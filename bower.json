@@ -1,0 +1,32 @@
+{
+  "name": "Shiba",
+  "version": "0.0.1",
+  "authors": [
+    "rhysd <lin90162@yahoo.co.jp>"
+  ],
+  "description": "Live markdown previewer with Lint",
+  "main": "src/main.js",
+  "keywords": [
+    "electron",
+    "markdown",
+    "browser",
+    "lint",
+    "preview",
+    "polymer"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "github-markdown-css": "~2.0.9",
+    "paper-input": "PolymerElements/paper-input#^1.0.0",
+    "paper-dialog": "PolymerElements/paper-dialog#^1.0.0",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^1.0.0",
+    "iron-flex-layout": "polymerelements/iron-flex-layout#^1.0.0"
+  }
+}

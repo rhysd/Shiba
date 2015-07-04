@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>Shiba</title>
+
+  <script src="../bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+  <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+  <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+  <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+  <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+  <style is="custom-style">
+    paper-dialog#dir-change {
+      width: 100%;
+    }
+    #wrapper {
+      @apply(--layout-horizontal)
+    }
+    .markdown-area {
+      @apply(--layout-flex);
+    }
+  </style>
+
+</head>
+<body>
+  <section id="wrapper">
+    <div class="markdown-area">
+      foooo!!!
+    </div>
+    <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="changeDir(event)"></paper-icon-button>
+    <paper-dialog id="dir-change">
+      <div id="dir-input-area">
+        <paper-textarea label="Shiba watching dir"></paper-textarea>
+      </div>
+    </paper-dialog>
+  </section>
+
+  <script>
+    'use strict';
+    function changeDir(e) {
+      let button = e.target;
+      while (!button.hasAttribute('data-dialog') && button !== document.body) {
+        button = button.parentElement;
+      }
+
+      if (!button.hasAttribute('data-dialog')) {
+        return;
+      }
+
+      const id = button.getAttribute('data-dialog');
+      let dialog = document.getElementById(id);
+      if (dialog) {
+        dialog.open();
+      }
+    }
+  </script>
+</body>
+</html>

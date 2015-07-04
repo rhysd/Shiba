@@ -1,0 +1,25 @@
+{
+  "name": "Shiba",
+  "productName": "Shiba",
+  "version": "0.0.1",
+  "description": "Live markdown previewer with linter",
+  "main": "./src/browser/mainu.js",
+  "author": "rhysd <lin90162@yahoo.co.jp>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhysd/Shiba.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rhysd/Shiba/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/rhysd/Shiba/raw/master/README.md"
+    }
+  ],
+  "dependencies": {
+    "js-yaml": "^3.3.1",
+    "marked": "^0.3.3"
+  }
+}
