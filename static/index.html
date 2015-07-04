@@ -14,6 +14,7 @@
   <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
   <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
   <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="markdown-area.html">
 
   <style is="custom-style">
     paper-dialog#dir-change {
@@ -22,7 +23,7 @@
     #wrapper {
       @apply(--layout-horizontal)
     }
-    .markdown-area {
+    markdown-area {
       @apply(--layout-flex);
     }
   </style>
@@ -30,15 +31,16 @@
 </head>
 <body>
   <section id="wrapper">
-    <div class="markdown-area">
-      foooo!!!
-    </div>
-    <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="changeDir(event)"></paper-icon-button>
-    <paper-dialog id="dir-change">
-      <div id="dir-input-area">
-        <paper-textarea id="dir-text-area" label="Shiba watching dir"></paper-textarea>
-      </div>
-    </paper-dialog>
+    <markdown-area>
+    </markdown-area>
+    <span>
+      <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="changeDir(event)"></paper-icon-button>
+      <paper-dialog id="dir-change">
+        <div id="dir-input-area">
+          <paper-textarea id="dir-text-area" label="Shiba watching dir"></paper-textarea>
+        </div>
+      </paper-dialog>
+    </span>
   </section>
 
   <script>
@@ -66,6 +68,11 @@
       let path = remote.require('./initial_path.js')();
       let textarea = document.getElementById('dir-text-area');
       textarea.value = path;
+
+      let Watcher = remote.require('./watcher.js');
+      let watcher = new Watcher(path, function(html){
+        document.querySelector('markdown-area').content = html;
+      });
     }
   </script>
 </body>
