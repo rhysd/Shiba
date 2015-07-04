@@ -36,13 +36,15 @@
     <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="changeDir(event)"></paper-icon-button>
     <paper-dialog id="dir-change">
       <div id="dir-input-area">
-        <paper-textarea label="Shiba watching dir"></paper-textarea>
+        <paper-textarea id="dir-text-area" label="Shiba watching dir"></paper-textarea>
       </div>
     </paper-dialog>
   </section>
 
   <script>
     'use strict';
+    let remote = require('remote');
+
     function changeDir(e) {
       let button = e.target;
       while (!button.hasAttribute('data-dialog') && button !== document.body) {
@@ -58,6 +60,12 @@
       if (dialog) {
         dialog.open();
       }
+    }
+
+    window.onload = function(){
+      let path = remote.require('./initial_path.js')();
+      let textarea = document.getElementById('dir-text-area');
+      textarea.value = path;
     }
   </script>
 </body>
