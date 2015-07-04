@@ -1,25 +1,50 @@
 'use strict';
 
-var ipc = require('ipc');
-var marked = require('marked');
-var path = require('path');
-var fs = require('fs');
+let ipc = require('ipc');
+let marked = require('marked');
+let path = require('path');
+let fs = require('fs');
+let chokidar = require('chokidar');
 
 // Note:
 // ES6 class syntax is unavailable for 'remote' module in renderer process
-function Watcher(d, r) {
-    this.dir = d;
+function Watcher(p, r) {
+    this.path = p;
     this.render = r;
 
-    // XXX: Temporary
-    const f = path.join(this.dir, 'README.md');
-    if (fs.statSync(f).isFile()) {
-        this.update(f);
-    }
+    console.log('Watcher starts with ' + p);
+
+    this.startWatching();
 }
 
-Watcher.prototype.update = function(file) {
+Watcher.prototype.startWatching = function() {
+    if (this.file_watcher) {
+        this.file_watcher.close();
+    }
+
+    if (!fs.existsSync(this.path)) {
+        return;
+    }
+
+    if (fs.statSync(this.path).isFile()) {
+        this._sendUpdate(this.path);
+    }
+
+    this.file_watcher = chokidar.watch(this.path);
     let that = this;
+    this.file_watcher.on('change', function(file){
+        console.log('File changed: ' + file);
+        that._sendUpdate(file);
+    });
+};
+
+Watcher.prototype._sendUpdate = function(file) {
+    if (!/.+\.(md|mkd|markdown)$/.test(file)) {
+        return;
+    }
+
+    let that = this;
+
     // Encoding should be specified by config or detected
     fs.readFile(file, 'utf-8', function(err, text){
         if (err) {
@@ -31,13 +56,15 @@ Watcher.prototype.update = function(file) {
     });
 };
 
-Watcher.prototype.changeWatchingDir = function(new_dir) {
-    if (new_dir === this.dir) {
+Watcher.prototype.changeWatchingDir = function(new_path) {
+    if (new_path === this.path) {
         return;
     }
 
-    this.dir = new_dir;
-    // TODO
+    console.log('Change watching path' + this.path + ' -> ' + new_path);
+
+    this.path = new_path;
+    this.startWatching();
 };
 
 module.exports = Watcher;
