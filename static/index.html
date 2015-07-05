@@ -102,6 +102,12 @@
         // Linter result renderer
         function(lint) {
           document.getElementById('lint-area').content = lint;
+          let button = document.getElementById('lint-button');
+          if (lint === '') {
+            button.style.color = '';
+          } else {
+            button.style.color = 'red';
+          }
         }
       );
 
