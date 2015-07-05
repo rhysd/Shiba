@@ -5,24 +5,44 @@
 <dom-module id="lint-panel">
 
   <style is="custom-style">
+    :host {
+      font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+    }
     .paper-header {
       background-color: var(--paper-green-500);
       color: white;
       @apply(--shadow-elevation-2dp);
       margin-bottom: 12px;
       font-size: 1.5em;
+      padding: 4px;
+    }
+    .content {
+      margin: 12px;
+      background-color: lightgray;
+    }
+    footer {
+      float: right;
+      margin: 12px;
+    }
+    .link {
+      cursor: pointer;
+      color: gray;
     }
   </style>
 
   <template>
     <paper-header-panel clas="flex" mode="scroll">
       <div class="paper-header" id="lint-header">No error</div>
-      <div class="content" id="lint-content"></div>
+      <div class="content">
+        <code class="content" id="lint-content"></code>
+      </div>
+      <footer><span class="link" on-click="_showLintRules">lint rules</span></footer>
     </paper-header-panel>
   </template>
 
   <script>
     'use strict';
+    let open = null;
 
     Polymer({
       is: 'lint-panel',
@@ -43,6 +63,14 @@
           // How can I use css variable --paper-red-500 here?
           header.style.backgroundColor = 'red';
         }
+      },
+
+      _showLintRules: function() {
+        if (!open) {
+          open = require('open');
+        }
+
+        open('https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md');
       }
     });
   </script>

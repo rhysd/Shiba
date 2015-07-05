@@ -5,12 +5,14 @@ let marked = require('marked');
 let path = require('path');
 let fs = require('fs');
 let chokidar = require('chokidar');
+let markdownlint = require('markdownlint');
 
 // Note:
 // ES6 class syntax is unavailable for 'remote' module in renderer process
-function Watcher(p, r) {
+function Watcher(p, r, l) {
     this.path = p;
     this.render = r;
+    this.renderLintResult = l;
 
     console.log('Watcher starts with ' + p);
 
@@ -46,11 +48,23 @@ Watcher.prototype._sendUpdate = function(file) {
     let that = this;
 
     // Encoding should be specified by config or detected
-    fs.readFile(file, 'utf-8', function(err, text){
+    fs.readFile(file, 'utf8', function(err, text){
         if (err) {
             console.log("Can't open: " + file);
             return;
         }
+
+        let options = {
+            // TODO: Enable to specify lint configurations
+            'strings' : {}
+        };
+        options.strings[path.basename(file)] = text;
+
+        markdownlint(options, function(err, result){
+            if (!err) {
+                that.renderLintResult(result.toString());
+            }
+        });
 
         that.render(marked(text));
     });
