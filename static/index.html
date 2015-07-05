@@ -14,7 +14,9 @@
   <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
   <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
   <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
   <link rel="import" href="markdown-area.html">
+  <link rel="import" href="lint-panel.html">
 
   <link rel="stylesheet" href="../bower_components/github-markdown-css/github-markdown.css">
 
@@ -23,27 +25,42 @@
       width: 100%;
     }
     #wrapper {
-      @apply(--layout-horizontal)
+      @apply(--layout-horizontal);
+      overflow: scroll;
     }
     markdown-area {
       @apply(--layout-flex);
+    }
+    #menu {
+      @apply(--layout-vertical);
+    }
+    #lint-area {
+      overflow: scroll;
     }
   </style>
 
 </head>
 <body>
-  <section id="wrapper">
-    <markdown-area>
-    </markdown-area>
-    <span>
-      <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="onDirButtonPushed(event)"></paper-icon-button>
-      <paper-dialog id="dir-change">
-        <div id="dir-input-area">
-          <paper-textarea id="dir-text-area" label="Shiba watching dir"></paper-textarea>
-        </div>
-      </paper-dialog>
-    </span>
-  </section>
+  <paper-drawer-panel id="main-drawer" right-drawer>
+    <section id="wrapper" main>
+      <markdown-area>
+      </markdown-area>
+      <div id="menu">
+        <span>
+          <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="onDirButtonPushed(event)"></paper-icon-button>
+          <paper-dialog id="dir-change">
+            <div id="dir-input-area">
+              <paper-textarea id="dir-text-area" label="Shiba watching..."></paper-textarea>
+            </div>
+          </paper-dialog>
+        </span>
+        <span>
+          <paper-icon-button id="lint-button" icon="error" alt="Lint" paper-drawer-toggle></paper-icon-button>
+        </span>
+      </div>
+    </section>
+    <lint-panel id="lint-area" drawer></lint-panel>
+  </paper-drawer-panel>
 
   <script>
     'use strict';

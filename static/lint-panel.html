@@ -1,0 +1,49 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+
+<dom-module id="lint-panel">
+
+  <style is="custom-style">
+    .paper-header {
+      background-color: var(--paper-green-500);
+      color: white;
+      @apply(--shadow-elevation-2dp);
+      margin-bottom: 12px;
+      font-size: 1.5em;
+    }
+  </style>
+
+  <template>
+    <paper-header-panel clas="flex" mode="scroll">
+      <div class="paper-header" id="lint-header">No error</div>
+      <div class="content" id="lint-content"></div>
+    </paper-header-panel>
+  </template>
+
+  <script>
+    'use strict';
+
+    Polymer({
+      is: 'lint-panel',
+
+      properties: {
+        content: {
+          type: String,
+          observer: '_contentUpdated'
+        }
+      },
+
+      _contentUpdated: function(new_content) {
+        document.getElementById('lint-content').innerText = new_content;
+        if (new_content !== '') {
+          let header = document.getElementById('lint-header');
+          header.innerText = 'Error';
+
+          // How can I use css variable --paper-red-500 here?
+          header.style.backgroundColor = 'red';
+        }
+      }
+    });
+  </script>
+</dom-module>
