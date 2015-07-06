@@ -14,8 +14,15 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 
 ## Installation
 
-This application is under construction.
-You must clone this repository, install bower and node.js components and install electron manually for now.
+### General
+
+Not released yet.
+
+### Via npm
+
+Not released yet.
+
+### For development
 
 ```sh
 $ git clone https://github.com/rhysd/Shiba.git && cd Shiba
