@@ -1,9 +1,12 @@
 {
-  "name": "Shiba",
+  "name": "shiba",
   "productName": "Shiba",
   "version": "0.0.1",
   "description": "Live markdown previewer with linter",
   "main": "./src/browser/mainu.js",
+  "bin": {
+    "shiba": "./bin/cli.js"
+  },
   "author": "rhysd <lin90162@yahoo.co.jp>",
   "repository": {
     "type": "git",
@@ -20,5 +23,11 @@
     "markdownlint": "0.0.6",
     "marked": "^0.3.3",
     "open": "0.0.5"
+  },
+  "devDependencies": {
+    "standard": "^4.5.2"
+  },
+  "scripts": {
+    "test": "standard"
   }
 }

@@ -1,6 +1,8 @@
 ![shibainu](https://raw.githubusercontent.com/rhysd/Shiba/master/resource/image/doc-shibainu.png)
 =====================
 
+[![npm version](https://img.shields.io/npm/v/shiba.svg?style=flat-square)](https://www.npmjs.com/package/shiba)
+
 Shiba is a rich live markdown preview app with lint.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
 Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](https://www.polymer-project.org/1.0/).
 
@@ -20,7 +22,9 @@ Not released yet.
 
 ### Via npm
 
-Not released yet.
+```
+$ npm install -g shiba
+```
 
 ### For development
 
