@@ -14,7 +14,13 @@ var mainWindow = null;
 app.on('window-all-closed', function(){ app.quit(); });
 
 app.on('ready', function(){
-    mainWindow = new BrowserWindow({width: 800, height: 600});
+    mainWindow = new BrowserWindow(
+        {
+            icon: path.join('..', 'resource', 'image', 'shibainu.png'),
+            width: 800,
+            height: 600
+        }
+    );
 
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadUrl(html);
