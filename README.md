@@ -31,18 +31,21 @@ T.B.D
 
 ## TODOs
 
-- [ ] prettier lint
-- [ ] keyboard shortcut
-- [ ] configuration
+- [ ] Prettier lint
+- [ ] Keyboard shortcut
+- [ ] Configuration with YAML
 
 ## Known Issues
 
 - URL links in document
 - Image path
+- Japanese is shown as tofu (font issue) in Linux
 
-## Resources
+## Special Thanks
 
-The logo of this app came from [いらすとや](http://www.irasutoya.com/).
+- The logo of this app came from [いらすとや](http://www.irasutoya.com/).
+- This app was inspired by [@mattn](https://github.com/mattn)'s [mkup](https://github.com/mattn/mkup).
+- This app refers [vmd](https://github.com/yoshuawuyts/vmd) a lot, which is a very simple markdown preview app built on Electron.
 
 ## License
 
