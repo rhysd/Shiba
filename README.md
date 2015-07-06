@@ -10,7 +10,7 @@ Shiba is on [Electron](https://github.com/atom/electron) and [Polymer](https://w
 - One executable
 - Customizable (format is yaml)
 - Cross platform
-- Dog respected
+- Dog respected :dog2:
 
 ## Usage
 
@@ -20,7 +20,6 @@ When the first version is released, what you have to do is only to download a fi
 
 ## TODOs
 
-- [ ] emoji (use gemoji)
 - [ ] prettier lint
 - [ ] keyboard shortcut
 - [ ] configuration

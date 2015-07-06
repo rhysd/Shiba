@@ -6,6 +6,7 @@ let path = require('path');
 let fs = require('fs');
 let chokidar = require('chokidar');
 let markdownlint = require('markdownlint');
+let emoji = require('./emoji.js');
 
 // Note:
 // ES6 class syntax is unavailable for 'remote' module in renderer process
@@ -66,7 +67,10 @@ Watcher.prototype._sendUpdate = function(file) {
             }
         });
 
-        that.render(marked(text));
+        // Note:
+        // Replace emoji notations in HTML document because Markdown can't specify the size of image.
+        let html = marked(text);
+        that.render(emoji.replaceAll(html));
     });
 };
 
