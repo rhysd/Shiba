@@ -89,6 +89,15 @@
       openDirDialog(button);
     }
 
+    function setTitle(path) {
+      if (path === '') {
+        document.title = 'Shiba';
+        'Shiba';
+      } else {
+        document.title = 'Shiba (' + path + ')';
+      }
+    }
+
     window.onload = function(){
       const path = remote.require('./initial_path.js')();
 
@@ -118,12 +127,15 @@
 
       let dialog = document.getElementById('dir-change');
       dialog.addEventListener('iron-overlay-closed', function(){
-        watcher.changeWatchingDir(textarea.value);
+        const path = textarea.value;
+        watcher.changeWatchingDir(path);
+        setTitle(path);
       });
 
       if (path === '') {
         dialog.open();
       }
+      setTitle(path);
     }
   </script>
 </body>
