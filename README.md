@@ -12,11 +12,22 @@ Shiba is on [Electron](https://github.com/atom/electron) and [Polymer](https://w
 - Cross platform
 - Dog respected :dog2:
 
-## Usage
+## Installation
 
 This application is under construction.
 You must clone this repository, install bower and node.js components and install electron manually for now.
-When the first version is released, what you have to do is only to download a file and place it.
+
+```sh
+$ git clone https://github.com/rhysd/Shiba.git && cd Shiba
+$ bower install && npm install
+$ electron . # Or `electron . {file to watch}`
+```
+
+When the first version is released, all you have to do will be only downloading one file and place it.
+
+## Usage
+
+T.B.D
 
 ## TODOs
 

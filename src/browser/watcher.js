@@ -6,7 +6,18 @@ let path = require('path');
 let fs = require('fs');
 let chokidar = require('chokidar');
 let markdownlint = require('markdownlint');
+let hljs = require('highlight.js');
 let emoji = require('./emoji.js');
+
+marked.setOptions({
+    highlight: function(code, lang) {
+        if (lang === undefined) {
+            return hljs.highlightAuto(code).value;
+        } else {
+            return hljs.highlight(lang, code).value;
+        }
+    }
+});
 
 // Note:
 // ES6 class syntax is unavailable for 'remote' module in renderer process
