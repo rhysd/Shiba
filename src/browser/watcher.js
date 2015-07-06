@@ -12,10 +12,10 @@ let emoji = require('./emoji.js');
 marked.setOptions({
     highlight: function(code, lang) {
         if (lang === undefined) {
-            return hljs.highlightAuto(code).value;
-        } else {
-            return hljs.highlight(lang, code).value;
+            return code;
         }
+
+        return hljs.highlight(lang, code).value;
     }
 });
 

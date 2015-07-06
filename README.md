@@ -46,6 +46,7 @@ T.B.D
 - The logo of this app came from [いらすとや](http://www.irasutoya.com/).
 - This app was inspired by [@mattn](https://github.com/mattn)'s [mkup](https://github.com/mattn/mkup).
 - This app refers [vmd](https://github.com/yoshuawuyts/vmd) a lot, which is a very simple markdown preview app built on Electron.
+- Emoji pictures are from [arvida/emoji-cheat-sheet.com](https://github.com/arvida/emoji-cheat-sheet.com).
 
 ## License
 
