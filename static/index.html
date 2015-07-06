@@ -26,12 +26,12 @@
     paper-dialog#dir-change {
       width: 100%;
     }
-    #wrapper {
+    #main-area {
       @apply(--layout-horizontal);
-      overflow: scroll;
     }
     markdown-area {
       @apply(--layout-flex);
+      overflow: scroll;
     }
     #menu {
       @apply(--layout-vertical);
@@ -44,7 +44,7 @@
 </head>
 <body>
   <paper-drawer-panel id="main-drawer" right-drawer>
-    <section id="wrapper" main>
+    <section id="main-area" main>
       <markdown-area>
       </markdown-area>
       <div id="menu">
