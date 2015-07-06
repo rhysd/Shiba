@@ -25,6 +25,7 @@
     "open": "0.0.5"
   },
   "devDependencies": {
+    "electron-packager": "^5.0.0",
     "standard": "^4.5.2"
   },
   "scripts": {
