@@ -1,8 +1,7 @@
 'use strict';
 
-let markdownlint = require('markdownlint');
-// let mdast = require('mdast');
-// let lint = require('mdast-lint');
+let markdownlint = null;
+let mdast = null;
 
 function Linter(name) {
     if (this.name === 'markdownlint') {
@@ -12,12 +11,15 @@ function Linter(name) {
         this.lint = this.mdast_lint;
         this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
     } else {
-        this.lint = this.markdownlint;
-        this.lint_url = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
+        this.lint = this.mdast_lint;
+        this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
     }
 }
 
 Linter.prototype.markdownlint = function(filename, content, callback) {
+    if (!markdownlint) {
+        markdownlint = require('markdownlint');
+    }
     let options = {
         // TODO: Enable to specify lint configurations
         'strings' : {}
@@ -25,14 +27,32 @@ Linter.prototype.markdownlint = function(filename, content, callback) {
     options.strings[filename] = content;
 
     markdownlint(options, function(err, result){
-        if (!err) {
-            callback(result.toString());
+        if (err) {
+            return '';
         }
+        callback(result.toString());
     });
 };
 
 Linter.prototype.mdast_lint = function(filename, content, callback) {
-    callback('');
+    if (!mdast) {
+        mdast = require('mdast')().use(require('mdast-lint'));
+    }
+
+    mdast.process(content, function(err, _, file){
+        if (err) {
+            return '';
+        }
+
+        callback(
+            file.messages.map(function(m){
+                // Note:
+                // Should I include m.ruleId to check the detail of message?
+                // I don't include it now because message gets too long.
+                return `${filename}:${m.line}:${m.column}: ${m.reason}`;
+            }).join("\n")
+        );
+    });
 };
 
 module.exports = Linter;
