@@ -51,7 +51,8 @@
         content: {
           type: String,
           observer: '_contentUpdated'
-        }
+        },
+        lint_url: String
       },
 
       _contentUpdated: function(new_content) {
@@ -66,6 +67,11 @@
       },
 
       _showLintRules: function() {
+        if (this.lint_url === undefined) {
+          console.log('No lint URL');
+          return;
+        }
+
         if (!open) {
           open = require('open');
         }

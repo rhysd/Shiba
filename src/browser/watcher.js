@@ -8,6 +8,7 @@ let chokidar = require('chokidar');
 let markdownlint = require('markdownlint');
 let hljs = require('highlight.js');
 let emoji = require('./emoji.js');
+let Linter = require('./linter.js');
 
 marked.setOptions({
     highlight: function(code, lang) {
@@ -25,6 +26,7 @@ function Watcher(p, r, l) {
     this.path = p;
     this.render = r;
     this.renderLintResult = l;
+    this.linter = new Linter();
 
     console.log('Watcher starts with ' + p);
 
@@ -66,17 +68,7 @@ Watcher.prototype._sendUpdate = function(file) {
             return;
         }
 
-        let options = {
-            // TODO: Enable to specify lint configurations
-            'strings' : {}
-        };
-        options.strings[path.basename(file)] = text;
-
-        markdownlint(options, function(err, result){
-            if (!err) {
-                that.renderLintResult(result.toString());
-            }
-        });
+        that.linter.lint(path.basename(file), text, that.renderLintResult);
 
         // Note:
         // Replace emoji notations in HTML document because Markdown can't specify the size of image.
@@ -94,6 +86,10 @@ Watcher.prototype.changeWatchingDir = function(new_path) {
 
     this.path = new_path;
     this.startWatching();
+};
+
+Watcher.prototype.getLintRuleURL = function() {
+    return this.linter.lint_url;
 };
 
 module.exports = Watcher;

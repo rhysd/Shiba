@@ -125,6 +125,8 @@
       let textarea = document.getElementById('dir-text-area');
       textarea.value = path;
 
+      document.getElementById('lint-area').lint_url = watcher.getLintRuleURL();
+
       let dialog = document.getElementById('dir-change');
       dialog.addEventListener('iron-overlay-closed', function(){
         const path = textarea.value;
