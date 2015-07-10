@@ -8,7 +8,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 
 - Rich GFM (code highlight, emoji)
 - Live reload
-- Automatic lint
+- Automatic lint (mdast, markdownlint)
 - One executable
 - Customizable (yaml configuration file)
 - Cross platform (Mac, Linux, Windows)
