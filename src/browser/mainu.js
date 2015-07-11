@@ -1,10 +1,11 @@
 'use strict';
 
-var app = require('app');
-var path = require('path');
-var ipc = require('ipc');
-var shortcut = require('global-shortcut');
-var BrowserWindow = require('browser-window');
+let app = require('app');
+let path = require('path');
+let ipc = require('ipc');
+let shortcut = require('global-shortcut');
+let BrowserWindow = require('browser-window');
+const config = require('./config.js').load();
 
 require('crash-reporter').start();
 
@@ -14,11 +15,31 @@ var mainWindow = null;
 app.on('window-all-closed', function(){ app.quit(); });
 
 app.on('ready', function(){
+    const display_size = require('screen').getPrimaryDisplay().workAreaSize;
+
+    function getConfigLength(key, default_len) {
+        const len = config[key];
+        switch (typeof len) {
+            case 'string': {
+                if (len === 'max') {
+                    return display_size[key];
+                }
+                return default_len;
+            }
+            case 'number': {
+                return len;
+            }
+            default: {
+                return default_len;
+            }
+        }
+    }
+
     mainWindow = new BrowserWindow(
         {
             icon: path.join('..', 'resource', 'image', 'shibainu.png'),
-            width: 800,
-            height: 600
+            width: getConfigLength('width', 800),
+            height: getConfigLength('height', 600)
         }
     );
 

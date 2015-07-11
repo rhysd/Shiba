@@ -17,7 +17,9 @@ module.exports.load = function(){
     const file = path.join(app.getPath('userData'), 'config.yml');
     const default_config = {
         linter: "mdast-lint",
-        file_ext: ["md", "markdown", "mkd"]
+        file_ext: ["md", "markdown", "mkd"],
+        width: 800,
+        height: 600
     };
 
     try {
