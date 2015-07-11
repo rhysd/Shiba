@@ -9,7 +9,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - Rich GFM (code highlight, emoji)
 - Live reload
 - Automatic lint (mdast, markdownlint)
-- One executable
+- One executable file
 - Customizable (yaml configuration file)
 - Cross platform (Mac, Linux, Windows)
 - Dog respected :dog2:
@@ -40,11 +40,26 @@ When the first version is released, all you have to do will be only downloading 
 
 T.B.D
 
+## Customization
+
+You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is `~/Library/Application\ Support/Shiba` for OS X, `~/.config/Shiba` for Linux.
+Below is an example for `config.yml`.
+
+```YAML
+width: 800
+height: "max"
+```
+
+| Key      | Description   | Value                              | Default        |
+| -------- | ------------- | ---------------------------------- | -------------- |
+| `width`  | Window width  | Number of pixel or `"max"`         | `800`          |
+| `height` | Window height | Number of pixel or `"max"`         | `600`          |
+| `linter` | Linter name   | `"mdast-lint"` or `"markdownlint"` | `"mdast-lint"` |
+
 ## TODOs
 
-- [ ] Prettier lint
 - [ ] Keyboard shortcut
-- [ ] Configuration with YAML
+- [ ] Application menu
 - Smarter alternatives
   - [ ] [slim](https://github.com/slim-template/slim)
   - [ ] [TypeScript](http://www.typescriptlang.org/)

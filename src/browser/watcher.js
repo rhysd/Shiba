@@ -17,7 +17,12 @@ marked.setOptions({
             return code;
         }
 
-        return hljs.highlight(lang, code).value;
+        try {
+            return hljs.highlight(lang, code).value;
+        } catch (e) {
+            console.log(e.message);
+            return code;
+        }
     }
 });
 
