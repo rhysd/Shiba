@@ -1,0 +1,40 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+
+<dom-module id="lint-message">
+  <style is="custom-style">
+    :host {
+      font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+    }
+    .item {
+      background-color: white;
+      @apply(--shadow-elevation-2dp);
+      border-bottom: 1px solid #e6e6e6;
+      font: inherit;
+    }
+    .text {
+      white-space: pre-wrap;
+    }
+  </style>
+
+  <template>
+    <paper-item class="item">
+      <paper-item-body two-line class="layout vertical">
+        <div secondary>{{message.header}}</div>
+        <div class="text">{{message.body}}</div>
+      </paper-item-body>
+    </paper-item>
+  </template>
+
+  <script>
+    'use strict';
+    Polymer({
+      is: 'lint-message',
+
+      properties: {
+        message: Object
+      }
+    });
+  </script>
+</dom-module>

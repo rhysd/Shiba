@@ -31,9 +31,16 @@ Linter.prototype.markdownlint = function(filename, content, callback) {
 
     markdownlint(options, function(err, result){
         if (err) {
-            return '';
+            return [];
         }
-        callback(result.toString());
+        const is_space = /\s+/;
+        const messages = result.toString()
+                          .split("\n")
+                          .map(function(msg){
+                              const split = msg.split(is_space);
+                              return {header: split[0], body: split[1]};
+                      });
+        callback(messages);
     });
 };
 
@@ -44,7 +51,7 @@ Linter.prototype.mdast_lint = function(filename, content, callback) {
 
     mdast.process(content, function(err, _, file){
         if (err) {
-            return '';
+            return [];
         }
 
         callback(
@@ -52,8 +59,11 @@ Linter.prototype.mdast_lint = function(filename, content, callback) {
                 // Note:
                 // Should I include m.ruleId to check the detail of message?
                 // I don't include it now because message gets too long.
-                return `${filename}:${m.line}:${m.column}: ${m.reason}`;
-            }).join("\n")
+                return {
+                    header: `${filename}:${m.line}:${m.column}:`,
+                    body: m.reason
+                };
+            })
         );
     });
 };

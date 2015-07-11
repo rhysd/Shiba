@@ -116,10 +116,10 @@
         },
 
         // Linter result renderer
-        function(lint) {
-          document.getElementById('lint-area').content = lint;
+        function(messages) {
+          document.getElementById('lint-area').content = messages;
           let button = document.getElementById('lint-button');
-          if (lint === '') {
+          if (messages.length === 0) {
             button.style.color = '#d99e5f';
           } else {
             button.style.color = '#ce3c4a';

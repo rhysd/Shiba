@@ -1,6 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
 <link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="lint-message.html">
 
 <dom-module id="lint-panel">
 
@@ -9,18 +10,23 @@
       font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
     }
     .paper-header {
-      background-color: var(--paper-green-500);
       color: white;
       @apply(--shadow-elevation-2dp);
       margin-bottom: 12px;
       font-size: 1.5em;
       padding: 4px;
     }
-    .content {
+    :host > ::content [green_bg] {
+      background-color: var(--paper-green-500);
+    }
+    :host > ::content [red_bg] {
+      background-color: var(--paper-red-500);
+    }
+    #content-wrapper {
       margin: 12px;
       background-color: lightgray;
     }
-    footer {
+    #rule-link {
       float: right;
       margin: 12px;
     }
@@ -28,15 +34,18 @@
       cursor: pointer;
       color: gray;
     }
+    #lint-content {
+      font: inherit;
+    }
   </style>
 
-  <template>
-    <paper-header-panel clas="flex" mode="scroll">
-      <div class="paper-header" id="lint-header">No error</div>
-      <div class="content">
-        <code class="content" id="lint-content"></code>
+  <template id="body">
+    <paper-header-panel class="flex" mode="scroll">
+      <div class="paper-header" id="lint-header" green_bg>No error</div>
+      <div id="content-wrapper">
+        <code id="lint-content"></code>
       </div>
-      <footer><span class="link" on-click="_showLintRules">lint rules</span></footer>
+      <footer id="rule-link"><span class="link" on-click="_showLintRules">lint rules</span></footer>
     </paper-header-panel>
   </template>
 
@@ -49,20 +58,32 @@
 
       properties: {
         content: {
-          type: String,
+          type: Array,
           observer: '_contentUpdated'
         },
         lint_url: String
       },
 
-      _contentUpdated: function(new_content) {
-        document.getElementById('lint-content').innerText = new_content;
-        if (new_content !== '') {
-          let header = document.getElementById('lint-header');
-          header.innerText = 'Error';
+      _setMessages(messages) {
+        let content = document.getElementById('lint-content');
 
-          // How can I use css variable --paper-red-500 here?
-          header.style.backgroundColor = 'red';
+        for (const m of messages) {
+          let msg = document.createElement('lint-message');
+          msg.message = m;
+          content.appendChild(msg);
+        }
+      },
+
+      _contentUpdated: function(messages) {
+        this._setMessages(messages);
+
+        let header = document.getElementById('lint-header');
+        if (messages.length > 0) {
+          header.innerText = 'Error';
+          header.setAttribute('red_bg', '');
+        } else {
+          header.innerText = 'No error';
+          header.setAttribute('green_bg', '');
         }
       },
 
