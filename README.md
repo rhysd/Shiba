@@ -45,6 +45,10 @@ T.B.D
 - [ ] Prettier lint
 - [ ] Keyboard shortcut
 - [ ] Configuration with YAML
+- Smarter alternatives
+  - [ ] [slim](https://github.com/slim-template/slim)
+  - [ ] [TypeScript](http://www.typescriptlang.org/)
+  - [ ] [sass](http://sass-lang.com/)
 
 ## Known Issues
 
