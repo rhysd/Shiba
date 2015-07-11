@@ -52,7 +52,13 @@ Watcher.prototype.startWatching = function() {
         this._sendUpdate(this.path);
     }
 
-    this.file_watcher = chokidar.watch(this.path);
+    const watched = path.join(this.path, '**', '*.(md|markdown|mkd)');
+    this.file_watcher = chokidar.watch(
+        watched, {
+            ignored: /[\\\/]\./,
+            persistent: true
+        }
+    );
     let that = this;
     this.file_watcher.on('change', function(file){
         console.log('File changed: ' + file);
