@@ -8,6 +8,7 @@ let chokidar = require('chokidar');
 let markdownlint = require('markdownlint');
 let hljs = require('highlight.js');
 let emoji = require('./emoji.js');
+let config = require('./config.js');
 let Linter = require('./linter.js');
 
 marked.setOptions({
@@ -26,7 +27,12 @@ function Watcher(p, r, l) {
     this.path = p;
     this.render = r;
     this.renderLintResult = l;
-    this.linter = new Linter();
+    this.config = config.load();
+    if ('linter' in this.config) {
+        this.linter = new Linter(this.config.linter);
+    } else {
+        this.linter = new Linter();
+    }
 
     console.log('Watcher starts with ' + p);
 

@@ -10,6 +10,9 @@ function Linter(name) {
     } else if (this.name === 'mdast-lint') {
         this.lint = this.mdast_lint;
         this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
+    } else if (this.name === 'none') {
+        this.lint = function(f, c, p){};
+        this.lint_url = '';
     } else {
         this.lint = this.mdast_lint;
         this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
