@@ -39,17 +39,23 @@
     #lint-area {
       overflow: scroll;
     }
+    #menu {
+      background-color: #ffd8aa;
+    }
+    .menu-button {
+      color: #d99e5f;
+    }
   </style>
 
 </head>
 <body>
-  <paper-drawer-panel id="main-drawer" right-drawer>
+  <paper-drawer-panel id="main-drawer" drawer-width="320px" responsive-width="1120px" right-drawer>
     <section id="main-area" main>
       <markdown-area>
       </markdown-area>
       <div id="menu">
         <span>
-          <paper-icon-button id="dir-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="onDirButtonPushed(event)"></paper-icon-button>
+          <paper-icon-button id="dir-button" class="menu-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="onDirButtonPushed(event)"></paper-icon-button>
           <paper-dialog id="dir-change">
             <div id="dir-input-area">
               <paper-textarea id="dir-text-area" label="Shiba watching..."></paper-textarea>
@@ -57,7 +63,7 @@
           </paper-dialog>
         </span>
         <span>
-          <paper-icon-button id="lint-button" icon="error" alt="Lint" paper-drawer-toggle></paper-icon-button>
+          <paper-icon-button id="lint-button" class="menu-button" icon="error" alt="Lint" paper-drawer-toggle></paper-icon-button>
         </span>
       </div>
     </section>
@@ -89,12 +95,11 @@
       openDirDialog(button);
     }
 
-    function setTitle(path) {
+    function makeTitle(path) {
       if (path === '') {
-        document.title = 'Shiba';
-        'Shiba';
+        return 'Shiba';
       } else {
-        document.title = 'Shiba (' + path + ')';
+        return 'Shiba (' + path + ')';
       }
     }
 
@@ -115,9 +120,9 @@
           document.getElementById('lint-area').content = lint;
           let button = document.getElementById('lint-button');
           if (lint === '') {
-            button.style.color = '';
+            button.style.color = '#d99e5f';
           } else {
-            button.style.color = 'red';
+            button.style.color = '#ce3c4a';
           }
         }
       );
@@ -131,13 +136,13 @@
       dialog.addEventListener('iron-overlay-closed', function(){
         const path = textarea.value;
         watcher.changeWatchingDir(path);
-        setTitle(path);
+        document.title = makeTitle(path);
       });
 
       if (path === '') {
         dialog.open();
       }
-      setTitle(path);
+      document.title = makeTitle(path);
     }
   </script>
 </body>
