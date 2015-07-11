@@ -1,35 +1,32 @@
 'use strict';
 
-let markdownlint = null;
-let mdast = null;
-
 function Linter(name) {
-    if (this.name === 'markdownlint') {
+    if (name === 'markdownlint') {
         this.lint = this.markdownlint;
         this.lint_url = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
-    } else if (this.name === 'mdast-lint') {
+    } else if (name === 'mdast-lint') {
         this.lint = this.mdast_lint;
         this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
-    } else if (this.name === 'none') {
+    } else if (name === 'none') {
         this.lint = function(f, c, p){};
         this.lint_url = '';
     } else {
-        this.lint = this.mdast_lint;
-        this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
+        console.log("linter.js: Invalid linter name '" + name + "'");
+        this.lint = function(f, c, p){};
+        this.lint_url = '';
     }
 }
 
 Linter.prototype.markdownlint = function(filename, content, callback) {
-    if (!markdownlint) {
-        markdownlint = require('markdownlint');
-    }
+    this.markdownlint = this.markdownlint || require('markdownlint');
+
     let options = {
         // TODO: Enable to specify lint configurations
         'strings' : {}
     };
     options.strings[filename] = content;
 
-    markdownlint(options, function(err, result){
+    this.markdownlint(options, function(err, result){
         if (err) {
             return [];
         }
@@ -45,11 +42,9 @@ Linter.prototype.markdownlint = function(filename, content, callback) {
 };
 
 Linter.prototype.mdast_lint = function(filename, content, callback) {
-    if (!mdast) {
-        mdast = require('mdast')().use(require('mdast-lint'));
-    }
+    this.mdast = this.mdast || require('mdast')().use(require('mdast-lint'));
 
-    mdast.process(content, function(err, _, file){
+    this.mdast.process(content, function(err, _, file){
         if (err) {
             return [];
         }

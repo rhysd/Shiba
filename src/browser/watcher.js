@@ -28,11 +28,7 @@ function Watcher(p, r, l) {
     this.render = r;
     this.renderLintResult = l;
     this.config = config.load();
-    if ('linter' in this.config) {
-        this.linter = new Linter(this.config.linter);
-    } else {
-        this.linter = new Linter();
-    }
+    this.linter = new Linter(this.config.linter);
 
     console.log('Watcher starts with ' + p);
 
@@ -52,7 +48,8 @@ Watcher.prototype.startWatching = function() {
         this._sendUpdate(this.path);
     }
 
-    const watched = path.join(this.path, '**', '*.(md|markdown|mkd)');
+    const ext_pattern = `*.(${this.config.file_ext.join('|')})`;
+    const watched = path.join(this.path, '**', ext_pattern);
     this.file_watcher = chokidar.watch(
         watched, {
             ignored: /[\\\/]\./,
