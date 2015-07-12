@@ -50,11 +50,12 @@ width: 800
 height: "max"
 ```
 
-| Key      | Description   | Value                              | Default        |
-| -------- | ------------- | ---------------------------------- | -------------- |
-| `width`  | Window width  | Number of pixel or `"max"`         | `800`          |
-| `height` | Window height | Number of pixel or `"max"`         | `600`          |
-| `linter` | Linter name   | `"mdast-lint"` or `"markdownlint"` | `"mdast-lint"` |
+| Key        | Description   | Value                                        | Default                     |
+| ---------- | ------------- | -------------------------------------------- | --------------------------- |
+| `width`    | Window width  | Number of pixel or `"max"`                   | `800`                       |
+| `height`   | Window height | Number of pixel or `"max"`                   | `600`                       |
+| `linter`   | Linter name   | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
+| `file_ext` | Ext to detect | Array of extensions                          | `["md", "markdown", "mkd"]` |
 
 ## TODOs
 

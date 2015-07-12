@@ -12,19 +12,14 @@
     .paper-header {
       color: white;
       @apply(--shadow-elevation-2dp);
-      margin-bottom: 12px;
       font-size: 1.5em;
       padding: 4px;
     }
-    :host > ::content [green_bg] {
-      background-color: var(--paper-green-500);
+    :host > ::content [no_error] {
+      background-color: #d99e5f;
     }
-    :host > ::content [red_bg] {
-      background-color: var(--paper-red-500);
-    }
-    #content-wrapper {
-      margin: 12px;
-      background-color: lightgray;
+    :host > ::content [error] {
+      background-color: #ce3c4a;
     }
     #rule-link {
       float: right;
@@ -35,16 +30,16 @@
       color: gray;
     }
     #lint-content {
+      padding: 12px;
       font: inherit;
+      background-color: #ffd8aa;
     }
   </style>
 
   <template id="body">
     <paper-header-panel class="flex" mode="scroll">
-      <div class="paper-header" id="lint-header" green_bg>No error</div>
-      <div id="content-wrapper">
-        <code id="lint-content"></code>
-      </div>
+      <div class="paper-header" id="lint-header" no_error>No Error</div>
+      <div id="lint-content"></div>
       <footer id="rule-link"><span class="link" on-click="_showLintRules">lint rules</span></footer>
     </paper-header-panel>
   </template>
@@ -80,10 +75,10 @@
         let header = document.getElementById('lint-header');
         if (messages.length > 0) {
           header.innerText = 'Error';
-          header.setAttribute('red_bg', '');
+          header.setAttribute('error', '');
         } else {
-          header.innerText = 'No error';
-          header.setAttribute('green_bg', '');
+          header.innerText = 'No Error';
+          header.setAttribute('no_error', '');
         }
       },
 
