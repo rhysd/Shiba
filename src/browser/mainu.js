@@ -5,6 +5,7 @@ let path = require('path');
 let ipc = require('ipc');
 let shortcut = require('global-shortcut');
 let BrowserWindow = require('browser-window');
+let menu = require('./menu.js');
 const config = require('./config.js').load();
 
 require('crash-reporter').start();
@@ -52,6 +53,8 @@ app.on('ready', function(){
         mainWindow = null;
         shortcut.unregisterAll();
     });
+
+    menu.build(mainWindow);
 });
 // }}}
 
