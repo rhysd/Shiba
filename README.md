@@ -9,7 +9,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - Rich GFM (code highlight, emoji)
 - Live reload
 - Automatic lint (mdast, markdownlint)
-- One executable file
+- Easy to install
 - Customizable (yaml configuration file)
 - Cross platform (Mac, Linux, Windows)
 - Dog respected :dog2:
@@ -18,7 +18,12 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 
 ### General
 
-Not released yet.
+Experimental alpha release is available for Linux, OS X and Windows.
+Please download from [here](https://github.com/rhysd/Shiba/releases) and unzip the archive.
+
+- __Linux__ : Use `shiba` executable in the directory.
+- __OS X__ : Use `Shiba.app` in the directory (e.g. `$ open -a ./Shiba.app`).
+- __Windows__ : Use `shiba.exe` in the directory.  No need to install.
 
 ### Via npm
 
@@ -38,7 +43,43 @@ When the first version is released, all you have to do will be only downloading 
 
 ## Usage
 
-T.B.D
+![Shiba on Linux](https://raw.githubusercontent.com/rhysd/screenshots/master/Shiba/shiba-main-0.1.0.png)
+
+- When file is updated, Shiba automatically updates preview and lint result.
+- You can see the result of lint by pushing lint icon in right above.  If linter reports any error, the icon's color is changed to red.
+- You can change the watching file by pushing directory icon in right above.
+- You can quit the app by closing window (`Command+Q` shortcut is also available in OS X).
+
+### Watch specific file
+
+```sh
+# Linux
+$ shiba /path/to/markdown-file
+
+# OS X
+$ open -a Shiba.app /path/to/markdown-file
+
+# Windows
+$ shiba.exe /path/to/markdown-file
+```
+
+Please specify the markdown file you want to watch as an argument of command.
+
+### Watch files in specific directory
+
+```sh
+# Linux
+$ shiba /path/to/dir
+
+# OS X
+$ open -a Shiba.app /path/to/dir
+
+# Windows
+$ shiba.exe /path/to/dir
+```
+
+Instead of markdown file, please specify the path to directory as above.  If you omit an argument, current working directory would be watched.
+
 
 ## Customization
 
@@ -60,7 +101,7 @@ height: "max"
 ## TODOs
 
 - [ ] Keyboard shortcut
-- [ ] Application menu
+- [ ] Package installer if needed (Windows, OS X)
 - Smarter alternatives
   - [ ] [slim](https://github.com/slim-template/slim)
   - [ ] [TypeScript](http://www.typescriptlang.org/)

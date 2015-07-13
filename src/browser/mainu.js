@@ -47,8 +47,6 @@ app.on('ready', function(){
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadUrl(html);
 
-    mainWindow.openDevTools();
-
     mainWindow.on('closed', function(){
         mainWindow = null;
         shortcut.unregisterAll();
