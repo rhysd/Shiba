@@ -33,7 +33,7 @@ function Watcher(p, r, l) {
     this.render = r;
     this.renderLintResult = l;
     this.config = config.load();
-    this.linter = new Linter(this.config.linter);
+    this.linter = new Linter(this.config.linter, this.config.lint_options);
 
     console.log('Watcher starts with ' + p);
 

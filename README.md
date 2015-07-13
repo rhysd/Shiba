@@ -58,6 +58,8 @@ $ shiba /path/to/markdown-file
 
 # OS X
 $ open -a Shiba.app /path/to/markdown-file
+# or
+$ Shiba.app/Contents/MacOS/Shiba /path/to/markdown-file
 
 # Windows
 $ shiba.exe /path/to/markdown-file
@@ -89,14 +91,18 @@ Below is an example for `config.yml`.
 ```YAML
 width: 800
 height: "max"
+linter: "mdast-lint"
+lint_options:
+    maximum-line-length: false
 ```
 
-| Key        | Description   | Value                                        | Default                     |
-| ---------- | ------------- | -------------------------------------------- | --------------------------- |
-| `width`    | Window width  | Number of pixel or `"max"`                   | `800`                       |
-| `height`   | Window height | Number of pixel or `"max"`                   | `600`                       |
-| `linter`   | Linter name   | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
-| `file_ext` | Ext to detect | Array of extensions                          | `["md", "markdown", "mkd"]` |
+| Key            | Description        | Value                                        | Default                     |
+| -------------- | ------------------ | -------------------------------------------- | --------------------------- |
+| `width`        | Window width       | Number of pixel or `"max"`                   | `800`                       |
+| `height`       | Window height      | Number of pixel or `"max"`                   | `600`                       |
+| `linter`       | Linter name        | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
+| `file_ext`     | Ext to detect      | Array of extensions                          | `["md", "markdown", "mkd"]` |
+| `lint_options` | Options for linter | Depends on linter                            | Not specified               |
 
 ## TODOs
 

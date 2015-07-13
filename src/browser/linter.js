@@ -1,6 +1,8 @@
 'use strict';
 
-function Linter(name) {
+function Linter(name, options) {
+    this.options = options || {};
+
     if (name === 'markdownlint') {
         this.lint = this.markdownlint;
         this.lint_url = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
@@ -20,13 +22,13 @@ function Linter(name) {
 Linter.prototype.markdownlint = function(filename, content, callback) {
     this.markdownlint = this.markdownlint || require('markdownlint');
 
-    let options = {
-        // TODO: Enable to specify lint configurations
-        'strings' : {}
+    let opts = {
+        strings: {},
+        config: this.options
     };
-    options.strings[filename] = content;
+    opts.strings[filename] = content;
 
-    this.markdownlint(options, function(err, result){
+    this.markdownlint(opts, function(err, result){
         if (err) {
             return [];
         }
@@ -49,7 +51,7 @@ Linter.prototype.markdownlint = function(filename, content, callback) {
 };
 
 Linter.prototype.mdast_lint = function(filename, content, callback) {
-    this.mdast = this.mdast || require('mdast')().use(require('mdast-lint'));
+    this.mdast = this.mdast || require('mdast')().use(require('mdast-lint'), this.options);
 
     this.mdast.process(content, function(err, _, file){
         if (err) {
