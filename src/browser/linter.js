@@ -34,8 +34,15 @@ Linter.prototype.markdownlint = function(filename, content, callback) {
         const messages = result.toString()
                           .split("\n")
                           .map(function(msg){
-                              const split = msg.split(is_space);
-                              return {header: split[0], body: split[1]};
+                              const m = msg.match(is_space);
+                              if (!m) {
+                                  return {header: '', body: msg};
+                              }
+
+                              return {
+                                  header: msg.slice(0, m.index),
+                                  body: msg.slice(m.index)
+                              };
                       });
         callback(messages);
     });
