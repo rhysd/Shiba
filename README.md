@@ -108,6 +108,7 @@ lint_options:
 
 - [ ] Keyboard shortcut
 - [ ] Package installer if needed (Windows, OS X)
+- [ ] Use file(directory?) picker to set watching path
 - Smarter alternatives
   - [ ] [slim](https://github.com/slim-template/slim)
   - [ ] [TypeScript](http://www.typescriptlang.org/)
