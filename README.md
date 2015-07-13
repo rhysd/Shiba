@@ -27,6 +27,8 @@ Please download from [here](https://github.com/rhysd/Shiba/releases) and unzip t
 
 ### Via npm
 
+__NOW BROKEN.__
+
 ```
 $ npm install -g shiba
 ```
@@ -38,8 +40,6 @@ $ git clone https://github.com/rhysd/Shiba.git && cd Shiba
 $ bower install && npm install
 $ electron . # Or `electron . {file to watch}`
 ```
-
-When the first version is released, all you have to do will be only downloading one file and place it.
 
 ## Usage
 
