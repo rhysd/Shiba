@@ -1,11 +1,25 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 
 <dom-module id="path-dialog">
   <style is="custom-style">
     .dialog {
       width: 100%;
+    }
+    #path-choose-button {
+      color: white;
+      background: #d99e5f;
+      float: left;
+    }
+    #path-hidden-input {
+      display: none;
+    }
+    #path-chooser-area {
+      float: right;
+      margin: 14px;
     }
   </style>
 
@@ -13,6 +27,16 @@
       <paper-dialog class="dialog" id="path-change-dialog">
         <div id="path-input-area">
           <paper-textarea id="path-text-area" label="{{label}}" value="{{path}}"></paper-textarea>
+          <div class="layout horizontal">
+            <div class="layout flex">
+              <paper-button id="path-choose-button" raised on-click="onChooserLaunched">Choose</paper-button>
+            </div>
+            <div id="path-chooser-area">
+              <paper-toggle-button id="want-to-choose-dir-button"></paper-toggle-button>
+              <span>Choose Directory</span>
+            </div>
+          </div>
+          <input id="path-hidden-input" type="file" on-change="onFileSpecified">
         </div>
       </paper-dialog>
   </template>
@@ -24,13 +48,9 @@
       is: 'path-dialog',
 
       properties: {
-        open: {
-          type: Object
-        },
+        open: Object,
 
-        onchanged: {
-          type: Object
-        },
+        onchanged: Object,
 
         label: {
           type: String,
@@ -44,20 +64,43 @@
       },
 
       onchanged: function(p) {
-        console.log('path-dialog: Callback onchanged is ignored: ' + p);
+        console.log("path-dialog: Callback 'onchanged' is ignored: " + p);
       },
 
       open: function() {
         document.getElementById('path-change-dialog').open();
       },
 
+      onChooserLaunched: function() {
+        document.getElementById('path-hidden-input').click();
+      },
+
+      onFileSpecified: function() {
+        const path = document.getElementById('path-hidden-input').files[0].path;
+        document.getElementById('path-text-area').value = path;
+        this.path = path;
+      },
+
       ready: function() {
         let that = this;
+
         let dialog = document.getElementById('path-change');
-        dialog.addEventListener('iron-overlay-closed', function(){
+        dialog.addEventListener('iron-overlay-closed', function() {
           const textarea = document.getElementById('path-text-area');
           that.path = textarea.value;
           that.onchanged(that.path);
+        });
+
+        let toggle = document.getElementById('want-to-choose-dir-button');
+        toggle.addEventListener('change', function() {
+          let hidden_input = document.getElementById('path-hidden-input');
+          if (this.checked) {
+            hidden_input.setAttribute('webkitdirectory', '');
+            hidden_input.setAttribute('directory', '');
+          } else {
+            hidden_input.removeAttribute('webkitdirectory');
+            hidden_input.removeAttribute('directory');
+          }
         });
       }
     });

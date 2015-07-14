@@ -50,7 +50,7 @@
       </markdown-area>
       <div id="menu">
         <span>
-          <paper-icon-button id="path-button" class="menu-button" data-dialog="path-change" icon="folder" alt="watching dir" onclick="onPathButtonPushed(event)"></paper-icon-button>
+          <paper-icon-button id="path-button" class="menu-button" data-dialog="path-change" icon="folder" alt="watching dir" onclick="onPathButtonPushed()"></paper-icon-button>
           <path-dialog id="path-change" label="Shiba watching..."></path-dialog>
         </span>
         <span>
@@ -65,7 +65,7 @@
     'use strict';
     let remote = require('remote');
 
-    function onPathButtonPushed(e) {
+    function onPathButtonPushed() {
       document.getElementById('path-change').open();
     }
 
