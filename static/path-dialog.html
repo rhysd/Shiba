@@ -1,0 +1,65 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+
+<dom-module id="path-dialog">
+  <style is="custom-style">
+    .dialog {
+      width: 100%;
+    }
+  </style>
+
+  <template>
+      <paper-dialog class="dialog" id="path-change-dialog">
+        <div id="path-input-area">
+          <paper-textarea id="path-text-area" label="{{label}}" value="{{path}}"></paper-textarea>
+        </div>
+      </paper-dialog>
+  </template>
+
+  <script>
+    'use strict';
+
+    Polymer({
+      is: 'path-dialog',
+
+      properties: {
+        open: {
+          type: Object
+        },
+
+        onchanged: {
+          type: Object
+        },
+
+        label: {
+          type: String,
+          value: ""
+        },
+
+        path: {
+          type: String,
+          value: ""
+        }
+      },
+
+      onchanged: function(p) {
+        console.log('path-dialog: Callback onchanged is ignored: ' + p);
+      },
+
+      open: function() {
+        document.getElementById('path-change-dialog').open();
+      },
+
+      ready: function() {
+        let that = this;
+        let dialog = document.getElementById('path-change');
+        dialog.addEventListener('iron-overlay-closed', function(){
+          const textarea = document.getElementById('path-text-area');
+          that.path = textarea.value;
+          that.onchanged(that.path);
+        });
+      }
+    });
+  </script>
+</dom-module>

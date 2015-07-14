@@ -9,22 +9,18 @@
 
   <script src="../bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
 
-  <link rel="import" href="../bower_components/paper-input/paper-textarea.html">
   <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
   <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-  <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
   <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
   <link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
   <link rel="import" href="markdown-area.html">
   <link rel="import" href="lint-panel.html">
+  <link rel="import" href="path-dialog.html">
 
   <link rel="stylesheet" href="../bower_components/github-markdown-css/github-markdown.css">
   <link rel="stylesheet" href="../node_modules/highlight.js/styles/github.css">
 
   <style is="custom-style">
-    paper-dialog#dir-change {
-      width: 100%;
-    }
     #main-area {
       @apply(--layout-horizontal);
     }
@@ -54,12 +50,8 @@
       </markdown-area>
       <div id="menu">
         <span>
-          <paper-icon-button id="dir-button" class="menu-button" data-dialog="dir-change" icon="folder" alt="watching dir" onclick="onDirButtonPushed(event)"></paper-icon-button>
-          <paper-dialog id="dir-change">
-            <div id="dir-input-area">
-              <paper-textarea id="dir-text-area" label="Shiba watching..."></paper-textarea>
-            </div>
-          </paper-dialog>
+          <paper-icon-button id="path-button" class="menu-button" data-dialog="path-change" icon="folder" alt="watching dir" onclick="onPathButtonPushed(event)"></paper-icon-button>
+          <path-dialog id="path-change" label="Shiba watching..."></path-dialog>
         </span>
         <span>
           <paper-icon-button id="lint-button" class="menu-button" icon="error" alt="Lint" paper-drawer-toggle></paper-icon-button>
@@ -73,25 +65,8 @@
     'use strict';
     let remote = require('remote');
 
-    function openDirDialog(button) {
-      const id = button.getAttribute('data-dialog');
-      let dialog = document.getElementById(id);
-      if (dialog) {
-        dialog.open();
-      }
-    }
-
-    function onDirButtonPushed(e) {
-      let button = e.target;
-      while (!button.hasAttribute('data-dialog') && button !== document.body) {
-        button = button.parentElement;
-      }
-
-      if (!button.hasAttribute('data-dialog')) {
-        return;
-      }
-
-      openDirDialog(button);
+    function onPathButtonPushed(e) {
+      document.getElementById('path-change').open();
     }
 
     function makeTitle(path) {
@@ -126,17 +101,14 @@
         }
       );
 
-      let textarea = document.getElementById('dir-text-area');
-      textarea.value = path;
-
       document.getElementById('lint-area').lint_url = watcher.getLintRuleURL();
 
-      let dialog = document.getElementById('dir-change');
-      dialog.addEventListener('iron-overlay-closed', function(){
-        const path = textarea.value;
+      let dialog = document.getElementById('path-change');
+      dialog.path = path;
+      dialog.onchanged = function(path) {
         watcher.changeWatchingDir(path);
         document.title = makeTitle(path);
-      });
+      };
 
       if (path === '') {
         dialog.open();
