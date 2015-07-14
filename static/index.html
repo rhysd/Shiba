@@ -61,8 +61,11 @@
     <lint-panel id="lint-area" drawer></lint-panel>
   </paper-drawer-panel>
 
+  <script src="../src/renderer/keyreceiver.js"></script>
+
   <script>
     'use strict';
+
     let remote = require('remote');
 
     function onPathButtonPushed() {
@@ -114,6 +117,41 @@
         dialog.open();
       }
       document.title = makeTitle(path);
+
+      let key_receiver = new KeyReceiver();
+
+      key_receiver.on('Lint', function(){
+        document.getElementById('main-drawer').togglePanel();
+      });
+
+      key_receiver.on('PageUp', function(){
+        window.scrollBy(0, -window.innerHeight / 2);
+      });
+
+      key_receiver.on('PageDown', function(){
+        window.scrollBy(0, window.innerHeight / 2);
+      });
+
+      key_receiver.on('PageLeft', function(){
+        window.scrollBy(-window.innerWidth / 2, 0);
+      });
+
+      key_receiver.on('PageRight', function(){
+        window.scrollBy(window.innerWidth / 2, 0);
+      });
+
+      key_receiver.on('PageTop', function(){
+        window.scrollTo(0, 0);
+      });
+
+      key_receiver.on('PageBottom', function(){
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+
+      key_receiver.on('ChangePath', function(){
+        dialog.open();
+      });
     }
   </script>
 </body>

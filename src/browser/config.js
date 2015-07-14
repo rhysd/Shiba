@@ -19,7 +19,17 @@ module.exports.load = function(){
         linter: "mdast-lint",
         file_ext: ["md", "markdown", "mkd"],
         width: 800,
-        height: 600
+        height: 600,
+        shortcuts: {
+            'J':                  'PageDown',
+            'K':                  'PageUp',
+            'H':                  'PageLeft',
+            'L':                  'PageRight',
+            'Shift+J':            'PageBottom',
+            'Shift+K':            'PageTop',
+            'CommandOrControl+D': 'ChangePath',
+            'CommandOrControl+L': 'Lint'
+        }
     };
 
     try {

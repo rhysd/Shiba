@@ -3,10 +3,10 @@
 let app = require('app');
 let path = require('path');
 let ipc = require('ipc');
-let shortcut = require('global-shortcut');
 let BrowserWindow = require('browser-window');
 let menu = require('./menu.js');
 const config = require('./config.js').load();
+let KeyShortcuts = require('./keyshortcuts.js');
 
 require('crash-reporter').start();
 
@@ -47,9 +47,11 @@ app.on('ready', function(){
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadUrl(html);
 
+    let keyshortcuts = new KeyShortcuts(mainWindow, config);
+
     mainWindow.on('closed', function(){
+        keyshortcuts.unregisterAll();
         mainWindow = null;
-        shortcut.unregisterAll();
     });
 
     menu.build(mainWindow);
