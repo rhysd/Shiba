@@ -28,8 +28,6 @@ Please download from [here](https://github.com/rhysd/Shiba/releases) and unzip t
 
 ### Via npm
 
-__NOW BROKEN.__
-
 ```
 $ npm install -g shiba
 ```
