@@ -10,9 +10,10 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - Live reload
 - Automatic lint (mdast, markdownlint)
 - Easy to install
-- Customizable (yaml configuration file)
+- Keyboard shortcuts
+- Customizable with YAML config file (keyboard shortcuts, linter, etc)
 - Cross platform (Mac, Linux, Windows)
-- Dog respected :dog2:
+- Dog-respected :dog2:
 
 ## Installation
 
@@ -103,16 +104,44 @@ lint_options:
 | `linter`       | Linter name        | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
 | `file_ext`     | Ext to detect      | Array of extensions                          | `["md", "markdown", "mkd"]` |
 | `lint_options` | Options for linter | Depends on linter                            | Not specified               |
+| `shortcuts`    | Keyboard shortcuts | Keyboard shortcuts definition                | See below section           |
+
+
+## Keyboard shortcuts
+
+You can set some keyboard shortcuts by `config.yml` (See 'Customization' section).
+Currently below actions can be assigned to keyboard shortcuts.
+
+| Action       | Description                   | Default Shortcut |
+| ------------ | ----------------------------- | ---------------- |
+| `PageDown`   | Scroll down by half page      | `J`              |
+| `PageUp`     | Scroll up by half page        | `K`              |
+| `PageLeft`   | Scroll left by half page      | `H`              |
+| `PageRight`  | Scroll left by half page      | `L`              |
+| `PageBottom` | Scroll down to bottom of page | `Shift+J`        |
+| `PageTop`    | Scroll up to top of page      | `Shift+K`        |
+| `ChangePath` | Open 'change path' dialog     | `Control+D`      |
+| `Lint`       | Toggle lint result drawer     | `Control+L`      |
+
+Customization example for `config.yml` is below.  The format of keys is the same as [Accelerator](https://github.com/atom/electron/blob/master/docs/api/accelerator.md) in Electron.
+
+```yaml
+shortcuts:
+    Down: "PageDown"
+    Up: "PageUp"
+    CommandOrControl: "Lint"
+```
+
 
 ## TODOs
 
-- [ ] Keyboard shortcut
 - [ ] Package installer if needed (Windows, OS X)
 - [ ] Use file(directory?) picker to set watching path
 - Smarter alternatives
   - [ ] [slim](https://github.com/slim-template/slim)
   - [ ] [TypeScript](http://www.typescriptlang.org/)
   - [ ] [sass](http://sass-lang.com/)
+- [ ] Tests
 
 ## Known Issues
 

@@ -68,10 +68,15 @@
       },
 
       open: function() {
+        // Note:
+        // 'chooser_opened' is a workaround to avoid calling 'onchanged'
+        // callback twice.
+        this.chooser_opened = false;
         document.getElementById('path-change-dialog').open();
       },
 
       onChooserLaunched: function() {
+        this.chooser_opened = true;
         document.getElementById('path-hidden-input').click();
       },
 
@@ -79,6 +84,7 @@
         const path = document.getElementById('path-hidden-input').files[0].path;
         document.getElementById('path-text-area').value = path;
         this.path = path;
+        this.onchanged(path);
       },
 
       ready: function() {
@@ -88,7 +94,9 @@
         dialog.addEventListener('iron-overlay-closed', function() {
           const textarea = document.getElementById('path-text-area');
           that.path = textarea.value;
-          that.onchanged(that.path);
+          if (!that.chooser_opened) {
+            that.onchanged(that.path);
+          }
         });
 
         let toggle = document.getElementById('want-to-choose-dir-button');
