@@ -6,9 +6,20 @@ function KeyShortcuts(browser_window, config) {
     let sender =  browser_window.webContents;
     const shortcuts = config.shortcuts;
     this.shortcuts = {};
+
+    // Note: Generating below function in 'for' loop make jshint angry
+    let quit_app = function() { browser_window.close(); };
+
     for (const k in shortcuts) {
+        const shortcut = shortcuts[k];
+
+        if (shortcut === 'QuitApp') {
+            this.shortcuts[k] = quit_app;
+            continue;
+        }
+
         this.shortcuts[k] = function() {
-            sender.send('keyinput', shortcuts[k]);
+            sender.send('keyinput', shortcut);
         };
     }
 
