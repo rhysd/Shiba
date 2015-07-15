@@ -27,19 +27,31 @@ module.exports.load = function(){
             'L':         'PageRight',
             'Shift+J':   'PageBottom',
             'Shift+K':   'PageTop',
-            'Control+D': 'ChangePath',
+            'Control+P': 'ChangePath',
             'Control+L': 'Lint'
         }
     };
 
-    try {
-        this.user_config = yaml.load(fs.readFileSync(file));
-        for (const k in default_config) {
-            if (k in this.user_config) {
+    function mergeConfig(c1, c2) {
+        for (const k in c2) {
+            const v2 = c2[k];
+
+            if (k in c1) {
+                let v1 = c1[k];
+                if (typeof(v1) === "object" && typeof(v2) === "object") {
+                    mergeConfig(v1, v2);
+                }
                 continue;
             }
-            this.user_config[k] = default_config[k];
+
+            c1[k] = c2[k];
         }
+    }
+
+    try {
+        this.user_config = yaml.load(fs.readFileSync(file));
+        mergeConfig(this.user_config, default_config);
+        console.log(JSON.stringify(this.user_config, null, 2));
     } catch(e) {
         console.log('No configuration file is found: ' + file);
         this.user_config = default_config;

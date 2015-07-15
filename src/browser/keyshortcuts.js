@@ -9,9 +9,19 @@ function KeyShortcuts(browser_window, config) {
 
     // Note: Generating below function in 'for' loop make jshint angry
     let quit_app = function() { browser_window.close(); };
+    let toggle_devtools = function() { browser_window.toggleDevTools(); };
 
     for (const k in shortcuts) {
         const shortcut = shortcuts[k];
+
+        if (!shortcut || shortcut === '') {
+            continue;
+        }
+
+        if (shortcut === 'DevTools') {
+            this.shortcuts[k] = toggle_devtools;
+            continue;
+        }
 
         if (shortcut === 'QuitApp') {
             this.shortcuts[k] = quit_app;

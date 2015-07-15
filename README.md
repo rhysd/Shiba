@@ -118,9 +118,10 @@ Currently below actions can be assigned to keyboard shortcuts.
 | `PageRight`  | Scroll left by half page      | `L`              |
 | `PageBottom` | Scroll down to bottom of page | `Shift+J`        |
 | `PageTop`    | Scroll up to top of page      | `Shift+K`        |
-| `ChangePath` | Open 'change path' dialog     | `Control+D`      |
+| `ChangePath` | Open 'change path' dialog     | `Control+P`      |
 | `Lint`       | Toggle lint result drawer     | `Control+L`      |
 | `QuitApp`    | Quit Shiba                    | Not assigned     |
+| `DevTools`   | Toggle DevTools window        | Not assigned     |
 
 Customization example for `config.yml` is below.  The format of keys is the same as [Accelerator](https://github.com/atom/electron/blob/master/docs/api/accelerator.md) in Electron.
 
@@ -131,6 +132,7 @@ shortcuts:
     CommandOrControl: "Lint"
 ```
 
+If an action is empty string `""` or `null`, the shortcut is disabled.
 
 ## TODOs
 
