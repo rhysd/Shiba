@@ -13,6 +13,7 @@
   <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
   <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
   <link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+  <link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
   <link rel="import" href="markdown-area.html">
   <link rel="import" href="lint-panel.html">
   <link rel="import" href="path-dialog.html">
@@ -45,20 +46,25 @@
 </head>
 <body>
   <paper-drawer-panel id="main-drawer" drawer-width="320px" responsive-width="1120px" disable-swipe=true right-drawer>
-    <section id="main-area" main>
-      <markdown-area>
-      </markdown-area>
-      <div id="menu">
-        <span>
-          <paper-icon-button id="path-button" class="menu-button" data-dialog="path-change" icon="folder" alt="watching dir" onclick="onPathButtonPushed()"></paper-icon-button>
-          <path-dialog id="path-change" label="Shiba watching..."></path-dialog>
-        </span>
-        <span>
-          <paper-icon-button id="lint-button" class="menu-button" icon="error" alt="Lint" paper-drawer-toggle></paper-icon-button>
-        </span>
-      </div>
-    </section>
-    <lint-panel id="lint-area" drawer></lint-panel>
+    <!-- Note: paper-header-panel is requred to scroll content from JavaScript -->
+    <paper-header-panel main>
+      <section id="main-area">
+        <markdown-area>
+        </markdown-area>
+        <div id="menu">
+          <span>
+            <paper-icon-button id="path-button" class="menu-button" data-dialog="path-change" icon="folder" alt="watching dir" onclick="onPathButtonPushed()"></paper-icon-button>
+            <path-dialog id="path-change" label="Shiba watching..."></path-dialog>
+          </span>
+          <span>
+            <paper-icon-button id="lint-button" class="menu-button" icon="error" alt="Lint" paper-drawer-toggle></paper-icon-button>
+          </span>
+        </div>
+      </section>
+    </paper-header-panel>
+    <paper-header-panel drawer>
+      <lint-panel id="lint-area"></lint-panel>
+    </paper-header-panel>
   </paper-drawer-panel>
 
   <script src="../src/renderer/keyreceiver.js"></script>
@@ -77,6 +83,29 @@
         return 'Shiba';
       } else {
         return 'Shiba (' + path + ')';
+      }
+    }
+
+    function getScroller() {
+      const selected = document.getElementById('main-drawer').selected;
+      if (selected === null) {
+        return null;
+      }
+
+      return document.querySelector('paper-header-panel[' + selected + ']').scroller;
+    }
+
+    function scrollContentBy(x, y) {
+      let scroller = getScroller();
+      if (!scroller) {
+        return;
+      }
+
+      if (x !== 0) {
+        scroller.scrollLeft += x;
+      }
+      if (y !== 0) {
+        scroller.scrollTop += y;
       }
     }
 
@@ -120,36 +149,43 @@
 
       let key_receiver = new KeyReceiver();
 
-      key_receiver.on('Lint', function(){
+      key_receiver.on('Lint', function() {
         document.getElementById('main-drawer').togglePanel();
       });
 
-      key_receiver.on('PageUp', function(){
-        window.scrollBy(0, -window.innerHeight / 2);
+      let scroller = document.querySelector('paper-header-panel[main]').scroller;
+
+      key_receiver.on('PageUp', function() {
+        scrollContentBy(0, -window.innerHeight / 2);
       });
 
-      key_receiver.on('PageDown', function(){
-        window.scrollBy(0, window.innerHeight / 2);
+      key_receiver.on('PageDown', function() {
+        scrollContentBy(0, window.innerHeight / 2);
       });
 
-      key_receiver.on('PageLeft', function(){
-        window.scrollBy(-window.innerWidth / 2, 0);
+      key_receiver.on('PageLeft', function() {
+        scrollContentBy(-window.innerHeight / 2, 0);
       });
 
-      key_receiver.on('PageRight', function(){
-        window.scrollBy(window.innerWidth / 2, 0);
+      key_receiver.on('PageRight', function() {
+        scrollContentBy(window.innerHeight / 2, 0);
       });
 
-      key_receiver.on('PageTop', function(){
-        window.scrollTo(0, 0);
+      key_receiver.on('PageTop', function() {
+        let scroller = getScroller();
+        if (scroller) {
+          scroller.scrollTop = 0;
+        }
       });
 
-      key_receiver.on('PageBottom', function(){
-        window.scrollTo(0, document.body.scrollHeight);
+      key_receiver.on('PageBottom', function() {
+        let scroller = getScroller();
+        if (scroller) {
+          scroller.scrollTop = scroller.scrollHeight;
+        }
       });
 
-
-      key_receiver.on('ChangePath', function(){
+      key_receiver.on('ChangePath', function() {
         dialog.open();
       });
     }

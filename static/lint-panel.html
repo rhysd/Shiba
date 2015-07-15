@@ -1,5 +1,4 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
 <link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="lint-message.html">
 
@@ -37,11 +36,9 @@
   </style>
 
   <template id="body">
-    <paper-header-panel class="flex" mode="scroll">
-      <div class="paper-header" id="lint-header" no_error>No Error</div>
-      <div id="lint-content"></div>
-      <footer id="rule-link"><span class="link" on-click="_showLintRules">lint rules</span></footer>
-    </paper-header-panel>
+    <div class="paper-header" id="lint-header" no_error>No Error</div>
+    <div id="lint-content"></div>
+    <footer id="rule-link"><span class="link" on-click="_showLintRules">lint rules</span></footer>
   </template>
 
   <script>
