@@ -17,28 +17,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 
 ## Installation
 
-### General
-
-Experimental alpha release is available for Linux, OS X and Windows.
-Please download from [here](https://github.com/rhysd/Shiba/releases) and unzip the archive.
-
-- __Linux__ : Use `shiba` executable in the directory.
-- __OS X__ : Use `Shiba.app` in the directory (e.g. `$ open -a ./Shiba.app`).
-- __Windows__ : Use `shiba.exe` in the directory.  No need to install.
-
-### Via npm
-
-```
-$ npm install -g shiba
-```
-
-### For development
-
-```sh
-$ git clone https://github.com/rhysd/Shiba.git && cd Shiba
-$ bower install && npm install
-$ electron . # Or `electron . {file to watch}`
-```
+You can install Shiba easily.  Please see [installation document](docs/installation.md).
 
 ## Usage
 

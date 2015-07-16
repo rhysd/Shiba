@@ -51,7 +51,6 @@ module.exports.load = function(){
     try {
         this.user_config = yaml.load(fs.readFileSync(file));
         mergeConfig(this.user_config, default_config);
-        console.log(JSON.stringify(this.user_config, null, 2));
     } catch(e) {
         console.log('No configuration file is found: ' + file);
         this.user_config = default_config;
