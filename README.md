@@ -8,11 +8,11 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 
 - Rich GFM (code highlight, emoji)
 - Live reload
-- Automatic lint (mdast, markdownlint)
-- Easy to install
-- Keyboard shortcuts
-- Customizable with YAML config file (keyboard shortcuts, linter, etc)
+- Automatic lint (mdast-lint, markdownlint)
 - Cross platform (Mac, Linux, Windows)
+- [Easy to install](docs/installation.md)
+- [Keyboard shortcuts](docs/shortcuts.md)
+- [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
 - Dog-respected :dog2:
 
 ## Installation
@@ -45,16 +45,14 @@ Please refer [customization document](docs/customization.md).
 
 ## TODOs
 
-- [ ] Package installer if needed (Windows, OS X)
-- [ ] Use file(directory?) picker to set watching path
 - Smarter alternatives
   - [ ] [slim](https://github.com/slim-template/slim)
-  - [ ] [TypeScript](http://www.typescriptlang.org/)
   - [ ] [sass](http://sass-lang.com/)
+  - [ ] [TypeScript](http://www.typescriptlang.org/)
 - More formats
   - [ ] HTML with `<webview>` tag
   - [ ] PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
-- [ ] Tests
+- [ ] Tests :scream:
 
 
 ## Known Issues

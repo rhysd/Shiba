@@ -23,10 +23,19 @@ module.exports.load = function(){
         shortcuts: {
             'J':         'PageDown',
             'K':         'PageUp',
+            'Down':      'PageDown',
+            'Up':        'PageUp',
+            'PageDown':  'PageDown',
+            'PageUp':    'PageUp',
             'H':         'PageLeft',
             'L':         'PageRight',
+            'Left':      'PageLeft',
+            'Right':     'PageRight',
+            'I':         'PageTop',
+            'M':         'PageBottom',
+            'Home':      'PageTop',
+            'End':       'PageBottom',
             'Shift+J':   'PageBottom',
-            'Shift+K':   'PageTop',
             'Control+P': 'ChangePath',
             'Control+L': 'Lint'
         }
