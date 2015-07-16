@@ -57,13 +57,18 @@ Watcher.prototype.startWatching = function() {
     const watched = path.join(this.path, '**', ext_pattern);
     this.file_watcher = chokidar.watch(
         watched, {
-            ignored: /[\\\/]\./,
-            persistent: true
+            ignoreInitial: true,
+            persistent: true,
+            ignored: /[\\\/]\./
         }
     );
     let that = this;
     this.file_watcher.on('change', function(file){
         console.log('File changed: ' + file);
+        that._sendUpdate(file);
+    });
+    this.file_watcher.on('add', function(file){
+        console.log('File added: ' + file);
         that._sendUpdate(file);
     });
 };
