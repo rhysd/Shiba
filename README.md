@@ -23,95 +23,25 @@ You can install Shiba easily.  Please see [installation document](docs/installat
 
 ![Shiba on Linux](https://raw.githubusercontent.com/rhysd/screenshots/master/Shiba/shiba-main-0.1.0.png)
 
-- When file is updated, Shiba automatically updates preview and lint result.
-- You can see the result of lint by pushing lint icon in right above.  If linter reports any error, the icon's color is changed to red.
-- You can change the watching file by pushing directory icon in right above.
-- You can quit the app by closing window (`Command+Q` shortcut is also available in OS X).
+1. At Shiba starting up, it is watching the current working directory (watching directory is shown in title of window).
+2. When you edit the markdown file in current working directory, shiba finds the update, renders the file in window and set the result of lint.
+3. You can see the result of lint by pushing the '!' button in right above of window.  When the button is red, it means that linter reported some errors.
+4. You can change the watching directory/file using 'directory' button in right above of window.  If you choose a file, Shiba watches the file only.  If you choose a directory, Shiba watches all files in the directory.  Wathing path is shown in title of window.
+5. You can quit app by closing the window.
 
-### Watch specific file
+Please see [usage document](docs/usage.md) for more detail.
 
-```sh
-# Linux
-$ shiba /path/to/markdown-file
+## Keyboard Shortcuts
 
-# OS X
-$ open -a Shiba.app /path/to/markdown-file
-# or
-$ Shiba.app/Contents/MacOS/Shiba /path/to/markdown-file
-
-# Windows
-$ shiba.exe /path/to/markdown-file
-```
-
-Please specify the markdown file you want to watch as an argument of command.
-
-### Watch files in specific directory
-
-```sh
-# Linux
-$ shiba /path/to/dir
-
-# OS X
-$ open -a Shiba.app /path/to/dir
-
-# Windows
-$ shiba.exe /path/to/dir
-```
-
-Instead of markdown file, please specify the path to directory as above.  If you omit an argument, current working directory would be watched.
+Keyboard shortcuts are available for above all operations.
+Please refer [shortcuts document](docs/shortcuts.md).
 
 
 ## Customization
 
-You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is `~/Library/Application\ Support/Shiba` for OS X, `~/.config/Shiba` for Linux.
-Below is an example for `config.yml`.
+You can customize Shiba by making YAML configuration file.
+Please refer [customization document](docs/customization.md).
 
-```YAML
-width: 800
-height: "max"
-linter: "mdast-lint"
-lint_options:
-    maximum-line-length: false
-```
-
-| Key            | Description        | Value                                        | Default                     |
-| -------------- | ------------------ | -------------------------------------------- | --------------------------- |
-| `width`        | Window width       | Number of pixel or `"max"`                   | `800`                       |
-| `height`       | Window height      | Number of pixel or `"max"`                   | `600`                       |
-| `linter`       | Linter name        | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
-| `file_ext`     | Ext to detect      | Array of extensions                          | `["md", "markdown", "mkd"]` |
-| `lint_options` | Options for linter | Depends on linter                            | Not specified               |
-| `shortcuts`    | Keyboard shortcuts | Keyboard shortcuts definition                | See below section           |
-
-
-## Keyboard shortcuts
-
-You can set some keyboard shortcuts by `config.yml` (See 'Customization' section).
-Currently below actions can be assigned to keyboard shortcuts.
-
-| Action       | Description                   | Default Shortcut |
-| ------------ | ----------------------------- | ---------------- |
-| `PageDown`   | Scroll down by half page      | `J`              |
-| `PageUp`     | Scroll up by half page        | `K`              |
-| `PageLeft`   | Scroll left by half page      | `H`              |
-| `PageRight`  | Scroll left by half page      | `L`              |
-| `PageBottom` | Scroll down to bottom of page | `Shift+J`        |
-| `PageTop`    | Scroll up to top of page      | `Shift+K`        |
-| `ChangePath` | Open 'change path' dialog     | `Control+P`      |
-| `Lint`       | Toggle lint result drawer     | `Control+L`      |
-| `QuitApp`    | Quit Shiba                    | Not assigned     |
-| `DevTools`   | Toggle DevTools window        | Not assigned     |
-
-Customization example for `config.yml` is below.  The format of keys is the same as [Accelerator](https://github.com/atom/electron/blob/master/docs/api/accelerator.md) in Electron.
-
-```yaml
-shortcuts:
-    Down: "PageDown"
-    Up: "PageUp"
-    CommandOrControl: "Lint"
-```
-
-If an action is empty string `""` or `null`, the shortcut is disabled.
 
 ## TODOs
 
@@ -121,13 +51,17 @@ If an action is empty string `""` or `null`, the shortcut is disabled.
   - [ ] [slim](https://github.com/slim-template/slim)
   - [ ] [TypeScript](http://www.typescriptlang.org/)
   - [ ] [sass](http://sass-lang.com/)
+- More formats
+  - [ ] HTML with `<webview>` tag
+  - [ ] PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
 - [ ] Tests
+
 
 ## Known Issues
 
-- URL links in document
-- Image path
-- Japanese is shown as tofu (font issue) in Linux
+- URL links to local document
+- Japanese may be shown as tofu (font issue) in Linux
+
 
 ## Special Thanks
 
@@ -135,6 +69,7 @@ If an action is empty string `""` or `null`, the shortcut is disabled.
 - This app was inspired by [@mattn](https://github.com/mattn)'s [mkup](https://github.com/mattn/mkup).
 - This app refers [vmd](https://github.com/yoshuawuyts/vmd) a lot, which is a very simple markdown preview app built on Electron.
 - Emoji pictures are from [arvida/emoji-cheat-sheet.com](https://github.com/arvida/emoji-cheat-sheet.com).
+
 
 ## License
 
