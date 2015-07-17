@@ -23,4 +23,4 @@ if (len > 2) {
     argv.push(process.cwd());
 }
 
-child_process.spawn(electron, argv);
+child_process.spawn(electron, argv, {stdio: 'inherit'});

@@ -7,6 +7,18 @@ dep:
 	@npm install
 	@bower install
 
+npm-publish:
+	@mkdir -p npm-publish/resource/image
+	@cp bower.json npm-publish/
+	@cp package.json npm-publish/
+	@cp -R resource/image/emoji npm-publish/resource/image/
+	@cp -R src npm-publish/
+	@cp -R static npm-publish/
+	@cp -R bin npm-publish/
+	@cd npm-publish && bower install --production
+	@cd npm-publish && npm publish
+	@rm -rf npm-publish
+
 asar: clean
 	@mkdir -p archive/resource/image
 	@cp bower.json archive/
@@ -19,6 +31,6 @@ asar: clean
 	@rm -rf archive
 
 clean:
-	@rm -rf archive
-	@rm -f app.asar
+	@rm -rf archive app.asar npm-publish
 
+.PHONY: run dep npm-publish asar clean
