@@ -15,7 +15,9 @@ npm-publish:
 	@cp -R src npm-publish/
 	@cp -R static npm-publish/
 	@cp -R bin npm-publish/
+	@cp README.md npm-publish/
 	@cd npm-publish && bower install --production
+	@cd npm-publish && npm install --save electron-prebuilt
 	@cd npm-publish && npm publish
 	@rm -rf npm-publish
 

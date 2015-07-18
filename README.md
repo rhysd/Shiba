@@ -45,6 +45,8 @@ Please refer [customization document](docs/customization.md).
 
 ## TODOs
 
+- Outline
+- Search
 - Smarter alternatives
   - [ ] [slim](https://github.com/slim-template/slim)
   - [ ] [sass](http://sass-lang.com/)

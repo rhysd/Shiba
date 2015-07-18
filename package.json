@@ -1,7 +1,7 @@
 {
   "name": "shiba",
   "productName": "Shiba",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Live markdown previewer with linter",
   "main": "./src/browser/mainu.js",
   "bin": {
