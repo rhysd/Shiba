@@ -14,7 +14,7 @@
   <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
   <link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
   <link rel="import" href="../bower_components/paper-header-panel/paper-header-panel.html">
-  <link rel="import" href="markdown-area.html">
+  <link rel="import" href="markdown-preview.html">
   <link rel="import" href="lint-panel.html">
   <link rel="import" href="path-dialog.html">
 
@@ -25,7 +25,7 @@
     #main-area {
       @apply(--layout-horizontal);
     }
-    markdown-area {
+    .preview {
       @apply(--layout-flex);
       overflow: auto;
     }
@@ -49,8 +49,10 @@
     <!-- Note: paper-header-panel is requred to scroll content from JavaScript -->
     <paper-header-panel main>
       <section id="main-area">
-        <markdown-area>
-        </markdown-area>
+        <div class="preview">
+          <markdown-preview>
+          </markdown-preview>
+        </div>
         <div id="menu">
           <span>
             <paper-icon-button id="path-button" class="menu-button" data-dialog="path-change" icon="folder" alt="watching dir" onclick="onPathButtonPushed()"></paper-icon-button>

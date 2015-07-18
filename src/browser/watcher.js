@@ -1,5 +1,6 @@
 'use strict';
 
+let app = require('app');
 let ipc = require('ipc');
 let marked = require('marked');
 let path = require('path');
@@ -86,6 +87,8 @@ Watcher.prototype._sendUpdate = function(file) {
             console.log("Can't open: " + file);
             return;
         }
+
+        app.addRecentDocument(file);
 
         that.linter.lint(path.basename(file), text, that.renderLintResult);
 

@@ -46,7 +46,7 @@ window.onload = function(){
 
         // Markdown renderer
         function(html) {
-            document.querySelector('markdown-area').content = html;
+            document.querySelector('markdown-preview').content = html;
         },
 
         // Linter result renderer
@@ -116,4 +116,4 @@ window.onload = function(){
     key_receiver.on('ChangePath', function() {
             dialog.open();
     });
-}
+};

@@ -7,7 +7,7 @@ var electron = require('electron-prebuilt');
 var path = require('path');
 var fs = require('fs');
 
-var argv = [path.join(__dirname, '..', 'src', 'browser', 'mainu.js')];
+var argv = [path.join(__dirname, '..')];
 var len = process.argv.length;
 
 // First is 'node' and Second arg is '/path/to/bin/shiba'.
