@@ -1,12 +1,10 @@
-'use strict';
-
-let app = require('app');
-let path = require('path');
-let ipc = require('ipc');
-let BrowserWindow = require('browser-window');
-let menu = require('./menu.js');
-const config = require('./config.js').load();
-let KeyShortcuts = require('./keyshortcuts.js');
+import app = require('app');
+import path = require('path');
+import ipc = require('ipc');
+import BrowserWindow = require('browser-window');
+import menu = require('./menu');
+const config = require('./config').load();
+import KeyShortcuts = require('./keyshortcuts');
 
 require('crash-reporter').start();
 
@@ -18,7 +16,7 @@ app.on('window-all-closed', function(){ app.quit(); });
 app.on('ready', function(){
     const display_size = require('screen').getPrimaryDisplay().workAreaSize;
 
-    function getConfigLength(key, default_len) {
+    function getConfigLength(key: string, default_len: number): number {
         const len = config[key];
         switch (typeof len) {
             case 'string': {
@@ -38,13 +36,13 @@ app.on('ready', function(){
 
     mainWindow = new BrowserWindow(
         {
-            icon: path.join('..', 'resource', 'image', 'shibainu.png'),
+            icon: path.join(__dirname, '..', '..', '..', 'resource', 'image', 'shibainu.png'),
             width: getConfigLength('width', 800),
             height: getConfigLength('height', 600)
         }
     );
 
-    const html = 'file://' + path.resolve(__dirname, '..', '..', 'build', 'index.html');
+    const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadUrl(html);
 
     let keyshortcuts = new KeyShortcuts(mainWindow, config);

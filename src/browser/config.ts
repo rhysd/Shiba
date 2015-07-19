@@ -1,15 +1,9 @@
-'use strict';
+import yaml = require('js-yaml');
+import path = require('path');
+import fs = require('fs');
+import app = require('app');
 
-var yaml = require('js-yaml');
-var path = require('path');
-var fs = require('fs');
-var app = require('app');
-
-// Note:
-// Add Config class to allow to deal with default config and user
-// customization
-
-module.exports.load = function(){
+export function load(): any/*TODO*/ {
     if (this.user_config) {
         return this.user_config;
     }
@@ -58,7 +52,7 @@ module.exports.load = function(){
     }
 
     try {
-        this.user_config = yaml.load(fs.readFileSync(file));
+        this.user_config = yaml.load(fs.readFileSync(file, {encoding: 'utf8'}));
         mergeConfig(this.user_config, default_config);
     } catch(e) {
         console.log('No configuration file is found: ' + file);
@@ -66,4 +60,4 @@ module.exports.load = function(){
     }
 
     return this.user_config;
-};
+}

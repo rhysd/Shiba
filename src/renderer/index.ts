@@ -1,12 +1,13 @@
-'use strict';
+/// <reference path="keyreceiver.ts" />
+/// <reference path="lib.d.ts" />
 
-let remote = require('remote');
+var remote = require('remote');
 
-function onPathButtonPushed() {
+function onPathButtonPushed(): void {
     document.getElementById('path-change').open();
 }
 
-function makeTitle(path) {
+function makeTitle(path: string): string {
     if (path === '') {
         return 'Shiba';
     } else {
@@ -15,7 +16,7 @@ function makeTitle(path) {
 }
 
 function getScroller() {
-    const selected = document.getElementById('main-drawer').selected;
+    const selected: string = document.getElementById('main-drawer').selected;
     if (selected === null) {
         return null;
     }
@@ -23,7 +24,7 @@ function getScroller() {
     return document.querySelector('paper-header-panel[' + selected + ']').scroller;
 }
 
-function scrollContentBy(x, y) {
+function scrollContentBy(x: number, y:number): void {
     let scroller = getScroller();
     if (!scroller) {
         return;
@@ -45,12 +46,12 @@ window.onload = function(){
         path,
 
         // Markdown renderer
-        function(html) {
+        function(html: string): void {
             document.querySelector('markdown-preview').content = html;
         },
 
         // Linter result renderer
-        function(messages) {
+        function(messages): void {
             document.getElementById('lint-area').content = messages;
             let button = document.getElementById('lint-button');
             if (messages.length === 0) {
@@ -75,45 +76,43 @@ window.onload = function(){
     }
     document.title = makeTitle(path);
 
-    let key_receiver = new KeyReceiver();
-
-    key_receiver.on('Lint', function() {
+    KeyReceiver.on('Lint', function() {
             document.getElementById('main-drawer').togglePanel();
     });
 
     let scroller = document.querySelector('paper-header-panel[main]').scroller;
 
-    key_receiver.on('PageUp', function() {
+    KeyReceiver.on('PageUp', function() {
             scrollContentBy(0, -window.innerHeight / 2);
     });
 
-    key_receiver.on('PageDown', function() {
+    KeyReceiver.on('PageDown', function() {
             scrollContentBy(0, window.innerHeight / 2);
     });
 
-    key_receiver.on('PageLeft', function() {
+    KeyReceiver.on('PageLeft', function() {
             scrollContentBy(-window.innerHeight / 2, 0);
     });
 
-    key_receiver.on('PageRight', function() {
+    KeyReceiver.on('PageRight', function() {
             scrollContentBy(window.innerHeight / 2, 0);
     });
 
-    key_receiver.on('PageTop', function() {
+    KeyReceiver.on('PageTop', function() {
             let scroller = getScroller();
             if (scroller) {
                 scroller.scrollTop = 0;
             }
     });
 
-    key_receiver.on('PageBottom', function() {
+    KeyReceiver.on('PageBottom', function() {
             let scroller = getScroller();
             if (scroller) {
                 scroller.scrollTop = scroller.scrollHeight;
             }
     });
 
-    key_receiver.on('ChangePath', function() {
+    KeyReceiver.on('ChangePath', function() {
             dialog.open();
     });
 };

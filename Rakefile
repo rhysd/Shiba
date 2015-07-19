@@ -34,15 +34,30 @@ task :npm_publish do
   rm_rf 'npm-publish'
 end
 
-task :build do
+task :build_slim do
   ensure_cmd 'slimrb'
-  mkdir 'build'
+  mkdir_p 'build/static'
 
   Dir['static/*.slim'].each do |slim_file|
     puts "converting #{slim_file}"
-    system "slimrb #{slim_file} build/#{File.basename(slim_file, '.slim')}.html"
+    system "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
   end
 end
+
+task :build_typescript do
+  ensure_cmd 'tsc'
+  ensure_cmd 'tsd'
+
+  puts 'installing typings/**/*.d.ts'
+  system 'tsd install'
+
+  puts 'compiling src/browser/*.ts'
+  system 'tsc -p src/browser'
+  puts 'compiling src/renderer/*.ts'
+  system 'tsc src/renderer/*.ts --out build/src/renderer/index.js'
+end
+
+task :build => [:build_slim, :build_typescript]
 
 task :asar do
   raise "'asar' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/asar"

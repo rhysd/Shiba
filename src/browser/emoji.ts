@@ -1,6 +1,4 @@
-'use strict';
-
-let path = require('path');
+import path = require('path');
 
 const EMOJI = new Set([
     '+1',
@@ -889,10 +887,10 @@ const EMOJI = new Set([
 
 const REGEX_EMOJI = /:(\w+):/g;
 
-module.exports.replaceAll = function(str) {
+export function replaceAll(str) {
     let replacer = function(match, name) {
         if (EMOJI.has(name)) {
-            return `<img src="../resource/image/emoji/${name}.png" title="${match}" height="16px"></img>`;
+            return `<img src="../../resource/image/emoji/${name}.png" title="${match}" height="16px"></img>`;
         } else {
             return match;
         }

@@ -1,9 +1,7 @@
-'use strict';
+import Menu = require('menu');
+import open = require('open');
 
-var Menu = require('menu');
-var open = require('open');
-
-module.exports.build = function(main_window) {
+export function build(main_window) {
     const template = [
         {
             label: 'Shiba',

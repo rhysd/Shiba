@@ -1,8 +1,7 @@
-'use strict';
-let fs = require('fs');
-let path = require('path');
+import fs = require('fs');
+import path = require('path');
 
-module.exports = function() {
+export = function() {
     function defaultPath() {
         const cwd = process.cwd();
         if (process.platform === 'darwin' && cwd === '/') {
@@ -29,3 +28,4 @@ module.exports = function() {
         return defaultPath();
     }
 };
+
