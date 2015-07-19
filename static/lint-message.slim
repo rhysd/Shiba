@@ -1,0 +1,37 @@
+link rel="import" href="../bower_components/polymer/polymer.html"
+link rel="import" href="../bower_components/paper-item/paper-item.html"
+link rel="import" href="../bower_components/paper-item/paper-item-body.html"
+
+dom-module#lint-message
+  style is="custom-style"
+    |
+      :host {
+        font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+      }
+      .item {
+        background-color: white;
+        @apply(--shadow-elevation-2dp);
+        border-bottom: 1px solid #e6e6e6;
+        font: inherit;
+      }
+      .text {
+        white-space: pre-wrap;
+      }
+
+  template
+    paper-item.item
+      paper-item-body[class="layout vertical" two-line]
+        div[secondary]
+          | {{message.header}}
+        div.text
+          | {{message.body}}
+
+  javascript:
+    'use strict';
+    Polymer({
+      is: 'lint-message',
+
+      properties: {
+        message: Object
+      }
+    });

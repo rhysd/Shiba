@@ -1,0 +1,34 @@
+link rel="import" href="../bower_components/polymer/polymer.html"
+
+dom-module id="markdown-preview"
+  link rel="import" type="css" href="../bower_components/github-markdown-css/github-markdown.css"
+
+  style is="custom-style"
+    |
+      .markdown-body {
+        min-width: 200px;
+        max-width: 790px;
+        margin: 0 auto;
+        padding: 30px;
+      }
+
+  template
+    div.markdown-body
+
+  javascript:
+    'use strict';
+
+    Polymer({
+      is: 'markdown-preview',
+
+      properties: {
+        content: {
+          type: String,
+          observer: '_contentUpdated'
+        }
+      },
+
+      _contentUpdated: function(new_content) {
+        document.querySelector('.markdown-body').innerHTML = new_content;
+      }
+    });

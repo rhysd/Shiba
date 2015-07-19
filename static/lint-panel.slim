@@ -1,0 +1,93 @@
+link rel="import" href="../bower_components/polymer/polymer.html"
+link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html"
+link rel="import" href="lint-message.html"
+
+dom-module#lint-panel
+  style is="custom-style"
+    |
+      :host {
+        font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+      }
+      .paper-header {
+        color: white;
+        @apply(--shadow-elevation-2dp);
+        font-size: 1.5em;
+        padding: 4px;
+      }
+      :host > ::content [no_error] {
+        background-color: #d99e5f;
+      }
+      :host > ::content [error] {
+        background-color: #ce3c4a;
+      }
+      #rule-link {
+        float: right;
+        margin: 12px;
+      }
+      .link {
+        cursor: pointer;
+        color: gray;
+      }
+      #lint-content {
+        padding: 12px;
+        font: inherit;
+        background-color: #ffd8aa;
+      }
+
+  template
+    div.paper-header#lint-header[no_error] No Error
+    div#lint-content
+    footer#rule-link
+      span.link on-click="_showLintRules" lint rules
+
+  javascript:
+    'use strict';
+    let open = null;
+
+    Polymer({
+      is: 'lint-panel',
+
+      properties: {
+        content: {
+          type: Array,
+          observer: '_contentUpdated'
+        },
+        lint_url: String
+      },
+
+      _setMessages(messages) {
+        let content = document.getElementById('lint-content');
+
+        for (const m of messages) {
+          let msg = document.createElement('lint-message');
+          msg.message = m;
+          content.appendChild(msg);
+        }
+      },
+
+      _contentUpdated: function(messages) {
+        this._setMessages(messages);
+
+        let header = document.getElementById('lint-header');
+        if (messages.length > 0) {
+          header.innerText = 'Error';
+          header.setAttribute('error', '');
+        } else {
+          header.innerText = 'No Error';
+          header.setAttribute('no_error', '');
+        }
+      },
+
+      _showLintRules: function() {
+        if (this.lint_url === undefined) {
+          console.log('No lint URL');
+          return;
+        }
+
+        if (!open) {
+          open = require('open');
+        }
+
+        open(this.lint_url);
+      }
+    });

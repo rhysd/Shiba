@@ -44,7 +44,7 @@ app.on('ready', function(){
         }
     );
 
-    const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
+    const html = 'file://' + path.resolve(__dirname, '..', '..', 'build', 'index.html');
     mainWindow.loadUrl(html);
 
     let keyshortcuts = new KeyShortcuts(mainWindow, config);

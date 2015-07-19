@@ -1,47 +1,41 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
-<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+link rel="import" href="../bower_components/polymer/polymer.html"
+link rel="import" href="../bower_components/paper-dialog/paper-dialog.html"
+link rel="import" href="../bower_components/paper-input/paper-textarea.html"
+link rel="import" href="../bower_components/paper-button/paper-button.html"
+link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html"
 
-<dom-module id="path-dialog">
-  <style is="custom-style">
-    .dialog {
-      width: 100%;
-    }
-    #path-choose-button {
-      color: white;
-      background: #d99e5f;
-      float: left;
-    }
-    #path-hidden-input {
-      display: none;
-    }
-    #path-chooser-area {
-      float: right;
-      margin: 14px;
-    }
-  </style>
+dom-module id="path-dialog"
+  style is="custom-style"
+    |
+      .dialog {
+        width: 100%;
+      }
+      #path-choose-button {
+        color: white;
+        background: #d99e5f;
+        float: left;
+      }
+      #path-hidden-input {
+        display: none;
+      }
+      #path-chooser-area {
+        float: right;
+        margin: 14px;
+      }
 
-  <template>
-      <paper-dialog class="dialog" id="path-change-dialog">
-        <div id="path-input-area">
-          <paper-textarea id="path-text-area" label="{{label}}" value="{{path}}"></paper-textarea>
-          <div class="layout horizontal">
-            <div class="layout flex">
-              <paper-button id="path-choose-button" raised on-click="onChooserLaunched">Choose</paper-button>
-            </div>
-            <div id="path-chooser-area">
-              <paper-toggle-button id="want-to-choose-dir-button"></paper-toggle-button>
-              <span>Choose Directory</span>
-            </div>
-          </div>
-          <input id="path-hidden-input" type="file" on-change="onFileSpecified">
-        </div>
-      </paper-dialog>
-  </template>
+  template
+    paper-dialog.dialog#path-change-dialog
+      div#path-input-area
+        paper-textarea#path-text-area label="{{label}}" value="{{path}}"
+        div class="layout horizontal"
+          div class="layout flex"
+            paper-button#path-choose-button[on-click="onChooserLaunched" raised] Choose
+          div#path-chooser-area
+            paper-toggle-button#want-to-choose-dir-button
+            span Choose Directory
+        input#path-hidden-input type="file" on-change="onFileSpecified"
 
-  <script>
+  javascript:
     'use strict';
 
     Polymer({
@@ -112,5 +106,3 @@
         });
       }
     });
-  </script>
-</dom-module>
