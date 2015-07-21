@@ -36,7 +36,7 @@ app.on('ready', function(){
 
     mainWindow = new BrowserWindow(
         {
-            icon: path.join(__dirname, '..', '..', 'image', 'shibainu.png'),
+            icon: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
             width: getConfigLength('width', 800),
             height: getConfigLength('height', 600)
         }
