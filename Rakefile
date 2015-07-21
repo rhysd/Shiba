@@ -19,7 +19,7 @@ def ensure_cmd(cmd)
 end
 
 task :dep do
-  system 'npm install'
+  system 'npm install --dev'
   system 'bower install'
 end
 
@@ -57,20 +57,26 @@ task :build_typescript do
   system 'tsc src/renderer/*.ts --out build/src/renderer/index.js'
 end
 
-task :build => [:build_slim, :build_typescript]
+task :build => %i(build_slim build_typescript)
 
-task :asar do
+task :asar => %i(build) do
   raise "'asar' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/asar"
 
-  mkdir_p 'archive/resource/image'
-  %w(bower.json package.json src build).each{|p| cp_r p, 'archive' }
-  cp_r 'resource/image/emoji', 'archive/resource/image/'
-  cd 'archive' do
-    system 'npm install --production'
-    system 'bower install --production'
+  mkdir_p 'archive'
+  begin
+    %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
+    cd 'archive' do
+      system 'npm install --production'
+      system 'bower install --production'
+    end
+    system "#{BIN_DIR}/asar pack archive app.asar"
+  ensure
+    rm_rf 'archive'
   end
-  system "#{BIN_DIR}/asar pack archive app.asar"
-  rm_rf 'archive'
+end
+
+task :run => %i(dep asar) do
+  system "#{BIN_DIR}/electron app.asar README.md"
 end
 
 task :clean do
