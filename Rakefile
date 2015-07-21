@@ -19,19 +19,8 @@ def ensure_cmd(cmd)
 end
 
 task :dep do
-  system 'npm install --dev'
-  system 'bower install'
-end
-
-task :npm_publish do
-  mkdir 'npm-publish'
-  %w(bower.json package.json src build bin README.md).each{|p| cp_r p, 'npm-publish' }
-  cd 'npm-publish' do
-    system 'bower install --production'
-    system 'npm install --save electron-prebuilt'
-    system 'npm publish'
-  end
-  rm_rf 'npm-publish'
+  sh 'npm install --dev'
+  sh 'bower install'
 end
 
 task :build_slim do
@@ -39,8 +28,7 @@ task :build_slim do
   mkdir_p 'build/static'
 
   Dir['static/*.slim'].each do |slim_file|
-    puts "converting #{slim_file}"
-    system "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
+    sh "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
   end
 end
 
@@ -48,16 +36,23 @@ task :build_typescript do
   ensure_cmd 'tsc'
   ensure_cmd 'tsd'
 
-  puts 'installing typings/**/*.d.ts'
-  system 'tsd install'
-
-  puts 'compiling src/browser/*.ts'
-  system 'tsc -p src/browser'
-  puts 'compiling src/renderer/*.ts'
-  system 'tsc src/renderer/*.ts --out build/src/renderer/index.js'
+  sh 'tsd install'
+  sh 'tsc -p src/browser'
+  sh 'tsc src/renderer/*.ts --out build/src/renderer/index.js'
 end
 
 task :build => %i(build_slim build_typescript)
+
+task :npm_publish => %i(build) do
+  mkdir 'npm-publish'
+  %w(bower.json package.json build bin README.md).each{|p| cp_r p, 'npm-publish' }
+  cd 'npm-publish' do
+    sh 'bower install --production'
+    sh 'npm install --save electron-prebuilt'
+    sh 'npm publish'
+  end
+  rm_rf 'npm-publish'
+end
 
 task :asar => %i(build) do
   raise "'asar' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/asar"
@@ -66,10 +61,10 @@ task :asar => %i(build) do
   begin
     %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
     cd 'archive' do
-      system 'npm install --production'
-      system 'bower install --production'
+      sh 'npm install --production'
+      sh 'bower install --production'
     end
-    system "#{BIN_DIR}/asar pack archive app.asar"
+    sh "#{BIN_DIR}/asar pack archive app.asar"
   ensure
     rm_rf 'archive'
   end
@@ -80,5 +75,5 @@ task :run => %i(dep asar) do
 end
 
 task :clean do
-  %w(npm-publish build archive).each{|tmpdir| rm_rf tmpdir}
+  %w(npm-publish build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
 end
