@@ -1,0 +1,33 @@
+{
+  "version": "v4",
+  "repo": "borisyankov/DefinitelyTyped",
+  "ref": "master",
+  "path": "typings",
+  "bundle": "typings/tsd.d.ts",
+  "installed": {
+    "marked/marked.d.ts": {
+      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+    },
+    "chokidar/chokidar.d.ts": {
+      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+    },
+    "js-yaml/js-yaml.d.ts": {
+      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+    },
+    "github-electron/github-electron.d.ts": {
+      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+    },
+    "github-electron/github-electron-main.d.ts": {
+      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+    },
+    "open/open.d.ts": {
+      "commit": "8f51d25ad3523cd01f2d92e343247852f6b70dff"
+    },
+    "highlightjs/highlightjs.d.ts": {
+      "commit": "8f51d25ad3523cd01f2d92e343247852f6b70dff"
+    },
+    "node/node.d.ts": {
+      "commit": "8f51d25ad3523cd01f2d92e343247852f6b70dff"
+    }
+  }
+}

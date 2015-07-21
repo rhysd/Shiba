@@ -2,7 +2,9 @@ bower_components
 node_modules
 npm-debug.log
 Shiba-*
-build
 archive
+build/static
+build/src
 app.asar
 npm-publish
+typings
