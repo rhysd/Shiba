@@ -47,10 +47,6 @@ Please refer [customization document](docs/customization.md).
 
 - Outline
 - Search
-- Smarter alternatives
-  - [ ] [slim](https://github.com/slim-template/slim)
-  - [ ] [sass](http://sass-lang.com/)
-  - [ ] [TypeScript](http://www.typescriptlang.org/)
 - More formats
   - [ ] HTML with `<webview>` tag
   - [ ] PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
