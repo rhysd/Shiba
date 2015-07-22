@@ -1,5 +1,10 @@
+interface Message {
+    header: string;
+    body: string;
+}
+
 class Linter {
-    lint: any;
+    lint: (filename: string, content: string, callback: (msgs: Message[]) => void) => void;
     lint_url: string;
     mdl: any;
     mdast: any;
@@ -40,7 +45,7 @@ class Linter {
             const is_space = /\s+/;
             const messages = result.toString()
                             .split("\n")
-                            .map(function(msg){
+                            .map(function(msg: string): Message {
                                 const m = msg.match(is_space);
                                 if (!m) {
                                     return {header: '', body: msg};
@@ -64,7 +69,7 @@ class Linter {
             }
 
             callback(
-                file.messages.map(function(m){
+                file.messages.map(function(m): Message {
                     // Note:
                     // Should I include m.ruleId to check the detail of message?
                     // I don't include it now because message gets too long.

@@ -1,6 +1,6 @@
 import path = require('path');
 
-const EMOJI = new Set([
+const EMOJI = new Set<string>([
     '+1',
     '-1',
     '100',
@@ -887,7 +887,7 @@ const EMOJI = new Set([
 
 const REGEX_EMOJI = /:(\w+):/g;
 
-export function replaceAll(str) {
+export function replaceAll(str: string): string {
     let replacer = function(match, name) {
         if (EMOJI.has(name)) {
             return `<img src="../images/emoji/${name}.png" title="${match}" height="16px"></img>`;

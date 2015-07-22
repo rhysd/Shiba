@@ -3,12 +3,6 @@ include FileUtils
 
 BIN_DIR = './node_modules/.bin'.freeze
 
-def cp_paths(paths, dest)
-  paths.each do |p|
-    cp_r p, dest
-  end
-end
-
 def cmd_exists?(cmd)
   File.exists?(cmd) && File.executable?(cmd)
 end
@@ -71,7 +65,7 @@ task :asar => %i(build) do
 end
 
 task :run => %i(dep asar) do
-  system "#{BIN_DIR}/electron app.asar README.md"
+  sh "#{BIN_DIR}/electron app.asar README.md"
 end
 
 task :clean do

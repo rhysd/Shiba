@@ -3,8 +3,8 @@ import path = require('path');
 import ipc = require('ipc');
 import BrowserWindow = require('browser-window');
 import menu = require('./menu');
-const config = require('./config').load();
 import KeyShortcuts = require('./keyshortcuts');
+const config = require('./config').load();
 
 require('crash-reporter').start();
 

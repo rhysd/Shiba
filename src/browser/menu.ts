@@ -1,7 +1,7 @@
 import Menu = require('menu');
 import open = require('open');
 
-export function build(main_window) {
+export function build(main_window: GitHubElectron.BrowserWindow) {
     const template = [
         {
             label: 'Shiba',

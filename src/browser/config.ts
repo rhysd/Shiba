@@ -3,7 +3,16 @@ import path = require('path');
 import fs = require('fs');
 import app = require('app');
 
-export function load(): any/*TODO*/ {
+export interface Config {
+    linter: string;
+    file_ext: string[];
+    width: number;
+    height: number;
+    shortcuts: Object;
+    lint_options?: any;
+}
+
+export function load(): Config {
     if (this.user_config) {
         return this.user_config;
     }
@@ -29,13 +38,12 @@ export function load(): any/*TODO*/ {
             'M':         'PageBottom',
             'Home':      'PageTop',
             'End':       'PageBottom',
-            'Shift+J':   'PageBottom',
             'Control+P': 'ChangePath',
             'Control+L': 'Lint'
         }
     };
 
-    function mergeConfig(c1, c2) {
+    function mergeConfig(c1: Config, c2: Config) {
         for (const k in c2) {
             const v2 = c2[k];
 

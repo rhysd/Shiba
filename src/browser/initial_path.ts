@@ -1,8 +1,8 @@
 import fs = require('fs');
 import path = require('path');
 
-export = function() {
-    function defaultPath() {
+export = function(): string {
+    function defaultPath(): string {
         const cwd = process.cwd();
         if (process.platform === 'darwin' && cwd === '/') {
             const doc_dir = path.join(process.env.HOME, 'Documents');

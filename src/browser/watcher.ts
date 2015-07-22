@@ -25,7 +25,7 @@ marked.setOptions({
 });
 
 class Watcher {
-    config: any/*TODO*/;
+    config: config.Config;
     linter: Linter;
     file_watcher: fs.FSWatcher;
 
