@@ -1,0 +1,10 @@
+language: node_js
+install:
+    - npm install -g tslint typescript tsd
+    - tsd install
+script:
+    - tslint --version
+    - tslint $(git ls-files | grep '.ts$')
+    - tsc --version
+    - tsc -p src/browser
+    - tsc src/renderer/*.ts --out build/src/renderer
