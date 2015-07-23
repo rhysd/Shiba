@@ -1,7 +1,7 @@
-import yaml = require('js-yaml');
-import path = require('path');
-import fs = require('fs');
-import app = require('app');
+import {load as loadYAML} from 'js-yaml';
+import {join} from 'path';
+import {readFileSync} from 'fs';
+import {getPath} from 'app';
 
 export interface Config {
     linter: string;
@@ -17,7 +17,7 @@ export function load(): Config {
         return this.user_config;
     }
 
-    const file = path.join(app.getPath('userData'), 'config.yml');
+    const file = join(getPath('userData'), 'config.yml');
     const default_config = {
         linter: "mdast-lint",
         file_ext: ["md", "markdown", "mkd"],
@@ -60,7 +60,7 @@ export function load(): Config {
     }
 
     try {
-        this.user_config = yaml.load(fs.readFileSync(file, {encoding: 'utf8'}));
+        this.user_config = loadYAML(readFileSync(file, {encoding: 'utf8'}));
         mergeConfig(this.user_config, default_config);
     } catch(e) {
         console.log('No configuration file is found: ' + file);

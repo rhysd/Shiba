@@ -1,5 +1,5 @@
-import Menu = require('menu');
 import open = require('open');
+import * as Menu from 'menu';
 
 export function build(main_window: GitHubElectron.BrowserWindow) {
     const template = [

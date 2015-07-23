@@ -1,12 +1,13 @@
-import app = require('app');
-import path = require('path');
-import ipc = require('ipc');
+import * as app from 'app';
+import * as path from 'path';
 import BrowserWindow = require('browser-window');
-import menu = require('./menu');
-import KeyShortcuts = require('./keyshortcuts');
-const config = require('./config').load();
+import * as menu from './menu';
+import KeyShortcuts from './keyshortcuts';
+import {load as loadConfig} from './config';
 
 require('crash-reporter').start();
+
+const config = loadConfig();
 
 // Main Window {{{
 var mainWindow = null;

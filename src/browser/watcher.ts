@@ -1,13 +1,12 @@
-import app = require('app');
-import ipc = require('ipc');
-import marked = require('marked');
-import path = require('path');
-import fs = require('fs');
-import chokidar = require('chokidar');
-import hljs = require('highlight.js');
-import emoji = require('./emoji');
-import config = require('./config');
-import Linter = require('./linter');
+import {addRecentDocument} from 'app';
+import * as marked from 'marked';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as chokidar from 'chokidar';
+import {highlight} from 'highlight.js';
+import {replaceAll as replaceAllEmojis} from './emoji';
+import * as config from './config'
+import Linter from './linter';
 
 marked.setOptions({
     highlight: function(code: string, lang: string): string {
@@ -16,7 +15,7 @@ marked.setOptions({
         }
 
         try {
-            return hljs.highlight(lang, code).value;
+            return highlight(lang, code).value;
         } catch (e) {
             console.log(e.message);
             return code;
@@ -83,14 +82,14 @@ class Watcher {
                 return;
             }
 
-            app.addRecentDocument(file);
+            addRecentDocument(file);
 
             this.linter.lint(path.basename(file), text, this.renderLintResult);
 
             // Note:
             // Replace emoji notations in HTML document because Markdown can't specify the size of image.
             let html = marked(text);
-            this.render(emoji.replaceAll(html));
+            this.render(replaceAllEmojis(html));
         });
     }
 

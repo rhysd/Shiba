@@ -8,3 +8,4 @@ build/src
 app.asar
 npm-publish
 typings
+src/**/*.js

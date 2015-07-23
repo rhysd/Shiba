@@ -1,6 +1,6 @@
 /// <reference path="lib.d.ts" />
 
-module KeyReceiver {
+namespace KeyReceiver {
     var ipc = require('ipc');
     var callbacks = {};
 

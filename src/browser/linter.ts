@@ -1,9 +1,10 @@
+/// <reference path="../../typings/tsd.d.ts" />
 interface Message {
     header: string;
     body: string;
 }
 
-class Linter {
+export default class Linter {
     lint: (filename: string, content: string, callback: (msgs: Message[]) => void) => void;
     lint_url: string;
     mdl: any;
@@ -84,4 +85,3 @@ class Linter {
 
 }
 
-export = Linter;

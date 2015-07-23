@@ -1,6 +1,6 @@
-import globalShortcut = require('global-shortcut');
+import * as globalShortcut from 'global-shortcut';
 
-class KeyShortCuts {
+export default class KeyShortcuts {
     shortcuts: Object;
 
     constructor(browser_window, config) {
@@ -56,4 +56,3 @@ class KeyShortCuts {
     }
 }
 
-export = KeyShortCuts;

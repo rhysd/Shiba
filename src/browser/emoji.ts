@@ -1,5 +1,3 @@
-import path = require('path');
-
 const EMOJI = new Set<string>([
     '+1',
     '-1',
