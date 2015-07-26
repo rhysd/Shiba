@@ -50,8 +50,13 @@ class Watcher {
             this._sendUpdate(this.path);
         }
 
-        const ext_pattern = `*.(${this.config.file_ext.join('|')})`;
-        const watched = path.join(this.path, '**', ext_pattern);
+        const ext_pattern = Object.keys(this.config.file_ext)
+                                .map((k) => this.config.file_ext[k].join('|'))
+                                .join('|');
+
+        console.log(ext_pattern);
+
+        const watched = path.join(this.path, '**', `*.(${ext_pattern})`);
         this.file_watcher = chokidar.watch(
             watched, {
                 ignoreInitial: true,
@@ -68,29 +73,57 @@ class Watcher {
             console.log('File added: ' + file);
             this._sendUpdate(file);
         });
+        this.file_watcher.on('error', (error) => {
+            console.log(`Error on watching: ${error}`);
+        })
     }
 
     _sendUpdate(file: string) {
-        if (!/.+\.(md|mkd|markdown)$/.test(file)) {
+        const ext = path.extname(file).substr(1);
+        if (ext === '') {
             return;
         }
 
-        // Encoding should be specified by config or detected
-        fs.readFile(file, 'utf8', (err: NodeJS.ErrnoException, text: string) => {
-            if (err) {
-                console.log("Can't open: " + file);
-                return;
+        console.log(ext);
+
+        const kind = (() => {
+            for (const k in this.config.file_ext) {
+                if (this.config.file_ext[k].indexOf(ext) !== -1) {
+                    return k;
+                }
             }
+            return '';
+        })();
 
-            addRecentDocument(file);
+        console.log(kind);
 
-            this.linter.lint(path.basename(file), text, this.renderLintResult);
+        switch (kind) {
+            case 'markdown': {
+                // Encoding should be specified by config or detected
+                fs.readFile(file, 'utf8', (err: NodeJS.ErrnoException, text: string) => {
+                    if (err) {
+                        console.log("Can't open: " + file);
+                        return;
+                    }
 
-            // Note:
-            // Replace emoji notations in HTML document because Markdown can't specify the size of image.
-            let html = marked(text);
-            this.render(replaceAllEmojis(html));
-        });
+                    addRecentDocument(file);
+
+                    // XXX: Why I use basename of file? Why full path is not needed?
+                    this.linter.lint(path.basename(file), text, this.renderLintResult);
+
+                    // Note:
+                    // Replace emoji notations in HTML document because Markdown can't specify the size of image.
+                    let html = marked(text);
+                    this.render(kind, replaceAllEmojis(html));
+                });
+                break;
+            }
+            case 'html': {
+                // XXX: Temporary
+                // I should send file name simply and renderer will read the file using <webview>
+                this.render(kind, file);
+            }
+        }
     }
 
     changeWatchingDir(new_path: string) {

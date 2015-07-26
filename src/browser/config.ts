@@ -5,7 +5,10 @@ import {getPath} from 'app';
 
 export interface Config {
     linter: string;
-    file_ext: string[];
+    file_ext: {
+        markdown: string[];
+        html: string[];
+    };
     width: number;
     height: number;
     shortcuts: Object;
@@ -20,7 +23,11 @@ export function load(): Config {
     const file = join(getPath('userData'), 'config.yml');
     const default_config = {
         linter: "mdast-lint",
-        file_ext: ["md", "markdown", "mkd"],
+        file_ext: {
+            markdown: ["md", "markdown", "mkd"],
+            html: ["html"]
+            // TODO: Add slim?
+        },
         width: 800,
         height: 600,
         shortcuts: {

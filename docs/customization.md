@@ -21,7 +21,7 @@ All keys for the YAML configuration file is below:
 | `width`        | Window width         | Number of pixel or `"max"`                   | `800`                       |
 | `height`       | Window height        | Number of pixel or `"max"`                   | `600`                       |
 | `linter`       | Linter name          | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
-| `file_ext`     | Extensions to detect | Array of extensions                          | `["md", "markdown", "mkd"]` |
+| `file_ext`     | Extensions to detect | Array of extensions for each file types      | See below section           |
 | `lint_options` | Options for linter   | Depends on linter                            | Not specified               |
 | `shortcuts`    | Keyboard shortcuts   | Keyboard shortcuts definition                | See below section           |
 
@@ -44,4 +44,19 @@ shortcuts:
 ```
 
 If an action is empty string `""` or `null`, the shortcut is disabled.
+
+## File extensions
+
+You can specify file extensions to watch with key `file_ext` as above table.
+The extensions are array of string for each file types.  Below is default configuration.
+
+```yaml
+file_ext:
+    markdown:
+        - "md"
+        - "markdown"
+        - "mkd"
+    html:
+        - "html"
+```
 

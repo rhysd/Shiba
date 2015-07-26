@@ -14,6 +14,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - [Easy to install](docs/installation.md)
 - [Keyboard shortcuts](docs/shortcuts.md)
 - [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
+- HTML preview
 - Dog-respected :dog2:
 
 ## Installation
@@ -49,7 +50,7 @@ Please refer [customization document](docs/customization.md).
 - Outline
 - Search
 - More formats
-  - [ ] HTML with `<webview>` tag
+  - [ ] HTML with `<webview>` tag (WIP)
   - [ ] PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
 - [ ] Tests :scream:
 

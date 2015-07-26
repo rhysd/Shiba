@@ -15,6 +15,7 @@ interface HTMLElement {
     path: string;
     onchanged: (string) => void;
     togglePanel: () => void;
+    src: string;
 }
 
 interface Element {

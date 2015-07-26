@@ -46,8 +46,54 @@ window.onload = function(){
         path,
 
         // Markdown renderer
-        function(html: string): void {
-            document.querySelector('markdown-preview').content = html;
+        function(kind: string, html: string): void {
+            switch (kind) {
+                case 'markdown': {
+                    let markdown_preview = document.getElementById('current-markdown-preview');
+                    if (markdown_preview !== null) {
+                        markdown_preview.content = html;
+                        return;
+                    }
+
+                    markdown_preview = document.createElement('markdown-preview');
+                    markdown_preview.id = 'current-markdown-preview';
+
+                    let wrapper = document.getElementById('viewer-wrapper');
+                    if (wrapper.hasChildNodes()) {
+                        wrapper.replaceChild(markdown_preview, wrapper.firstChild);
+                    } else {
+                        wrapper.appendChild(markdown_preview);
+                    }
+
+                    markdown_preview.content = html;
+                    return;
+                }
+
+                case 'html': {
+                    console.log(html);
+
+                    // XXX: Temporary
+                    // Now using 'div' container.  But I should use <webview> to load source properly
+                    let html_preview = document.getElementById('current-html-preview');
+                    if (html_preview !== null) {
+                        html_preview.src = 'file://' + html;
+                        return;
+                    }
+
+                    html_preview = document.createElement('webview');
+                    html_preview.id = 'current-html-preview';
+
+                    let wrapper = document.getElementById('viewer-wrapper');
+                    if (wrapper.hasChildNodes()) {
+                        wrapper.replaceChild(html_preview, wrapper.firstChild);
+                    } else {
+                        wrapper.appendChild(html_preview);
+                    }
+
+                    html_preview.src = 'file://' + html;
+                    return;
+                }
+            }
         },
 
         // Linter result renderer
