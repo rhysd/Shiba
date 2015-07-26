@@ -23,12 +23,12 @@ export default class KeyShortcuts {
             }
 
             if (shortcut === 'DevTools') {
-                this.shortcuts[k] = browser_window.toggleDevTools;
+                this.shortcuts[k] = () => browser_window.toggleDevTools();
                 continue;
             }
 
             if (shortcut === 'QuitApp') {
-                this.shortcuts[k] = browser_window.close;
+                this.shortcuts[k] = () => browser_window.close();
                 continue;
             }
 

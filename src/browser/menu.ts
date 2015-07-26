@@ -9,16 +9,16 @@ export function build(main_window: GitHubElectron.BrowserWindow) {
             submenu: [
                 {
                     label: 'Reload',
-                    click: main_window.reload,
+                    click: () => main_window.reload(),
                 },
                 {
                     label: 'DevTools',
-                    click: main_window.toggleDevTools,
+                    click: () => main_window.toggleDevTools(),
                 },
                 {
                     label: 'Quit App',
                     accelerator: 'Command+Q',
-                    click: main_window.close,
+                    click: () => main_window.close(),
                 },
                 {
                     type: 'separator'
