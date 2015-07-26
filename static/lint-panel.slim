@@ -85,7 +85,7 @@ dom-module#lint-panel
         }
 
         if (!open) {
-          open = require('open');
+          open = require('shell').openExternal;
         }
 
         open(this.lint_url);

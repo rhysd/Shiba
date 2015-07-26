@@ -9,8 +9,6 @@ export default class KeyShortcuts {
         this.shortcuts = {};
 
         // Note: Generating below function in 'for' loop make jshint angry
-        let quit_app = () => browser_window.close();
-        let toggle_devtools = () => browser_window.toggleDevTools();
         const key_receiver_for = function(s: string): () => void {
             return function() {
                 sender.send('keyinput', s);
@@ -25,12 +23,12 @@ export default class KeyShortcuts {
             }
 
             if (shortcut === 'DevTools') {
-                this.shortcuts[k] = toggle_devtools;
+                this.shortcuts[k] = browser_window.toggleDevTools;
                 continue;
             }
 
             if (shortcut === 'QuitApp') {
-                this.shortcuts[k] = quit_app;
+                this.shortcuts[k] = browser_window.close;
                 continue;
             }
 

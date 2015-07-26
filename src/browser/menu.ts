@@ -1,5 +1,5 @@
-import open = require('open');
 import * as Menu from 'menu';
+import {openExternal} from 'shell';
 
 export function build(main_window: GitHubElectron.BrowserWindow) {
     const template = [
@@ -9,23 +9,23 @@ export function build(main_window: GitHubElectron.BrowserWindow) {
             submenu: [
                 {
                     label: 'Reload',
-                    click: function(){ main_window.reload(); }
+                    click: main_window.reload,
                 },
                 {
                     label: 'DevTools',
-                    click: function(){ main_window.toggleDevTools(); }
+                    click: main_window.toggleDevTools,
                 },
                 {
                     label: 'Quit App',
                     accelerator: 'Command+Q',
-                    click: function(){ main_window.close(); }
+                    click: main_window.close,
                 },
                 {
                     type: 'separator'
                 },
                 {
                     label: 'About Shiba',
-                    click: function(){ open('https://github.com/rhysd/Shiba'); }
+                    click: function(){ openExternal('https://github.com/rhysd/Shiba'); }
                 }
             ]
         }
