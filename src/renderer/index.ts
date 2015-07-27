@@ -80,7 +80,9 @@ window.onload = function(){
                         return;
                     }
 
-                    html_preview = document.createElement('webview');
+                    html_preview = document.createElement('iframe');
+
+                    // html_preview = document.createElement('webview');
                     html_preview.id = 'current-html-preview';
 
                     let wrapper = document.getElementById('viewer-wrapper');
@@ -90,6 +92,8 @@ window.onload = function(){
                         wrapper.appendChild(html_preview);
                     }
 
+                    html_preview.setAttribute('seamless', '');
+                    html_preview.setAttribute('sandbox', 'allow-same-origin allow-top-navigation allow-forms allow-scripts');
                     html_preview.src = 'file://' + html;
                     return;
                 }

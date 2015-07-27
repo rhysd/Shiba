@@ -1,6 +1,7 @@
 import * as app from 'app';
 import * as path from 'path';
 import BrowserWindow = require('browser-window');
+import {openExternal} from 'shell';
 import * as menu from './menu';
 import KeyShortcuts from './keyshortcuts';
 import {load as loadConfig} from './config';
@@ -13,6 +14,12 @@ const config = loadConfig();
 var mainWindow = null;
 
 app.on('window-all-closed', function(){ app.quit(); });
+
+app.on('open-url', function(event){
+    event.preventDefault();
+    console.log('Tend to open: ' + event.url);
+    openExternal(event.url);
+});
 
 app.on('ready', function(){
     const display_size = require('screen').getPrimaryDisplay().workAreaSize;

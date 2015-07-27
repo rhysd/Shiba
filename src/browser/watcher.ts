@@ -54,8 +54,6 @@ class Watcher {
                                 .map((k) => this.config.file_ext[k].join('|'))
                                 .join('|');
 
-        console.log(ext_pattern);
-
         const watched = path.join(this.path, '**', `*.(${ext_pattern})`);
         this.file_watcher = chokidar.watch(
             watched, {
@@ -84,8 +82,6 @@ class Watcher {
             return;
         }
 
-        console.log(ext);
-
         const kind = (() => {
             for (const k in this.config.file_ext) {
                 if (this.config.file_ext[k].indexOf(ext) !== -1) {
@@ -94,8 +90,6 @@ class Watcher {
             }
             return '';
         })();
-
-        console.log(kind);
 
         switch (kind) {
             case 'markdown': {
