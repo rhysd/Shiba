@@ -25,16 +25,24 @@ function getScroller() {
 }
 
 function scrollContentBy(x: number, y:number): void {
-    let scroller = getScroller();
-    if (!scroller) {
-        return;
-    }
+    let html_preview = document.getElementById('current-html-preview');
+    if (html_preview) {
+        html_preview.contentWindow.scrollBy(x, y);
+    } else {
+        // Note:
+        // Scroll markdown preview
 
-    if (x !== 0) {
-        scroller.scrollLeft += x;
-    }
-    if (y !== 0) {
-        scroller.scrollTop += y;
+        let scroller = getScroller();
+        if (!scroller) {
+            return;
+        }
+
+        if (x !== 0) {
+            scroller.scrollLeft += x;
+        }
+        if (y !== 0) {
+            scroller.scrollTop += y;
+        }
     }
 }
 

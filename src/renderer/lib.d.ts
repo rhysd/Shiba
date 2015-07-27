@@ -16,6 +16,7 @@ interface HTMLElement {
     onchanged: (string) => void;
     togglePanel: () => void;
     src: string;
+    contentWindow: typeof window;
 }
 
 interface Element {

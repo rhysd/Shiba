@@ -50,7 +50,6 @@ Please refer [customization document](docs/customization.md).
 - Outline
 - Search
 - More formats
-  - [ ] HTML with `<webview>` tag (WIP)
   - [ ] PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
 - [ ] Tests :scream:
 
