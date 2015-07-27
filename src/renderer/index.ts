@@ -25,25 +25,66 @@ function getScroller() {
 }
 
 function scrollContentBy(x: number, y:number): void {
-    let html_preview = document.getElementById('current-html-preview');
-    if (html_preview) {
-        html_preview.contentWindow.scrollBy(x, y);
-    } else {
-        // Note:
-        // Scroll markdown preview
-
-        let scroller = getScroller();
-        if (!scroller) {
-            return;
-        }
-
-        if (x !== 0) {
-            scroller.scrollLeft += x;
-        }
-        if (y !== 0) {
-            scroller.scrollTop += y;
-        }
+    let scroller = getScroller();
+    if (!scroller) {
+        return;
     }
+
+    if (x !== 0) {
+        scroller.scrollLeft += x;
+    }
+    if (y !== 0) {
+        scroller.scrollTop += y;
+    }
+}
+
+function setChildToViewerWrapper(new_child: HTMLElement): void {
+    let target = document.getElementById('viewer-wrapper');
+    if (target.hasChildNodes()) {
+        target.replaceChild(new_child, target.firstChild);
+    } else {
+        target.appendChild(new_child);
+    }
+}
+
+function prepare_markdown_preview(html: string): void {
+    let markdown_preview = document.getElementById('current-markdown-preview');
+    if (markdown_preview !== null) {
+        markdown_preview.content = html;
+        return;
+    }
+
+    markdown_preview = document.createElement('markdown-preview');
+    markdown_preview.id = 'current-markdown-preview';
+
+    setChildToViewerWrapper(markdown_preview);
+
+    markdown_preview.content = html;
+}
+
+function prepare_html_preview(file) {
+    let html_preview = document.getElementById('current-html-preview');
+    if (html_preview !== null) {
+        html_preview.src = 'file://' + file;
+        return;
+    }
+
+    html_preview = document.createElement('iframe');
+
+    // html_preview = document.createElement('webview');
+    html_preview.id = 'current-html-preview';
+    html_preview.onload = function(e) {
+        // Note:
+        // Adjust
+        html_preview.setAttribute('height', html_preview.contentWindow.document.body.scrollHeight + 'px');
+    }
+
+    html_preview.setAttribute('seamless', '');
+    html_preview.setAttribute('sandbox', 'allow-same-origin allow-top-navigation allow-forms allow-scripts');
+    html_preview.setAttribute('height', window.innerHeight + 'px');
+    html_preview.src = 'file://' + file; // XXX: Escape double " and &
+
+    setChildToViewerWrapper(html_preview);
 }
 
 window.onload = function(){
@@ -57,52 +98,12 @@ window.onload = function(){
         function(kind: string, html: string): void {
             switch (kind) {
                 case 'markdown': {
-                    let markdown_preview = document.getElementById('current-markdown-preview');
-                    if (markdown_preview !== null) {
-                        markdown_preview.content = html;
-                        return;
-                    }
-
-                    markdown_preview = document.createElement('markdown-preview');
-                    markdown_preview.id = 'current-markdown-preview';
-
-                    let wrapper = document.getElementById('viewer-wrapper');
-                    if (wrapper.hasChildNodes()) {
-                        wrapper.replaceChild(markdown_preview, wrapper.firstChild);
-                    } else {
-                        wrapper.appendChild(markdown_preview);
-                    }
-
-                    markdown_preview.content = html;
+                    prepare_markdown_preview(html);
                     return;
                 }
 
                 case 'html': {
-                    console.log(html);
-
-                    // XXX: Temporary
-                    // Now using 'div' container.  But I should use <webview> to load source properly
-                    let html_preview = document.getElementById('current-html-preview');
-                    if (html_preview !== null) {
-                        html_preview.src = 'file://' + html;
-                        return;
-                    }
-
-                    html_preview = document.createElement('iframe');
-
-                    // html_preview = document.createElement('webview');
-                    html_preview.id = 'current-html-preview';
-
-                    let wrapper = document.getElementById('viewer-wrapper');
-                    if (wrapper.hasChildNodes()) {
-                        wrapper.replaceChild(html_preview, wrapper.firstChild);
-                    } else {
-                        wrapper.appendChild(html_preview);
-                    }
-
-                    html_preview.setAttribute('seamless', '');
-                    html_preview.setAttribute('sandbox', 'allow-same-origin allow-top-navigation allow-forms allow-scripts');
-                    html_preview.src = 'file://' + html;
+                    prepare_html_preview(html);
                     return;
                 }
             }
