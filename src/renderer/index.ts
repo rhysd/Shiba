@@ -3,8 +3,20 @@
 
 var remote = require('remote');
 
+function getPathDialog() {
+    return <PathDialog>document.getElementById('path-change');
+}
+
+function getMainDrawerPanel() {
+    return <MainDrawerPanel>document.getElementById('main-drawer');
+}
+
 function onPathButtonPushed(): void {
-    document.getElementById('path-change').open();
+    getPathDialog().open();
+}
+
+function getLintArea() {
+    return <LintResultArea>document.getElementById('lint-area');
 }
 
 function makeTitle(path: string): string {
@@ -15,13 +27,13 @@ function makeTitle(path: string): string {
     }
 }
 
-function getScroller() {
-    const selected: string = document.getElementById('main-drawer').selected;
+function getScroller(): Scroller {
+    const selected: string = getMainDrawerPanel().selected;
     if (selected === null) {
         return null;
     }
 
-    return document.querySelector('paper-header-panel[' + selected + ']').scroller;
+    return (<HeaderPanel>document.querySelector('paper-header-panel[' + selected + ']')).scroller;
 }
 
 function scrollContentBy(x: number, y:number): void {
@@ -48,13 +60,13 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
 }
 
 function prepare_markdown_preview(html: string): void {
-    let markdown_preview = document.getElementById('current-markdown-preview');
+    let markdown_preview = <MarkdownPreview>document.getElementById('current-markdown-preview');
     if (markdown_preview !== null) {
         markdown_preview.content = html;
         return;
     }
 
-    markdown_preview = document.createElement('markdown-preview');
+    markdown_preview = <MarkdownPreview>document.createElement('markdown-preview');
     markdown_preview.id = 'current-markdown-preview';
 
     setChildToViewerWrapper(markdown_preview);
@@ -63,7 +75,7 @@ function prepare_markdown_preview(html: string): void {
 }
 
 function prepare_html_preview(file) {
-    let html_preview = document.getElementById('current-html-preview');
+    let html_preview = <HTMLIFrameElement>document.getElementById('current-html-preview');
     if (html_preview !== null) {
         html_preview.src = 'file://' + file;
         return;
@@ -111,7 +123,7 @@ window.onload = function(){
 
         // Linter result renderer
         function(messages): void {
-            document.getElementById('lint-area').content = messages;
+            getLintArea().content = messages;
             let button = document.getElementById('lint-button');
             if (messages.length === 0) {
                 button.style.color = '#d99e5f';
@@ -121,9 +133,9 @@ window.onload = function(){
         }
     );
 
-    document.getElementById('lint-area').lint_url = watcher.getLintRuleURL();
+    getLintArea().lint_url = watcher.getLintRuleURL();
 
-    let dialog = document.getElementById('path-change');
+    let dialog = getPathDialog();
     dialog.path = path;
     dialog.onchanged = function(path) {
         watcher.changeWatchingDir(path);
@@ -136,42 +148,40 @@ window.onload = function(){
     document.title = makeTitle(path);
 
     KeyReceiver.on('Lint', function() {
-            document.getElementById('main-drawer').togglePanel();
+        getMainDrawerPanel().togglePanel();
     });
 
-    let scroller = document.querySelector('paper-header-panel[main]').scroller;
-
     KeyReceiver.on('PageUp', function() {
-            scrollContentBy(0, -window.innerHeight / 2);
+        scrollContentBy(0, -window.innerHeight / 2);
     });
 
     KeyReceiver.on('PageDown', function() {
-            scrollContentBy(0, window.innerHeight / 2);
+        scrollContentBy(0, window.innerHeight / 2);
     });
 
     KeyReceiver.on('PageLeft', function() {
-            scrollContentBy(-window.innerHeight / 2, 0);
+        scrollContentBy(-window.innerHeight / 2, 0);
     });
 
     KeyReceiver.on('PageRight', function() {
-            scrollContentBy(window.innerHeight / 2, 0);
+        scrollContentBy(window.innerHeight / 2, 0);
     });
 
     KeyReceiver.on('PageTop', function() {
-            let scroller = getScroller();
-            if (scroller) {
-                scroller.scrollTop = 0;
-            }
+        let scroller = getScroller();
+        if (scroller) {
+            scroller.scrollTop = 0;
+        }
     });
 
     KeyReceiver.on('PageBottom', function() {
-            let scroller = getScroller();
-            if (scroller) {
-                scroller.scrollTop = scroller.scrollHeight;
-            }
+        let scroller = getScroller();
+        if (scroller) {
+            scroller.scrollTop = scroller.scrollHeight;
+        }
     });
 
     KeyReceiver.on('ChangePath', function() {
-            dialog.open();
+        dialog.open();
     });
 };

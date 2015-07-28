@@ -6,20 +6,27 @@ interface Scroller {
     scrollHeight: number;
 }
 
-interface HTMLElement {
+interface PathDialog extends HTMLElement {
     open(): void;
-    selected: any; // tsurai
-    scroller: Scroller;
-    content: string;
-    lint_url: string;
     path: string;
     onchanged: (string) => void;
-    togglePanel: () => void;
-    src: string;
-    contentWindow: typeof window;
 }
 
-interface Element {
+interface MainDrawerPanel extends HTMLElement {
+    selected: any; // tsurai
+    togglePanel: () => void;
+}
+
+interface HeaderPanel extends HTMLElement {
     scroller: Scroller;
+}
+
+interface MarkdownPreview extends HTMLElement {
     content: string;
 }
+
+interface LintResultArea extends HTMLElement {
+    content: string;
+    lint_url: string;
+}
+
