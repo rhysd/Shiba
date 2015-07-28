@@ -29,18 +29,17 @@ All keys for the YAML configuration file is below:
 ## Customize Keyboard Shortcuts
 
 You can customize the keyboard shortcuts as the value of `shortcuts` key in configuration.  You can specify a shortcut and corresponding action as key-value configuration.
-Customization example for `config.yml` is below.  Typing `O`, `K`, `L`, `,` are mapping to actions `Up`, `Left`, `Right`, `Down`. Typing `Control` (or `Command` for OS X) key and `s` key executes `Lint` action.  And `J` key is disabled to avoid mistyping.
-
-The format of key shortcuts is the same as [Accelerator](https://github.com/atom/electron/blob/master/docs/api/accelerator.md) in Electron.
+Below is a vim-like keymaps customization example.
+Shiba uses [Mousetrap](https://craig.is/killing/mice). Please see the Mousetrap's document to know how to write the key sequence.
 
 ```yaml
 shortcuts:
-    O: "Up"
-    K: "Left"
-    L: "Right"
-    ,: "Down"
-    J: ""
-    CommandOrControl+S: "Lint"
+    "g g": "PageTop"
+    "shift+g": "PageBottom"
+    i: ""
+    m: ""
+    command+q: "QuitApp"
+    "shift+z shift+z": "QuitApp"
 ```
 
 If an action is empty string `""` or `null`, the shortcut is disabled.
