@@ -31,22 +31,22 @@ export function load(): Config {
         width: 800,
         height: 600,
         shortcuts: {
-            'J':         'PageDown',
-            'K':         'PageUp',
-            'Down':      'PageDown',
-            'Up':        'PageUp',
-            'PageDown':  'PageDown',
-            'PageUp':    'PageUp',
-            'H':         'PageLeft',
-            'L':         'PageRight',
-            'Left':      'PageLeft',
-            'Right':     'PageRight',
-            'I':         'PageTop',
-            'M':         'PageBottom',
-            'Home':      'PageTop',
-            'End':       'PageBottom',
-            'Control+P': 'ChangePath',
-            'Control+L': 'Lint'
+            'j':        'PageDown',
+            'k':        'PageUp',
+            'down':     'PageDown',
+            'up':       'PageUp',
+            'pagedown': 'PageDown',
+            'pageup':   'PageUp',
+            'h':        'PageLeft',
+            'l':        'PageRight',
+            'left':     'PageLeft',
+            'right':    'PageRight',
+            'i':        'PageTop',
+            'm':        'PageBottom',
+            'home':     'PageTop',
+            'end':      'PageBottom',
+            'ctrl+p':   'ChangePath',
+            'ctrl+l':   'Lint'
         }
     };
 

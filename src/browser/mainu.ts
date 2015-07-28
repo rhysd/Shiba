@@ -3,7 +3,6 @@ import * as path from 'path';
 import BrowserWindow = require('browser-window');
 import {openExternal} from 'shell';
 import * as menu from './menu';
-import KeyShortcuts from './keyshortcuts';
 import {load as loadConfig} from './config';
 
 require('crash-reporter').start();
@@ -53,10 +52,7 @@ app.on('ready', function(){
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadUrl(html);
 
-    let keyshortcuts = new KeyShortcuts(mainWindow, config);
-
     mainWindow.on('closed', function(){
-        keyshortcuts.unregisterAll();
         mainWindow = null;
     });
 

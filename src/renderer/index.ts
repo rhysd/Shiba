@@ -1,4 +1,4 @@
-/// <reference path="keyreceiver.ts" />
+/// <reference path="keyboard.ts" />
 /// <reference path="lib.d.ts" />
 
 var remote = require('remote');
@@ -147,41 +147,30 @@ window.onload = function(){
     }
     document.title = makeTitle(path);
 
-    KeyReceiver.on('Lint', function() {
-        getMainDrawerPanel().togglePanel();
-    });
 
-    KeyReceiver.on('PageUp', function() {
-        scrollContentBy(0, -window.innerHeight / 2);
-    });
+    let receiver = new Keyboard.Receiver(remote);
 
-    KeyReceiver.on('PageDown', function() {
-        scrollContentBy(0, window.innerHeight / 2);
-    });
-
-    KeyReceiver.on('PageLeft', function() {
-        scrollContentBy(-window.innerHeight / 2, 0);
-    });
-
-    KeyReceiver.on('PageRight', function() {
-        scrollContentBy(window.innerHeight / 2, 0);
-    });
-
-    KeyReceiver.on('PageTop', function() {
+    receiver.on('Lint', () => getMainDrawerPanel().togglePanel());
+    receiver.on('PageUp', () => scrollContentBy(0, -window.innerHeight / 2));
+    receiver.on('PageDown', () => scrollContentBy(0, window.innerHeight / 2));
+    receiver.on('PageLeft', () => scrollContentBy(-window.innerHeight / 2, 0));
+    receiver.on('PageRight', () => scrollContentBy(window.innerHeight / 2, 0));
+    receiver.on('ChangePath', () => dialog.open());
+    receiver.on('QuitApp', () => remote.require('app').quit());
+    receiver.on('PageTop', () => {
         let scroller = getScroller();
         if (scroller) {
             scroller.scrollTop = 0;
         }
     });
-
-    KeyReceiver.on('PageBottom', function() {
+    receiver.on('PageBottom', () => {
         let scroller = getScroller();
         if (scroller) {
             scroller.scrollTop = scroller.scrollHeight;
         }
     });
-
-    KeyReceiver.on('ChangePath', function() {
-        dialog.open();
+    receiver.on('DevTools', function() {
+        this.bw = this.bw || remote.require('browser-window');
+        this.bw.getFocusedWindow().toggleDevTools();
     });
 };
