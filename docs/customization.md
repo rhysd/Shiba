@@ -16,14 +16,16 @@ lint_options:
 
 All keys for the YAML configuration file is below:
 
-| Key            | Description          | Value                                        | Default                     |
-| -------------- | -------------------- | -------------------------------------------- | --------------------------- |
-| `width`        | Window width         | Number of pixel or `"max"`                   | `800`                       |
-| `height`       | Window height        | Number of pixel or `"max"`                   | `600`                       |
-| `linter`       | Linter name          | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`              |
-| `file_ext`     | Extensions to detect | Array of extensions for each file types      | See below section           |
-| `lint_options` | Options for linter   | Depends on linter                            | Not specified               |
-| `shortcuts`    | Keyboard shortcuts   | Keyboard shortcuts definition                | See below section           |
+| Key             | Description          | Value                                        | Default             |
+| --------------- | -------------------- | -------------------------------------------- | ------------------- |
+| `width`         | Window width         | Number of pixel or `"max"`                   | `800`               |
+| `height`        | Window height        | Number of pixel or `"max"`                   | `600`               |
+| `linter`        | Linter name          | `"mdast-lint"` or `"markdownlint"` or "none" | `"mdast-lint"`      |
+| `file_ext`      | Extensions to detect | Array of extensions for each file types      | See below section   |
+| `lint_options`  | Options for linter   | Depends on linter                            | Not specified       |
+| `shortcuts`     | Keyboard shortcuts   | Keyboard shortcuts definition                | See below section   |
+| `voice.enabled` | Notify with voice    | enable/disable with boolean value            | false               |
+| `voice.source`  | Path to voice source | Path string                                  | "../voices/bow.mp3" |
 
 
 ## Customize Keyboard Shortcuts
@@ -44,7 +46,7 @@ shortcuts:
 
 If an action is empty string `""` or `null`, the shortcut is disabled.
 
-## File extensions
+## File Extensions
 
 You can specify file extensions to watch with key `file_ext` as above table.
 The extensions are array of string for each file types.  Below is default configuration.
@@ -58,4 +60,16 @@ file_ext:
     html:
         - "html"
 ```
+
+## Voice Notification
+
+When linter reports some errors or warnings, Shiba can notify that with voice.
+You can specify the resource for the voice as below.  You can use any format supported by `<audio>` tag.
+
+```yaml
+voice:
+    enabled: true
+    source: /path/to/your/favorite/sound
+```
+
 

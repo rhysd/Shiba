@@ -4,11 +4,9 @@
 namespace Keyboard {
 
     export class Receiver {
-        shortcuts: Object;
-        callbacks: Object;
+        private callbacks: Object;
 
-        constructor(remote) {
-            this.shortcuts = remote.require('./config').load().shortcuts;
+        constructor(private shortcuts) {
             this.callbacks = {};
 
             const key_handler_for = action => () => this.dispatch(action);

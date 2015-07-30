@@ -33,12 +33,16 @@ dom-module#lint-panel
         font: inherit;
         background-color: #ffd8aa;
       }
+      #voice-notification {
+        display: none;
+      }
 
   template
     div.paper-header#lint-header[no_error] No Error
     div#lint-content
     footer#rule-link
       span.link on-click="_showLintRules" lint rules
+      audio#voice-notification src="[[voice_src]]" preload="auto"
 
   javascript:
     'use strict';
@@ -52,7 +56,11 @@ dom-module#lint-panel
           type: Array,
           observer: '_contentUpdated'
         },
-        lint_url: String
+        lint_url: String,
+        voice_src: {
+          type: String,
+          value: ''
+        }
       },
 
       _setMessages(messages) {
@@ -72,6 +80,12 @@ dom-module#lint-panel
         if (messages.length > 0) {
           header.innerText = 'Error';
           header.setAttribute('error', '');
+          if (this.voice_src !== '') {
+            const voice = document.getElementById('voice-notification');
+            if (voice) {
+              voice.play();
+            }
+          }
         } else {
           header.innerText = 'No Error';
           header.setAttribute('no_error', '');

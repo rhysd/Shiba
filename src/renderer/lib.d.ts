@@ -28,5 +28,6 @@ interface MarkdownPreview extends HTMLElement {
 interface LintResultArea extends HTMLElement {
     content: string;
     lint_url: string;
+    voice_src: string;
 }
 

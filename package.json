@@ -23,7 +23,8 @@
     "markdownlint": "0.0.6",
     "marked": "^0.3.3",
     "mdast": "^0.26.2",
-    "mdast-lint": "^0.4.1"
+    "mdast-lint": "^0.4.1",
+    "mousetrap": "^1.5.3"
   },
   "devDependencies": {
     "asar": "^0.7.2",

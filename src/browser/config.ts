@@ -12,6 +12,10 @@ export interface Config {
     width: number;
     height: number;
     shortcuts: Object;
+    voice: {
+        enabled: boolean;
+        source: string;
+    },
     lint_options?: any;
 }
 
@@ -30,6 +34,10 @@ export function load(): Config {
         },
         width: 800,
         height: 600,
+        voice: {
+            enabled: false,
+            source: '../voices/bow.mp3',
+        },
         shortcuts: {
             'j':        'PageDown',
             'k':        'PageUp',

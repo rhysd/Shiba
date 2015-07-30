@@ -17,9 +17,11 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - HTML preview
 - Dog-respected :dog2:
 
+
 ## Installation
 
 You can install Shiba easily.  Please see [installation document](docs/installation.md).
+
 
 ## Usage
 
@@ -32,6 +34,7 @@ You can install Shiba easily.  Please see [installation document](docs/installat
 5. You can quit app by closing the window.
 
 Please see [usage document](docs/usage.md) for more detail.
+
 
 ## Keyboard Shortcuts
 

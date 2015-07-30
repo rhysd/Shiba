@@ -101,6 +101,12 @@ function prepare_html_preview(file) {
 
 window.onload = function(){
     const path = remote.require('./initial_path.js')();
+    const config = remote.require('./config').load();
+
+    let lint = getLintArea();
+    if (config.voice.enabled) {
+        lint.voice_src = config.voice.source;
+    }
 
     let Watcher = remote.require('./watcher.js');
     var watcher = new Watcher(
@@ -123,7 +129,7 @@ window.onload = function(){
 
         // Linter result renderer
         function(messages): void {
-            getLintArea().content = messages;
+            lint.content = messages;
             let button = document.getElementById('lint-button');
             if (messages.length === 0) {
                 button.style.color = '#d99e5f';
@@ -133,7 +139,7 @@ window.onload = function(){
         }
     );
 
-    getLintArea().lint_url = watcher.getLintRuleURL();
+    lint.lint_url = watcher.getLintRuleURL();
 
     let dialog = getPathDialog();
     dialog.path = path;
@@ -147,8 +153,7 @@ window.onload = function(){
     }
     document.title = makeTitle(path);
 
-
-    let receiver = new Keyboard.Receiver(remote);
+    let receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());
     receiver.on('PageUp', () => scrollContentBy(0, -window.innerHeight / 2));
