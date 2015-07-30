@@ -69,6 +69,7 @@ Please refer [customization document](docs/customization.md).
 - This app was inspired by [@mattn](https://github.com/mattn)'s [mkup](https://github.com/mattn/mkup).
 - This app refers [vmd](https://github.com/yoshuawuyts/vmd) a lot, which is a very simple markdown preview app built on Electron.
 - Emoji pictures are from [arvida/emoji-cheat-sheet.com](https://github.com/arvida/emoji-cheat-sheet.com).
+- The voice resource came from [効果音ラボ](http://soundeffect-lab.info/).
 
 
 ## License
