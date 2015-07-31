@@ -3,13 +3,39 @@ Usage
 
 ## Basic Usage
 
-![Shiba on Linux](https://raw.githubusercontent.com/rhysd/screenshots/master/Shiba/shiba-main-0.1.0.png)
+Click application icon to start Shiba.  Below is an OS X example.
 
-1. At Shiba starting up, it is watching the current working directory (watching directory is shown in title of window).
-2. When you edit the markdown file in current working directory, shiba finds the update, renders the file in window and set the result of lint.
-3. You can see the result of lint by pushing the '!' button in right above of window.  When the button is red, it means that linter reported some errors.
-4. You can change the watching directory/file using 'directory' button in right above of window.  If you choose a file, Shiba watches the file only.  If you choose a directory, Shiba watches all files in the directory.  Wathing path is shown in title of window.
-5. You can quit app by closing the window.
+![dock startup](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/dock.png)
+
+Then you can see an empty window.  At first, find the 'directory' icon and push it.  A dialog will be shown and you can specify a directory or markdown file to make Shiba watch.
+
+![directory icon](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/menu-no-error.png)
+
+When specifying a markdown file, Shiba will show the preview of it.  Below window is a preview of [this file](https://gist.github.com/rhysd/ffe61ad01f9a7a9fe69f).
+
+![main window](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/window-main.png)
+
+After that, when you edit some lines of the file, the preview will be automatically updated.  So you can write your markdown document with checking preview.
+
+If you want to change the watching directory/file, please push the 'directory' button again.  And you can quit app by closing the window.
+
+
+## Lint
+
+Shiba has integrated markdown linter.  When file is updated, Shiba will run linter automatically and report it if an error occurs.  You can access the lint result by '!' button in right above of the window.
+At first, the '!' button is normal color as below.
+
+![no error](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/menu-no-error.png)
+
+When linter reports some errors, the button's color would be changed to red.
+
+![error](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/menu-errors.png)
+
+When you want to know the detail of lint errors, simply click the red button.  It shows the list of errors.
+
+![lint result](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/window-lint.png)
+
+Shortcut `CTRL + L` is also available to toggle lint result drawer.
 
 ## Shortcuts
 
