@@ -18,6 +18,14 @@ dom-module id="markdown-preview"
   javascript:
     'use strict';
 
+    const openExternal = require('shell').openExternal;
+
+    function openLinkWithExternalBrowser(event) {
+      event.preventDefault();
+      openExternal(event.target.href);
+      return false;
+    }
+
     Polymer({
       is: 'markdown-preview',
 
@@ -30,5 +38,14 @@ dom-module id="markdown-preview"
 
       _contentUpdated: function(new_content) {
         document.querySelector('.markdown-body').innerHTML = new_content;
+
+        // Prevent external links from opening in page
+        const links = document.querySelectorAll('a');
+        for (let i = 0; i < links.length; ++i) {
+          let link = links.item(i);
+          if (link.href && link.href.startsWith('http')) {
+            link.setAttribute('onclick', 'openLinkWithExternalBrowser(event)');
+          }
+        }
       }
     });
