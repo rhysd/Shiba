@@ -65,7 +65,9 @@ dom-module#lint-panel
 
       _setMessages(messages) {
         let content = document.getElementById('lint-content');
-        content.innerHTML = '';
+        while (content.firstChild) {
+          content.removeChild(content.firstChild);
+        }
 
         for (const m of messages) {
           let msg = document.createElement('lint-message');
