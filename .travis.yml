@@ -1,6 +1,9 @@
 language: node_js
+node_js:
+    - "0.12.7"
 install:
     - npm install -g tslint typescript tsd
+    - npm install
     - tsd install
 script:
     - tslint --version
@@ -8,3 +11,4 @@ script:
     - tsc --version
     - tsc -p src/browser
     - tsc src/renderer/*.ts --out build/src/renderer
+    - npm test
