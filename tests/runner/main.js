@@ -5,47 +5,38 @@ var BrowserWindow = require('browser-window');
 var glob = require('globby').sync;
 var join = require('path').join;
 var fs = require('fs');
+var Mocha = require('mocha');
 
 var mainWindow = null;
+const RE_JS = /\.js$/;
 
-function runRendererTest(html_file) {
-    console.log('Start renderer process test: ' + html_path);
-    // TODO
-    return true;
-}
-
-function runBrowserTest(js_file) {
-    console.log('Start browser process test: ' + js_file);
-    return require(js_file)();
-}
-
-function runTest(path) {
-    var stats = fs.statSync(path);
+function addTest(path, mocha) {
+    const stats = fs.statSync(path);
     if (stats.isDirectory()) {
         var index_file = join(path, 'index.html');
         if (fs.existsSync(index_file)) {
-            return runRendererTest(index_file);
+            // TODO
+            return;
         } else {
-            let success = true;
             for (const f of glob(join(path, '*'))) {
-                success = runTest(f);
+                addTest(f, mocha);
             }
-            return success;
+            return;
         }
-    } else if (stats.isFile()) {
-        return runBrowserTest(path)
-    } else {
-        console.log('Ignored: Target does not exist: ' + path);
-        return true;
+    } else if (stats.isFile() && RE_JS.test(path)) {
+        mocha.addFile(path);
     }
 }
 
 app.on('ready', function() {
-    let success = true;
+    let mocha = new Mocha();
     for (const path of process.argv.slice(2)) {
-        success = runTest(path);
+        addTest(path, mocha);
     }
-
-    app.quit();
-    mainWindow = new BrowserWindow({});
+    mocha.ui('bdd').run(function(failures) {
+        process.on('exit', function() {
+            process.exit(failures);
+        });
+        app.quit();
+    });
 });
