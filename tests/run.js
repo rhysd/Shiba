@@ -13,6 +13,7 @@ function runOnElectron(tests) {
     var args = [join(__dirname, 'runner')].concat(tests);
     var proc = spawnSync(electron, args, {stdio: 'inherit'});
     console.log(proc.status === 0 ? 'run.js: SUCCESS' : 'run.js: FAILED');
+    process.exit(proc.status);
 }
 
 var args = process.argv.slice(2)

@@ -46,6 +46,7 @@ export default class Linter {
             const is_space = /\s+/;
             const messages = result.toString()
                             .split("\n")
+                            .filter((msg: string) => msg !== '')
                             .map(function(msg: string): Message {
                                 const m = msg.match(is_space);
                                 if (!m) {
@@ -56,7 +57,7 @@ export default class Linter {
                                     header: msg.slice(0, m.index),
                                     body: msg.slice(m.index)
                                 };
-                        });
+                            });
             callback(messages);
         });
     }
