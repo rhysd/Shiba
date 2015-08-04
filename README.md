@@ -17,6 +17,8 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - HTML preview
 - Dog-respected :dog2:
 
+All documents are in [docs](docs/) directory.  And I wrote [a Japanese blog post](http://rhysd.hatenablog.com/entry/2015/08/03/090646).
+
 
 ## Installation
 

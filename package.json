@@ -29,10 +29,12 @@
   "devDependencies": {
     "asar": "^0.7.2",
     "electron-prebuilt": "^0.30.0",
+    "globby": "^2.1.0",
+    "mocha": "^2.2.5",
     "standard": "^4.5.2"
   },
   "scripts": {
-    "test": "standard",
+    "test": "node ./tests/run.js",
     "build": "make asar",
     "start": "./bin/cli.js"
   }
