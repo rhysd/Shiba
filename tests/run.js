@@ -4,10 +4,7 @@
 
 var electron = require('electron-prebuilt');
 var spawnSync = require('child_process').spawnSync;
-
 var join = require('path').join;
-var fs = require('fs');
-var glob = require('globby');
 
 function runOnElectron(tests) {
     var args = [join(__dirname, 'runner')].concat(tests);
@@ -18,7 +15,7 @@ function runOnElectron(tests) {
 
 var args = process.argv.slice(2)
 if (args.length === 0) {
-    runOnElectron([join(__dirname, 'browser'), join(__dirname, 'renderer')]);
+    runOnElectron(join(__dirname, 'browser', 'out'));
 } else {
     runOnElectron(join(process.cwd(), args));
 }
