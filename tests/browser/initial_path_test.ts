@@ -16,10 +16,11 @@ context('InitialPath', () =>
         it('returns specific path when no argument is specified in darwin', () => {
             if (process.platform === 'darwin') {
                 process.argv = [];
-                if (process.cwd() === '/') {
+                const cwd = process.cwd();
+                if (cwd === '/') {
                     assert.match(initial_path(), /Documents$/);
                 } else {
-                    assert.strictEqual(initial_path(), path.join(process.resourcesPath, 'README.md'));
+                    assert.strictEqual(initial_path(), cwd);
                 }
             }
         });
