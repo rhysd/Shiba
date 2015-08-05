@@ -28,7 +28,11 @@ class Watcher {
     linter: Linter;
     file_watcher: fs.FSWatcher;
 
-    constructor(public path, public render, public renderLintResult) {
+    constructor(
+        public path: string,
+        public render: (kind: string, content: string) => void,
+        public renderLintResult: (msgs: any[]) => void
+    ) {
         this.config = config.load();
         this.linter = new Linter(this.config.linter, this.config.lint_options);
 
@@ -37,7 +41,7 @@ class Watcher {
         this.startWatching();
     }
 
-    startWatching() {
+    private startWatching() {
         if (this.file_watcher) {
             this.file_watcher.close();
         }
@@ -47,7 +51,7 @@ class Watcher {
         }
 
         if (fs.statSync(this.path).isFile()) {
-            this._sendUpdate(this.path);
+            this.sendUpdate(this.path);
         }
 
         const ext_pattern = Object.keys(this.config.file_ext)
@@ -65,18 +69,18 @@ class Watcher {
 
         this.file_watcher.on('change', (file: string) => {
             console.log('File changed: ' + file);
-            this._sendUpdate(file);
+            this.sendUpdate(file);
         });
         this.file_watcher.on('add', (file: string) => {
             console.log('File added: ' + file);
-            this._sendUpdate(file);
+            this.sendUpdate(file);
         });
         this.file_watcher.on('error', (error) => {
             console.log(`Error on watching: ${error}`);
         })
     }
 
-    _sendUpdate(file: string) {
+    private sendUpdate(file: string) {
         const ext = path.extname(file).substr(1);
         if (ext === '') {
             return;
@@ -102,8 +106,7 @@ class Watcher {
 
                     addRecentDocument(file);
 
-                    // XXX: Why I use basename of file? Why full path is not needed?
-                    this.linter.lint(path.basename(file), text, this.renderLintResult);
+                    this.linter.lint(file, text, this.renderLintResult);
 
                     // Note:
                     // Replace emoji notations in HTML document because Markdown can't specify the size of image.
