@@ -59,3 +59,6 @@ $ shiba.exe {path}
 
 The `{path}` is a path to markdown file or a directory you want to preview.
 
+
+-----------------
+[installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)

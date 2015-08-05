@@ -10,3 +10,7 @@ If you [install Shiba with npm](installation.md), `shiba` command is available t
 ```
 
 Shiba opens the window and starts to watch and preview the current buffer.
+
+
+-----------------
+[installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)

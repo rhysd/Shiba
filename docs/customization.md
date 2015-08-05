@@ -3,7 +3,7 @@ Customization
 
 ## Customize Shiba with YAML
 
-You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is `~/Library/Application\ Support/Shiba` for OS X, `~/.config/Shiba` for Linux.
+You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is `~/Library/Application\ Support/Shiba` for OS X, `~/.config/Shiba` for Linux, `%APPDATA%\Shiba` for Windows.
 Below is an example for `config.yml`.
 
 ```YAML
@@ -73,3 +73,5 @@ voice:
 ```
 
 
+-----------------
+[installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)

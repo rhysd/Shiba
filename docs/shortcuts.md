@@ -19,3 +19,6 @@ Currently below actions can be assigned to keyboard shortcuts.
 
 You can customize all key assigns.  Please see [customization document](customization.md).
 
+
+-----------------
+[installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)
