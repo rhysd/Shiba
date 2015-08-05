@@ -8,8 +8,15 @@ def cmd_exists?(cmd)
 end
 
 def ensure_cmd(cmd)
+  $cmd_cache ||= []
+  return true if $cmd_cache.include? cmd
+
   paths = ENV['PATH'].split(':').uniq
-  raise "'#{cmd}' command doesn't exist" unless paths.any?{|p| cmd_exists? "#{p}/#{cmd}" }
+  unless paths.any?{|p| cmd_exists? "#{p}/#{cmd}" }
+    raise "'#{cmd}' command doesn't exist"
+  else
+    $cmd_cache << cmd
+  end
 end
 
 task :dep do
@@ -24,6 +31,11 @@ task :build_slim do
   Dir['static/*.slim'].each do |slim_file|
     sh "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
   end
+end
+
+task :build_test do
+  ensure_cmd 'tsc'
+  sh 'tsc -p tests/browser'
 end
 
 task :build_typescript do
@@ -46,6 +58,10 @@ task :npm_publish => %i(build) do
     sh 'npm publish'
   end
   rm_rf 'npm-publish'
+end
+
+task :test => %i(build_test) do
+  sh 'npm test'
 end
 
 task :asar => %i(build) do

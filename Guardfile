@@ -29,10 +29,10 @@ ignore /^node_modules/, /^build/, /^typings/, /^bower_components/
 
 guard :shell do
   watch /^.+\.ts/ do |m|
-    puts File.basename(File.dirname m[0])
-    case File.basename(File.dirname m[0])
+    dir = File.dirname m[0]
+    case File.basename(dir)
     when 'browser'
-      execute(m[0], 'tsc', '-p', 'src/browser')
+      execute(m[0], 'tsc', '-p', dir)
     when 'renderer'
       execute(m[0], 'tsc', *Dir['src/renderer/*.ts'], '--out', 'build/src/renderer/index.js')
     end

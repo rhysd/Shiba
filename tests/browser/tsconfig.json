@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": "./out",
+    "target": "es5"
+  },
+  "files": [
+    "linter_test.ts",
+    "menu_test.ts",
+    "emoji_test.ts",
+    "lib.d.ts",
+    "../../typings/tsd.d.ts"
+  ]
+}

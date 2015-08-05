@@ -28,6 +28,12 @@
     },
     "mousetrap/mousetrap.d.ts": {
       "commit": "73e4b46719dd2e425b4daf850d64cc5b1f753706"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "147cc7a8b375d97bf82afb34614268bbb77d18d5"
+    },
+    "chai/chai.d.ts": {
+      "commit": "147cc7a8b375d97bf82afb34614268bbb77d18d5"
     }
   }
 }

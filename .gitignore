@@ -9,3 +9,4 @@ app.asar
 npm-publish
 typings
 src/**/*.js
+tests/browser/out

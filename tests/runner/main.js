@@ -6,6 +6,7 @@ var glob = require('globby').sync;
 var join = require('path').join;
 var fs = require('fs');
 var Mocha = require('mocha');
+var chai = require('chai');
 
 var mainWindow = null;
 const RE_JS = /\.js$/;
@@ -30,6 +31,7 @@ function addTest(path, mocha) {
 
 app.on('ready', function() {
     let mocha = new Mocha();
+    global.assert = chai.assert;
     for (const path of process.argv.slice(2)) {
         addTest(path, mocha);
     }
