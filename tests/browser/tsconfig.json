@@ -10,6 +10,7 @@
     "linter_test.ts",
     "menu_test.ts",
     "emoji_test.ts",
+    "initial_path_test.ts",
     "lib.d.ts",
     "../../typings/tsd.d.ts"
   ]
