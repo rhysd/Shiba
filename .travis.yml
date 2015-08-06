@@ -12,4 +12,4 @@ script:
     - tsc -p src/browser
     - tsc src/renderer/*.ts --out build/src/renderer
     - tsc -p tests/browser
-    - npm test
+    - npm test -- --travis

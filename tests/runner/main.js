@@ -8,8 +8,13 @@ var fs = require('fs');
 var Mocha = require('mocha');
 var chai = require('chai');
 
-var mainWindow = null;
 const RE_JS = /\.js$/;
+
+var on_travis = false;
+if (process.argv[process.argv.length-1] == '--travis') {
+    on_travis = true;
+    process.argv.pop();
+}
 
 function addTest(path, mocha) {
     const stats = fs.statSync(path);
@@ -32,6 +37,7 @@ function addTest(path, mocha) {
 app.on('ready', function() {
     let mocha = new Mocha();
     global.assert = chai.assert;
+    global.on_travis = on_travis;
     for (const path of process.argv.slice(2)) {
         addTest(path, mocha);
     }
