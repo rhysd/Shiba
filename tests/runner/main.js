@@ -68,7 +68,6 @@ app.on('ready', function() {
     }
 
     fetchRendererTests();
-    return;
 
     mocha.ui('bdd').run(function(failures) {
         process.on('exit', function() {
