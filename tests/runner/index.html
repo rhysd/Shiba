@@ -2,7 +2,35 @@
 <head>
   <meta charset="utf-8">
   <title>Shiba Test</title>
+  <link rel="stylesheet" href="./bower_components/mocha/mocha.css" />
 </head>
 <body>
+  <div id="mocha"></div>
+  <script src="./bower_components/chai/chai.js"></script>
+  <script src="./bower_components/mocha/mocha.js"></script>
+  <script>
+    var assert = chai.assert;
+  </script>
+  <script>mocha.setup('bdd')</script>
+  <script>
+    'use strict';
+    var ipc = require('ipc');
+    ipc.on('renderer-test', function(msg){
+      const num_files = msg.files.length;
+      let counter = 0;
+      function callback(){
+        counter += 1;
+        if (num_files === counter) {
+          mocha.run();
+        }
+      }
+      for (const f of msg.files) {
+        let script = document.createElement('script');
+        script.setAttribute('src', f);
+        script.onload = callback;
+        document.body.appendChild(script);
+      }
+    });
+  </script>
 </body>
 </html>

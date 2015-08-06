@@ -35,7 +35,11 @@ end
 
 task :build_test do
   ensure_cmd 'tsc'
+  ensure_cmd 'bower'
   sh 'tsc -p tests/browser'
+  cd 'tests/runner' do
+    sh 'bower install'
+  end
 end
 
 task :build_typescript do

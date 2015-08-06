@@ -25,7 +25,7 @@ function runOnElectron(tests) {
 }
 
 if (args.length === 0) {
-    runOnElectron(join(__dirname, 'browser', 'out'));
+    runOnElectron([join(__dirname, 'browser', 'out'), join(__dirname, 'renderer')]);
 } else {
-    runOnElectron(join(process.cwd(), args));
+    runOnElectron(args);
 }
