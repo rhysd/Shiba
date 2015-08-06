@@ -12,25 +12,9 @@
     var assert = chai.assert;
   </script>
   <script>mocha.setup('bdd')</script>
+  <script src="../renderer/index.js"></script>
   <script>
-    'use strict';
-    var ipc = require('ipc');
-    ipc.on('renderer-test', function(msg){
-      const num_files = msg.files.length;
-      let counter = 0;
-      function callback(){
-        counter += 1;
-        if (num_files === counter) {
-          mocha.run();
-        }
-      }
-      for (const f of msg.files) {
-        let script = document.createElement('script');
-        script.setAttribute('src', f);
-        script.onload = callback;
-        document.body.appendChild(script);
-      }
-    });
+    mocha.run();
   </script>
 </body>
 </html>

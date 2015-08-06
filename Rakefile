@@ -37,6 +37,7 @@ task :build_test do
   ensure_cmd 'tsc'
   ensure_cmd 'bower'
   sh 'tsc -p tests/browser'
+  sh 'tsc tests/renderer/*.ts --out tests/renderer/index.js'
   cd 'tests/runner' do
     sh 'bower install'
   end
