@@ -30,10 +30,9 @@ You can find `shiba.exe` in the directory.  Please simply use it by double click
 
 ## <a name="npm"> Via npm
 
-I already registered Shiba to [npm](https://www.npmjs.com/).  You can install it via npm as below.  Note that you must install `electron-prebuilt` in advance.
+I already registered Shiba to [npm](https://www.npmjs.com/).  You can install it via npm as below.
 
 ```
-$ npm install -g electron-prebuilt
 $ npm install -g shiba
 ```
 
@@ -48,7 +47,8 @@ To execute Shiba in git repository for development purpose, please use `electron
 ```sh
 $ git clone https://github.com/rhysd/Shiba.git && cd Shiba
 $ bower install && npm install
-$ electron . # Or `electron . {file to watch}`
+$ rake build
+$ ./bin/cli.js
 ```
 
 
