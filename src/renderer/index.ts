@@ -100,8 +100,9 @@ function prepare_html_preview(file) {
 }
 
 window.onload = function(){
-    const path = remote.require('./initial_path.js')();
+    const init_path = remote.require('./initial_path.js')();
     const config = remote.require('./config').load();
+    const path = remote.require('path');
 
     let lint = getLintArea();
     if (config.voice.enabled) {
@@ -110,18 +111,20 @@ window.onload = function(){
 
     let Watcher = remote.require('./watcher.js');
     var watcher = new Watcher(
-        path,
+        init_path,
 
         // Markdown renderer
-        function(kind: string, html: string): void {
+        function(kind: string, content: {html?: string; file: string}): void {
+            const base = document.querySelector('base');
+            base.setAttribute('href', 'file://' + path.dirname(content.file) + path.sep);
             switch (kind) {
                 case 'markdown': {
-                    prepare_markdown_preview(html);
+                    prepare_markdown_preview(content.html);
                     return;
                 }
 
                 case 'html': {
-                    prepare_html_preview(html);
+                    prepare_html_preview(content.file);
                     return;
                 }
             }
@@ -142,16 +145,16 @@ window.onload = function(){
     lint.lint_url = watcher.getLintRuleURL();
 
     let dialog = getPathDialog();
-    dialog.path = path;
+    dialog.path = init_path;
     dialog.onchanged = function(path) {
         watcher.changeWatchingDir(path);
         document.title = makeTitle(path);
     };
 
-    if (path === '') {
+    if (init_path === '') {
         dialog.open();
     }
-    document.title = makeTitle(path);
+    document.title = makeTitle(init_path);
 
     let receiver = new Keyboard.Receiver(config.shortcuts);
 

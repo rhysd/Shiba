@@ -30,7 +30,7 @@ class Watcher {
 
     constructor(
         public path: string,
-        public render: (kind: string, content: string) => void,
+        public render: (kind: string, content: Object) => void,
         public renderLintResult: (msgs: any[]) => void
     ) {
         this.config = config.load();
@@ -111,14 +111,17 @@ class Watcher {
                     // Note:
                     // Replace emoji notations in HTML document because Markdown can't specify the size of image.
                     let html = marked(text);
-                    this.render(kind, replaceAllEmojis(html));
+                    this.render(kind, {
+                        file: file,
+                        html: replaceAllEmojis(html),
+                    });
                 });
                 break;
             }
             case 'html': {
                 // XXX: Temporary
                 // I should send file name simply and renderer will read the file using <webview>
-                this.render(kind, file);
+                this.render(kind, {file: file});
             }
         }
     }
