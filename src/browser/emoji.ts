@@ -1,3 +1,6 @@
+import * as path from 'path';
+
+const IMAGE_PATH = path.dirname(path.dirname(__dirname)) + '/images';
 const EMOJI = new Set<string>([
     '+1',
     '-1',
@@ -888,7 +891,7 @@ const REGEX_EMOJI = /:(\w+):/g;
 export function replaceAll(str: string): string {
     let replacer = function(match, name) {
         if (EMOJI.has(name)) {
-            return `<img src="../images/emoji/${name}.png" title="${match}" height="16px"></img>`;
+            return `<img src="${IMAGE_PATH}/emoji/${name}.png" title="${match}" height="16px"></img>`;
         } else {
             return match;
         }
