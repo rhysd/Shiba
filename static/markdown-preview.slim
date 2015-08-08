@@ -20,10 +20,20 @@ dom-module id="markdown-preview"
 
     const openExternal = require('shell').openExternal;
 
-    function openLinkWithExternalBrowser(event) {
+    let element_env = null; // XXX
+    function openMarkdownLink(event) {
       event.preventDefault();
-      openExternal(event.target.href);
-      return false;
+
+      let path = event.target.href;
+      if (path.startsWith('file://')) {
+        path = path.slice(7); // Omit 'file://'
+      }
+
+      if (element_env.openMarkdownDoc) {
+        element_env.openMarkdownDoc(path);
+      } else {
+        console.log('openMarkdownDoc() is not defined!! Link ignored: ' + path);
+      }
     }
 
     Polymer({
@@ -33,7 +43,27 @@ dom-module id="markdown-preview"
         content: {
           type: String,
           observer: '_contentUpdated'
+        },
+
+        exts: {
+            type: Array,
+            value: []
+        },
+
+        openMarkdownDoc: Object
+      },
+
+      openLinkWithExternalBrowser: function(event) {
+        event.preventDefault();
+        if (event.target.href) {
+          openExternal(event.target.href);
+        } else if (event.target.src) {
+          openExternal(event.target.src);
         }
+      },
+
+      ready: function() {
+        element_env = this; // XXX
       },
 
       _contentUpdated: function(new_content) {
@@ -43,8 +73,19 @@ dom-module id="markdown-preview"
         const links = document.querySelectorAll('a');
         for (let i = 0; i < links.length; ++i) {
           let link = links.item(i);
-          if (link.href && link.href.startsWith('http')) {
-            link.setAttribute('onclick', 'openLinkWithExternalBrowser(event)');
+          if (!link.href) {
+              continue;
+          }
+
+          if (link.href.startsWith('http')) {
+            link.onclick = this.openLinkWithExternalBrowser;
+            continue;
+          }
+
+          for (const ext of this.exts) {
+            if (link.href.endsWith('.' + ext)) {
+              link.onclick = openMarkdownLink;
+            }
           }
         }
       }

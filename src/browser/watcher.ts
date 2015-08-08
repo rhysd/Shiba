@@ -80,7 +80,7 @@ class Watcher {
         })
     }
 
-    private sendUpdate(file: string) {
+    sendUpdate(file: string) {
         const ext = path.extname(file).substr(1);
         if (ext === '') {
             return;

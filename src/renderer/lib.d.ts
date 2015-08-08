@@ -23,6 +23,8 @@ interface HeaderPanel extends HTMLElement {
 
 interface MarkdownPreview extends HTMLElement {
     content: string;
+    exts: string[];
+    openMarkdownDoc: (string) => void;
 }
 
 interface LintResultArea extends HTMLElement {
