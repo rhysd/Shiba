@@ -14,12 +14,6 @@ var mainWindow = null;
 
 app.on('window-all-closed', function(){ app.quit(); });
 
-app.on('open-url', function(event){
-    event.preventDefault();
-    console.log('Tend to open: ' + event.url);
-    openExternal(event.url);
-});
-
 app.on('ready', function(){
     const display_size = require('screen').getPrimaryDisplay().workAreaSize;
 
@@ -54,6 +48,11 @@ app.on('ready', function(){
 
     mainWindow.on('closed', function(){
         mainWindow = null;
+    });
+
+    mainWindow.on('will-navigate', function(e: Event, url: string){
+        e.preventDefault();
+        openExternal(url);
     });
 
     menu.build(mainWindow);
