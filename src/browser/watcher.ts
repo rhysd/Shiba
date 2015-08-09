@@ -100,7 +100,7 @@ class Watcher {
                 // Encoding should be specified by config or detected
                 fs.readFile(file, 'utf8', (err: NodeJS.ErrnoException, text: string) => {
                     if (err) {
-                        console.log("Can't open: " + file);
+                        console.log(`Can't open '${file}': ${err}`);
                         return;
                     }
 

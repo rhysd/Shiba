@@ -59,7 +59,7 @@ task :build_typescript => %i(typings) do
   ensure_cmd 'tsc'
 
   sh 'tsc -p src/browser'
-  %w(index.ts).each do |f|
+  %w(index.ts markdown-preview.ts).each do |f|
     sh "tsc src/renderer/#{f} --out build/src/renderer/#{File.basename(f, '.*')}.js"
   end
 end
