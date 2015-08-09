@@ -34,7 +34,7 @@ guard :shell do
     when 'src/browser'
       execute(m[0], 'tsc', '-p', dir)
     when 'src/renderer'
-      execute(m[0], 'tsc', *Dir['src/renderer/*.ts'], '--out', 'build/src/renderer/index.js')
+      execute(m[0], 'tsc', m[0], '--out', "build/src/renderer/#{File.basename(m[0], '.ts')}.js")
     when 'tests/browser'
       execute(m[0], 'tsc', '-p', dir)
     when 'tests/renderer'

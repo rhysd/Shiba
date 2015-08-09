@@ -19,14 +19,21 @@ def ensure_cmd(cmd)
   end
 end
 
-task :dep do
+file "node_modules" do
+  ensure_cmd 'npm'
   sh 'npm install --dev'
+end
+
+file "bower_components" do
+  ensure_cmd 'bower'
   sh 'bower install'
 end
 
+task :dep => %i(node_modules bower_components)
+
 task :build_slim do
   ensure_cmd 'slimrb'
-  mkdir_p 'build/static'
+  directory 'build/static'
 
   Dir['static/*.slim'].each do |slim_file|
     sh "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
@@ -43,16 +50,21 @@ task :build_test do
   end
 end
 
-task :build_typescript do
-  ensure_cmd 'tsc'
+file "typings" do
   ensure_cmd 'tsd'
-
   sh 'tsd install'
-  sh 'tsc -p src/browser'
-  sh 'tsc src/renderer/*.ts --out build/src/renderer/index.js'
 end
 
-task :build => %i(build_slim build_typescript)
+task :build_typescript => %i(typings) do
+  ensure_cmd 'tsc'
+
+  sh 'tsc -p src/browser'
+  %w(index.ts).each do |f|
+    sh "tsc src/renderer/#{f} --out build/src/renderer/#{File.basename(f, '.*')}.js"
+  end
+end
+
+task :build => %i(dep build_slim build_typescript)
 
 task :npm_publish => %i(build) do
   mkdir 'npm-publish'
