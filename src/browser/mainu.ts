@@ -1,5 +1,6 @@
 import * as app from 'app';
 import * as path from 'path';
+import * as fs from 'fs';
 import BrowserWindow = require('browser-window');
 import {openExternal} from 'shell';
 import * as menu from './menu';
@@ -53,6 +54,16 @@ app.on('ready', function(){
     mainWindow.on('will-navigate', function(e: Event, url: string){
         e.preventDefault();
         openExternal(url);
+    });
+
+    mainWindow.on('dom-ready', function(){
+        fs.readFile(path.join(app.getPath('userData'), 'user.css'), {encoding: 'utf8'}, (err, content) => {
+            if (err) {
+                return;
+            }
+
+            mainWindow.webContents.insertCSS(content);
+        });
     });
 
     menu.build(mainWindow);
