@@ -158,6 +158,26 @@ window.onload = function(){
     }
     document.title = makeTitle(init_path);
 
+    let viewer = document.getElementById('viewer-wrapper');
+    const cancel_event = function(e: Event) {
+        e.preventDefault();
+    };
+    viewer.addEventListener('dragenter', cancel_event);
+    viewer.addEventListener('dragover', cancel_event);
+    viewer.addEventListener('drop', event => {
+        event.preventDefault();
+        const file: any = event.dataTransfer.files[0];
+        // XXX: `path` is not standard member of `File` class
+        if (file.path === undefined) {
+            console.log('Failed to get the path of dropped file');
+            return;
+        }
+        watcher.changeWatchingDir(file.path);
+        document.title = makeTitle(file.path);
+    });
+
+    console.log('viewer set!');
+
     let receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());

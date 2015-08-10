@@ -42,6 +42,19 @@ html
         #current-html-preview {
           width: 100%;
         }
+        .dropzone {
+          width: calc(100% - 40px);
+          height: calc(100vh - 40px);
+          line-height: calc(100vh - 40px);
+          margin: 20px;
+          background-color: #eeeeee;
+          border: 1px dashed grey;
+          border-radius: 8px;
+          text-align: center;
+          font-weight: bold;
+          font-size: xx-large;
+          color: grey;
+        }
 
     base
   body
@@ -50,6 +63,7 @@ html
       paper-header-panel[main]
         section#main-area
           div.preview#viewer-wrapper
+            div.dropzone Drop file here
           div#menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
