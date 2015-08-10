@@ -58,6 +58,7 @@ Please refer [customization document](docs/customization.md).
 - More markdown theme (e.g. [tufte-css](https://github.com/daveliepmann/tufte-css))
 - More formats
   - [ ] PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
+- Put D&D area in preview when no file is watched
 
 
 ## Special Thanks

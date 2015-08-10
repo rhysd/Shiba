@@ -8,6 +8,7 @@ interface Scroller {
 
 interface PathDialog extends HTMLElement {
     open(): void;
+    close(): void;
     path: string;
     onchanged: (string) => void;
 }
