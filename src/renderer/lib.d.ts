@@ -33,6 +33,15 @@ interface LintResultArea extends HTMLElement {
     voice_src: string;
 }
 
+interface LintMessage {
+    header: string;
+    body: string;
+}
+
+interface LintMessageElement extends HTMLElement {
+    message: LintMessage;
+}
+
 interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
