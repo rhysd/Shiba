@@ -42,6 +42,25 @@ Shortcut `CTRL + L` is also available to toggle lint result drawer.
 Keyboard shortcuts are available for above all operations.
 Please refer [shortcuts document](shortcuts.md).
 
+## Links in Documents
+
+### Clicking a link to local markdown file
+
+When you click a link to local markdown document, Shiba shows the preview of the document _temporarily_.
+'_temporarily_' means that Shiba still watches the original document before jump the link.  So you can back to the original document when original document is updated or 'reload' button is pushed.
+
+### Clicking an external link
+
+When you click an external link (which starts with `http://` or `https://`), Shiba tends to open the link with external browser.  This behavior is mandatory in terms of security because pages in Electron are loaded outside sandbox.
+
+### Clicking a `#hash` link
+
+When you click to the internal link to hash, page simply scrolls to the target.
+
+### Clicking a link to local markdown file with modifier key
+
+If you click a link to local markdown document with modifier key (Ctrl or Command), Shiba changes the watching directory to the linked document.
+
 ## Start up Options
 
 You can specify initial path to watch as command line argument if you start Shiba from terminal.
