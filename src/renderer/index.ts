@@ -176,8 +176,6 @@ window.onload = function(){
         document.title = makeTitle(file.path);
     });
 
-    console.log('viewer set!');
-
     let receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());

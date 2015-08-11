@@ -18,6 +18,7 @@ html
 
     link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
     link rel="stylesheet" href="../../node_modules/highlight.js/styles/github.css"
+    link rel="stylesheet" href="../../bower_components/font-awesome/css/font-awesome.min.css"
 
     style is="custom-style"
       |
@@ -43,17 +44,24 @@ html
           width: 100%;
         }
         .dropzone {
+          position: relative;
           width: calc(100% - 40px);
           height: calc(100vh - 40px);
-          line-height: calc(100vh - 40px);
           margin: 20px;
           background-color: #eeeeee;
-          border: 1px dashed grey;
+          border: 2px dashed grey;
           border-radius: 8px;
+        }
+        .inner-dropzone {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
           text-align: center;
           font-weight: bold;
           font-size: xx-large;
           color: grey;
+          font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
         }
 
     base
@@ -63,7 +71,13 @@ html
       paper-header-panel[main]
         section#main-area
           div.preview#viewer-wrapper
-            div.dropzone Drop file here
+            div.dropzone
+              div.inner-dropzone
+                p
+                  i class="fa fa-file-text-o fa-5x"
+                p
+                  i class="fa fa-arrow-up fa-2x"
+                p Drop file to window
           div#menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
