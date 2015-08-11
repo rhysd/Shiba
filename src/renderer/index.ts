@@ -179,6 +179,11 @@ window.onload = function(){
     let reload_button = document.getElementById('reload-button');
     reload_button.onclick = () => watcher.startWatching();
 
+    if (!config.drawer.responsive) {
+        let drawer: any = document.getElementById('main-drawer');
+        drawer.forceNarrow = true;
+    }
+
     let receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());

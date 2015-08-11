@@ -15,8 +15,11 @@ export interface Config {
     voice: {
         enabled: boolean;
         source: string;
-    },
+    };
     lint_options?: any;
+    drawer: {
+        responsive: boolean;
+    };
 }
 
 export function load(): Config {
@@ -37,6 +40,9 @@ export function load(): Config {
         voice: {
             enabled: false,
             source: '../voices/bow.mp3',
+        },
+        drawer: {
+            responsive: true,
         },
         shortcuts: {
             'j':        'PageDown',
