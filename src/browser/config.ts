@@ -54,7 +54,8 @@ export function load(): Config {
             'home':     'PageTop',
             'end':      'PageBottom',
             'ctrl+p':   'ChangePath',
-            'ctrl+l':   'Lint'
+            'ctrl+l':   'Lint',
+            'r':        'Reload',
         }
     };
 
