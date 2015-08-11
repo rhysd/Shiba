@@ -2,6 +2,7 @@
 /// <reference path="../../typings/polymer/polymer.d.ts" />
 
 const openExternal: (string) => void = require('shell').openExternal;
+const path = require('path');
 
 let element_env = null; // XXX
 function openMarkdownLink(event: Event) {
@@ -66,11 +67,15 @@ Polymer({
                 continue;
             }
 
-            for (const ext of this.exts) {
-                if (link.href.endsWith('.' + ext)) {
-                    link.onclick = openMarkdownLink;
-                }
+            const ext = path.extname(link.href).slice(1); // Omit '.'
+            if (this.exts.indexOf(ext) !== -1) {
+                link.onclick = openMarkdownLink;
+                continue;
             }
+
+            // Note:
+            // If the link is local link, it should not work
+            link.onclick = event => event.preventDefault();
         }
     }
 });
