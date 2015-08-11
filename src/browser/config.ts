@@ -20,6 +20,9 @@ export interface Config {
     drawer: {
         responsive: boolean;
     };
+    menu: {
+        visible: boolean;
+    };
 }
 
 export function load(): Config {
@@ -43,6 +46,9 @@ export function load(): Config {
         },
         drawer: {
             responsive: true,
+        },
+        menu: {
+            visible: true,
         },
         shortcuts: {
             'j':        'PageDown',

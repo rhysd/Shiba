@@ -12,6 +12,10 @@ height: "max"
 linter: "mdast-lint"
 lint_options:
     maximum-line-length: false
+drawer:
+    responsive: false
+menu:
+    visible: false
 ```
 
 All keys for the YAML configuration file is below:
@@ -27,6 +31,7 @@ All keys for the YAML configuration file is below:
 | `voice.enabled`     | Notify with voice      | enable/disable with boolean value              | false               |
 | `voice.source`      | Path to voice source   | Path string                                    | "../voices/bow.mp3" |
 | `drawer.responsive` | Make drawer responsive | Enable responsive drawer with boolean value    | true                |
+| `menu.visible`      | Right menu visibility  | Right menu is visible or not (boolean value)   | true                |
 
 
 ## Customize Keyboard Shortcuts

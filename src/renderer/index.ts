@@ -184,6 +184,11 @@ window.onload = function(){
         drawer.forceNarrow = true;
     }
 
+    if (!config.menu.visible) {
+        let menu = document.getElementById('menu');
+        menu.style.display = 'none';
+    }
+
     let receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());
