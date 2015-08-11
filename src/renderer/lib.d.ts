@@ -10,7 +10,7 @@ interface PathDialog extends HTMLElement {
     open(): void;
     close(): void;
     path: string;
-    onchanged: (string) => void;
+    onchanged: (path: string) => void;
 }
 
 interface MainDrawerPanel extends HTMLElement {
@@ -25,7 +25,7 @@ interface HeaderPanel extends HTMLElement {
 interface MarkdownPreview extends HTMLElement {
     content: string;
     exts: string[];
-    openMarkdownDoc: (string) => void;
+    openMarkdownDoc: (path: string, modifier: boolean) => void;
 }
 
 interface LintResultArea extends HTMLElement {

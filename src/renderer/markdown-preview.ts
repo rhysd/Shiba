@@ -5,7 +5,7 @@ const openExternal: (string) => void = require('shell').openExternal;
 const path = require('path');
 
 let element_env = null; // XXX
-function openMarkdownLink(event: Event) {
+function openMarkdownLink(event: MouseEvent) {
     event.preventDefault();
 
     let path: string = (<HTMLAnchorElement>event.target).href;
@@ -14,7 +14,7 @@ function openMarkdownLink(event: Event) {
     }
 
     if (element_env.openMarkdownDoc) {
-        element_env.openMarkdownDoc(path);
+        element_env.openMarkdownDoc(path, event.ctrlKey || event.metaKey);
     } else {
         console.log('openMarkdownDoc() is not defined!! Link ignored: ' + path);
     }

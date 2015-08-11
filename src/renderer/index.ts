@@ -59,7 +59,7 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
     }
 }
 
-function prepare_markdown_preview(html: string, exts: string[], onPathChanged: (string) => void): void {
+function prepare_markdown_preview(html: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
     let markdown_preview = <MarkdownPreview>document.getElementById('current-markdown-preview');
     if (markdown_preview !== null) {
         markdown_preview.content = html;
@@ -121,7 +121,14 @@ window.onload = function(){
             base.setAttribute('href', 'file://' + path.dirname(content.file) + path.sep);
             switch (kind) {
                 case 'markdown': {
-                    prepare_markdown_preview(content.html, config.file_ext.markdown, watcher.sendUpdate);
+                    prepare_markdown_preview(content.html, config.file_ext.markdown, (path: string, modifier: boolean) => {
+                        if (modifier) {
+                            watcher.changeWatchingDir(path);
+                            document.title = makeTitle(path);
+                        } else {
+                            watcher.sendUpdate(path)
+                        }
+                    });
                     return;
                 }
 
