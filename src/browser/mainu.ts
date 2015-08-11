@@ -12,7 +12,7 @@ const config = loadConfig();
 
 // Show versions {{{
 const versions: any = process.versions;
-console.log('Shiba version 0.3.9');
+console.log('Shiba version 0.3.10');
 console.log('  Electron version ' + versions.electron);
 console.log('  Chrome version ' + versions.chrome);
 console.log('  io.js version ' + versions.node);
