@@ -176,6 +176,9 @@ window.onload = function(){
         document.title = makeTitle(file.path);
     });
 
+    let reload_button = document.getElementById('reload-button');
+    reload_button.onclick = () => watcher.startWatching();
+
     let receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());
@@ -200,5 +203,8 @@ window.onload = function(){
     receiver.on('DevTools', function() {
         this.bw = this.bw || remote.require('browser-window');
         this.bw.getFocusedWindow().toggleDevTools();
+    });
+    receiver.on('Reload', () => {
+        watcher.startWatching();
     });
 };
