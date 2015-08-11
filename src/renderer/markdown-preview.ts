@@ -2,7 +2,6 @@
 /// <reference path="../../typings/polymer/polymer.d.ts" />
 
 const openExternal: (string) => void = require('shell').openExternal;
-const path = require('path');
 
 let element_env = null; // XXX
 function openMarkdownLink(event: MouseEvent) {
@@ -18,6 +17,14 @@ function openMarkdownLink(event: MouseEvent) {
     } else {
         console.log('openMarkdownDoc() is not defined!! Link ignored: ' + path);
     }
+}
+
+function openHashLink(event: MouseEvent) {
+    event.preventDefault();
+
+    let hash_name: string = (<HTMLAnchorElement>event.target).href.split('#')[1];
+    console.log(hash_name);
+    location.hash = hash_name;
 }
 
 Polymer({
@@ -62,14 +69,25 @@ Polymer({
                 continue;
             }
 
+            // Note: External link
             if (link.href.startsWith('http')) {
                 link.onclick = this.openLinkWithExternalBrowser;
                 continue;
             }
 
-            const ext = path.extname(link.href).slice(1); // Omit '.'
-            if (this.exts.indexOf(ext) !== -1) {
-                link.onclick = openMarkdownLink;
+            // Note: Link to local markdown document
+            const ext_idx = link.href.lastIndexOf('.');
+            if (ext_idx !== -1) {
+                const ext = link.href.slice(ext_idx + 1);
+                if (this.exts.indexOf(ext) !== -1) {
+                    link.onclick = openMarkdownLink;
+                    continue;
+                }
+            }
+
+            // Note: Inner link (<base> tag appends prefix to the hash name)
+            if (link.href.indexOf('#') !== -1) {
+                link.onclick = openHashLink;
                 continue;
             }
 
