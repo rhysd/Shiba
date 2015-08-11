@@ -5,13 +5,17 @@ sudo: false
 install:
     - npm install -g tslint typescript tsd
     - npm install
+    - tsd install
     - export DISPLAY=':99.0'
     - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 script:
     - tslint --version
     - tslint $(git ls-files | grep '.ts$')
     - tsc --version
-    - rake build_typescript
+    - tsc index.ts --out /build/src/renderer/index.js
+    - tsc markdown-preview.ts --out /build/src/renderer/markdown-preview.js
+    - tsc lint-panel.ts --out /build/src/renderer/lint-panel.js
+    - tsc path-dialog.ts --out /build/src/renderer/path-dialog.js
     - npm test -- --travis
 addons:
     apt:
