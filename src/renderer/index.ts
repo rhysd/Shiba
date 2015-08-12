@@ -165,13 +165,12 @@ window.onload = function(){
     }
     document.title = makeTitle(init_path);
 
-    let viewer = document.getElementById('viewer-wrapper');
     const cancel_event = function(e: Event) {
         e.preventDefault();
     };
-    viewer.addEventListener('dragenter', cancel_event);
-    viewer.addEventListener('dragover', cancel_event);
-    viewer.addEventListener('drop', event => {
+    document.body.addEventListener('dragenter', cancel_event);
+    document.body.addEventListener('dragover', cancel_event);
+    document.body.addEventListener('drop', event => {
         event.preventDefault();
         const file: any = event.dataTransfer.files[0];
         if (file === undefined) {
