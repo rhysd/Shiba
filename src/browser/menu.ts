@@ -8,7 +8,7 @@ export function build(main_window: GitHubElectron.BrowserWindow) {
 
             submenu: [
                 {
-                    label: 'Reload',
+                    label: 'Restart',
                     click: () => main_window.reload(),
                 },
                 {
