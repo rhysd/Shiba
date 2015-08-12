@@ -101,13 +101,6 @@ function prepare_html_preview(file) {
     setChildToViewerWrapper(html_preview);
 }
 
-function launchFileChooser() {
-    const uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');
-    if (uploader) {
-        uploader.click();
-    }
-}
-
 window.onload = function(){
     const init_path = remote.require('./initial_path.js')();
     const config = remote.require('./config').load();
@@ -193,14 +186,10 @@ window.onload = function(){
         document.title = makeTitle(file.path);
     });
 
-    let uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');
-    uploader.addEventListener('change', (event: Event) => {
-        const file: any = (<HTMLInputElement>event.target).files[0];
-        if (file !== undefined && file.path !== undefined) {
-            watcher.changeWatchingDir(file.path);
-            document.title = makeTitle(file.path);
-        }
-    });
+    (<PawFilechooser>document.querySelector('paw-filechooser')).onFileChosen = (path: string) => {
+        watcher.changeWatchingDir(path);
+        document.title = makeTitle(path);
+    };
 
     let reload_button = document.getElementById('reload-button');
     reload_button.onclick = () => watcher.startWatching();

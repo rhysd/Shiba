@@ -18,6 +18,7 @@ script:
     - tsc src/renderer/markdown-preview.ts --out build/src/renderer/markdown-preview.js
     - tsc src/renderer/lint-panel.ts --out build/src/renderer/lint-panel.js
     - tsc src/renderer/path-dialog.ts --out build/src/renderer/path-dialog.js
+    - tsc src/renderer/paw-filechooser.ts --out build/src/renderer/paw-filechooser.js
     - npm test -- --travis
 addons:
     apt:

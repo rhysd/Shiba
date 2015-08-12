@@ -43,6 +43,10 @@ interface LintMessageElement extends HTMLElement {
     message: LintMessage;
 }
 
+interface PawFilechooser extends HTMLElement {
+    onFileChosen: (path: string) => void;
+}
+
 interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
