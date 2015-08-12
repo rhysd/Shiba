@@ -74,30 +74,9 @@ Polymer({
 
     },
 
-    setupDropzone: function(dialog) {
-        let dropzone = <HTMLDivElement>document.querySelector('.dropzone');
-        const cancel_event = function(e: Event) {
-            e.preventDefault();
-        };
-        dropzone.addEventListener('dragenter', cancel_event);
-        dropzone.addEventListener('dragover', cancel_event);
-        dropzone.addEventListener('drop', event => {
-            event.preventDefault();
-            const file: any = event.dataTransfer.files[0];
-            if (file === undefined) {
-                return;
-            }
-            // XXX: `path` is not standard member of `File` class
-            this.path = file.path;
-            this.onchanged(file.path);
-            dialog.close();
-        });
-    },
-
     ready: function() {
         let dialog = this.getDialog();
         this.setupDialog(dialog);
         this.setupToggleButton();
-        this.setupDropzone(dialog);
     }
 });

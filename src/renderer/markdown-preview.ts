@@ -2,12 +2,13 @@
 /// <reference path="../../typings/polymer/polymer.d.ts" />
 
 const openExternal: (string) => void = require('shell').openExternal;
+const querystring = require('querystring');
 
 let element_env = null; // XXX
 function openMarkdownLink(event: MouseEvent) {
     event.preventDefault();
 
-    let path: string = (<HTMLAnchorElement>event.target).href;
+    let path: string = querystring.unescape((<HTMLAnchorElement>event.target).href);
     if (path.startsWith('file://')) {
         path = path.slice(7); // Omit 'file://'
     }
