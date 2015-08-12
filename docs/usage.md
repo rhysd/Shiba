@@ -7,7 +7,11 @@ Click application icon to start Shiba.  Below is an OS X example.
 
 ![dock startup](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/dock.png)
 
-Then you can see an empty window.  At first, find the 'directory' icon and push it.  A dialog will be shown and you can specify a directory or markdown file to make Shiba watch.
+Then you can see an empty window.  At first, let's make Shiba watch a markdown document.  There are 3 ways to do that.
+
+1. You can see 'Drop file to window' message in the main window. Simply drop a file you want to preview.  Note that you can always drop down a file to window even if Shiba already watches other file.
+2. Click the drop zone in main window.  A file chooser appears and you can choose a file to preview with it.
+3. Please find the 'directory' icon and push it.  A dialog will be shown and you can specify a directory or markdown file to make Shiba watch.
 
 ![directory icon](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/menu-no-error.png)
 
@@ -42,24 +46,24 @@ Shortcut `CTRL + L` is also available to toggle lint result drawer.
 Keyboard shortcuts are available for above all operations.
 Please refer [shortcuts document](shortcuts.md).
 
-## Links in Documents
+## Clicking Links in Documents
 
-### Clicking a link to local markdown file
+### Link to local markdown file
 
 When you click a link to local markdown document, Shiba shows the preview of the document _temporarily_.
 '_temporarily_' means that Shiba still watches the original document before jump the link.  So you can back to the original document when original document is updated or 'reload' button is pushed.
 
-### Clicking an external link
+### External link
 
 When you click an external link (which starts with `http://` or `https://`), Shiba tends to open the link with external browser.  This behavior is mandatory in terms of security because pages in Electron are loaded outside sandbox.
 
-### Clicking a `#hash` link
+### `#hash` link
 
 When you click to the internal link to hash, page simply scrolls to the target.
 
-### Clicking a link to local markdown file with modifier key
+### Link to local markdown file with modifier key
 
-If you click a link to local markdown document with modifier key (Ctrl or Command), Shiba changes the watching directory to the linked document.
+If you click a link to local markdown document with modifier key (Ctrl or Command), Shiba changes the watching path to the linked document.
 
 ## Start up Options
 
