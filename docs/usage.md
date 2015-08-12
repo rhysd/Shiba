@@ -59,7 +59,22 @@ When you click an external link (which starts with `http://` or `https://`), Shi
 
 ### `#hash` link
 
-When you click to the internal link to hash, page simply scrolls to the target.
+When you click to the internal link to hash, page simply scrolls to the target. Note that links must be lower-case only. For example, each of these links:
+
+    # Table of Contents
+    * [Chapter 1](#chapter-1)
+      * [Section A](#section-a)
+      * [Section B](#section-b)
+    * [Chapter 2](#chapter-2)
+    * [Chapter 3](#chapter-3)
+
+Will link to each of these headings:
+
+    ## Chapter 1
+      ### Section A
+      ### Section B
+    ## Chapter 2
+    ## Chapter 3
 
 ### Link to local markdown file with modifier key
 
