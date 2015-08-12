@@ -101,6 +101,13 @@ function prepare_html_preview(file) {
     setChildToViewerWrapper(html_preview);
 }
 
+function launchFileChooser() {
+    const uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');
+    if (uploader) {
+        uploader.click();
+    }
+}
+
 window.onload = function(){
     const init_path = remote.require('./initial_path.js')();
     const config = remote.require('./config').load();
@@ -174,6 +181,9 @@ window.onload = function(){
     viewer.addEventListener('drop', event => {
         event.preventDefault();
         const file: any = event.dataTransfer.files[0];
+        if (file === undefined) {
+            return;
+        }
         // XXX: `path` is not standard member of `File` class
         if (file.path === undefined) {
             console.log('Failed to get the path of dropped file');
@@ -181,6 +191,15 @@ window.onload = function(){
         }
         watcher.changeWatchingDir(file.path);
         document.title = makeTitle(file.path);
+    });
+
+    let uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');
+    uploader.addEventListener('change', (event: Event) => {
+        const file: any = (<HTMLInputElement>event.target).files[0];
+        if (file !== undefined && file.path !== undefined) {
+            watcher.changeWatchingDir(file.path);
+            document.title = makeTitle(file.path);
+        }
     });
 
     let reload_button = document.getElementById('reload-button');

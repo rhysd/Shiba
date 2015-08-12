@@ -41,6 +41,9 @@ html
         #current-html-preview {
           width: 100%;
         }
+        .hidden-uploader {
+          display: none;
+        }
         .dropzone {
           position: relative;
           width: calc(100% - 44px);   /* (margin 20px + border 2px) * 2 */
@@ -49,6 +52,7 @@ html
           background-color: #eeeeee;
           border: 2px dashed grey;
           border-radius: 8px;
+          cursor: pointer;
         }
         .inner-dropzone {
           position: absolute;
@@ -69,13 +73,14 @@ html
       paper-header-panel[main]
         section#main-area
           div.preview#viewer-wrapper
-            div.dropzone
+            div.dropzone onclick="launchFileChooser()"
               div.inner-dropzone
                 p
                   i class="fa fa-paw fa-5x"
                 p
                   i class="fa fa-arrow-up fa-2x"
                 p Drop file to window
+                input.hidden-uploader type="file"
           div#menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"

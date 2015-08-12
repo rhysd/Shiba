@@ -84,6 +84,9 @@ Polymer({
         dropzone.addEventListener('drop', event => {
             event.preventDefault();
             const file: any = event.dataTransfer.files[0];
+            if (file === undefined) {
+                return;
+            }
             // XXX: `path` is not standard member of `File` class
             this.path = file.path;
             this.onchanged(file.path);
