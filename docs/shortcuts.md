@@ -15,6 +15,7 @@ Currently below actions can be assigned to keyboard shortcuts.
 | `ChangePath` | Open 'change path' dialog     | `ctrl+p`                |
 | `Lint`       | Toggle lint result drawer     | `ctrl+l`                |
 | `Reload`     | Reload preview                | `r`                     |
+| `Print`      | Print current preview         | Not assigned            |
 | `QuitApp`    | Quit Shiba                    | Not assigned            |
 | `DevTools`   | Toggle DevTools window        | Not assigned            |
 

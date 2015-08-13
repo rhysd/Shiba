@@ -15,6 +15,10 @@ function onPathButtonPushed(): void {
     getPathDialog().open();
 }
 
+function onPrintButtonPushed(): void {
+    remote.getCurrentWebContents().print();
+}
+
 function getLintArea() {
     return <LintResultArea>document.getElementById('lint-area');
 }
@@ -229,9 +233,8 @@ window.onload = function(){
         this.bw = this.bw || remote.require('browser-window');
         this.bw.getFocusedWindow().toggleDevTools();
     });
-    receiver.on('Reload', () => {
-        watcher.startWatching();
-    });
+    receiver.on('Reload', () => watcher.startWatching());
+    receiver.on('Print', () => remote.getCurrentWebContents().print());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
     fs.exists(user_css_path, (exists: boolean) => {
