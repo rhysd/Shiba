@@ -97,7 +97,7 @@ $ shiba.exe {path}
 
 The `{path}` is a path to markdown file or a directory you want to preview.
 
-## [mermaid.js](https://github.com/knsv/mermaid) Integaration
+## [mermaid.js](https://github.com/knsv/mermaid) Integration
 
 Shiba can render diagram and flowchart using [mermaid.js](https://github.com/knsv/mermaid).
 Write diagram or flowchart definition in `mermaid` code block in markdown document.
