@@ -67,6 +67,18 @@ file_ext:
         - "html"
 ```
 
+## User CSS
+
+You can put `user.css` in configuration directory.  It is loaded at opening main window and enables to control the style of Shiba.  Below is an example to remove a reload button from menu.
+
+```css
+#reload-button {
+  display: none;
+}
+```
+
+Note that Shiba uses web components.  Some components' style can not be modified directly because Stylesheets are isolated in web components.  `Devtools` option may be useful to check the attributes in HTML document.
+
 ## Voice Notification
 
 When linter reports some errors or warnings, Shiba can notify that with voice.
