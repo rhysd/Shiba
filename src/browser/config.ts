@@ -8,21 +8,21 @@ export interface Config {
     file_ext: {
         markdown: string[];
         html: string[];
-    };
-    width: number;
-    height: number;
+    }
+    width: number | string;
+    height: number | string;
     shortcuts: Object;
     voice: {
         enabled: boolean;
         source: string;
-    };
+    }
     lint_options?: any;
     drawer: {
         responsive: boolean;
-    };
+    }
     menu: {
         visible: boolean;
-    };
+    }
 }
 
 export function load(): Config {
@@ -30,7 +30,8 @@ export function load(): Config {
         return this.user_config;
     }
 
-    const file = join(getPath('userData'), 'config.yml');
+    const config_dir = getPath('userData');
+    const file = join(config_dir, 'config.yml');
     const default_config = {
         linter: "mdast-lint",
         file_ext: {
@@ -94,6 +95,8 @@ export function load(): Config {
         console.log('No configuration file is found: ' + file);
         this.user_config = default_config;
     }
+
+    this.user_config._config_dir_path = config_dir;
 
     return this.user_config;
 }

@@ -64,16 +64,6 @@ app.on('ready', function(){
         openExternal(url);
     });
 
-    mainWindow.on('dom-ready', function(){
-        fs.readFile(path.join(app.getPath('userData'), 'user.css'), {encoding: 'utf8'}, (err, content) => {
-            if (err) {
-                return;
-            }
-
-            mainWindow.webContents.insertCSS(content);
-        });
-    });
-
     menu.build(mainWindow);
 });
 // }}}

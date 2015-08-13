@@ -105,6 +105,7 @@ window.onload = function(){
     const init_path = remote.require('./initial_path.js')();
     const config = remote.require('./config').load();
     const path = remote.require('path');
+    const fs = remote.require('fs');
 
     let lint = getLintArea();
     if (config.voice.enabled) {
@@ -230,5 +231,18 @@ window.onload = function(){
     });
     receiver.on('Reload', () => {
         watcher.startWatching();
+    });
+
+    const user_css_path: string = path.join(config._config_dir_path, 'user.css');
+    fs.exists(user_css_path, (exists: boolean) => {
+        if (!exists) {
+            return;
+        }
+
+        let link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'file://' + user_css_path;
+        document.head.appendChild(link);
     });
 };
