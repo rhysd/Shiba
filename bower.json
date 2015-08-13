@@ -1,6 +1,6 @@
 {
   "name": "Shiba",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "authors": [
     "rhysd <lin90162@yahoo.co.jp>"
   ],
@@ -34,6 +34,7 @@
     "paper-item": "PolymerElements/paper-item#^1.0.0",
     "paper-button": "PolymerElements/paper-button#^1.0.0",
     "paper-toggle-button": "PolymerElements/paper-toggle-button#^1.0.0",
-    "font-awesome": "~4.4.0"
+    "font-awesome": "~4.4.0",
+    "mermaid": "~0.5.1"
   }
 }

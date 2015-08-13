@@ -1,7 +1,9 @@
 link rel="import" href="../../bower_components/polymer/polymer.html"
 
 dom-module id="markdown-preview"
-  link rel="import" type="css" href="../../bower_components/github-markdown-css/github-markdown.css"
+  link rel="stylesheet" href="../../bower_components/mermaid/dist/mermaid.css"
+  link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
+  link rel="stylesheet" href="../../node_modules/highlight.js/styles/github.css"
 
   style is="custom-style"
     |
@@ -16,4 +18,7 @@ dom-module id="markdown-preview"
   template
     div.markdown-body
 
+  script src="../../bower_components/mermaid/dist/mermaid.min.js"
+  javascript:
+    mermaid.initialize({startOnLoad: false});
   script src="../src/renderer/markdown-preview.js"

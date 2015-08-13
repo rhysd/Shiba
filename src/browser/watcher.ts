@@ -14,6 +14,10 @@ marked.setOptions({
             return code;
         }
 
+        if (lang === 'mermaid') {
+            return '<div class="mermaid">' + code + '</div>';
+        }
+
         try {
             return highlight(lang, code).value;
         } catch (e) {

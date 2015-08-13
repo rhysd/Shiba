@@ -96,5 +96,9 @@ Polymer({
             // If the link is local link, it should not work
             link.onclick = event => event.preventDefault();
         }
+
+        if (document.querySelector('.lang-mermaid') !== undefined) {
+            mermaid.init();
+        }
     }
 });
