@@ -39,7 +39,7 @@ Polymer({
 
         exts: {
             type: Array,
-            value: []
+            value: function(){ return []; },
         },
 
         openMarkdownDoc: Object
