@@ -7,17 +7,18 @@
 Shiba is a rich live markdown preview app with lint.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
 Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](https://www.polymer-project.org/1.0/).
 
-- Isolated app.  You need not prepare Chrome and can use favorite editor.
-- Rich GitHub Flavored Markdown (code highlight, emoji)
-- Live reload
-- Automatic lint (mdast-lint, markdownlint)
-- Cross platform (Mac, Linux, Windows)
-- Both GUI and CLI friendly.
-- [Easy to install](docs/installation.md)
-- [Keyboard shortcuts](docs/shortcuts.md)
-- [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
-- HTML preview
-- Dog-respected :dog2:
+- [x] Isolated app.  You need not prepare Chrome and can use favorite editor.
+- [x] Rich GitHub Flavored Markdown (code highlight, emoji, tree diagram and flowchart using [mermaid](https://github.com/knsv/mermaid))
+- [x] Live reload
+- [x] Automatic lint (mdast-lint, markdownlint)
+- [x] Cross platform (Mac, Linux, Windows)
+- [x] Both GUI and CLI friendly.
+- [x] [Easy to install](docs/installation.md)
+- [x] [Keyboard shortcuts](docs/shortcuts.md)
+- [x] [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
+- [x] Print preview (to paper / to PDF file)
+- [x] HTML preview
+- [x] Dog-respected :dog2:
 
 All documents are in [docs](docs/) directory.  And I wrote [a Japanese blog post](http://rhysd.hatenablog.com/entry/2015/08/03/090646).
 
@@ -62,8 +63,6 @@ Please refer [customization document](docs/customization.md).
   - org
 - Separate converter as plugin
 - Watch multiple paths (Now Shiba can only one directory or file)
-- mermaid.js to draw figures (special block `mermaidjs`)
-- Emit current preview as PDF file (and HTML file).
 
 
 ## Special Thanks
