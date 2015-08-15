@@ -23,7 +23,7 @@ export interface Config {
     menu: {
         visible: boolean;
     }
-    ignore_file_pattern: string;
+    ignore_path_pattern: string;
 }
 
 export function load(): Config {
@@ -42,7 +42,7 @@ export function load(): Config {
         },
         width: 800,
         height: 600,
-        ignore_file_pattern: "[\\\\/]\\.",
+        ignore_path_pattern: "[\\\\/]\\.",
         voice: {
             enabled: false,
             source: '../voices/bow.mp3',
