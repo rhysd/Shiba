@@ -67,7 +67,7 @@ class Watcher {
             watched, {
                 ignoreInitial: true,
                 persistent: true,
-                ignored: /[\\\/]\./
+                ignored: new RegExp(this.config.ignore_file_pattern)
             }
         );
 
