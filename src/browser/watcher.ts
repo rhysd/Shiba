@@ -67,7 +67,7 @@ class Watcher {
             watched, {
                 ignoreInitial: true,
                 persistent: true,
-                ignored: new RegExp(this.config.ignore_path_pattern)
+                ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/]
             }
         );
 
