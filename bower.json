@@ -35,6 +35,7 @@
     "paper-button": "PolymerElements/paper-button#^1.0.0",
     "paper-toggle-button": "PolymerElements/paper-toggle-button#^1.0.0",
     "font-awesome": "~4.4.0",
-    "mermaid": "~0.5.1"
+    "mermaid": "~0.5.1",
+    "katex": "~0.5.1"
   }
 }
