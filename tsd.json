@@ -40,6 +40,9 @@
     },
     "webcomponents.js/webcomponents.js.d.ts": {
       "commit": "3b0f362204ea965952dafdb682a5274d527ef9d0"
+    },
+    "katex/katex.d.ts": {
+      "commit": "6f6e5c7dd9effe21fee14eb65fe340ecbbc8580a"
     }
   }
 }

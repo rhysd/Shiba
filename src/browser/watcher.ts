@@ -7,6 +7,7 @@ import {highlight} from 'highlight.js';
 import {replaceAll as replaceAllEmojis} from './emoji';
 import * as config from './config'
 import Linter from './linter';
+import {renderToString as katexRender} from 'katex';
 
 marked.setOptions({
     highlight: function(code: string, lang: string): string {
@@ -16,6 +17,10 @@ marked.setOptions({
 
         if (lang === 'mermaid') {
             return '<div class="mermaid">' + code + '</div>';
+        }
+
+        if (lang === 'katex') {
+            return '<div class="katex">' + katexRender(code, {displayMode: true}) + '</div>';
         }
 
         try {
