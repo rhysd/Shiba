@@ -27,10 +27,6 @@ function openHashLink(event: MouseEvent) {
     location.hash = hash_name;
 }
 
-function isAnchor(elem): elem is HTMLAnchorElement {
-    return elem.href;
-}
-
 interface MarkdownPreviewComponent extends polymer.Base {
     openLinkWithExternalBrowser(event: Event): void;
     _contentUpdated(new_content: string): void;
@@ -55,8 +51,8 @@ Polymer({
 
     openLinkWithExternalBrowser: function(event) {
         event.preventDefault();
-        let e = event.target as HTMLAnchorElement | HTMLImageElement;
-        if (isAnchor(e)) {
+        let e = event.target as HTMLElement & {src?: string; href?: string};
+        if (e.href) {
             openExternal(e.href);
         } else if (e.src) {
             openExternal(e.src);
