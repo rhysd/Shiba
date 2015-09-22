@@ -44,13 +44,11 @@ app.on('ready', function(){
         }
     }
 
-    mainWindow = new BrowserWindow(
-        {
+    mainWindow = new BrowserWindow({
             icon: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
             width: getConfigLength('width', 800),
             height: getConfigLength('height', 600)
-        }
-    );
+        } as GitHubElectron.BrowserWindowOptions);
 
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadUrl(html);

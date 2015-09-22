@@ -1,6 +1,16 @@
 /// <reference path="lib.d.ts" />
 /// <reference path="../../typings/polymer/polymer.d.ts" />
 
+interface PathDialogComponent extends polymer.Base {
+    getDialog(): PathDialog;
+    onchanged(p: string): void;
+    open(): void;
+    onChooserLaunched(): void;
+    onFileSpecified(): void;
+    setupDialog(dialog): void;
+    setupToggleButton(): void;
+}
+
 Polymer({
     is: 'path-dialog',
 
@@ -79,4 +89,4 @@ Polymer({
         this.setupDialog(dialog);
         this.setupToggleButton();
     }
-});
+} as PathDialogComponent);

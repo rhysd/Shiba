@@ -24,8 +24,16 @@ function openHashLink(event: MouseEvent) {
     event.preventDefault();
 
     let hash_name: string = (<HTMLAnchorElement>event.target).href.split('#')[1];
-    console.log(hash_name);
     location.hash = hash_name;
+}
+
+function isAnchor(elem): elem is HTMLAnchorElement {
+    return elem.href;
+}
+
+interface MarkdownPreviewComponent extends polymer.Base {
+    openLinkWithExternalBrowser(event: Event): void;
+    _contentUpdated(new_content: string): void;
 }
 
 Polymer({
@@ -47,10 +55,11 @@ Polymer({
 
     openLinkWithExternalBrowser: function(event) {
         event.preventDefault();
-        if (event.target.href) {
-            openExternal(event.target.href);
-        } else if (event.target.src) {
-            openExternal(event.target.src);
+        let e = event.target as HTMLAnchorElement | HTMLImageElement;
+        if (isAnchor(e)) {
+            openExternal(e.href);
+        } else if (e.src) {
+            openExternal(e.src);
         }
     },
 
@@ -101,4 +110,4 @@ Polymer({
             mermaid.init();
         }
     }
-});
+} as MarkdownPreviewComponent);

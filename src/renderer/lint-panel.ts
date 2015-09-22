@@ -1,6 +1,12 @@
 /// <reference path="lib.d.ts" />
 /// <reference path="../../typings/polymer/polymer.d.ts" />
 
+interface LintPanelComponent extends polymer.Base {
+    _setMessages(messages: LintMessage[]) : void;
+    _contentUpdated(messages: LintMessage[]) : void;
+    _showLintRules() : void;
+}
+
 Polymer({
     is: 'lint-panel',
 
@@ -57,4 +63,4 @@ Polymer({
         this.openExternal = this.openExternal || require('shell').openExternal;
         this.openExternal(this.lint_url);
     }
-});
+} as LintPanelComponent);
