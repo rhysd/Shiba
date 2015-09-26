@@ -11,6 +11,19 @@ If you [install Shiba with npm](installation.md), `shiba` command is available t
 
 Shiba opens the window and starts to watch and preview the current buffer.
 
+## Use from Emacs
+
+You can open shiba from emacs by adding following code to your .emacs:
+
+```lisp
+(defun open-with-shiba ()
+  "open a current markdown file with shiba"
+  (interactive)
+  (start-process "shiba" "*shiba*" "shiba" "--detach" buffer-file-name))
+(define-key markdown-mode-map (kbd "C-c C-c") 'open-with-shiba)
+```
+
+Simply type `C-c C-c` and you can preview your markdown file with shiba.
 
 -----------------
 [installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)
