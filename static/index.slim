@@ -45,6 +45,24 @@ html
         #current-html-preview {
           width: 100%;
         }
+    css:
+      @media print {
+        html, body {
+          padding: 0;
+          overflow-x: hidden;
+        }
+        #mainContainer {
+          overflow: visible !important;
+        }
+
+        paper-drawer-panel#main-drawer {
+          overflow: visible !important;
+          overflow-y: visible;
+        }
+        paper-drawer-panel {
+          overflow: visible !important;
+        }
+      }
     base
   body
     paper-drawer-panel#main-drawer[drawer-width="320px" responsive-width="1120px" disable-swipe=true right-drawer]
