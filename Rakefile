@@ -57,11 +57,8 @@ end
 
 task :build_typescript => %i(typings) do
   ensure_cmd 'tsc'
-
   sh 'tsc -p src/browser'
-  %w(index.ts markdown-preview.ts lint-panel.ts path-dialog.ts paw-filechooser.ts).each do |f|
-    sh "tsc src/renderer/#{f} --out build/src/renderer/#{File.basename(f, '.*')}.js"
-  end
+  sh 'tsc -p src/renderer'
 end
 
 task :build => %i(dep build_slim build_typescript)
@@ -78,6 +75,8 @@ task :npm_publish => %i(build) do
 end
 
 task :test => %i(build_test) do
+  sh 'tsc -p tests/browser'
+  sh 'tsc tests/renderer/keyboard_test.ts --out tests/renderer/index.js'
   sh 'npm test'
 end
 

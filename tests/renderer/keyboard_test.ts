@@ -1,3 +1,4 @@
+/// <reference path="./lib.d.ts" />
 /// <reference path="../../src/renderer/keyboard.ts" />
 
 context('Keyboard', () => {

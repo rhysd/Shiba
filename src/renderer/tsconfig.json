@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": "../../build/src/renderer",
+    "noImplicitAny": false,
+    "target": "es5",
+    "sourceMap": true
+  },
+  "files": [
+    "index.ts",
+    "markdown-preview.ts",
+    "lint-panel.ts",
+    "path-dialog.ts",
+    "paw-filechooser.ts"
+  ]
+}
