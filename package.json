@@ -29,6 +29,7 @@
     "katex": "^0.5.1",
     "markdownlint": "^0.0.6",
     "marked": "^0.3.3",
+    "mdast": "^2.1.0",
     "mdast-lint": "^1.1.1",
     "mousetrap": "^1.5.3"
   },
