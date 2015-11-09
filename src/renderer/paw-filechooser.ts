@@ -1,7 +1,7 @@
 /// <reference path="lib.d.ts" />
 
 function launchFileChooser() {
-    const uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');
+    const uploader = document.querySelector('.hidden-uploader') as HTMLInputElement;
     if (uploader) {
         uploader.click();
     }
@@ -15,9 +15,9 @@ Polymer({
     },
 
     ready: function() {
-        let uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');
+        const uploader = document.querySelector('.hidden-uploader') as HTMLInputElement;
         uploader.addEventListener('change', (event: Event) => {
-            const file: any = (<HTMLInputElement>event.target).files[0];
+            const file: any = (event.target as HTMLInputElement).files[0];
             if (file !== undefined && file.path !== undefined) {
                 this.onFileChosen(file.path);
             }

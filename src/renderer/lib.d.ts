@@ -28,15 +28,15 @@ interface MarkdownPreview extends HTMLElement {
     openMarkdownDoc: (path: string, modifier: boolean) => void;
 }
 
-interface LintResultArea extends HTMLElement {
-    content: string;
-    lint_url: string;
-    voice_src: string;
-}
-
 interface LintMessage {
     header: string;
     body: string;
+}
+
+interface LintResultArea extends HTMLElement {
+    content: LintMessage[];
+    lint_url: string;
+    voice_src: string;
 }
 
 interface LintMessageElement extends HTMLElement {

@@ -3,12 +3,12 @@
 namespace Keyboard {
 
     export class Receiver {
-        private callbacks: Object;
+        private callbacks: {[action: string]: () => void};
 
-        constructor(private shortcuts) {
+        constructor(private shortcuts: {[k: string]: string}) {
             this.callbacks = {};
 
-            const key_handler_for = action => () => this.dispatch(action);
+            const key_handler_for = (action: string) => () => this.dispatch_shortcut(action);
             for (const key in this.shortcuts) {
                 Mousetrap.bind(key, key_handler_for(this.shortcuts[key]));
             }
@@ -18,7 +18,7 @@ namespace Keyboard {
             this.callbacks[action] = callback;
         }
 
-        dispatch(action: string): void {
+        dispatch_shortcut(action: string): void {
             if (action in this.callbacks) {
                 this.callbacks[action]();
             }

@@ -4,6 +4,18 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "outDir": "../../build/src/browser",
-    "target": "es5"
-  }
+    "noImplicitAny": true,
+    "target": "es5",
+    "sourceMap": true
+  },
+  "files": [
+    "config.ts",
+    "emoji.ts",
+    "initial_path.ts",
+    "lib.d.ts",
+    "linter.ts",
+    "mainu.ts",
+    "menu.ts",
+    "watcher.ts"
+  ]
 }

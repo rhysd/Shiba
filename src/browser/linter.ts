@@ -4,6 +4,14 @@ interface Message {
     body: string;
 }
 
+interface MdastFile {
+    messages: {
+        line: number;
+        column: number;
+        reason: string;
+    }[]
+}
+
 export default class Linter {
     lint: (filename: string, content: string, callback: (msgs: Message[]) => void) => void;
     lint_url: string;
@@ -11,7 +19,7 @@ export default class Linter {
     mdast: any;
     options: Object;
 
-    constructor(name, options) {
+    constructor(name: string, options: Object) {
         this.options = options || {};
 
         if (name === 'markdownlint') {
@@ -30,18 +38,19 @@ export default class Linter {
         }
     }
 
-    markdownlint(filename, content, callback) {
+    markdownlint(filename: string, content: string, callback: (msgs: Message[]) => void) {
         this.mdl = this.mdl || require('markdownlint');
 
-        let opts = {
-            strings: {},
+        const opts = {
+            strings: {
+                [filename]: content
+            },
             config: this.options
         };
-        opts.strings[filename] = content;
 
-        this.mdl(opts, function(err, result){
+        this.mdl(opts, function(err: Error, result: any) {
             if (err) {
-                return [];
+                return;
             }
             const is_space = /\s+/;
             const messages = result.toString()
@@ -62,10 +71,10 @@ export default class Linter {
         });
     }
 
-    mdast_lint(filename, content, callback) {
+    mdast_lint(filename: string, content: string, callback: (msgs: Message[]) => void) {
         this.mdast = this.mdast || require('mdast')().use(require('mdast-lint'), this.options);
 
-        this.mdast.process(content, function(err, file){
+        this.mdast.process(content, function(err: NodeJS.ErrnoException, file: MdastFile){
             if (err) {
                 console.log('Lint failed: ', err.stack);
                 return;

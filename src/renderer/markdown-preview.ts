@@ -1,13 +1,19 @@
 /// <reference path="lib.d.ts" />
 
-const openExternal: (string) => void = require('shell').openExternal;
-const querystring = require('querystring');
+const openExternal = require('shell').openExternal as (url: string) => void;
+const unescape = require('querystring').unescape as (str: string) => string;
 
-let element_env = null; // XXX
+interface LinkOpenerType {
+    openMarkdownDoc(path: string, modifier: boolean): void;
+}
+
+let element_env: LinkOpenerType = null; // XXX
 function openMarkdownLink(event: MouseEvent) {
     event.preventDefault();
 
-    let path: string = querystring.unescape((<HTMLAnchorElement>event.target).href);
+    const anchor = event.target as HTMLAnchorElement;
+
+    let path = unescape(anchor.href);
     if (path.startsWith('file://')) {
         path = path.slice(7); // Omit 'file://'
     }
@@ -42,7 +48,7 @@ Polymer({
 
         exts: {
             type: Array,
-            value: function(){ return []; },
+            value: function(){ return [] as string[]; },
         },
 
         openMarkdownDoc: Object

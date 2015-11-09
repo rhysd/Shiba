@@ -6,7 +6,7 @@ interface PathDialogComponent extends polymer.Base {
     open(): void;
     onChooserLaunched(): void;
     onFileSpecified(): void;
-    setupDialog(dialog): void;
+    setupDialog(dialog: PathDialog): void;
     setupToggleButton(): void;
 }
 
@@ -51,16 +51,18 @@ Polymer({
     },
 
     onFileSpecified: function() {
-        // XXX: 'path' doesn't exist in standard File object?
-        const path = (<any>document.getElementById('path-hidden-input')).files[0].path;
-        (<HTMLTextAreaElement>document.getElementById('path-text-area')).value = path;
+        const hidden_input = document.getElementById('path-hidden-input') as HTMLInputElement;
+        // Note: Electron extends 'path' property in File API
+        const path = (hidden_input.files[0] as any).path;
+        const text_area = document.getElementById('path-text-area') as HTMLTextAreaElement;
+        text_area.value = path;
         this.path = path;
         this.onchanged(path);
     },
 
     setupDialog: function(dialog) {
         dialog.addEventListener('iron-overlay-closed', () => {
-            const textarea = <HTMLTextAreaElement>document.getElementById('path-text-area');
+            const textarea = document.getElementById('path-text-area') as HTMLTextAreaElement;
             this.path = textarea.value;
             if (!this.chooser_opened) {
                 this.onchanged(this.path);
@@ -69,9 +71,9 @@ Polymer({
     },
 
     setupToggleButton: function() {
-        let toggle = document.getElementById('want-to-choose-dir-button');
+        const toggle = document.getElementById('want-to-choose-dir-button');
         toggle.addEventListener('change', function() {
-            let hidden_input = document.getElementById('path-hidden-input');
+            const hidden_input = document.getElementById('path-hidden-input');
             if (this.checked) {
                 hidden_input.setAttribute('webkitdirectory', '');
                 hidden_input.setAttribute('directory', '');
@@ -84,7 +86,7 @@ Polymer({
     },
 
     ready: function() {
-        let dialog = this.getDialog();
+        const dialog = this.getDialog();
         this.setupDialog(dialog);
         this.setupToggleButton();
     }

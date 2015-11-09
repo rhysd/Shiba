@@ -889,7 +889,7 @@ const EMOJI = new Set<string>([
 const REGEX_EMOJI = /:(\w+):/g;
 
 export function replaceAll(str: string): string {
-    let replacer = function(match, name) {
+    const replacer = function(match: string, name: string) {
         if (EMOJI.has(name)) {
             return `<img src="${IMAGE_PATH}/emoji/${name}.png" title="${match}" height="16px"></img>`;
         } else {

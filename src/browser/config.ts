@@ -8,6 +8,7 @@ export interface Config {
     file_ext: {
         markdown: string[];
         html: string[];
+        [n: string]: string[];
     }
     width: number | string;
     height: number | string;
@@ -24,6 +25,7 @@ export interface Config {
         visible: boolean;
     }
     ignore_path_pattern: string;
+    [name: string]: any;
 }
 
 export function load(): Config {
@@ -72,7 +74,7 @@ export function load(): Config {
             'ctrl+l':   'Lint',
             'r':        'Reload',
         }
-    };
+    } as Config;
 
     function mergeConfig(c1: Config, c2: Config) {
         for (const k in c2) {
@@ -91,7 +93,7 @@ export function load(): Config {
     }
 
     try {
-        this.user_config = loadYAML(readFileSync(file, {encoding: 'utf8'}));
+        this.user_config = loadYAML(readFileSync(file, {encoding: 'utf8'})) as Config;
         mergeConfig(this.user_config, default_config);
     } catch(e) {
         console.log('No configuration file is found: ' + file);

@@ -1,7 +1,7 @@
 /// <reference path="keyboard.ts" />
 /// <reference path="lib.d.ts" />
 
-var remote = require('remote');
+const remote = require('remote');
 
 function getPathDialog() {
     return <PathDialog>document.getElementById('path-change');
@@ -20,7 +20,7 @@ function onPrintButtonPushed(): void {
 }
 
 function getLintArea() {
-    return <LintResultArea>document.getElementById('lint-area');
+    return document.getElementById('lint-area') as LintResultArea;
 }
 
 function makeTitle(path: string): string {
@@ -37,7 +37,8 @@ function getScroller(): Scroller {
         return null;
     }
 
-    return (<HeaderPanel>document.querySelector('paper-header-panel[' + selected + ']')).scroller;
+    const panel = document.querySelector('paper-header-panel[' + selected + ']') as HeaderPanel;
+    return panel.scroller;
 }
 
 function scrollContentBy(x: number, y:number): void {
@@ -64,13 +65,13 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
 }
 
 function prepare_markdown_preview(html: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
-    let markdown_preview = <MarkdownPreview>document.getElementById('current-markdown-preview');
+    let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
     if (markdown_preview !== null) {
         markdown_preview.content = html;
         return;
     }
 
-    markdown_preview = <MarkdownPreview>document.createElement('markdown-preview');
+    markdown_preview = document.createElement('markdown-preview') as MarkdownPreview;
     markdown_preview.id = 'current-markdown-preview';
 
     setChildToViewerWrapper(markdown_preview);
@@ -80,8 +81,8 @@ function prepare_markdown_preview(html: string, exts: string[], onPathChanged: (
     markdown_preview.content = html;
 }
 
-function prepare_html_preview(file) {
-    let html_preview = <HTMLIFrameElement>document.getElementById('current-html-preview');
+function prepare_html_preview(file: string) {
+    let html_preview = document.getElementById('current-html-preview') as HTMLIFrameElement;
     if (html_preview !== null) {
         html_preview.src = 'file://' + file;
         return;
@@ -112,13 +113,13 @@ window.onload = function(){
     const path = remote.require('path');
     const fs = remote.require('fs');
 
-    let lint = getLintArea();
+    const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;
     }
 
-    let Watcher = remote.require('./watcher.js');
-    var watcher = new Watcher(
+    const Watcher = remote.require('./watcher.js');
+    const watcher = new Watcher(
         init_path,
 
         // Markdown renderer
@@ -146,7 +147,7 @@ window.onload = function(){
         },
 
         // Linter result renderer
-        function(messages): void {
+        function(messages: LintMessage[]): void {
             lint.content = messages;
             let button = document.getElementById('lint-button');
             if (messages.length === 0) {

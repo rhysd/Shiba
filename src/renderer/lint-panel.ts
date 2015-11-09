@@ -22,7 +22,7 @@ Polymer({
     },
 
     _setMessages(messages: LintMessage[]) {
-        let content = document.querySelector('.lint-content');
+        const content = document.querySelector('.lint-content');
         while (content.firstChild) {
             content.removeChild(content.firstChild);
         }
@@ -37,7 +37,7 @@ Polymer({
     _contentUpdated: function(messages: LintMessage[]) {
         this._setMessages(messages);
 
-        let header = document.getElementById('lint-header');
+        const header = document.getElementById('lint-header');
         if (messages.length > 0) {
             header.innerText = 'Error';
             header.setAttribute('error', '');
@@ -59,7 +59,7 @@ Polymer({
             return;
         }
 
-        this.openExternal = this.openExternal || require('shell').openExternal;
+        this.openExternal = this.openExternal || require('shell').openExternal as (url: string) => void;
         this.openExternal(this.lint_url);
     }
 } as LintPanelComponent);

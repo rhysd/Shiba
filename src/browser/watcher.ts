@@ -64,7 +64,7 @@ class Watcher {
         }
 
         const ext_pattern = Object.keys(this.config.file_ext)
-                                .map((k) => this.config.file_ext[k].join('|'))
+                                .map((k: string) => this.config.file_ext[k].join('|'))
                                 .join('|');
 
         const watched = path.join(this.path, '**', `*.(${ext_pattern})`);
@@ -84,7 +84,7 @@ class Watcher {
             console.log('File added: ' + file);
             this.sendUpdate(file);
         });
-        this.file_watcher.on('error', (error) => {
+        this.file_watcher.on('error', (error: Error) => {
             console.log(`Error on watching: ${error}`);
         })
     }

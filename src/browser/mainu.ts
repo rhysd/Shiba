@@ -1,7 +1,7 @@
 import * as app from 'app';
 import * as path from 'path';
 import * as fs from 'fs';
-import BrowserWindow = require('browser-window');
+import * as BrowserWindow from 'browser-window';
 import {openExternal} from 'shell';
 import * as menu from './menu';
 import {load as loadConfig} from './config';
@@ -19,7 +19,7 @@ console.log('  Node.js version ' + versions.node);
 // }}}
 
 // Main Window {{{
-var mainWindow = null;
+let mainWindow: GitHubElectron.BrowserWindow = null;
 
 app.on('window-all-closed', function(){ app.quit(); });
 
