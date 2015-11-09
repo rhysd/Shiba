@@ -91,6 +91,7 @@ function prepare_html_preview(file) {
 
     // html_preview = document.createElement('webview');
     html_preview.id = 'current-html-preview';
+    html_preview.className = 'current-html-preview';
     html_preview.onload = function(e) {
         // Note:
         // Adjust

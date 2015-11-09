@@ -10,15 +10,15 @@ dom-module id="path-dialog"
       .dialog {
         width: 100%;
       }
-      #path-choose-button {
+      .path-choose-button {
         color: white;
         background: #d99e5f;
         float: left;
       }
-      #path-hidden-input {
+      .path-hidden-input {
         display: none;
       }
-      #path-chooser-area {
+      .path-chooser-area {
         float: right;
         margin: 14px;
       }
@@ -29,10 +29,10 @@ dom-module id="path-dialog"
         paper-textarea#path-text-area label="{{label}}" value="{{path}}"
         div class="layout horizontal"
           div class="layout flex"
-            paper-button#path-choose-button[on-click="onChooserLaunched" raised] Choose
-          div#path-chooser-area
+            paper-button.path-choose-button[on-click="onChooserLaunched" raised] Choose
+          div.path-chooser-area
             paper-toggle-button#want-to-choose-dir-button
             span Choose Directory
-        input#path-hidden-input type="file" on-change="onFileSpecified"
+        input.path-hidden-input#path-hidden-input type="file" on-change="onFileSpecified"
 
   script src="../src/renderer/path-dialog.js"

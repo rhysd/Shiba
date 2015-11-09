@@ -26,23 +26,23 @@ html
           height: 100%;
           margin: 0px;
         }
-        #main-area {
+        .main-area {
           @apply(--layout-horizontal);
         }
         .preview {
           @apply(--layout-flex);
         }
-        #menu {
+        .menu {
           @apply(--layout-vertical);
           background-color: #ffd8aa;
         }
-        #lint-area {
+        .lint-area {
           overflow: auto;
         }
         .menu-button {
           color: #d99e5f;
         }
-        #current-html-preview {
+        .current-html-preview {
           width: 100%;
         }
     css:
@@ -68,10 +68,10 @@ html
     paper-drawer-panel#main-drawer[drawer-width="320px" responsive-width="1120px" disable-swipe=true right-drawer]
       / Note: paper-header-panel is required to scroll content from JavaScript
       paper-header-panel[main]
-        section#main-area
+        section.main-area
           div.preview#viewer-wrapper
             paw-filechooser
-          div#menu
+          div#menu.menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
               path-dialog#path-change label="Shiba watching..."
@@ -83,7 +83,7 @@ html
               paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"
 
       paper-header-panel[drawer]
-        lint-panel#lint-area
+        lint-panel#lint-area.lint-area
 
     script src="../../node_modules/mousetrap/mousetrap.min.js"
     script src="../src/renderer/keyboard.js"

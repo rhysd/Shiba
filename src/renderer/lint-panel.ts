@@ -22,13 +22,13 @@ Polymer({
     },
 
     _setMessages(messages: LintMessage[]) {
-        let content = document.getElementById('lint-content');
+        let content = document.querySelector('.lint-content');
         while (content.firstChild) {
             content.removeChild(content.firstChild);
         }
 
         for (const m of messages) {
-            let msg = <LintMessageElement>document.createElement('lint-message');
+            let msg = document.createElement('lint-message') as LintMessageElement;
             msg.message = m;
             content.appendChild(msg);
         }
@@ -42,7 +42,7 @@ Polymer({
             header.innerText = 'Error';
             header.setAttribute('error', '');
             if (this.voice_src !== '') {
-                const voice = <HTMLAudioElement>document.getElementById('voice-notification');
+                const voice = document.querySelector('.voice-notification') as HTMLAudioElement;
                 if (voice) {
                     voice.play();
                 }

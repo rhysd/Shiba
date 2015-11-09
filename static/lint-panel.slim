@@ -20,7 +20,7 @@ dom-module#lint-panel
       :host > ::content [error] {
         background-color: #ce3c4a;
       }
-      #rule-link {
+      .rule-link {
         float: right;
         margin: 12px;
       }
@@ -28,20 +28,20 @@ dom-module#lint-panel
         cursor: pointer;
         color: gray;
       }
-      #lint-content {
+      .lint-content {
         padding: 12px;
         font: inherit;
         background-color: #ffd8aa;
       }
-      #voice-notification {
+      .voice-notification {
         display: none;
       }
 
   template
     div.paper-header#lint-header[no_error] No Error
-    div#lint-content
-    footer#rule-link
+    div.lint-content
+    footer.rule-link
       span.link on-click="_showLintRules" lint rules
-      audio#voice-notification src="[[voice_src]]" preload="auto"
+      audio.voice-notification src="[[voice_src]]" preload="auto"
 
   script src="../src/renderer/lint-panel.js"
