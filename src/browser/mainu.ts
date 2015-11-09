@@ -15,7 +15,7 @@ const versions: any = process.versions;
 console.log('Shiba version 0.5.2');
 console.log('  Electron version ' + versions.electron);
 console.log('  Chrome version ' + versions.chrome);
-console.log('  io.js version ' + versions.node);
+console.log('  Node.js version ' + versions.node);
 // }}}
 
 // Main Window {{{

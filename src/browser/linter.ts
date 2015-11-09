@@ -65,9 +65,10 @@ export default class Linter {
     mdast_lint(filename, content, callback) {
         this.mdast = this.mdast || require('mdast')().use(require('mdast-lint'), this.options);
 
-        this.mdast.process(content, function(err, _, file){
+        this.mdast.process(content, function(err, file){
             if (err) {
-                return [];
+                console.log('Lint failed: ', err.stack);
+                return;
             }
 
             callback(
