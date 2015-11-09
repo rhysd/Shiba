@@ -8,6 +8,7 @@
     "shiba": "./bin/cli.js"
   },
   "author": "rhysd <lin90162@yahoo.co.jp>",
+  "homepage": "https://github.com/rhysd/Shiba#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/rhysd/Shiba.git"
@@ -16,24 +17,27 @@
     "url": "https://github.com/rhysd/Shiba/issues"
   },
   "license": "MIT",
+  "keywords": [
+    "markdown",
+    "viewer",
+    "electron"
+  ],
   "dependencies": {
-    "chokidar": "^1.0.3",
-    "highlight.js": "^8.6.0",
-    "js-yaml": "^3.3.1",
+    "chokidar": "^1.2.0",
+    "highlight.js": "^8.9.1",
+    "js-yaml": "^3.4.3",
     "katex": "^0.5.1",
-    "markdownlint": "0.0.6",
+    "markdownlint": "^0.0.6",
     "marked": "^0.3.3",
-    "mdast": "^0.26.2",
-    "mdast-lint": "^0.4.1",
+    "mdast-lint": "^1.1.1",
     "mousetrap": "^1.5.3"
   },
   "devDependencies": {
-    "asar": "^0.7.2",
+    "asar": "^0.8.2",
     "chai": "^3.2.0",
-    "electron-prebuilt": "^0.30.0",
+    "electron-prebuilt": "^0.34.0",
     "globby": "^2.1.0",
-    "mocha": "^2.2.5",
-    "standard": "^4.5.2"
+    "mocha": "^2.2.5"
   },
   "scripts": {
     "test": "node ./tests/run.js",
