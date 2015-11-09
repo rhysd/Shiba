@@ -42,7 +42,7 @@ function getScroller(): Scroller {
 }
 
 function scrollContentBy(x: number, y:number): void {
-    let scroller = getScroller();
+    const scroller = getScroller();
     if (!scroller) {
         return;
     }
@@ -56,7 +56,7 @@ function scrollContentBy(x: number, y:number): void {
 }
 
 function setChildToViewerWrapper(new_child: HTMLElement): void {
-    let target = document.getElementById('viewer-wrapper');
+    const target = document.getElementById('viewer-wrapper');
     if (target.hasChildNodes()) {
         target.replaceChild(new_child, target.firstChild);
     } else {
@@ -149,7 +149,7 @@ window.onload = function(){
         // Linter result renderer
         function(messages: LintMessage[]): void {
             lint.content = messages;
-            let button = document.getElementById('lint-button');
+            const button = document.getElementById('lint-button');
             if (messages.length === 0) {
                 button.style.color = '#d99e5f';
             } else {
@@ -160,7 +160,7 @@ window.onload = function(){
 
     lint.lint_url = watcher.getLintRuleURL();
 
-    let dialog = getPathDialog();
+    const dialog = getPathDialog();
     dialog.path = init_path;
     dialog.onchanged = function (path) {
         watcher.changeWatchingDir(path);
@@ -197,20 +197,20 @@ window.onload = function(){
         document.title = makeTitle(path);
     };
 
-    let reload_button = document.getElementById('reload-button');
+    const reload_button = document.getElementById('reload-button');
     reload_button.onclick = () => watcher.startWatching();
 
     if (!config.drawer.responsive) {
-        let drawer: any = document.getElementById('main-drawer');
+        const drawer: any = document.getElementById('main-drawer');
         drawer.forceNarrow = true;
     }
 
     if (!config.menu.visible) {
-        let menu = document.getElementById('menu');
+        const menu = document.getElementById('menu');
         menu.style.display = 'none';
     }
 
-    let receiver = new Keyboard.Receiver(config.shortcuts);
+    const receiver = new Keyboard.Receiver(config.shortcuts);
 
     receiver.on('Lint', () => getMainDrawerPanel().togglePanel());
     receiver.on('PageUp', () => scrollContentBy(0, -window.innerHeight / 2));
@@ -220,19 +220,19 @@ window.onload = function(){
     receiver.on('ChangePath', () => dialog.open());
     receiver.on('QuitApp', () => remote.require('app').quit());
     receiver.on('PageTop', () => {
-        let scroller = getScroller();
+        const scroller = getScroller();
         if (scroller) {
             scroller.scrollTop = 0;
         }
     });
     receiver.on('PageBottom', () => {
-        let scroller = getScroller();
+        const scroller = getScroller();
         if (scroller) {
             scroller.scrollTop = scroller.scrollHeight;
         }
     });
     receiver.on('DevTools', function() {
-        this.bw = this.bw || remote.require('browser-window');
+        this.bw = this.bw || remote.require('browser-window') as GitHubElectron.BrowserWindow;
         this.bw.getFocusedWindow().toggleDevTools();
     });
     receiver.on('Reload', () => watcher.startWatching());
@@ -244,7 +244,7 @@ window.onload = function(){
             return;
         }
 
-        let link = document.createElement('link');
+        const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.type = 'text/css';
         link.href = 'file://' + user_css_path;
