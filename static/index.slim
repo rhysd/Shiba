@@ -32,7 +32,7 @@ html
         .preview {
           @apply(--layout-flex);
         }
-        .menu {
+        .shiba-menu {
           @apply(--layout-vertical);
           background-color: #ffd8aa;
         }
@@ -62,6 +62,9 @@ html
         paper-drawer-panel {
           overflow: visible !important;
         }
+        #menu {
+          display: none;
+        }
       }
     base
   body
@@ -71,7 +74,7 @@ html
         section.main-area
           div.preview#viewer-wrapper
             paw-filechooser
-          div#menu.menu
+          div#menu.shiba-menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
               path-dialog#path-change label="Shiba watching..."
