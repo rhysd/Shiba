@@ -9,8 +9,11 @@
   },
   "files": [
     "index.ts",
-    "markdown-preview.ts",
+    "keyboard.ts",
+    "lib.d.ts",
+    "lint-message.ts",
     "lint-panel.ts",
+    "markdown-preview.ts",
     "path-dialog.ts",
     "paw-filechooser.ts"
   ]

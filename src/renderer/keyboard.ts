@@ -1,5 +1,4 @@
 /// <reference path="lib.d.ts" />
-/// <reference path="../../typings/mousetrap/mousetrap.d.ts" />
 
 namespace Keyboard {
 

@@ -1,5 +1,4 @@
 /// <reference path="lib.d.ts" />
-/// <reference path="../../typings/polymer/polymer.d.ts" />
 
 interface LintPanelComponent extends polymer.Base {
     _setMessages(messages: LintMessage[]) : void;

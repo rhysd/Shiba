@@ -1,5 +1,4 @@
 /// <reference path="lib.d.ts" />
-/// <reference path="../../typings/polymer/polymer.d.ts" />
 
 const openExternal: (string) => void = require('shell').openExternal;
 const querystring = require('querystring');

@@ -1,4 +1,4 @@
-declare function require(mod: string): any; // tsurai
+/// <reference path="../../typings/tsd.d.ts" />
 
 interface Scroller {
     scrollLeft: number;

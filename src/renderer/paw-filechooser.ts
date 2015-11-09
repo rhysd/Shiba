@@ -1,5 +1,4 @@
 /// <reference path="lib.d.ts" />
-/// <reference path="../../typings/polymer/polymer.d.ts" />
 
 function launchFileChooser() {
     const uploader = <HTMLInputElement>document.querySelector('.hidden-uploader');

@@ -1,5 +1,4 @@
 /// <reference path="lib.d.ts" />
-/// <reference path="../../typings/polymer/polymer.d.ts" />
 
 interface PathDialogComponent extends polymer.Base {
     getDialog(): PathDialog;
