@@ -2,7 +2,7 @@
   "compilerOptions": {
     "removeComments": true,
     "preserveConstEnums": true,
-    "outDir": "../../build/src/renderer",
+    "outDir": "../build/src/renderer",
     "noImplicitAny": true,
     "target": "es5",
     "sourceMap": true

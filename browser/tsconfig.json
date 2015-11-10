@@ -3,7 +3,7 @@
     "module": "commonjs",
     "removeComments": true,
     "preserveConstEnums": true,
-    "outDir": "../../build/src/browser",
+    "outDir": "../build/src/browser",
     "noImplicitAny": true,
     "target": "es5",
     "sourceMap": true
