@@ -1,5 +1,5 @@
 import BW = require('browser-window');
-import * as M from '../../src/browser/menu';
+import * as M from '../../browser/menu';
 
 context('menu', () => {
     describe('#build', () => {

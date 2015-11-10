@@ -1,4 +1,4 @@
-import initial_path = require('../../src/browser/initial_path');
+import initial_path = require('../../browser/initial_path');
 import * as path from 'path';
 
 context('InitialPath', () =>

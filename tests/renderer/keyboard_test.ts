@@ -1,5 +1,5 @@
 /// <reference path="./lib.d.ts" />
-/// <reference path="../../src/renderer/keyboard.ts" />
+/// <reference path="../../renderer/keyboard.ts" />
 
 context('Keyboard', () => {
     describe('Receiver', () => {

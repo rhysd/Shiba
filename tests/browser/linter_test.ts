@@ -1,4 +1,4 @@
-import Linter from '../../src/browser/linter';
+import Linter from '../../browser/linter';
 
 context('Linter', () => {
     describe('constructor', () => {

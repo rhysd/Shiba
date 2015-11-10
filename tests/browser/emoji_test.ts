@@ -1,4 +1,4 @@
-import {replaceAll} from '../../src/browser/emoji';
+import {replaceAll} from '../../browser/emoji';
 
 context('Emoji', () =>
     describe('#replaceAll', () => {

@@ -1,4 +1,4 @@
-import Watcher = require('../../src/browser/watcher');
+import Watcher = require('../../browser/watcher');
 import {join} from 'path';
 
 context('Watcher', () => {
