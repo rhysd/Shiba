@@ -39,7 +39,7 @@ guard :shell do
   end
 
   watch /^.+\.slim/ do |m|
-    if File.basename(File.dirname m[0]) == 'static'
+    if File.dirname(m[0]) == 'renderer'
       execute(m[0], 'slimrb', m[0], "build/static/#{File.basename(m[0], '.slim')}.html")
     end
   end
