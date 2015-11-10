@@ -31,11 +31,7 @@ guard :shell do
   watch /^.+\.ts/ do |m|
     dir = File.dirname m[0]
     case dir
-    when 'src/browser'
-      execute(m[0], 'tsc', '-p', dir)
-    when 'src/renderer'
-      execute(m[0], 'tsc', m[0], '--out', "build/src/renderer/#{File.basename(m[0], '.ts')}.js")
-    when 'tests/browser'
+    when 'browser', 'renderer', 'tests/browser'
       execute(m[0], 'tsc', '-p', dir)
     when 'tests/renderer'
       execute(m[0], 'tsc', *Dir['tests/renderer/*.ts'], '--out', 'tests/renderer/index.js')

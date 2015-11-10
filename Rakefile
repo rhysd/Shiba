@@ -35,7 +35,7 @@ task :build_slim do
   ensure_cmd 'slimrb'
   directory 'build/static'
 
-  Dir['static/*.slim'].each do |slim_file|
+  Dir['renderer/*.slim'].each do |slim_file|
     sh "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
   end
 end
@@ -57,8 +57,8 @@ end
 
 task :build_typescript => %i(typings) do
   ensure_cmd 'tsc'
-  sh 'tsc -p src/browser'
-  sh 'tsc -p src/renderer'
+  sh 'tsc -p ./browser'
+  sh 'tsc -p ./renderer'
 end
 
 task :build => %i(dep build_slim build_typescript)
