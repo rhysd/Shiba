@@ -4,6 +4,7 @@ Polymer({
     is: 'lint-message',
 
     properties: {
-        message: Object
+        header: String,
+        body: String,
     }
 });

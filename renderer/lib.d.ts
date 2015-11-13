@@ -40,7 +40,8 @@ interface LintResultArea extends HTMLElement {
 }
 
 interface LintMessageElement extends HTMLElement {
-    message: LintMessage;
+    header: string;
+    body: string;
 }
 
 interface PawFilechooser extends HTMLElement {

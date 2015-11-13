@@ -29,7 +29,8 @@ Polymer({
 
         for (const m of messages) {
             let msg = document.createElement('lint-message') as LintMessageElement;
-            msg.message = m;
+            msg.header = m.header;
+            msg.body = m.body;
             content.appendChild(msg);
         }
     },
