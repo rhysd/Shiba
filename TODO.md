@@ -6,7 +6,7 @@
   - [ ] Run test with electron-mocha(main process) and nightmare.js(renderer process).
   - [ ] Watcher notifies the name of changed file and event name from main process, then linter and markdown conversion should work in renderer process, in order to avoid sending file content via IPC.
 - Tab
-  - [ ] Move menu to right side of the window
+  - [ ] Move menu to left side of the window
   - [ ] Refactor watcher to watch multiple files
   - [ ] Add tabs into the menu
 - Hidden title bar
