@@ -104,6 +104,23 @@ Write diagram or flowchart definition in `mermaid` code block in markdown docume
 
 ![mermaid integration screenshot](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/shiba-mermaid-integ.png)
 
+## Math formula support using [katex](https://github.com/Khan/KaTeX)
+
+Shiba can preview math formula using [katex](https://github.com/Khan/KaTeX).
+Write formula in `katex` code block in markdown document.
+
+![katex integration screenshot](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/katex.png)
+
+Above formula is written in `katex` block as below.
+
+<pre>
+<code>
+```katex
+y = x + \sin(\pi) + \displaystyle \int e^x dx
+```
+</code>
+</pre>
+
 
 -----------------
 [installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)
