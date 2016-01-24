@@ -1,7 +1,6 @@
-import * as Menu from 'menu';
-import {openExternal} from 'shell';
+import {shell, Menu} from 'electron';
 
-export function build(main_window: GitHubElectron.BrowserWindow) {
+export function build(main_window: Electron.BrowserWindow) {
     const template = [
         {
             label: 'Shiba',
@@ -13,7 +12,7 @@ export function build(main_window: GitHubElectron.BrowserWindow) {
                 },
                 {
                     label: 'DevTools',
-                    click: () => main_window.toggleDevTools(),
+                    click: () => main_window.webContents.toggleDevTools(),
                 },
                 {
                     label: 'Quit App',
@@ -25,7 +24,7 @@ export function build(main_window: GitHubElectron.BrowserWindow) {
                 },
                 {
                     label: 'About Shiba',
-                    click: function(){ openExternal('https://github.com/rhysd/Shiba'); }
+                    click: function(){ shell.openExternal('https://github.com/rhysd/Shiba'); }
                 }
             ]
         }

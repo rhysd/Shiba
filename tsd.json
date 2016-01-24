@@ -6,43 +6,40 @@
   "bundle": "typings/tsd.d.ts",
   "installed": {
     "marked/marked.d.ts": {
-      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "chokidar/chokidar.d.ts": {
-      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "js-yaml/js-yaml.d.ts": {
-      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "github-electron/github-electron.d.ts": {
-      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
-    },
-    "github-electron/github-electron-main.d.ts": {
-      "commit": "db475daba23206e8cd0ac04d47f0764f4a62f7da"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "highlightjs/highlightjs.d.ts": {
-      "commit": "8f51d25ad3523cd01f2d92e343247852f6b70dff"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "node/node.d.ts": {
-      "commit": "8f51d25ad3523cd01f2d92e343247852f6b70dff"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "mousetrap/mousetrap.d.ts": {
-      "commit": "73e4b46719dd2e425b4daf850d64cc5b1f753706"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "mocha/mocha.d.ts": {
-      "commit": "147cc7a8b375d97bf82afb34614268bbb77d18d5"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "chai/chai.d.ts": {
-      "commit": "147cc7a8b375d97bf82afb34614268bbb77d18d5"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "polymer/polymer.d.ts": {
-      "commit": "3b0f362204ea965952dafdb682a5274d527ef9d0"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "webcomponents.js/webcomponents.js.d.ts": {
-      "commit": "3b0f362204ea965952dafdb682a5274d527ef9d0"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     },
     "katex/katex.d.ts": {
-      "commit": "6f6e5c7dd9effe21fee14eb65fe340ecbbc8580a"
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     }
   }
 }

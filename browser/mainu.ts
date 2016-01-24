@@ -1,8 +1,6 @@
-import * as app from 'app';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as BrowserWindow from 'browser-window';
-import {openExternal} from 'shell';
+import {app, BrowserWindow, shell} from 'electron';
 import * as menu from './menu';
 import {load as loadConfig} from './config';
 
@@ -19,7 +17,7 @@ console.log('  Node.js version ' + versions.node);
 // }}}
 
 // Main Window {{{
-let mainWindow: GitHubElectron.BrowserWindow = null;
+let mainWindow: Electron.BrowserWindow = null;
 
 app.on('window-all-closed', function(){ app.quit(); });
 
@@ -48,10 +46,10 @@ app.on('ready', function(){
             icon: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
             width: getConfigLength('width', 800),
             height: getConfigLength('height', 600)
-        } as GitHubElectron.BrowserWindowOptions);
+        } as Electron.BrowserWindowOptions);
 
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
-    mainWindow.loadUrl(html);
+    mainWindow.loadURL(html);
 
     mainWindow.on('closed', function(){
         mainWindow = null;
@@ -59,7 +57,7 @@ app.on('ready', function(){
 
     mainWindow.on('will-navigate', function(e: Event, url: string){
         e.preventDefault();
-        openExternal(url);
+        shell.openExternal(url);
     });
 
     menu.build(mainWindow);

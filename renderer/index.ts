@@ -232,7 +232,7 @@ window.onload = function(){
         }
     });
     receiver.on('DevTools', function() {
-        this.bw = this.bw || remote.require('browser-window') as GitHubElectron.BrowserWindow;
+        this.bw = this.bw || remote.require('browser-window') as Electron.BrowserWindow;
         this.bw.getFocusedWindow().toggleDevTools();
     });
     receiver.on('Reload', () => watcher.startWatching());

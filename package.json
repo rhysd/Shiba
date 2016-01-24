@@ -37,7 +37,7 @@
     "asar": "^0.8.2",
     "chai": "^3.2.0",
     "co-mocha": "^1.1.2",
-    "electron-prebuilt": "^0.34.0",
+    "electron-prebuilt": "^0.36.0",
     "globby": "^2.1.0",
     "mocha": "^2.3.3",
     "nightmare": "https://github.com/segmentio/nightmare.git"

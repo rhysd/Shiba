@@ -1,7 +1,7 @@
 import {load as loadYAML} from 'js-yaml';
 import {join} from 'path';
 import {readFileSync} from 'fs';
-import {getPath} from 'app';
+import {app} from 'electron';
 
 export interface Config {
     linter: string;
@@ -33,7 +33,7 @@ export function load(): Config {
         return this.user_config;
     }
 
-    const config_dir = getPath('userData');
+    const config_dir = app.getPath('userData');
     const file = join(config_dir, 'config.yml');
     const default_config = {
         linter: "mdast-lint",

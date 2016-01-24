@@ -1,13 +1,13 @@
-import {addRecentDocument} from 'app';
+import {app} from 'electron';
 import * as marked from 'marked';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as chokidar from 'chokidar';
 import {highlight} from 'highlight.js';
+import {renderToString as katexRender} from 'katex';
 import {replaceAll as replaceAllEmojis} from './emoji';
 import * as config from './config'
 import Linter from './linter';
-import {renderToString as katexRender} from 'katex';
 
 marked.setOptions({
     highlight: function(code: string, lang: string): string {
@@ -113,7 +113,7 @@ class Watcher {
                         return;
                     }
 
-                    addRecentDocument(file);
+                    app.addRecentDocument(file);
 
                     this.linter.lint(file, text, this.renderLintResult);
 
