@@ -23,15 +23,27 @@ script:
     - npm test -- --travis
 
 after_script:
-    - npm install -g electron-packager
-    - npm prune --production
-    - npm install --save electron-prebuilt
+    - |
+        if [[ "$TRAVIS_TAG" || 1 ]]; then
+            npm install -g electron-packager asar
+            npm prune --production
+            electron-packager ./ Shiba --platform=linux --arch=all --version=0.36.5 --asar
+            electron-packager ./ Shiba --platform=darwin --arch=x64 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.icns
+            electron-packager ./ Shiba --platform=win32 --arch=all --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico
+            for os in darwin-x64 linux-ia32 linux-x64 win32-ia32 win32-x64; do
+                zip --symlinks "Shiba-${os}.zip" -r "./Shiba-${os}"
+            done
+        fi
 
 deploy:
     provider: releases
     api_key: $GITHUB_RELEASE_TOKEN
     file:
-        - 
+        - Shiba-darwin-x64.zip
+        - Shiba-linux-ia32.zip
+        - Shiba-linux-x64.zip
+        - Shiba-win32-ia32.zip
+        - Shiba-win32-x64.zip
     skip_cleanup: true
     on:
         tags: true
