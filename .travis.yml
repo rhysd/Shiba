@@ -22,6 +22,20 @@ script:
     - tsc -p tests/browser
     - npm test -- --travis
 
+after_script:
+    - npm install -g electron-packager
+    - npm prune --production
+    - npm install --save electron-prebuilt
+
+deploy:
+    provider: releases
+    api_key: $GITHUB_RELEASE_TOKEN
+    file:
+        - 
+    skip_cleanup: true
+    on:
+        tags: true
+
 cache:
     - apt
 
