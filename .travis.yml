@@ -21,13 +21,7 @@ script:
     - tslint $(git ls-files | grep '.ts$')
     - tsc -p browser/
     - tsc -p renderer/
-
-after_script:
-    - rake release
-      # - |
-      #     if [[ "$TRAVIS_TAG" || 1 ]]; then
-      #         rake release
-      #     fi
+    - if [[ "$TRAVIS_TAG" ]]; then rake release; fi
 
 deploy:
     provider: releases
@@ -40,7 +34,9 @@ deploy:
         - packages/Shiba-win32-x64.zip
     skip_cleanup: true
     on:
+        repo: rhysd/Shiba
         tags: true
+        all_branches: true
 
 cache:
     - apt
