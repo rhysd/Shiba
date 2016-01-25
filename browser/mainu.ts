@@ -4,8 +4,6 @@ import {app, BrowserWindow, shell} from 'electron';
 import * as menu from './menu';
 import {load as loadConfig} from './config';
 
-require('crash-reporter').start();
-
 const config = loadConfig();
 
 // Show versions {{{
