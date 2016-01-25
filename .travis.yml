@@ -1,6 +1,7 @@
 language: node_js
 node_js: stable
 sudo: false
+
 install:
     - npm install -g tslint typescript tsd
     - npm install
@@ -8,9 +9,11 @@ install:
     - tslint --version
     - tsc --version
     - mkdir -p build/src/renderer
+
 before_script:
-    - "export DISPLAY=:99.0"
-    - "sh -e /etc/init.d/xvfb start"
+    - export DISPLAY=':99.0'
+    - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
 script:
     - tslint $(git ls-files | grep '.ts$')
     - tsc -p browser/
@@ -18,7 +21,12 @@ script:
     - tsc tests/renderer/keyboard_test.ts --out tests/renderer/index.js
     - tsc -p tests/browser
     - npm test -- --travis
+
+cache:
+    - apt
+
 addons:
     apt:
         packages:
             - xvfb
+            - wine
