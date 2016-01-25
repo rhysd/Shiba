@@ -19,9 +19,6 @@ script:
     - tslint $(git ls-files | grep '.ts$')
     - tsc -p browser/
     - tsc -p renderer/
-    - tsc tests/renderer/keyboard_test.ts --out tests/renderer/index.js
-    - tsc -p tests/browser
-    - npm test -- --travis
 
 after_script:
     - rake release
