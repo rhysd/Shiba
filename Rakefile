@@ -19,6 +19,15 @@ def ensure_cmd(cmd)
   end
 end
 
+def make_archive_dir
+  mkdir_p 'archive'
+  %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
+  cd 'archive' do
+    sh 'npm install --production'
+    sh 'bower install --production'
+  end
+end
+
 file "node_modules" do
   ensure_cmd 'npm'
   sh 'npm install --dev'
@@ -29,7 +38,7 @@ file "bower_components" do
   sh 'bower install'
 end
 
-task :dep => %i(node_modules bower_components)
+task :dep => [:node_modules, :bower_components]
 
 task :build_slim do
   ensure_cmd 'slimrb'
@@ -52,15 +61,15 @@ file "typings" do
   sh 'tsd install'
 end
 
-task :build_typescript => %i(typings) do
+task :build_typescript => [:typings] do
   ensure_cmd 'tsc'
   sh 'tsc -p ./browser'
   sh 'tsc -p ./renderer'
 end
 
-task :build => %i(dep build_slim build_typescript)
+task :build => [:dep, :build_slim, :build_typescript]
 
-task :npm_publish => %i(build) do
+task :npm_publish => [:build] do
   mkdir 'npm-publish'
   %w(bower.json package.json build bin README.md).each{|p| cp_r p, 'npm-publish' }
   cd 'npm-publish' do
@@ -71,29 +80,47 @@ task :npm_publish => %i(build) do
   rm_rf 'npm-publish'
 end
 
-task :test => %i(build_test) do
+task :test => [:build_test] do
   sh 'tsc -p tests/browser'
   sh 'tsc tests/renderer/keyboard_test.ts --out tests/renderer/index.js'
   sh 'npm test'
 end
 
-task :asar => %i(build) do
+task :asar => [:build] do
   raise "'asar' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/asar"
 
-  mkdir_p 'archive'
   begin
-    %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
-    cd 'archive' do
-      sh 'npm install --production'
-      sh 'bower install --production'
-    end
+    make_archive_dir
     sh "#{BIN_DIR}/asar pack archive app.asar"
   ensure
     rm_rf 'archive'
   end
 end
 
-task :run => %i(dep asar) do
+task :release => [:build] do
+  ensure_cmd 'electron-packager'
+  make_archive_dir
+  mkdir_p 'packages'
+  def release(options)
+    cd 'archive' do
+      sh "electron-packager ./ Shiba #{options}"
+      Dir['Shiba-*'].each do |dst|
+        cp_r '../README.md', dst
+        cp_r '../docs', dst
+        sh "zip --symlinks #{dst}.zip -r #{dst}"
+        mv "#{dst}.zip", '../packages'
+        rm_r dst
+      end
+    end
+  end
+  release '--platform=darwin --arch=x64 --version=0.36.5 --asar --icon=../resource/image/icon/shibainu.icns'
+  release '--platform=win32 --arch=ia32 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
+  release '--platform=win32 --arch=x64 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
+  release '--platform=linux --arch=ia32 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
+  release '--platform=linux --arch=x64 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
+end
+
+task :run => [:dep, :asar] do
   sh "#{BIN_DIR}/electron app.asar README.md"
 end
 
