@@ -1,8 +1,10 @@
 'use strict';
 
-var app = require('app');
-var BrowserWindow = require('browser-window');
-var ipc = require('ipc');
+var electron = require('electron');
+var app = electron.app;
+var BrowserWindow = electron.BrowserWindow;
+var ipc = electron.ipcMain;
+
 var glob = require('globby').sync;
 var path = require('path');
 var fs = require('fs');
@@ -47,7 +49,7 @@ function fetchRendererTests() {
     const html = 'file://' + path.resolve(__dirname, 'index.html');
     w.on('closed', function() { process.exit(0) });
     w.webContents.on('dom-ready', function(){ w.send('renderer-test', {files: renderer_test_paths}); w.openDevTools();});
-    w.loadUrl(html);
+    w.loadURL(html);
 
     ipc.on('renderer-test-result', function(event, exit_status){
         renderer_test_exit_status = exit_status;
