@@ -13,8 +13,8 @@ install:
     - mkdir -p build/static
 
 before_script:
-    - "export DISPLAY=:99.0"
-    - "sh -e /etc/init.d/xvfb start"
+    - export DISPLAY=:99.0
+    - sh -e /etc/init.d/xvfb start
     - sleep 3
 
 script:
@@ -25,7 +25,8 @@ script:
 
 deploy:
     provider: releases
-    api_key: $GITHUB_RELEASE_TOKEN
+    api_key:
+        secure: IPgoYOzTPyHubOgddXvB57mW/AWPpL3f/CSOOHGr6Q0i7G+vEW777i1GCi28vF2NS1rd5EOVn8vROJ2bXC1ZdtklbKPPpd7HXie2asXh+7c7a+q8hoKBR9Ifw9Xvb3fewyxCZjbAN3Mw6S46XHJ769ZDJ0QNcIJykgprPnvWw5vUnqGGkBUMZlBpp2DGbnINAJBQHLahuJ9BVhjCpSxkZJp3+Ck6Wzg2PBOKBJoDYOk4V3oHGbBngWjxInAsA8ozF6PIj7+gsgO3JFwkWLVZQwGD45zLF8x2otMKPPlzZXto6/Q88bWklYIFwQ3hryknPt3rvmr0YobBOPzcmQTpboWHsblwLrPkq7+TG1108oCdjcFek09o16YW7/IXcQuU5sxrAriE7MmTE0kwPnGn6nPcjQ7WDlZnqqwLfzPAgmCHxLVmnZmgIvlX5k6dZM0bRBDxWoAfifctH/bA5/TdAxdFysXacpPW7ZP4vXEa5u8jrE0gIS+mwvLfPkMdqUw/N1K9Mnass4QUpXTZCIXDhEbO+p6lnGxccHfHmrc3XgyROncFXn45l8yQBN5IiW4CnUcte9e01oAGyOzp2NIuz+uQx84jECuEMrRgXE8OYZaiN5zUa4YNhcsUz+cRBMSu6nseGwNEIGDErJ+YzR+VI69dXDG64ofuV6qdQhr9xCw=
     file:
         - packages/Shiba-darwin-x64.zip
         - packages/Shiba-linux-ia32.zip
