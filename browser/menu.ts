@@ -25,8 +25,8 @@ export function build(main_window: Electron.BrowserWindow) {
                 {
                     label: 'About Shiba',
                     click: function(){ shell.openExternal('https://github.com/rhysd/Shiba'); }
-                }
-            ]
+                },
+            ],
         },
 
         {
@@ -44,6 +44,22 @@ export function build(main_window: Electron.BrowserWindow) {
                 },
                 {
                     type: 'separator'
+                },
+                {
+                    label: 'Choose File',
+                    click: () => main_window.webContents.send('shiba:choose-file'),
+                },
+                {
+                    label: 'Lint Result',
+                    click: () => main_window.webContents.send('shiba:lint'),
+                },
+                {
+                    label: 'Reload',
+                    click: () => main_window.webContents.send('shiba:reload'),
+                },
+                {
+                    label: 'Print',
+                    click: () => main_window.webContents.print(),
                 },
             ],
         },

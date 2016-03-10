@@ -1,7 +1,9 @@
 /// <reference path="keyboard.ts" />
 /// <reference path="lib.d.ts" />
 
-const remote = require('remote');
+const electron = require('electron');
+const remote = electron.remote;
+const ipc = electron.ipcRenderer;
 
 function getPathDialog() {
     return <PathDialog>document.getElementById('path-change');
@@ -16,7 +18,7 @@ function onPathButtonPushed(): void {
 }
 
 function onPrintButtonPushed(): void {
-    remote.getCurrentWebContents().print();
+    remote.getCurrentWindow().webContents.print();
 }
 
 function getLintArea() {
@@ -236,7 +238,11 @@ window.onload = function(){
         this.bw.getFocusedWindow().toggleDevTools();
     });
     receiver.on('Reload', () => watcher.startWatching());
-    receiver.on('Print', () => remote.getCurrentWebContents().print());
+    receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
+
+    ipc.on('shiba:choose-file', () => dialog.open());
+    ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
+    ipc.on('shiba:reload', () => watcher.startWatching());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
     fs.exists(user_css_path, (exists: boolean) => {
