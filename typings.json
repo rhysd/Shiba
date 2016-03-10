@@ -1,0 +1,18 @@
+{
+  "name": "shiba",
+  "version": false,
+  "ambientDependencies": {
+    "chai": "registry:dt/chai#3.4.0+20160216071402",
+    "chokidar": "registry:dt/chokidar#1.0.0+20150305075054",
+    "github-electron": "registry:dt/github-electron#0.36.3+20160310134616",
+    "highlightjs": "registry:dt/highlightjs#9.1.0+20160127112808",
+    "js-yaml": "registry:dt/js-yaml#3.5.2+20160202083555",
+    "katex": "registry:dt/katex#0.0.0+20150806191439",
+    "marked": "registry:dt/marked#0.0.0+20160215162030",
+    "mocha": "registry:dt/mocha#2.2.5+20151023103246",
+    "mousetrap": "registry:dt/mousetrap#1.5.0+20160215162030",
+    "node": "registry:dt/node#4.0.0+20160226132328",
+    "polymer": "registry:dt/polymer#1.1.6+20160123034809",
+    "webcomponents.js": "registry:dt/webcomponents.js#0.6.0+20150630235545"
+  }
+}

@@ -3,10 +3,10 @@ node_js: stable
 sudo: false
 
 install:
-    - npm install -g tslint typescript tsd bower electron-packager
+    - npm install -g tslint typescript typings bower electron-packager
     - gem install slim
     - npm install
-    - tsd install
+    - typings install
     - tslint --version
     - tsc --version
     - mkdir -p build/src/renderer

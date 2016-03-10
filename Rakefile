@@ -57,8 +57,8 @@ task :build_test do
 end
 
 file "typings" do
-  ensure_cmd 'tsd'
-  sh 'tsd install'
+  raise "'typings' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/typings"
+  sh "#{BIN_DIR}/typings install"
 end
 
 task :build_typescript => [:typings] do
