@@ -10,7 +10,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - [x] Isolated app.  You need not prepare Chrome and can use favorite editor.
 - [x] Rich GitHub Flavored Markdown (code highlight, emoji, tree diagram and flowchart using [mermaid](https://github.com/knsv/mermaid), math rendering using [katex](https://github.com/Khan/KaTeX))
 - [x] Live reload
-- [x] Automatic lint (mdast-lint, markdownlint)
+- [x] Automatic lint (remark-lint, markdownlint)
 - [x] Cross platform (Mac, Linux, Windows)
 - [x] Both GUI and CLI friendly.
 - [x] [Easy to install](docs/installation.md)

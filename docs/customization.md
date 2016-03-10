@@ -9,7 +9,7 @@ Below is an example for `config.yml`.
 ```YAML
 width: 800
 height: "max"
-linter: "mdast-lint"
+linter: "remark-lint"
 lint_options:
     maximum-line-length: false
 drawer:
@@ -20,19 +20,19 @@ menu:
 
 All keys for the YAML configuration file is below:
 
-| Key                   | Description            | Value                                          | Default                 |
-| --------------------- | ---------------------- | ---------------------------------------------- | ----------------------- |
-| `width`               | Window width           | Number of pixel or `"max"`                     | `800`                   |
-| `height`              | Window height          | Number of pixel or `"max"`                     | `600`                   |
-| `linter`              | Linter name            | `"mdast-lint"` or `"markdownlint"` or `"none"` | `"mdast-lint"`          |
-| `file_ext`            | Extensions to detect   | Array of extensions for each file types        | See below section       |
-| `lint_options`        | Options for linter     | Depends on linter                              | Not specified           |
-| `shortcuts`           | Keyboard shortcuts     | Keyboard shortcuts definition                  | See below section       |
-| `voice.enabled`       | Notify with voice      | enable/disable with boolean value              | false                   |
-| `voice.source`        | Path to voice source   | Path string                                    | "../voices/bow.mp3"     |
-| `drawer.responsive`   | Make drawer responsive | Enable responsive drawer with boolean value    | true                    |
-| `menu.visible`        | Right menu visibility  | Right menu is visible or not (boolean value)   | true                    |
-| `ignore_path_pattern` | Regex to ignore  path  | Regex string which path should be ignored      | '[\\\\/]\\.' (dotfiles) |
+| Key                   | Description            | Value                                           | Default                 |
+| --------------------- | ---------------------- | ----------------------------------------------- | ----------------------- |
+| `width`               | Window width           | Number of pixel or `"max"`                      | `800`                   |
+| `height`              | Window height          | Number of pixel or `"max"`                      | `600`                   |
+| `linter`              | Linter name            | `"remark-lint"` or `"markdownlint"` or `"none"` | `"remark-lint"`         |
+| `file_ext`            | Extensions to detect   | Array of extensions for each file types         | See below section       |
+| `lint_options`        | Options for linter     | Depends on linter                               | Not specified           |
+| `shortcuts`           | Keyboard shortcuts     | Keyboard shortcuts definition                   | See below section       |
+| `voice.enabled`       | Notify with voice      | enable/disable with boolean value               | false                   |
+| `voice.source`        | Path to voice source   | Path string                                     | "../voices/bow.mp3"     |
+| `drawer.responsive`   | Make drawer responsive | Enable responsive drawer with boolean value     | true                    |
+| `menu.visible`        | Right menu visibility  | Right menu is visible or not (boolean value)    | true                    |
+| `ignore_path_pattern` | Regex to ignore  path  | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles) |
 
 
 ## Customize Keyboard Shortcuts

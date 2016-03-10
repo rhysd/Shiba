@@ -36,7 +36,7 @@ export function load(): Config {
     const config_dir = app.getPath('userData');
     const file = join(config_dir, 'config.yml');
     const default_config = {
-        linter: "mdast-lint",
+        linter: "remark-lint",
         file_ext: {
             markdown: ["md", "markdown", "mkd"],
             html: ["html"]

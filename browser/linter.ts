@@ -4,7 +4,7 @@ interface Message {
     body: string;
 }
 
-interface MdastFile {
+interface RemarkFile {
     messages: {
         line: number;
         column: number;
@@ -16,7 +16,7 @@ export default class Linter {
     lint: (filename: string, content: string, callback: (msgs: Message[]) => void) => void;
     lint_url: string;
     mdl: any;
-    mdast: any;
+    remark: any;
     options: Object;
 
     constructor(name: string, options: Object) {
@@ -25,9 +25,9 @@ export default class Linter {
         if (name === 'markdownlint') {
             this.lint = this.markdownlint;
             this.lint_url = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
-        } else if (name === 'mdast-lint') {
-            this.lint = this.mdast_lint;
-            this.lint_url = 'https://github.com/wooorm/mdast-lint/blob/master/doc/rules.md';
+        } else if (name === 'remark-lint' || name === 'mdast-lint') {
+            this.lint = this.remark_lint;
+            this.lint_url = 'https://github.com/wooorm/remark-lint/blob/master/doc/rules.md';
         } else if (name === 'none') {
             this.lint = function(f, c, p){};
             this.lint_url = '';
@@ -71,10 +71,10 @@ export default class Linter {
         });
     }
 
-    mdast_lint(filename: string, content: string, callback: (msgs: Message[]) => void) {
-        this.mdast = this.mdast || require('mdast')().use(require('mdast-lint'), this.options);
+    remark_lint(filename: string, content: string, callback: (msgs: Message[]) => void) {
+        this.remark = this.remark || require('remark')().use(require('remark-lint'), this.options);
 
-        this.mdast.process(content, function(err: NodeJS.ErrnoException, file: MdastFile){
+        this.remark.process(content, function(err: NodeJS.ErrnoException, file: RemarkFile){
             if (err) {
                 console.log('Lint failed: ', err.stack);
                 return;
