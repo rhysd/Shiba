@@ -27,7 +27,26 @@ export function build(main_window: Electron.BrowserWindow) {
                     click: function(){ shell.openExternal('https://github.com/rhysd/Shiba'); }
                 }
             ]
-        }
+        },
+
+        {
+            label: 'Actions',
+            submenu: [
+                {
+                    label: 'Copy',
+                    accelerator: 'Command+C',
+                    role: 'copy',
+                },
+                {
+                    label: 'Select All',
+                    accelerator: 'Command+A',
+                    role: 'selectall',
+                },
+                {
+                    type: 'separator'
+                },
+            ],
+        },
     ];
 
     const menu = Menu.buildFromTemplate(template);
