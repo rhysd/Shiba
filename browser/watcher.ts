@@ -123,7 +123,8 @@ class Watcher {
             return;
         }
 
-        if (fs.statSync(this.path).isFile()) {
+        const is_file = fs.statSync(this.path).isFile();
+        if (is_file) {
             this.sendUpdate(this.path);
         }
 
@@ -131,7 +132,7 @@ class Watcher {
                                 .map((k: string) => this.config.file_ext[k].join('|'))
                                 .join('|');
 
-        const watched = path.join(this.path, '**', `*.(${ext_pattern})`);
+        const watched = is_file ? this.path : path.join(this.path, '**', `*.(${ext_pattern})`);
         this.file_watcher = chokidar.watch(
             watched, {
                 ignoreInitial: true,
