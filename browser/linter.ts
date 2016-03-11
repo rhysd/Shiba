@@ -9,7 +9,7 @@ interface RemarkFile {
         line: number;
         column: number;
         reason: string;
-    }[]
+    }[];
 }
 
 export default class Linter {
@@ -29,11 +29,11 @@ export default class Linter {
             this.lint = this.remark_lint;
             this.lint_url = 'https://github.com/wooorm/remark-lint/blob/master/doc/rules.md';
         } else if (name === 'none') {
-            this.lint = function(f, c, p){};
+            this.lint = function(f, c, p){ /* do nothing */ };
             this.lint_url = '';
         } else {
             console.log("linter.js: Invalid linter name '" + name + "'");
-            this.lint = function(f, c, p){};
+            this.lint = function(f, c, p){ /* do nothing */ };
             this.lint_url = '';
         }
     }
@@ -43,9 +43,9 @@ export default class Linter {
 
         const opts = {
             strings: {
-                [filename]: content
+                [filename]: content,
             },
-            config: this.options
+            config: this.options,
         };
 
         this.mdl(opts, function(err: Error, result: any) {
@@ -54,7 +54,7 @@ export default class Linter {
             }
             const is_space = /\s+/;
             const messages = result.toString()
-                            .split("\n")
+                            .split('\n')
                             .filter((msg: string) => msg !== '')
                             .map(function(msg: string): Message {
                                 const m = msg.match(is_space);
@@ -64,7 +64,7 @@ export default class Linter {
 
                                 return {
                                     header: msg.slice(0, m.index),
-                                    body: msg.slice(m.index)
+                                    body: msg.slice(m.index),
                                 };
                             });
             callback(messages);
@@ -87,7 +87,7 @@ export default class Linter {
                     // I don't include it now because message gets too long.
                     return {
                         header: `${filename}:${m.line}:${m.column}:`,
-                        body: m.reason
+                        body: m.reason,
                     };
                 })
             );

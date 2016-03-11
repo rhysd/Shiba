@@ -11,7 +11,10 @@ context('Emoji', () =>
 
         it('does nothing to unknown emoji', () => {
             assert.strictEqual(replaceAll(':boku_no_kangaeta_saikyouno_emoji:'), ':boku_no_kangaeta_saikyouno_emoji:');
-            assert.strictEqual(replaceAll('Ah, I do not know :this_emoij:. Do not :replace_this_emoji:.'), 'Ah, I do not know :this_emoij:. Do not :replace_this_emoji:.');
+            assert.strictEqual(
+                replaceAll('Ah, I do not know :this_emoij:. Do not :replace_this_emoji:.'),
+                'Ah, I do not know :this_emoij:. Do not :replace_this_emoji:.'
+            );
         });
 
         it('replaces emojis with <img> tag', () => {

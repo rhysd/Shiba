@@ -1,6 +1,7 @@
 /// <reference path="lib.d.ts" />
 
 namespace Keyboard {
+    'use strict';
 
     export class Receiver {
         private callbacks: {[action: string]: () => void};

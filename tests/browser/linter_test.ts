@@ -25,8 +25,8 @@ context('Linter', () => {
         const linter = new Linter('markdownlint', {});
 
         it('lints markdown source', () => {
-            linter.lint('foo.md', "## foo\n- bar\n  - poyo", msgs => assert.ok(msgs.length > 0));
-            linter.lint('foo.md', "Foo\n===\n", msgs => assert.ok(msgs.length === 0));
+            linter.lint('foo.md', '## foo\n- bar\n  - poyo', msgs => assert.ok(msgs.length > 0));
+            linter.lint('foo.md', 'Foo\n===\n', msgs => assert.ok(msgs.length === 0));
         });
     });
 
@@ -34,8 +34,8 @@ context('Linter', () => {
         const linter = new Linter('remark-lint', {});
 
         it('lints markdown source', () => {
-            linter.lint('foo.md', "## foo\n- bar\n  - poyo", msgs => assert.ok(msgs.length > 0));
-            linter.lint('foo.md', "Foo\n===\n", msgs => assert.ok(msgs.length === 0));
+            linter.lint('foo.md', '## foo\n- bar\n  - poyo', msgs => assert.ok(msgs.length > 0));
+            linter.lint('foo.md', 'Foo\n===\n', msgs => assert.ok(msgs.length === 0));
         });
     });
 });

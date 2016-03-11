@@ -1,11 +1,13 @@
 /// <reference path="lib.d.ts" />
 
+/* tslint:disable no-unused-variable*/
 function launchFileChooser() {
     const uploader = document.querySelector('.hidden-uploader') as HTMLInputElement;
     if (uploader) {
         uploader.click();
     }
 }
+/* tslint:enable no-unused-variable*/
 
 Polymer({
     is: 'paw-filechooser',

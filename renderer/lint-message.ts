@@ -6,5 +6,5 @@ Polymer({
     properties: {
         header: String,
         body: String,
-    }
+    },
 });

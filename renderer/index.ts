@@ -10,25 +10,27 @@ const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
 let current_path = remote.require('./initial_path.js')();
 
-let onPathButtonPushed = function(){};
+let onPathButtonPushed = function(){ /* do nothing */ };
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
 }
 
+/* tslint:disable no-unused-variable*/
 function onPrintButtonPushed(): void {
     remote.getCurrentWindow().webContents.print();
 }
+/* tslint:enable no-unused-variable*/
 
 function getLintArea() {
     return document.getElementById('lint-area') as LintResultArea;
 }
 
-function makeTitle(path: string): string {
-    if (path === '') {
+function makeTitle(p: string): string {
+    if (p === '') {
         return 'Shiba';
     } else {
-        return 'Shiba (' + path + ')';
+        return `Shiba (${p})`;
     }
 }
 
@@ -42,7 +44,7 @@ function getScroller(): Scroller {
     return panel.scroller;
 }
 
-function scrollContentBy(x: number, y:number): void {
+function scrollContentBy(x: number, y: number) {
     const scroller = getScroller();
     if (!scroller) {
         return;
@@ -98,7 +100,7 @@ function prepare_html_preview(file: string) {
         // Note:
         // Adjust
         html_preview.setAttribute('height', html_preview.contentWindow.document.body.scrollHeight + 'px');
-    }
+    };
 
     html_preview.setAttribute('seamless', '');
     html_preview.setAttribute('sandbox', 'allow-same-origin allow-top-navigation allow-forms allow-scripts');
@@ -137,12 +139,12 @@ window.onload = function(){
             base.setAttribute('href', 'file://' + path.dirname(content.file) + path.sep);
             switch (kind) {
                 case 'markdown': {
-                    prepare_markdown_preview(content.html, config.file_ext.markdown, (path: string, modifier: boolean) => {
+                    prepare_markdown_preview(content.html, config.file_ext.markdown, (file_path: string, modifier: boolean) => {
                         if (modifier) {
-                            watcher.changeWatchingDir(path);
-                            document.title = makeTitle(path);
+                            watcher.changeWatchingDir(file_path);
+                            document.title = makeTitle(file_path);
                         } else {
-                            watcher.sendUpdate(path)
+                            watcher.sendUpdate(file_path);
                         }
                     });
                     return;
@@ -151,6 +153,11 @@ window.onload = function(){
                 case 'html': {
                     prepare_html_preview(content.file);
                     return;
+                }
+
+                default: {
+                    // Do nothing
+                    break;
                 }
             }
         },
@@ -199,9 +206,9 @@ window.onload = function(){
         document.title = makeTitle(file.path);
     });
 
-    (<PawFilechooser>document.querySelector('paw-filechooser')).onFileChosen = (path: string) => {
-        watcher.changeWatchingDir(path);
-        document.title = makeTitle(path);
+    (<PawFilechooser>document.querySelector('paw-filechooser')).onFileChosen = (file: string) => {
+        watcher.changeWatchingDir(file);
+        document.title = makeTitle(file);
     };
 
     const reload_button = document.getElementById('reload-button');

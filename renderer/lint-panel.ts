@@ -1,9 +1,9 @@
 /// <reference path="lib.d.ts" />
 
 interface LintPanelComponent extends polymer.Base {
-    _setMessages(messages: LintMessage[]) : void;
-    _contentUpdated(messages: LintMessage[]) : void;
-    _showLintRules() : void;
+    _setMessages(messages: LintMessage[]): void;
+    _contentUpdated(messages: LintMessage[]): void;
+    _showLintRules(): void;
 }
 
 Polymer({
@@ -12,13 +12,13 @@ Polymer({
     properties: {
         content: {
             type: Array,
-            observer: '_contentUpdated'
+            observer: '_contentUpdated',
         },
         lint_url: String,
         voice_src: {
             type: String,
-            value: ''
-        }
+            value: '',
+        },
     },
 
     _setMessages(messages: LintMessage[]) {
@@ -62,5 +62,5 @@ Polymer({
 
         this.openExternal = this.openExternal || require('shell').openExternal as (url: string) => void;
         this.openExternal(this.lint_url);
-    }
+    },
 } as LintPanelComponent);

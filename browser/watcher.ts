@@ -6,7 +6,7 @@ import * as chokidar from 'chokidar';
 import {highlight} from 'highlight.js';
 import {renderToString as katexRender} from 'katex';
 import {replaceAll as replaceAllEmojis} from './emoji';
-import * as config from './config'
+import * as config from './config';
 import Linter from './linter';
 
 marked.setOptions({
@@ -29,7 +29,7 @@ marked.setOptions({
             console.log(e.message);
             return code;
         }
-    }
+    },
 });
 
 class Watcher {
@@ -48,45 +48,6 @@ class Watcher {
         console.log('Watcher starts with ' + this.path);
 
         this.startWatching();
-    }
-
-    private startWatching() {
-        if (this.file_watcher) {
-            this.file_watcher.close();
-        }
-
-        if (!fs.existsSync(this.path)) {
-            return;
-        }
-
-        if (fs.statSync(this.path).isFile()) {
-            this.sendUpdate(this.path);
-        }
-
-        const ext_pattern = Object.keys(this.config.file_ext)
-                                .map((k: string) => this.config.file_ext[k].join('|'))
-                                .join('|');
-
-        const watched = path.join(this.path, '**', `*.(${ext_pattern})`);
-        this.file_watcher = chokidar.watch(
-            watched, {
-                ignoreInitial: true,
-                persistent: true,
-                ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/]
-            }
-        );
-
-        this.file_watcher.on('change', (file: string) => {
-            console.log('File changed: ' + file);
-            this.sendUpdate(file);
-        });
-        this.file_watcher.on('add', (file: string) => {
-            console.log('File added: ' + file);
-            this.sendUpdate(file);
-        });
-        this.file_watcher.on('error', (error: Error) => {
-            console.log(`Error on watching: ${error}`);
-        })
     }
 
     sendUpdate(file: string) {
@@ -132,6 +93,9 @@ class Watcher {
                 // I should send file name simply and renderer will read the file using <webview>
                 this.render(kind, {file: file});
             }
+            default: {
+                // Do nothing
+            }
         }
     }
 
@@ -149,6 +113,46 @@ class Watcher {
     getLintRuleURL() {
         return this.linter.lint_url;
     }
+
+    private startWatching() {
+        if (this.file_watcher) {
+            this.file_watcher.close();
+        }
+
+        if (!fs.existsSync(this.path)) {
+            return;
+        }
+
+        if (fs.statSync(this.path).isFile()) {
+            this.sendUpdate(this.path);
+        }
+
+        const ext_pattern = Object.keys(this.config.file_ext)
+                                .map((k: string) => this.config.file_ext[k].join('|'))
+                                .join('|');
+
+        const watched = path.join(this.path, '**', `*.(${ext_pattern})`);
+        this.file_watcher = chokidar.watch(
+            watched, {
+                ignoreInitial: true,
+                persistent: true,
+                ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
+            }
+        );
+
+        this.file_watcher.on('change', (file: string) => {
+            console.log('File changed: ' + file);
+            this.sendUpdate(file);
+        });
+        this.file_watcher.on('add', (file: string) => {
+            console.log('File added: ' + file);
+            this.sendUpdate(file);
+        });
+        this.file_watcher.on('error', (error: Error) => {
+            console.log(`Error on watching: ${error}`);
+        });
+    }
+
 }
 
 export = Watcher;

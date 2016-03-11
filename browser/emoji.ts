@@ -883,7 +883,7 @@ const EMOJI = new Set<string>([
     'yum',
     'zap',
     'zero',
-    'zzz'
+    'zzz',
 ]);
 
 const REGEX_EMOJI = /:(\w+):/g;

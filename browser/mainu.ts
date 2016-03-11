@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as fs from 'fs';
 import {app, BrowserWindow, shell} from 'electron';
 import * as menu from './menu';
 import {load as loadConfig} from './config';
@@ -43,7 +42,7 @@ app.on('ready', function(){
     mainWindow = new BrowserWindow({
             icon: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
             width: getConfigLength('width', 800),
-            height: getConfigLength('height', 600)
+            height: getConfigLength('height', 600),
         } as Electron.BrowserWindowOptions);
 
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');

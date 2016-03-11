@@ -20,11 +20,11 @@ export function build(main_window: Electron.BrowserWindow) {
                     click: () => main_window.close(),
                 },
                 {
-                    type: 'separator'
+                    type: 'separator',
                 },
                 {
                     label: 'About Shiba',
-                    click: function(){ shell.openExternal('https://github.com/rhysd/Shiba'); }
+                    click: function(){ shell.openExternal('https://github.com/rhysd/Shiba'); },
                 },
             ],
         },
@@ -43,7 +43,7 @@ export function build(main_window: Electron.BrowserWindow) {
                     role: 'selectall',
                 },
                 {
-                    type: 'separator'
+                    type: 'separator',
                 },
                 {
                     label: 'Choose File',

@@ -43,7 +43,7 @@ Polymer({
     properties: {
         content: {
             type: String,
-            observer: '_contentUpdated'
+            observer: '_contentUpdated',
         },
 
         exts: {
@@ -51,7 +51,7 @@ Polymer({
             value: function(){ return [] as string[]; },
         },
 
-        openMarkdownDoc: Object
+        openMarkdownDoc: Object,
     },
 
     openLinkWithExternalBrowser: function(event) {
@@ -110,5 +110,5 @@ Polymer({
         if (document.querySelector('.lang-mermaid') !== undefined) {
             mermaid.init();
         }
-    }
+    },
 } as MarkdownPreviewComponent);
