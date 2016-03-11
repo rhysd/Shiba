@@ -1,20 +1,19 @@
 /// <reference path="keyboard.ts" />
 /// <reference path="lib.d.ts" />
 
+const path = require('path');
+const fs = require('fs');
 const electron = require('electron');
 const remote = electron.remote;
 const ipc = electron.ipcRenderer;
+const Watcher = remote.require('./watcher.js');
+const config = remote.require('./config').load();
+let current_path = remote.require('./initial_path.js')();
 
-function getPathDialog() {
-    return <PathDialog>document.getElementById('path-change');
-}
+let onPathButtonPushed = function(){};
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
-}
-
-function onPathButtonPushed(): void {
-    getPathDialog().open();
 }
 
 function onPrintButtonPushed(): void {
@@ -110,19 +109,27 @@ function prepare_html_preview(file: string) {
 }
 
 window.onload = function(){
-    const init_path = remote.require('./initial_path.js')();
-    const config = remote.require('./config').load();
-    const path = remote.require('path');
-    const fs = remote.require('fs');
-
     const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;
     }
 
-    const Watcher = remote.require('./watcher.js');
+    function chooseFileOrDirWithDialog() {
+        // TODO: Filter by extentions
+        const paths = remote.dialog.showOpenDialog({
+            title: 'Choose file or directory to watch',
+            defaultPath: current_path,
+            properties: ['openFile', 'openDirectory'],
+        });
+        console.log(paths);
+        if (!paths || paths.length === 0) {
+            return '';
+        }
+        return paths[0];
+    }
+
     const watcher = new Watcher(
-        init_path,
+        current_path,
 
         // Markdown renderer
         function(kind: string, content: {html?: string; file: string}): void {
@@ -162,17 +169,15 @@ window.onload = function(){
 
     lint.lint_url = watcher.getLintRuleURL();
 
-    const dialog = getPathDialog();
-    dialog.path = init_path;
-    dialog.onchanged = function (path) {
-        watcher.changeWatchingDir(path);
-        document.title = makeTitle(path);
+    onPathButtonPushed = function() {
+        current_path = chooseFileOrDirWithDialog();
+        document.title = makeTitle(current_path);
+        watcher.changeWatchingDir(current_path);
     };
 
-    if (init_path === '') {
-        dialog.open();
+    if (current_path === '') {
+        onPathButtonPushed();
     }
-    document.title = makeTitle(init_path);
 
     const cancel_event = function(e: Event) {
         e.preventDefault();
@@ -219,7 +224,7 @@ window.onload = function(){
     receiver.on('PageDown', () => scrollContentBy(0, window.innerHeight / 2));
     receiver.on('PageLeft', () => scrollContentBy(-window.innerHeight / 2, 0));
     receiver.on('PageRight', () => scrollContentBy(window.innerHeight / 2, 0));
-    receiver.on('ChangePath', () => dialog.open());
+    receiver.on('ChangePath', () => onPathButtonPushed());
     receiver.on('QuitApp', () => remote.require('app').quit());
     receiver.on('PageTop', () => {
         const scroller = getScroller();
@@ -240,7 +245,7 @@ window.onload = function(){
     receiver.on('Reload', () => watcher.startWatching());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
 
-    ipc.on('shiba:choose-file', () => dialog.open());
+    ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
     ipc.on('shiba:reload', () => watcher.startWatching());
 

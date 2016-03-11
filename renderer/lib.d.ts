@@ -6,13 +6,6 @@ interface Scroller {
     scrollHeight: number;
 }
 
-interface PathDialog extends HTMLElement {
-    open(): void;
-    close(): void;
-    path: string;
-    onchanged: (path: string) => void;
-}
-
 interface MainDrawerPanel extends HTMLElement {
     selected: any; // tsurai
     togglePanel: () => void;

@@ -14,7 +14,6 @@
     "lint-message.ts",
     "lint-panel.ts",
     "markdown-preview.ts",
-    "path-dialog.ts",
     "paw-filechooser.ts"
   ]
 }

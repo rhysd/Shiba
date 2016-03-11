@@ -30,7 +30,7 @@ end
 
 file "node_modules" do
   ensure_cmd 'npm'
-  sh 'npm install --dev'
+  sh 'npm install'
 end
 
 file "bower_components" do

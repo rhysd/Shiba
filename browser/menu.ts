@@ -12,7 +12,7 @@ export function build(main_window: Electron.BrowserWindow) {
                 },
                 {
                     label: 'DevTools',
-                    click: () => main_window.webContents.toggleDevTools(),
+                    click: () => main_window.webContents.openDevTools({detach: true}),
                 },
                 {
                     label: 'Quit App',
