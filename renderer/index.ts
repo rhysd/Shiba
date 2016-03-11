@@ -121,6 +121,16 @@ window.onload = function(){
         const paths = remote.dialog.showOpenDialog({
             title: 'Choose file or directory to watch',
             defaultPath: current_path,
+            filters: [
+                {
+                    name: 'Markdown',
+                    extensions: ['md', 'markdown', 'mkd'],
+                },
+                {
+                    name: 'HTML',
+                    extensions: ['html'],
+                },
+            ],
             properties: ['openFile', 'openDirectory'],
         });
         console.log(paths);
