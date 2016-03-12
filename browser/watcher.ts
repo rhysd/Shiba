@@ -26,7 +26,7 @@ marked.setOptions({
         try {
             return highlight(lang, code).value;
         } catch (e) {
-            console.log(e.message);
+            console.log('Error on highlight: ' + e.message);
             return code;
         }
     },
