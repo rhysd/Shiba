@@ -1,11 +1,9 @@
 /// <reference path="keyboard.ts" />
 /// <reference path="lib.d.ts" />
 
-const path = require('path');
-const fs = require('fs');
-const electron = require('electron');
-const remote = electron.remote;
-const ipc = electron.ipcRenderer;
+import * as path from 'path';
+import * as fs from 'fs';
+import {remote, ipcRenderer as ipc} from 'electron';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
 let current_path = remote.require('./initial_path.js')();
@@ -242,7 +240,7 @@ window.onload = function(){
     receiver.on('PageLeft', () => scrollContentBy(-window.innerHeight / 2, 0));
     receiver.on('PageRight', () => scrollContentBy(window.innerHeight / 2, 0));
     receiver.on('ChangePath', () => onPathButtonPushed());
-    receiver.on('QuitApp', () => remote.require('app').quit());
+    receiver.on('QuitApp', () => remote.app.quit());
     receiver.on('PageTop', () => {
         const scroller = getScroller();
         if (scroller) {
@@ -256,7 +254,7 @@ window.onload = function(){
         }
     });
     receiver.on('DevTools', function() {
-        this.bw = this.bw || remote.require('browser-window') as Electron.BrowserWindow;
+        this.bw = this.bw || remote.BrowserWindow;
         this.bw.getFocusedWindow().toggleDevTools();
     });
     receiver.on('Reload', () => watcher.startWatching());

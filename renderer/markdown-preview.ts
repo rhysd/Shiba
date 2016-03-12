@@ -1,7 +1,7 @@
 /// <reference path="lib.d.ts" />
 
-const openExternal = require('electron').shell.openExternal as (url: string) => void;
-const unescape = require('querystring').unescape as (str: string) => string;
+import {shell} from 'electron';
+import {unescape} from 'querystring';
 
 interface LinkOpenerType {
     openMarkdownDoc(path: string, modifier: boolean): void;
@@ -56,12 +56,8 @@ Polymer({
 
     openLinkWithExternalBrowser: function(event) {
         event.preventDefault();
-        let e = event.target as HTMLElement & {src?: string; href?: string};
-        if (e.href) {
-            openExternal(e.href);
-        } else if (e.src) {
-            openExternal(e.src);
-        }
+        const e = event.target as HTMLElement & {src?: string; href?: string};
+        shell.openExternal(e.href ? e.href : e.src);
     },
 
     ready: function() {

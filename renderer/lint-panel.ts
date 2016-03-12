@@ -1,5 +1,7 @@
 /// <reference path="lib.d.ts" />
 
+import {shell} from 'electron';
+
 interface LintPanelComponent extends polymer.Base {
     _setMessages(messages: LintMessage[]): void;
     _contentUpdated(messages: LintMessage[]): void;
@@ -60,7 +62,6 @@ Polymer({
             return;
         }
 
-        this.openExternal = this.openExternal || require('electron').shell.openExternal as (url: string) => void;
-        this.openExternal(this.lint_url);
+        shell.openExternal(this.lint_url);
     },
 } as LintPanelComponent);
