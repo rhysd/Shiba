@@ -1,36 +1,9 @@
 import {app} from 'electron';
-import * as marked from 'marked';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as chokidar from 'chokidar';
-import {highlight} from 'highlight.js';
-import {renderToString as katexRender} from 'katex';
-import {replaceAll as replaceAllEmojis} from './emoji';
 import * as config from './config';
 import Linter from './linter';
-
-marked.setOptions({
-    highlight: function(code: string, lang: string): string {
-        if (lang === undefined) {
-            return code;
-        }
-
-        if (lang === 'mermaid') {
-            return '<div class="mermaid">' + code + '</div>';
-        }
-
-        if (lang === 'katex') {
-            return '<div class="katex">' + katexRender(code, {displayMode: true}) + '</div>';
-        }
-
-        try {
-            return highlight(lang, code).value;
-        } catch (e) {
-            console.log('Error on highlight: ' + e.message);
-            return code;
-        }
-    },
-});
 
 class Watcher {
     config: config.Config;
@@ -67,34 +40,18 @@ class Watcher {
 
         switch (kind) {
             case 'markdown': {
-                // Encoding should be specified by config or detected
-                fs.readFile(file, 'utf8', (err: NodeJS.ErrnoException, text: string) => {
-                    if (err) {
-                        console.log(`Can't open '${file}': ${err}`);
-                        return;
-                    }
-
-                    app.addRecentDocument(file);
-
-                    this.linter.lint(file, text, this.renderLintResult);
-
-                    // Note:
-                    // Replace emoji notations in HTML document because Markdown can't specify the size of image.
-                    let html = marked(text);
-                    this.render(kind, {
-                        file: file,
-                        html: replaceAllEmojis(html),
-                    });
-                });
+                app.addRecentDocument(file);
+                this.render(kind, file);
+                this.linter.lint(file, this.renderLintResult);
                 break;
             }
             case 'html': {
-                // XXX: Temporary
-                // I should send file name simply and renderer will read the file using <webview>
-                this.render(kind, {file: file});
+                this.render(kind, file);
+                break;
             }
             default: {
                 // Do nothing
+                break;
             }
         }
     }
@@ -153,7 +110,6 @@ class Watcher {
             console.log(`Error on watching: ${error}`);
         });
     }
-
 }
 
 export = Watcher;

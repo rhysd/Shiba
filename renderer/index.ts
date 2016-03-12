@@ -4,11 +4,37 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import {remote, ipcRenderer as ipc} from 'electron';
+import * as marked from 'marked';
+import * as katex from 'katex';
+import {highlight} from 'highlight.js';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
-let current_path = remote.require('./initial_path.js')();
 
+let current_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
+
+marked.setOptions({
+    highlight: function(code: string, lang: string): string {
+        if (lang === undefined) {
+            return code;
+        }
+
+        if (lang === 'mermaid') {
+            return '<div class="mermaid">' + code + '</div>';
+        }
+
+        if (lang === 'katex') {
+            return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
+        }
+
+        try {
+            return highlight(lang, code).value;
+        } catch (e) {
+            console.log('Error on highlight: ' + e.message);
+            return code;
+        }
+    },
+});
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
@@ -65,21 +91,30 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
     }
 }
 
-function prepare_markdown_preview(html: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
-    let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
-    if (markdown_preview !== null) {
+function prepare_markdown_preview(file: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
+    fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        const html = marked(markdown);
+
+        let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
+        if (markdown_preview !== null) {
+            markdown_preview.content = html;
+            return;
+        }
+
+        markdown_preview = document.createElement('markdown-preview') as MarkdownPreview;
+        markdown_preview.id = 'current-markdown-preview';
+
+        setChildToViewerWrapper(markdown_preview);
+
+        markdown_preview.exts = exts;
+        markdown_preview.openMarkdownDoc = onPathChanged;
         markdown_preview.content = html;
-        return;
-    }
-
-    markdown_preview = document.createElement('markdown-preview') as MarkdownPreview;
-    markdown_preview.id = 'current-markdown-preview';
-
-    setChildToViewerWrapper(markdown_preview);
-
-    markdown_preview.exts = exts;
-    markdown_preview.openMarkdownDoc = onPathChanged;
-    markdown_preview.content = html;
+    });
 }
 
 function prepare_html_preview(file: string) {
@@ -142,12 +177,12 @@ window.onload = function(){
         current_path,
 
         // Markdown renderer
-        function(kind: string, content: {html?: string; file: string}): void {
+        function(kind: string, file: string): void {
             const base = document.querySelector('base');
-            base.setAttribute('href', 'file://' + path.dirname(content.file) + path.sep);
+            base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
             switch (kind) {
                 case 'markdown': {
-                    prepare_markdown_preview(content.html, config.file_ext.markdown, (file_path: string, modifier: boolean) => {
+                    prepare_markdown_preview(file, config.file_ext.markdown, (file_path: string, modifier: boolean) => {
                         if (modifier) {
                             watcher.changeWatchingDir(file_path);
                             document.title = makeTitle(file_path);
@@ -159,7 +194,7 @@ window.onload = function(){
                 }
 
                 case 'html': {
-                    prepare_html_preview(content.file);
+                    prepare_html_preview(file);
                     return;
                 }
 
