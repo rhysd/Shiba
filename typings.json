@@ -2,17 +2,17 @@
   "name": "shiba",
   "version": false,
   "ambientDependencies": {
-    "chai": "registry:dt/chai#3.4.0+20160216071402",
-    "chokidar": "registry:dt/chokidar#1.0.0+20150305075054",
-    "github-electron": "registry:dt/github-electron#0.36.3+20160310134616",
-    "highlightjs": "registry:dt/highlightjs#9.1.0+20160127112808",
-    "js-yaml": "registry:dt/js-yaml#3.5.2+20160202083555",
-    "katex": "registry:dt/katex#0.5.0+20150806191439",
-    "marked": "registry:dt/marked#0.2.6+20121226082801",
-    "mocha": "registry:dt/mocha#2.2.5+20151023103246",
-    "mousetrap": "registry:dt/mousetrap#1.5.0+20160215162030",
-    "node": "registry:dt/node#4.0.0+20160226132328",
-    "polymer": "registry:dt/polymer#1.1.6+20160123034809",
-    "webcomponents.js": "registry:dt/webcomponents.js#0.6.0+20150630235545"
+    "chai": "github:DefinitelyTyped/DefinitelyTyped/chai/chai.d.ts#1914a00b3c740348dae407ee0d2be89b0b58ad7f",
+    "chokidar": "github:DefinitelyTyped/DefinitelyTyped/chokidar/chokidar.d.ts#ae81e340a9e897167cfef3122a5a3aed04293814",
+    "github-electron": "github:DefinitelyTyped/DefinitelyTyped/github-electron/github-electron.d.ts#2a9dadf70a06fddb239b9b6bf3b0e49d4e696ada",
+    "highlightjs": "github:DefinitelyTyped/DefinitelyTyped/highlightjs/highlightjs.d.ts#2da55a09042047ef9ecd8cafd5c1ed97d216ba29",
+    "js-yaml": "github:DefinitelyTyped/DefinitelyTyped/js-yaml/js-yaml.d.ts#1ff6156a58d0e9002df8a2178c00d39b4886a691",
+    "katex": "github:DefinitelyTyped/DefinitelyTyped/katex/katex.d.ts#b05ea8139c03b72773b6d0e6c74cbe5a7fc89b08",
+    "marked": "github:DefinitelyTyped/DefinitelyTyped/marked/marked.d.ts#4de74cb527395c13ba20b438c3a7a419ad931f1c",
+    "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#d6dd320291705694ba8e1a79497a908e9f5e6617",
+    "mousetrap": "github:DefinitelyTyped/DefinitelyTyped/mousetrap/mousetrap.d.ts#4de74cb527395c13ba20b438c3a7a419ad931f1c",
+    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#81506d0602d4f15b153c6a8a7657a45e42c8346f",
+    "polymer": "github:DefinitelyTyped/DefinitelyTyped/polymer/polymer.d.ts#128875c022a87573439f0c426d24bc682fab61a4",
+    "webcomponents.js": "github:DefinitelyTyped/DefinitelyTyped/webcomponents.js/webcomponents.js.d.ts#4a3cfb0f70c4f42c503fde8f61fb00a4516b86d5"
   }
 }
