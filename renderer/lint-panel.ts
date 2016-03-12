@@ -60,7 +60,7 @@ Polymer({
             return;
         }
 
-        this.openExternal = this.openExternal || require('shell').openExternal as (url: string) => void;
+        this.openExternal = this.openExternal || require('electron').shell.openExternal as (url: string) => void;
         this.openExternal(this.lint_url);
     },
 } as LintPanelComponent);

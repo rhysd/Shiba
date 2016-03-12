@@ -1,6 +1,6 @@
 /// <reference path="lib.d.ts" />
 
-const openExternal = require('shell').openExternal as (url: string) => void;
+const openExternal = require('electron').shell.openExternal as (url: string) => void;
 const unescape = require('querystring').unescape as (str: string) => string;
 
 interface LinkOpenerType {
