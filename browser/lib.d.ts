@@ -17,3 +17,6 @@ declare module NodeJS {
     }
 }
 
+interface String {
+    endsWith(s: string): boolean;
+}

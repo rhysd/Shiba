@@ -49,8 +49,9 @@ app.on('ready', function(){
         }
     }
 
+    const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
     mainWindow = new BrowserWindow({
-            icon: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
+            icon: icon_path,
             width: getConfigLength('width', 800),
             height: getConfigLength('height', 600),
         } as Electron.BrowserWindowOptions);
@@ -68,6 +69,11 @@ app.on('ready', function(){
     });
 
     menu.build(mainWindow);
+
+    if (process.argv[0].endsWith('Electron') && process.platform === 'darwin') {
+        // If Shiba is run as npm package, replace dock app icon
+        app.dock.setIcon(icon_path);
+    }
 });
 // }}}
 
