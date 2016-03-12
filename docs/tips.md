@@ -25,5 +25,9 @@ You can open shiba from emacs by adding following code to your .emacs:
 
 Simply type `C-c C-c` and you can preview your markdown file with shiba.
 
+## Shiba consumes CPU power
+
+In directories which contain so many files and directories, they cost CPU power because of so many targets to be watched.  Please consider using [`ignore_path_pattern`](customization.md) to ignore such directories.
+
 -----------------
 [installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)

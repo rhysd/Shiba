@@ -8,10 +8,18 @@ var join = require('path').join;
 var existsSync = require('fs').existsSync;
 
 var argv = [join(__dirname, '..')];
+
 var detach_idx = process.argv.indexOf('--detach');
 var detached = detach_idx !== -1;
 if (detached) {
     process.argv.splice(detach_idx, 1);
+}
+
+var version_idx = process.argv.indexOf('--version');
+var version = version_idx !== -1;
+if (version) {
+    process.argv.splice(detach_idx, 1);
+    argv.push('--version');
 }
 
 var len = process.argv.length;
@@ -29,7 +37,7 @@ if (len > 2) {
     argv.push(process.cwd());
 }
 
-if (detached) {
+if (detached && !version) {
     child_process.spawn(electron, argv, {
         stdio: 'ignore',
         detached: true

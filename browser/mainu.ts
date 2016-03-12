@@ -6,11 +6,21 @@ import {load as loadConfig} from './config';
 const config = loadConfig();
 
 // Show versions {{{
-const versions: any = process.versions;
-console.log('Shiba version ' + app.getVersion());
-console.log('  Electron version ' + versions.electron);
-console.log('  Chrome version ' + versions.chrome);
-console.log('  Node.js version ' + versions.node);
+if (process.argv.indexOf('--version') !== -1) {
+    const versions: any = process.versions;
+    console.log(`Shiba: rich markdown previewer
+
+Usage:
+  $ shiba [--detach|--version] {directory to watch}
+
+Versions:
+  Shiba:    ${app.getVersion()}
+  Electron: ${versions.electron}
+  Chrome:   ${versions.chrome}
+  Node.js:  ${versions.node}
+`);
+    app.quit();
+}
 // }}}
 
 // Main Window {{{
