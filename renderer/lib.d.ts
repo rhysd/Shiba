@@ -1,5 +1,16 @@
 /// <reference path="../typings/browser.d.ts" />
 
+interface Set<T> {
+    has(value: T): boolean;
+}
+
+interface SetConstructor {
+    new <T>(): Set<T>;
+    new <T>(iterable: any[]): Set<T>;
+    prototype: Set<any>;
+}
+declare var Set: SetConstructor;
+
 interface Scroller {
     scrollLeft: number;
     scrollTop: number;

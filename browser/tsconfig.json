@@ -10,7 +10,6 @@
   },
   "files": [
     "config.ts",
-    "emoji.ts",
     "initial_path.ts",
     "lib.d.ts",
     "linter.ts",

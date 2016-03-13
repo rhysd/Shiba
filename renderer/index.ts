@@ -10,8 +10,11 @@ import {highlight} from 'highlight.js';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
 
+/// <reference path="emoji.ts" />
+
 let current_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
+const emojiReplacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
 marked.setOptions({
     highlight: function(code: string, lang: string): string {
@@ -91,14 +94,14 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
     }
 }
 
-function prepare_markdown_preview(file: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
+function prepareMarkdownPreview(file: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
     fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
         if (err) {
             console.error(err);
             return;
         }
 
-        const html = marked(markdown);
+        const html = emojiReplacer.replaceWithImages(marked(markdown));
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
@@ -117,7 +120,7 @@ function prepare_markdown_preview(file: string, exts: string[], onPathChanged: (
     });
 }
 
-function prepare_html_preview(file: string) {
+function prepareHtmlPreview(file: string) {
     let html_preview = document.getElementById('current-html-preview') as HTMLIFrameElement;
     if (html_preview !== null) {
         html_preview.src = 'file://' + file;
@@ -182,7 +185,7 @@ window.onload = function(){
             base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
             switch (kind) {
                 case 'markdown': {
-                    prepare_markdown_preview(file, config.file_ext.markdown, (file_path: string, modifier: boolean) => {
+                    prepareMarkdownPreview(file, config.file_ext.markdown, (file_path: string, modifier: boolean) => {
                         if (modifier) {
                             watcher.changeWatchingDir(file_path);
                             document.title = makeTitle(file_path);
@@ -194,7 +197,7 @@ window.onload = function(){
                 }
 
                 case 'html': {
-                    prepare_html_preview(file);
+                    prepareHtmlPreview(file);
                     return;
                 }
 
