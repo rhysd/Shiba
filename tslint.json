@@ -24,8 +24,7 @@
     "label-position": true,
     "label-undefined": true,
     "max-line-length": [
-      true,
-      140
+      false
     ],
     "member-access": false,
     "member-ordering": [
@@ -108,8 +107,7 @@
       }
     ],
     "use-strict": [
-      true,
-      "check-module"
+      false
     ],
     "variable-name": [
       false,

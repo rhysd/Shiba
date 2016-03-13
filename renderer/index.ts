@@ -1,43 +1,70 @@
-/// <reference path="keyboard.ts" />
+/// <reference path="./keyboard.ts" />
+/// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
+
+import * as marked from 'marked';
+import * as katex from 'katex';
+import {highlight} from 'highlight.js';
+
+namespace CustomMarkdownRenderer {
+    'use strict';
+
+    marked.setOptions({
+        highlight: function(code: string, lang: string): string {
+            if (lang === undefined) {
+                return code;
+            }
+
+            if (lang === 'mermaid') {
+                return '<div class="mermaid">' + code + '</div>';
+            }
+
+            if (lang === 'katex') {
+                return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
+            }
+
+            try {
+                return highlight(lang, code).value;
+            } catch (e) {
+                console.log('Error on highlight: ' + e.message);
+                return code;
+            }
+        },
+    });
+
+    const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
+    const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
+    const renderer = new marked.Renderer();
+    renderer.listitem = function(text) {
+        let matched = text.match(REGEX_CHECKED_LISTITEM);
+        if (matched && matched[0]) {
+            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
+                + text.slice(matched[0].length) + '</li>\n';
+        }
+
+        matched = text.match(REGEX_UNCHECKED_LISTITEM);
+        if (matched && matched[0]) {
+            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
+                + text.slice(matched[0].length) + '</li>\n';
+        }
+
+        return marked.Renderer.prototype.listitem.call(this, text);
+    };
+
+    export function render(markdown: string): string {
+        return marked(markdown, {renderer});
+    }
+}
 
 import * as path from 'path';
 import * as fs from 'fs';
 import {remote, ipcRenderer as ipc} from 'electron';
-import * as marked from 'marked';
-import * as katex from 'katex';
-import {highlight} from 'highlight.js';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
 
-/// <reference path="emoji.ts" />
-
 let current_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
-const emojiReplacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
-
-marked.setOptions({
-    highlight: function(code: string, lang: string): string {
-        if (lang === undefined) {
-            return code;
-        }
-
-        if (lang === 'mermaid') {
-            return '<div class="mermaid">' + code + '</div>';
-        }
-
-        if (lang === 'katex') {
-            return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
-        }
-
-        try {
-            return highlight(lang, code).value;
-        } catch (e) {
-            console.log('Error on highlight: ' + e.message);
-            return code;
-        }
-    },
-});
+const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
@@ -101,7 +128,7 @@ function prepareMarkdownPreview(file: string, exts: string[], onPathChanged: (p:
             return;
         }
 
-        const html = emojiReplacer.replaceWithImages(marked(markdown));
+        const html = emoji_replacer.replaceWithImages(CustomMarkdownRenderer.render(markdown));
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
