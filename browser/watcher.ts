@@ -46,6 +46,7 @@ class Watcher {
                 break;
             }
             case 'html': {
+                app.addRecentDocument(file);
                 this.render(kind, file);
                 break;
             }
