@@ -42,6 +42,7 @@ namespace MarkdownRenderer {
     const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
     const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
     const renderer = new marked.Renderer();
+
     renderer.listitem = function(text) {
         let matched = text.match(REGEX_CHECKED_LISTITEM);
         if (matched && matched[0]) {
@@ -56,6 +57,10 @@ namespace MarkdownRenderer {
         }
 
         return marked.Renderer.prototype.listitem.call(this, text);
+    };
+
+    renderer.text = function(text) {
+        return emoji_replacer.replaceWithImages(text);
     };
 
     export function render(markdown: string): string {
@@ -125,7 +130,7 @@ function prepareMarkdownPreview(file: string, exts: string[], onPathChanged: (p:
             return;
         }
 
-        const html = emoji_replacer.replaceWithImages(MarkdownRenderer.render(markdown));
+        const html = MarkdownRenderer.render(markdown);
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
