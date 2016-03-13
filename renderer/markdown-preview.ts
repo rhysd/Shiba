@@ -65,13 +65,13 @@ Polymer({
     },
 
     _contentUpdated: function(new_content) {
-        let body = <HTMLDivElement>document.querySelector('.markdown-body');
+        let body = document.querySelector('.markdown-body') as HTMLDivElement;
         body.innerHTML = new_content;
 
         // Prevent external links from opening in page
-        const links = document.querySelectorAll('a');
+        const links = body.querySelectorAll('a');
         for (let i = 0; i < links.length; ++i) {
-            let link = <HTMLAnchorElement>links.item(i);
+            const link = links.item(i) as HTMLAnchorElement;
             if (!link.href) {
                 continue;
             }
@@ -103,7 +103,7 @@ Polymer({
             link.onclick = event => event.preventDefault();
         }
 
-        if (document.querySelector('.lang-mermaid') !== undefined) {
+        if (document.querySelector('.lang-mermaid') !== null) {
             mermaid.init();
         }
     },

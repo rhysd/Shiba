@@ -2,13 +2,20 @@
 /// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
 
+import * as path from 'path';
+import * as fs from 'fs';
 import * as marked from 'marked';
 import * as katex from 'katex';
 import {highlight} from 'highlight.js';
+import {remote, ipcRenderer as ipc} from 'electron';
+const Watcher = remote.require('./watcher.js');
+const config = remote.require('./config').load();
 
-namespace CustomMarkdownRenderer {
-    'use strict';
+let current_path = remote.require('./initial_path.js')();
+let onPathButtonPushed = function(){ /* do nothing */ };
+const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
+namespace MarkdownRenderer {
     marked.setOptions({
         highlight: function(code: string, lang: string): string {
             if (lang === undefined) {
@@ -55,16 +62,6 @@ namespace CustomMarkdownRenderer {
         return marked(markdown, {renderer});
     }
 }
-
-import * as path from 'path';
-import * as fs from 'fs';
-import {remote, ipcRenderer as ipc} from 'electron';
-const Watcher = remote.require('./watcher.js');
-const config = remote.require('./config').load();
-
-let current_path = remote.require('./initial_path.js')();
-let onPathButtonPushed = function(){ /* do nothing */ };
-const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
@@ -128,7 +125,7 @@ function prepareMarkdownPreview(file: string, exts: string[], onPathChanged: (p:
             return;
         }
 
-        const html = emoji_replacer.replaceWithImages(CustomMarkdownRenderer.render(markdown));
+        const html = emoji_replacer.replaceWithImages(MarkdownRenderer.render(markdown));
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
