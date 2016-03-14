@@ -4,14 +4,14 @@
 [![npm version](https://img.shields.io/npm/v/shiba.svg?style=flat-square)](https://www.npmjs.com/package/shiba)
 [![Build Status](https://travis-ci.org/rhysd/Shiba.svg)](https://travis-ci.org/rhysd/Shiba)
 
-Shiba is a rich live markdown preview app with lint.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
+Shiba is a rich live markdown preview app with linter.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
 Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](https://www.polymer-project.org/1.0/).
 
 - [x] Isolated app.  You need not prepare Chrome and can use favorite editor.
-- [x] Rich GitHub Flavored Markdown (code highlight, emoji, tree diagram and flowchart using [mermaid](https://github.com/knsv/mermaid), math rendering using [katex](https://github.com/Khan/KaTeX))
+- [x] Rich GitHub Flavored Markdown (code highlight, emoji, task list, tree diagram and flowchart using [mermaid](https://github.com/knsv/mermaid), math rendering using [katex](https://github.com/Khan/KaTeX))
 - [x] Live reload
 - [x] Automatic lint (remark-lint, markdownlint)
-- [x] Cross platform (Mac, Linux, Windows)
+- [x] Cross platform (OS X, Linux, Windows)
 - [x] Both GUI and CLI friendly.
 - [x] [Easy to install](docs/installation.md)
 - [x] [Keyboard shortcuts](docs/shortcuts.md)
@@ -69,8 +69,8 @@ Please refer [customization document](docs/customization.md).
 
 - The logo of this app came from [いらすとや](http://www.irasutoya.com/).
 - This app was inspired by [@mattn](https://github.com/mattn)'s [mkup](https://github.com/mattn/mkup).
-- This app refers [vmd](https://github.com/yoshuawuyts/vmd) a lot, which is a very simple markdown preview app built on Electron.
-- Emoji pictures are from [arvida/emoji-cheat-sheet.com](https://github.com/arvida/emoji-cheat-sheet.com).
+- This app referred [vmd](https://github.com/yoshuawuyts/vmd) a lot at first, which was a very simple markdown preview app built on Electron.
+- Emoji pictures were from [arvida/emoji-cheat-sheet.com](https://github.com/arvida/emoji-cheat-sheet.com).
 - The voice resource came from [効果音ラボ](http://soundeffect-lab.info/).
 
 
