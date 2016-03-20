@@ -74,6 +74,11 @@ app.on('ready', function(){
         // If Shiba is run as npm package, replace dock app icon
         app.dock.setIcon(icon_path);
     }
+
+    console.log(process.env.NODE_ENV);
+    if (process.env.NODE_ENV === 'debug') {
+        mainWindow.webContents.openDevTools({detach: true});
+    }
 });
 // }}}
 
