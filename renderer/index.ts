@@ -175,7 +175,7 @@ function prepareHtmlPreview(file: string) {
     setChildToViewerWrapper(html_preview);
 }
 
-window.onload = function(){
+(function(){
     const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;
@@ -343,4 +343,4 @@ window.onload = function(){
         link.href = 'file://' + user_css_path;
         document.head.appendChild(link);
     });
-};
+})();
