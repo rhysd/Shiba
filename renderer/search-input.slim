@@ -14,9 +14,21 @@ html
     const ipc = electron.ipcRenderer;
 
     const element = document.querySelector('.search-input');
-    element.addEventListener('keypress', e => {
-      if (e.keyIdentifier === 'Enter') {
-        ipc.sendToHost('builtin-search:query', element.value);
+    element.addEventListener('keydown', e => {
+      switch(e.code) {
+        case 'Enter':
+          ipc.sendToHost('builtin-search:query', element.value);
+          break;
+        case 'Escape':
+          ipc.sendToHost('builtin-search:close');
+          break;
+        case 'KeyG':
+          if (e.ctrlKey) {
+            ipc.sendToHost('builtin-search:close');
+          }
+          break;
+        default:
+          break;
       }
     });
 

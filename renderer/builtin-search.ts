@@ -31,11 +31,24 @@ Polymer({
         this.webview.src = 'file://' + path.join(__dirname, 'search-input.html');
         this.webview.addEventListener('ipc-message', (e: any) => {
             const channel = e.channel as string;
-            if (channel === 'builtin-search:query') {
-                const text = (e.args[0] || '') as string;
-                this.search(text);
+            switch (channel) {
+                case 'builtin-search:query': {
+                    const text = (e.args[0] || '') as string;
+                    this.search(text);
+                    break;
+                }
+                case 'builtin-search:close': {
+                    this.dismiss();
+                    break;
+                }
+                default:
+                    break;
             }
         });
+        this.webview.addEventListener('console-message', (e: any) => {
+            console.log('console-message: ', e.line + ': ' + e.message);
+        });
+
         this.webview.addEventListener('dom-ready', () => {
             this.webview.addEventListener('blur', (e: Event) => {
                 this.focusOnInput();
@@ -84,7 +97,9 @@ Polymer({
             return;
         }
 
-        this.body.style = 'none';
+        console.log('dismiss!');
+
+        this.body.style.display = 'none';
         this.displayed = false;
 
         if (this.searching) {
