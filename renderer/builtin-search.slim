@@ -1,0 +1,41 @@
+link rel="import" href="../../bower_components/polymer/polymer.html"
+link rel="import" href="../../bower_components/paper-input/paper-input.html"
+link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html"
+link rel="import" href="../../bower_components/paper-material/paper-material.html"
+
+dom-module#builtin-search
+  template
+    css:
+      :host {
+        font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
+      }
+      .builtin-search-body {
+        diplay: none;
+        margin-left: 0 8px;
+        position: absolute;
+        right: 0;
+        top: 0;
+        background-color: white;
+      }
+      .builtin-search-contents {
+        padding: 0 8px;
+        display: flex;
+      }
+      .builtin-search-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .builtin-search-matches {
+        margin: 0 auto 8px;
+        font-size: 14px;
+        min-width: 40px;
+        text-align: center;
+      }
+    div.builtin-search-body
+      paper-material.builtin-search-contents
+        div.builtin-search-panel
+          paper-icon-button.builtin-search-button icon="search"
+          div.builtin-search-matches 0/0
+        paper-input.builtin-search-input[label="Search document" autofocus]
+
+  script src="../src/renderer/builtin-search.js"

@@ -15,6 +15,7 @@ html
     link rel="import" href="markdown-preview.html"
     link rel="import" href="lint-panel.html"
     link rel="import" href="paw-filechooser.html"
+    link rel="import" href="builtin-search.html"
 
     link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
     link rel="stylesheet" href="../../bower_components/katex/dist/katex.min.css"
@@ -82,9 +83,10 @@ html
               paper-icon-button#reload-button.menu-button icon="refresh" alt="Reload"
             span
               paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"
-
       paper-header-panel[drawer]
         lint-panel#lint-area.lint-area
+    builtin-search
+
 
     script src="../../node_modules/mousetrap/mousetrap.min.js"
     script src="../src/renderer/keyboard.js"

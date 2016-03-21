@@ -58,3 +58,11 @@ interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
 }
+
+interface FoundInPage {
+    requestId: number;
+    finalUpdate: boolean;
+    activeMatchOrdinal?: number;
+    matches?: number;
+    selectionArea: Object;
+}
