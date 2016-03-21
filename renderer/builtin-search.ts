@@ -66,6 +66,7 @@ Polymer({
         });
 
         this.body = document.querySelector('.builtin-search-body') as HTMLDivElement;
+        this.body.classList.add('animated');
         if (this.displayed) {
             this.body.style.display = 'block';
         }
@@ -105,6 +106,8 @@ Polymer({
             return;
         }
 
+        this.body.classList.remove('slideOutUp');
+        this.body.classList.add('slideInDown');
         this.body.style.display = 'block';
         this.displayed = true;
         if (this.onMount) {
@@ -117,8 +120,14 @@ Polymer({
             return;
         }
 
-        this.body.style.display = 'none';
-        this.displayed = false;
+        const removeNode = () => {
+            this.body.style.display = 'none';
+            this.body.removeEventListener('animationend', removeNode);
+            this.displayed = false;
+        };
+        this.body.addEventListener('animationend', removeNode);
+        this.body.classList.remove('slideInDown');
+        this.body.classList.add('slideOutUp');
 
         if (this.searching) {
             this.stopSearch();

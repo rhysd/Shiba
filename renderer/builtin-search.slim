@@ -5,17 +5,19 @@ link rel="import" href="../../bower_components/paper-material/paper-material.htm
 
 dom-module#builtin-search
   template
+    link rel="stylesheet" href="../../node_modules/animate.css/animate.min.css"
     css:
       :host {
         font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
       }
       .builtin-search-body {
         display: none;
-        margin-left: 0 8px;
         position: absolute;
         right: 0;
         top: 0;
         background-color: white;
+        animation-duration: 0.2s;
+        -webkit-animation-duration: 0.2s;
       }
       .builtin-search-contents {
         padding: 0 8px;
