@@ -71,6 +71,8 @@ interface BuiltinSearch extends HTMLElement {
     displayed: boolean;
     searching: boolean;
     activeIdx: number;
+    onMount: () => void;
+    onUnmount: () => void;
     show(): void;
     dismiss(): void;
     toggle(): void;

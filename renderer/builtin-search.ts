@@ -19,6 +19,8 @@ Polymer({
             type: Number,
             value: 0,
         },
+        onMount: Object,
+        onUnmount: Object,
     },
 
     focusOnInput() {
@@ -105,6 +107,9 @@ Polymer({
 
         this.body.style.display = 'block';
         this.displayed = true;
+        if (this.onMount) {
+            this.onMount();
+        }
     },
 
     dismiss: function() {
@@ -117,6 +122,9 @@ Polymer({
 
         if (this.searching) {
             this.stopSearch();
+        }
+        if (this.onUnmount) {
+            this.onUnmount();
         }
     },
 

@@ -335,6 +335,9 @@ function prepareHtmlPreview(file: string) {
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
     receiver.on('Search', () => searcher.toggle());
 
+    searcher.onMount = () => { receiver.enabled = false; };
+    searcher.onUnmount = () => { receiver.enabled = true; };
+
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
     ipc.on('shiba:reload', () => watcher.startWatching());
