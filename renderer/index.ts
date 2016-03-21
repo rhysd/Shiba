@@ -333,6 +333,7 @@ function prepareHtmlPreview(file: string) {
     });
     receiver.on('Reload', () => watcher.startWatching());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
+    receiver.on('Search', () => searcher.toggle());
 
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
