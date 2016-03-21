@@ -9,7 +9,6 @@
     "sourceMap": true
   },
   "files": [
-    "builtin-search.ts",
     "config.ts",
     "initial_path.ts",
     "lib.d.ts",
