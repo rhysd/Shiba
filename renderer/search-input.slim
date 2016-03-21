@@ -5,6 +5,18 @@ html
     script src="../../bower_components/webcomponentsjs/webcomponents-lite.min.js"
     link rel="import" href="../../bower_components/polymer/polymer.html"
     link rel="import" href="../../bower_components/paper-input/paper-input.html"
+    css:
+    style is="custom-style"
+      |
+        body {
+          margin: 0px;
+          color: #522d05;
+          background-color: #ffd8aa;
+        }
+        paper-input.search-input {
+          --paper-input-container-color: #522d05;
+          --paper-input-container-focus-color: #d99e5f;
+        }
   body
     paper-input.search-input[label="Search document" autofocus]
   javascript:
