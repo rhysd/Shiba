@@ -2,6 +2,7 @@ import * as path from 'path';
 import {app, BrowserWindow, shell} from 'electron';
 import * as menu from './menu';
 import {load as loadConfig} from './config';
+import BuiltinSearch from './builtin-search';
 
 const config = loadConfig();
 
@@ -25,6 +26,7 @@ Versions:
 
 // Main Window {{{
 let mainWindow: Electron.BrowserWindow = null;
+let searcher: BuiltinSearch = null;
 
 app.on('window-all-closed', function(){ app.quit(); });
 
@@ -75,7 +77,8 @@ app.on('ready', function(){
         app.dock.setIcon(icon_path);
     }
 
-    console.log(process.env.NODE_ENV);
+    searcher = new BuiltinSearch(mainWindow.webContents);
+
     if (process.env.NODE_ENV === 'debug') {
         mainWindow.webContents.openDevTools({detach: true});
     }

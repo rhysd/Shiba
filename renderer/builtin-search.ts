@@ -1,6 +1,6 @@
 /// <reference path="lib.d.ts" />
 
-import {remote} from 'electron';
+import {ipcRenderer as ipc} from 'electron';
 
 Polymer({
     is: 'builtin-search',
@@ -13,10 +13,6 @@ Polymer({
         searching: {
             type: Boolean,
             value: false,
-        },
-        activeIdx: {
-            type: Number,
-            value: 0,
         },
     },
 
@@ -45,20 +41,8 @@ Polymer({
 
         this.matches = document.querySelector('.builtin-search-matches') as HTMLDivElement;
 
-        remote.getCurrentWebContents().on('found-in-page', (event: Event, result: FoundInPage) => {
-            console.log(result, result.activeMatchOrdinal, result.matches, result.selectionArea);
-            if (this.requestId !== result.requestId) {
-                return;
-            }
-            if (result.activeMatchOrdinal) {
-                this.activeIdx = result.activeMatchOrdinal;
-            }
-            if (result.matches) {
-                this.setResult(this.activeIdx, result.matches);
-            }
-            if (result.finalUpdate) {
-                remote.getCurrentWebContents().stopFindInPage('keepSelection');
-            }
+        ipc.on('builtin-search:match-result', (event: Event, active: number, all: number) => {
+            this.setResult(active, all);
         });
     },
 
@@ -88,25 +72,25 @@ Polymer({
         }
     },
 
-    search: function(word: string) {
-        if (word === '') {
+    search: function(text: string) {
+        if (text === '') {
             this.stopSearch();
             this.focusOnInput();
             return;
         }
 
-        if (!this.searching || this.query !== word) {
-            this.requestId = remote.getCurrentWebContents().findInPage(word);
+        if (!this.searching || this.query !== text) {
+            ipc.send('builtin-search:start-finding', text);
             this.searching = true;
-            this.query = word;
+            this.query = text;
             this.focusOnInput();
-            console.log('start search: ', word, this.requestId);
+            console.log('start search: ', text);
             return;
         }
 
-        // Note: When this.query === word
-        this.requestId = remote.getCurrentWebContents().findInPage(word, {findNext: true});
-        console.log('next search: ', word, this.requestId);
+        // Note: When this.query === text
+        ipc.send('builtin-search:find-next', text, /*forward: */true);
+        console.log('next search: ', text);
     },
 
     stopSearch: function() {
@@ -115,9 +99,7 @@ Polymer({
         }
         this.searching = false;
         this.query = '';
-        this.requestId = undefined;
-        this.activeIdx = 0;
-        remote.getCurrentWebContents().stopFindInPage('clearSelection');
+        ipc.send('builtin-search:stop-finding');
         console.log('stop search: ', this.seatchWord);
     },
 
