@@ -75,7 +75,6 @@ app.on('ready', function(){
         app.dock.setIcon(icon_path);
     }
 
-    console.log(process.env.NODE_ENV);
     if (process.env.NODE_ENV === 'debug') {
         mainWindow.webContents.openDevTools({detach: true});
     }

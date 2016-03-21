@@ -55,9 +55,6 @@ Polymer({
             this.webview.addEventListener('blur', (e: Event) => {
                 this.focusOnInput();
             });
-            if (this.displayed) {
-                this.focusOnInput();
-            }
         });
 
         this.button = document.querySelector('.builtin-search-button') as HTMLButtonElement;
@@ -98,6 +95,9 @@ Polymer({
             this.dismiss();
         } else {
             this.show();
+        }
+        if (this.displayed) {
+            this.focusOnInput();
         }
     },
 
