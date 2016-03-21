@@ -125,5 +125,5 @@ task :clean do
 end
 
 task :watch do
-  sh 'guard --watchdir static browser renderer tests typings'
+  sh 'guard --watchdir browser renderer tests typings'
 end

@@ -31,11 +31,15 @@ dom-module#builtin-search
         min-width: 40px;
         text-align: center;
       }
+      .input-workaround {
+        width: auto;
+        height: auto;
+      }
     div.builtin-search-body
       paper-material.builtin-search-contents
         div.builtin-search-panel
           paper-icon-button.builtin-search-button icon="search"
           div.builtin-search-matches 0/0
-        paper-input.builtin-search-input[label="Search document" autofocus]
+        webview.input-workaround nodeintegration="on" autosize="on"
 
   script src="../src/renderer/builtin-search.js"

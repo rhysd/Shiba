@@ -1,6 +1,7 @@
 /// <reference path="lib.d.ts" />
 
 import {remote} from 'electron';
+import * as path from 'path';
 
 Polymer({
     is: 'builtin-search',
@@ -20,17 +21,28 @@ Polymer({
         },
     },
 
+    focusOnInput() {
+        this.webview.focus();
+        this.webview.send('builtin-search:focus');
+    },
+
     ready: function() {
-        this.input = document.querySelector('.builtin-search-input') as HTMLInputElement;
-        this.input.addEventListener('keypress', (event: KeyboardEvent & {keyIdentifier: string}) => {
-            if (event.keyIdentifier === 'Enter') {
-                this.search(this.input.value);
+        this.webview = document.querySelector('.input-workaround') as HTMLElement;
+        this.webview.src = 'file://' + path.join(__dirname, 'search-input.html');
+        this.webview.addEventListener('ipc-message', (e: any) => {
+            const channel = e.channel as string;
+            if (channel === 'builtin-search:query') {
+                const text = (e.args[0] || '') as string;
+                this.search(text);
             }
         });
-        this.input.addEventListener('blur', (e: Event) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.focusOnInput();
+        this.webview.addEventListener('dom-ready', () => {
+            this.webview.addEventListener('blur', (e: Event) => {
+                this.focusOnInput();
+            });
+            if (this.displayed) {
+                this.focusOnInput();
+            }
         });
 
         this.button = document.querySelector('.builtin-search-button') as HTMLButtonElement;
@@ -46,24 +58,16 @@ Polymer({
         this.matches = document.querySelector('.builtin-search-matches') as HTMLDivElement;
 
         remote.getCurrentWebContents().on('found-in-page', (event: Event, result: FoundInPage) => {
-            console.log(result, result.activeMatchOrdinal, result.matches, result.selectionArea);
             if (this.requestId !== result.requestId) {
                 return;
             }
             if (result.activeMatchOrdinal) {
                 this.activeIdx = result.activeMatchOrdinal;
             }
-            if (result.matches) {
+            if (result.finalUpdate && result.matches) {
                 this.setResult(this.activeIdx, result.matches);
             }
-            if (result.finalUpdate) {
-                remote.getCurrentWebContents().stopFindInPage('keepSelection');
-            }
         });
-    },
-
-    focusOnInput() {
-        this.input.$.input.focus();
     },
 
     show: function() {
@@ -91,7 +95,6 @@ Polymer({
     search: function(word: string) {
         if (word === '') {
             this.stopSearch();
-            this.focusOnInput();
             return;
         }
 
@@ -100,25 +103,24 @@ Polymer({
             this.searching = true;
             this.query = word;
             this.focusOnInput();
-            console.log('start search: ', word, this.requestId);
             return;
         }
 
         // Note: When this.query === word
         this.requestId = remote.getCurrentWebContents().findInPage(word, {findNext: true});
-        console.log('next search: ', word, this.requestId);
+        this.focusOnInput();
     },
 
     stopSearch: function() {
         if (!this.searching) {
             return;
         }
+        this.setResult(0, 0);
+        remote.getCurrentWebContents().stopFindInPage('clearSelection');
         this.searching = false;
         this.query = '';
         this.requestId = undefined;
         this.activeIdx = 0;
-        remote.getCurrentWebContents().stopFindInPage('clearSelection');
-        console.log('stop search: ', this.seatchWord);
     },
 
     setResult: function(no: number, all: number) {

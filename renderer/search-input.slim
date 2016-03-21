@@ -1,0 +1,25 @@
+doctype html
+html
+  head
+    meta charset="utf-8"
+    script src="../../bower_components/webcomponentsjs/webcomponents-lite.min.js"
+    link rel="import" href="../../bower_components/polymer/polymer.html"
+    link rel="import" href="../../bower_components/paper-input/paper-input.html"
+  body
+    paper-input.search-input[label="Search document" autofocus]
+  javascript:
+    'use strict';
+
+    const electron = require('electron');
+    const ipc = electron.ipcRenderer;
+
+    const element = document.querySelector('.search-input');
+    element.addEventListener('keypress', e => {
+      if (e.keyIdentifier === 'Enter') {
+        ipc.sendToHost('builtin-search:query', element.value);
+      }
+    });
+
+    ipc.on('builtin-search:focus', () => {
+      element.focus();
+    });
