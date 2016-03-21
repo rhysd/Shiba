@@ -9,7 +9,7 @@ Polymer({
     properties: {
         displayed: {
             type: Boolean,
-            value: true,
+            value: false,
         },
         searching: {
             type: Boolean,
@@ -90,12 +90,20 @@ Polymer({
         this.close_button.addEventListener('click', () => this.dismiss());
     },
 
+    toggle() {
+        if (this.displayed) {
+            this.dismiss();
+        } else {
+            this.show();
+        }
+    },
+
     show: function() {
         if (this.displayed) {
             return;
         }
 
-        this.body.style = 'block';
+        this.body.style.display = 'block';
         this.displayed = true;
     },
 

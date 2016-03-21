@@ -66,3 +66,16 @@ interface FoundInPage {
     matches?: number;
     selectionArea: Object;
 }
+
+interface BuiltinSearch extends HTMLElement {
+    displayed: boolean;
+    searching: boolean;
+    activeIdx: number;
+    show(): void;
+    dismiss(): void;
+    toggle(): void;
+    search(text: string): void;
+    searchNext(text: string, forward: boolean): void;
+    stopSearch(): void;
+    setResult(no: number, all: number): void;
+}

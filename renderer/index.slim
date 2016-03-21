@@ -80,12 +80,14 @@ html
             span
               paper-icon-button#lint-button.menu-button[icon="error" alt="Lint" paper-drawer-toggle]
             span
+              paper-icon-button#search-button.menu-button icon="search" alt="search" onclick="onSearchButtonPushed()"
+            span
               paper-icon-button#reload-button.menu-button icon="refresh" alt="Reload"
             span
               paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"
       paper-header-panel[drawer]
         lint-panel#lint-area.lint-area
-    builtin-search
+    builtin-search#builtin-page-searcher
 
     script src="../../node_modules/mousetrap/mousetrap.min.js"
     script src="../src/renderer/keyboard.js"
