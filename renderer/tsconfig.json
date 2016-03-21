@@ -8,6 +8,7 @@
     "sourceMap": true
   },
   "files": [
+    "builtin-search.ts",
     "emoji.ts",
     "index.ts",
     "keyboard.ts",

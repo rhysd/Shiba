@@ -120,14 +120,10 @@ task :release => [:build] do
   release '--platform=linux --arch=x64 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
 end
 
-task :debug  do
-  sh "NODE_ENV=debug #{BIN_DIR}/electron ./bin/cli.js README.md"
-end
-
 task :clean do
   %w(npm-publish build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
 end
 
 task :watch do
-  sh 'guard --watchdir static browser renderer tests typings'
+  sh 'guard --watchdir browser renderer tests typings'
 end

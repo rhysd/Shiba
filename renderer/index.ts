@@ -13,6 +13,7 @@ const config = remote.require('./config').load();
 
 let current_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
+let onSearchButtonPushed = function(){ /* do nothing */ };
 const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
 namespace MarkdownRenderer {
@@ -261,6 +262,12 @@ function prepareHtmlPreview(file: string) {
         onPathButtonPushed();
     }
 
+    const searcher = document.getElementById('builtin-page-searcher') as BuiltinSearch;
+
+    onSearchButtonPushed = function() {
+        searcher.toggle();
+    };
+
     const cancel_event = function(e: Event) {
         e.preventDefault();
     };
@@ -326,6 +333,10 @@ function prepareHtmlPreview(file: string) {
     });
     receiver.on('Reload', () => watcher.startWatching());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
+    receiver.on('Search', () => searcher.toggle());
+
+    searcher.onMount = () => { receiver.enabled = false; };
+    searcher.onUnmount = () => { receiver.enabled = true; };
 
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());

@@ -4,9 +4,11 @@ namespace Keyboard {
     'use strict';
 
     export class Receiver {
+        public enabled: boolean;
         private callbacks: {[action: string]: () => void};
 
         constructor(private shortcuts: {[k: string]: string}) {
+            this.enabled = true;
             this.callbacks = {};
 
             const key_handler_for = (action: string) => () => this.dispatch_shortcut(action);
@@ -20,7 +22,7 @@ namespace Keyboard {
         }
 
         dispatch_shortcut(action: string): void {
-            if (action in this.callbacks) {
+            if (this.enabled && action in this.callbacks) {
                 this.callbacks[action]();
             }
         }

@@ -14,6 +14,7 @@ Currently below actions can be assigned to keyboard shortcuts.
 | `PageTop`    | Scroll up to top of page                   | `i`, `home`             |
 | `ChangePath` | Open dialog to choose file or directory    | `ctrl+p`                |
 | `Lint`       | Toggle lint result drawer                  | `ctrl+l`                |
+| `Search`     | Toggle find-in-page search box             | `s`                     |
 | `Reload`     | Reload preview                             | `r`                     |
 | `Print`      | Print current preview                      | Not assigned            |
 | `QuitApp`    | Quit Shiba                                 | Not assigned            |

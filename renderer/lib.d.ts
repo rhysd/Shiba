@@ -58,3 +58,26 @@ interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
 }
+
+interface FoundInPage {
+    requestId: number;
+    finalUpdate: boolean;
+    activeMatchOrdinal?: number;
+    matches?: number;
+    selectionArea: Object;
+}
+
+interface BuiltinSearch extends HTMLElement {
+    displayed: boolean;
+    searching: boolean;
+    activeIdx: number;
+    onMount: () => void;
+    onUnmount: () => void;
+    show(): void;
+    dismiss(): void;
+    toggle(): void;
+    search(text: string): void;
+    searchNext(text: string, forward: boolean): void;
+    stopSearch(): void;
+    setResult(no: number, all: number): void;
+}

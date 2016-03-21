@@ -73,6 +73,7 @@ export function load(): Config {
             'ctrl+p':   'ChangePath',
             'ctrl+l':   'Lint',
             'r':        'Reload',
+            's':        'Search',
         },
     } as Config;
 

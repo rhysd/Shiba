@@ -1,0 +1,56 @@
+link rel="import" href="../../bower_components/polymer/polymer.html"
+link rel="import" href="../../bower_components/paper-input/paper-input.html"
+link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html"
+link rel="import" href="../../bower_components/paper-material/paper-material.html"
+
+dom-module#builtin-search
+  template
+    css:
+      :host {
+        font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
+      }
+      .builtin-search-body {
+        display: none;
+        margin-left: 0 8px;
+        position: absolute;
+        right: 0;
+        top: 0;
+        background-color: white;
+      }
+      .builtin-search-contents {
+        padding: 0 8px;
+        display: flex;
+      }
+      .builtin-search-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .builtin-search-matches {
+        margin: 0 auto 8px;
+        font-size: 14px;
+        min-width: 40px;
+        text-align: center;
+      }
+      .input-workaround {
+        width: 300px;
+        height: 80px;
+      }
+      .builtin-search-control {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        font-size: 14px;
+      }
+    div.builtin-search-body
+      paper-material.builtin-search-contents
+        div.builtin-search-panel
+          paper-icon-button.builtin-search-button icon="search"
+          div.builtin-search-matches 0/0
+        div.builtin-search-control
+          paper-icon-button.builtin-search-up icon="expand-less"
+          paper-icon-button.builtin-search-down icon="expand-more"
+          paper-icon-button.builtin-search-close icon="close"
+        webview.input-workaround nodeintegration="on" autosize="on"
+
+  script src="../src/renderer/builtin-search.js"
