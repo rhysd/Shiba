@@ -35,11 +35,22 @@ dom-module#builtin-search
         width: 300px;
         height: 80px;
       }
+      .builtin-search-control {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        font-size: 14px;
+      }
     div.builtin-search-body
       paper-material.builtin-search-contents
         div.builtin-search-panel
           paper-icon-button.builtin-search-button icon="search"
           div.builtin-search-matches 0/0
+        div.builtin-search-control
+          paper-icon-button.builtin-search-up icon="expand-less"
+          paper-icon-button.builtin-search-down icon="expand-more"
+          paper-icon-button.builtin-search-close icon="close"
         webview.input-workaround nodeintegration="on" autosize="on"
 
   script src="../src/renderer/builtin-search.js"

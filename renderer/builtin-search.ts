@@ -81,6 +81,13 @@ Polymer({
                 this.setResult(this.activeIdx, result.matches);
             }
         });
+
+        this.up_button = document.querySelector('.builtin-search-up') as HTMLButtonElement;
+        this.up_button.addEventListener('click', () => this.searchNext(this.query, false));
+        this.down_button = document.querySelector('.builtin-search-down') as HTMLButtonElement;
+        this.down_button.addEventListener('click', () => this.searchNext(this.query, true));
+        this.close_button = document.querySelector('.builtin-search-close') as HTMLButtonElement;
+        this.close_button.addEventListener('click', () => this.dismiss());
     },
 
     show: function() {
@@ -97,8 +104,6 @@ Polymer({
             return;
         }
 
-        console.log('dismiss!');
-
         this.body.style.display = 'none';
         this.displayed = false;
 
@@ -109,7 +114,7 @@ Polymer({
 
     search: function(word: string) {
         if (word === '') {
-            this.stopSearch();
+            this.dismiss();
             return;
         }
 
@@ -122,7 +127,18 @@ Polymer({
         }
 
         // Note: When this.query === word
-        this.requestId = remote.getCurrentWebContents().findInPage(word, {findNext: true});
+        this.searchNext(word, true);
+    },
+
+    searchNext(text: string, forward: boolean) {
+        if (text === '') {
+            return;
+        }
+        const options = {
+            forward,
+            findNext: true,
+        };
+        this.requestId = remote.getCurrentWebContents().findInPage(text, options);
         this.focusOnInput();
     },
 
