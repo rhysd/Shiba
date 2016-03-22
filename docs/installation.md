@@ -42,13 +42,21 @@ Then you can simply execute `shiba` command from command line.
 
 ## For development
 
-To execute Shiba in git repository for development purpose, please use `electron` command which is available after installing `electron-prebuilt` via npm.
-
 ```sh
 $ git clone https://github.com/rhysd/Shiba.git && cd Shiba
-$ bower install && npm install
+
+$ gem install slimrb
+$ npm install -g typescript bower
+$ bower install && npm install && ./node_modules/.bin/typings install
+
+# Build Shiba
 $ rake build
+
+# Execute Shiba
 $ ./bin/cli.js
+
+# Watch and differential build
+$ rake watch
 ```
 
 

@@ -25,6 +25,7 @@
   "dependencies": {
     "animate.css": "^3.5.1",
     "chokidar": "^1.4.3",
+    "electron-prebuilt": "^0.37.2",
     "highlight.js": "^9.2.0",
     "js-yaml": "^3.5.4",
     "katex": "^0.5.1",
@@ -38,7 +39,6 @@
     "asar": "^0.10.0",
     "chai": "^3.5.0",
     "co-mocha": "^1.1.2",
-    "electron-prebuilt": "^0.37.2",
     "globby": "^4.0.0",
     "mocha": "^2.4.5",
     "nightmare": "https://github.com/segmentio/nightmare.git",
