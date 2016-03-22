@@ -7,15 +7,16 @@
 Shiba is a rich live markdown preview app with linter.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
 Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](https://www.polymer-project.org/1.0/).
 
-- [x] Isolated app.  You need not prepare Chrome and can use favorite editor.
+- [x] Isolated app.  You need not prepare Chrome and can use favorite editor
 - [x] Rich GitHub Flavored Markdown (code highlight, emoji, task list, tree diagram and flowchart using [mermaid](https://github.com/knsv/mermaid), math rendering using [katex](https://github.com/Khan/KaTeX))
 - [x] Live reload
 - [x] Automatic lint (remark-lint, markdownlint)
 - [x] Cross platform (OS X, Linux, Windows)
-- [x] Both GUI and CLI friendly.
+- [x] Both GUI and CLI friendly
 - [x] [Easy to install](docs/installation.md)
 - [x] [Keyboard shortcuts](docs/shortcuts.md)
 - [x] [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
+- [x] Search text in preview
 - [x] Print preview (to paper / to PDF file)
 - [x] HTML preview
 - [x] Dog-respected :dog2:

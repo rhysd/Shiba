@@ -19,33 +19,51 @@ html
 
     link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
     link rel="stylesheet" href="../../bower_components/katex/dist/katex.min.css"
-    style is="custom-style"
-      |
+    css:
         html, body {
           width: 100%;
           height: 100%;
           margin: 0px;
         }
         .main-area {
-          @apply(--layout-horizontal);
-        }
-        .preview {
-          @apply(--layout-flex);
-        }
-        .shiba-menu {
-          @apply(--layout-vertical);
-          background-color: #ffd8aa;
-        }
-        .lint-area {
-          overflow: auto;
-        }
-        .menu-button {
-          color: #d99e5f;
-        }
-        .current-html-preview {
+          display: flex;
+          flex-direction: row;
+          height: 100%;
           width: 100%;
         }
-    css:
+        .preview {
+          display: flex;
+          flex-direction: row;
+          height: 100%;
+          width: 100%;
+          overflow: auto;
+        }
+      .shiba-menu {
+        display: flex;
+        flex-direction: column;
+        background-color: #ffd8aa;
+        height: 100%;
+        overflow: hidden;
+      }
+      .lint-area {
+        overflow: auto;
+      }
+      .menu-button {
+        color: #d99e5f;
+      }
+      .current-html-preview {
+        width: 100%;
+      }
+      .file-chooser {
+        height: 100%;
+        width: 100%;
+      }
+      #mainPanel {
+        height: 100%;
+      }
+      #mainContainer {
+        height: 100%;
+      }
       @media print {
         html, body {
           padding: 0;
@@ -54,7 +72,6 @@ html
         #mainContainer {
           overflow: visible !important;
         }
-
         paper-drawer-panel#main-drawer {
           overflow: visible !important;
           overflow-y: visible;
@@ -62,8 +79,11 @@ html
         paper-drawer-panel {
           overflow: visible !important;
         }
-        #menu {
+        .shiba-menu {
           display: none;
+        }
+        .preview {
+          overflow: visible;
         }
       }
     base
@@ -73,7 +93,7 @@ html
       paper-header-panel[main]
         section.main-area
           div.preview#viewer-wrapper
-            paw-filechooser
+            paw-filechooser.file-chooser
           div#menu.shiba-menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"

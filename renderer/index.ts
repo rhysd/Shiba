@@ -97,8 +97,12 @@ function getScroller(): Scroller {
         return null;
     }
 
-    const panel = document.querySelector('paper-header-panel[' + selected + ']') as HeaderPanel;
-    return panel.scroller;
+    if (selected === 'drawer') {
+        const panel = document.querySelector('paper-header-panel[drawer]') as HeaderPanel;
+        return panel.scroller;
+    } else {
+        return document.getElementById('viewer-wrapper');
+    }
 }
 
 function scrollContentBy(x: number, y: number) {
