@@ -50,11 +50,15 @@ app.on('ready', function(){
     }
 
     const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
-    mainWindow = new BrowserWindow({
+    const options: Electron.BrowserWindowOptions = {
             icon: icon_path,
-            width: getConfigLength('width', 800),
-            height: getConfigLength('height', 600),
-        } as Electron.BrowserWindowOptions);
+            width: getConfigLength('width', 900),
+            height: getConfigLength('height', 800),
+        };
+    if (config.hide_title_bar) {
+        options.titleBarStyle = 'hidden-inset';
+    }
+    mainWindow = new BrowserWindow(options);
 
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
     mainWindow.loadURL(html);

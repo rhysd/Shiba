@@ -184,6 +184,7 @@ function prepareHtmlPreview(file: string) {
     const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;
+        lint.enable_inset = config.hide_title_bar;
     }
 
     function chooseFileOrDirWithDialog() {
@@ -305,9 +306,16 @@ function prepareHtmlPreview(file: string) {
         drawer.forceNarrow = true;
     }
 
+    const menu = document.getElementById('menu');
     if (!config.menu.visible) {
-        const menu = document.getElementById('menu');
         menu.style.display = 'none';
+    } else if (config.hide_title_bar && process.platform === 'darwin') {
+        const spacer = document.getElementById('inset-spacer');
+        spacer.style.height = '25px';
+        // Note:
+        // Tweak width of menu bar.
+        // Width of traffic lights gets wider when a title bar is hidden.
+        menu.style.width = '80px';
     }
 
     const receiver = new Keyboard.Receiver(config.shortcuts);
@@ -333,7 +341,7 @@ function prepareHtmlPreview(file: string) {
     });
     receiver.on('DevTools', function() {
         this.bw = this.bw || remote.BrowserWindow;
-        this.bw.getFocusedWindow().toggleDevTools();
+        this.bw.getFocusedWindow().openDevTools({detach: true});
     });
     receiver.on('Reload', () => watcher.startWatching());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());

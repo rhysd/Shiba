@@ -19,31 +19,44 @@ html
 
     link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
     link rel="stylesheet" href="../../bower_components/katex/dist/katex.min.css"
+    style is="custom-style"
+      |
+        .menu-button {
+          width: 50px;
+          height: 50px;
+        }
+        paper-header-panel {
+          --paper-header-panel-shadow: {
+            display: none;
+          }
+        }
     css:
-        html, body {
-          width: 100%;
-          height: 100%;
-          margin: 0px;
-        }
-        .main-area {
-          display: flex;
-          flex-direction: row;
-          height: 100%;
-          width: 100%;
-        }
-        .preview {
-          display: flex;
-          flex-direction: row;
-          height: 100%;
-          width: 100%;
-          overflow: auto;
-        }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+      }
+      .main-area {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        width: 100%;
+      }
+      .preview {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+      }
       .shiba-menu {
         display: flex;
         flex-direction: column;
         background-color: #ffd8aa;
         height: 100%;
         overflow: hidden;
+        width: 70px;
+        align-items: center;
       }
       .lint-area {
         overflow: auto;
@@ -93,8 +106,9 @@ html
       paper-header-panel[main]
         section.main-area
           div#menu.shiba-menu
+            span#inset-spacer
             span
-              paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
+              paper-icon-button#path-button.giant.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
             span
               paper-icon-button#lint-button.menu-button[icon="error" alt="Lint" paper-drawer-toggle]
             span

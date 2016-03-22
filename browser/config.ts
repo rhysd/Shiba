@@ -25,6 +25,7 @@ export interface Config {
         visible: boolean;
     };
     ignore_path_pattern: string;
+    hide_title_bar: boolean;
     [name: string]: any;
 }
 
@@ -42,8 +43,8 @@ export function load(): Config {
             html: ['html'],
             // TODO: Add slim?
         },
-        width: 800,
-        height: 600,
+        width: 900,
+        height: 800,
         ignore_path_pattern: '[\\\\/]\\.',
         voice: {
             enabled: false,
@@ -55,6 +56,7 @@ export function load(): Config {
         menu: {
             visible: true,
         },
+        hide_title_bar: false,
         shortcuts: {
             'j':        'PageDown',
             'k':        'PageUp',

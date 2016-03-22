@@ -21,6 +21,17 @@ Polymer({
             type: String,
             value: '',
         },
+        enable_inset: {
+            type: Boolean,
+            value: false,
+        },
+    },
+
+    attached: function() {
+        if (this.enable_inset && process.platform === 'darwin') {
+            const header = document.getElementById('lint-header');
+            header.style.textAlign = 'center';
+        }
     },
 
     _setMessages(messages: LintMessage[]) {

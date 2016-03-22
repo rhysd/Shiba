@@ -41,6 +41,7 @@ interface LintResultArea extends HTMLElement {
     content: LintMessage[];
     lint_url: string;
     voice_src: string;
+    enable_inset: boolean;
 }
 
 interface LintMessageElement extends HTMLElement {
