@@ -26,7 +26,7 @@ If you want to change the watching directory/file, please push the 'directory' b
 
 ## Lint
 
-Shiba has integrated markdown linter.  When file is updated, Shiba will run linter automatically and report it if an error occurs.  You can access the lint result by '!' button in right above of the window.
+Shiba has integrated markdown linter.  When file is updated, Shiba will run linter automatically and report it if an error occurs.  You can access the lint result by '!' button in left above of the window.
 At first, the '!' button is normal color as below.
 
 ![no error](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/menu-no-error.png)

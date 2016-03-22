@@ -31,7 +31,7 @@ All keys for the YAML configuration file is below:
 | `voice.enabled`       | Notify with voice      | enable/disable with boolean value               | false                   |
 | `voice.source`        | Path to voice source   | Path string                                     | "../voices/bow.mp3"     |
 | `drawer.responsive`   | Make drawer responsive | Enable responsive drawer with boolean value     | true                    |
-| `menu.visible`        | Right menu visibility  | Right menu is visible or not (boolean value)    | true                    |
+| `menu.visible`        | Left menu visibility   | Left menu is visible or not (boolean value)     | true                    |
 | `ignore_path_pattern` | Regex to ignore  path  | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles) |
 
 

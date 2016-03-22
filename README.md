@@ -35,8 +35,8 @@ You can install Shiba easily.  Please see [installation document](docs/installat
 
 1. At start up, Shiba is watching the current working directory (watching directory is shown in title of window).
 2. When you edit the markdown file in current working directory, Shiba finds the update, renders the file in window and set the result of lint.
-3. You can see the result of lint by pushing the '!' button in right above of window.  When the button is red, it means that linter reported some errors.
-4. You can change the watching directory/file using 'directory' button in right above of window or dropping file to window.  Watching path is shown in title of window.
+3. You can see the result of lint by pushing the '!' button in left above of window.  When the button is red, it means that linter reported some errors.
+4. You can change the watching directory/file using 'directory' button in left above of window or dropping file to window.  Watching path is shown in title of window.
 5. You can quit app by closing the window.
 
 Please see [usage document](docs/usage.md) for more detail.

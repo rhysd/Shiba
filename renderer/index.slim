@@ -88,12 +88,10 @@ html
       }
     base
   body
-    paper-drawer-panel#main-drawer[drawer-width="320px" responsive-width="1120px" disable-swipe=true right-drawer]
+    paper-drawer-panel#main-drawer drawer-width="320px" responsive-width="1120px" disable-swipe=true
       / Note: paper-header-panel is required to scroll content from JavaScript
       paper-header-panel[main]
         section.main-area
-          div.preview#viewer-wrapper
-            paw-filechooser.file-chooser
           div#menu.shiba-menu
             span
               paper-icon-button#path-button.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
@@ -104,6 +102,8 @@ html
             span
               paper-icon-button#reload-button.menu-button icon="refresh" alt="Reload"
             span
+          div.preview#viewer-wrapper
+            paw-filechooser.file-chooser
               paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"
       paper-header-panel[drawer]
         lint-panel#lint-area.lint-area
