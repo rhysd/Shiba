@@ -23,6 +23,7 @@
     "electron"
   ],
   "dependencies": {
+    "animate.css": "^3.5.1",
     "chokidar": "^1.4.3",
     "highlight.js": "^9.2.0",
     "js-yaml": "^3.5.4",

@@ -22,6 +22,8 @@ Currently below actions can be assigned to keyboard shortcuts.
 
 You can customize all key assigns.  Please see [customization document](customization.md).
 
+Note: When a search box is opened with `Search` action, all shortcuts are disabled temporarily to input a text into it.  In search box, `escape` and `ctrl+g` shortcuts are available to close it.
+
 
 -----------------
 [installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)
