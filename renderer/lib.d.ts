@@ -27,7 +27,7 @@ interface HeaderPanel extends HTMLElement {
 }
 
 interface MarkdownPreview extends HTMLElement {
-    content: string;
+    document: string;
     exts: string[];
     openMarkdownDoc: (path: string, modifier: boolean) => void;
 }
@@ -82,3 +82,9 @@ interface BuiltinSearch extends HTMLElement {
     stopSearch(): void;
     setResult(no: number, all: number): void;
 }
+
+interface MarkdownPreviewComponent extends polymer.Base {
+    openLinkWithExternalBrowser(event: Event): void;
+    _documentUpdated(markdown_doc: string): void;
+}
+

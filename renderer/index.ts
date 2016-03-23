@@ -1,12 +1,8 @@
 /// <reference path="./keyboard.ts" />
-/// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
 
 import * as path from 'path';
 import * as fs from 'fs';
-import * as marked from 'marked';
-import * as katex from 'katex';
-import {highlight} from 'highlight.js';
 import {remote, ipcRenderer as ipc} from 'electron';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
@@ -14,60 +10,6 @@ const config = remote.require('./config').load();
 let watching_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
 let onSearchButtonPushed = function(){ /* do nothing */ };
-const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
-
-namespace MarkdownRenderer {
-    marked.setOptions({
-        highlight: function(code: string, lang: string): string {
-            if (lang === undefined) {
-                return code;
-            }
-
-            if (lang === 'mermaid') {
-                return '<div class="mermaid">' + code + '</div>';
-            }
-
-            if (lang === 'katex') {
-                return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
-            }
-
-            try {
-                return highlight(lang, code).value;
-            } catch (e) {
-                console.log('Error on highlight: ' + e.message);
-                return code;
-            }
-        },
-    });
-
-    const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
-    const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
-    const renderer = new marked.Renderer();
-
-    renderer.listitem = function(text) {
-        let matched = text.match(REGEX_CHECKED_LISTITEM);
-        if (matched && matched[0]) {
-            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
-                + text.slice(matched[0].length) + '</li>\n';
-        }
-
-        matched = text.match(REGEX_UNCHECKED_LISTITEM);
-        if (matched && matched[0]) {
-            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
-                + text.slice(matched[0].length) + '</li>\n';
-        }
-
-        return marked.Renderer.prototype.listitem.call(this, text);
-    };
-
-    renderer.text = function(text) {
-        return emoji_replacer.replaceWithImages(text);
-    };
-
-    export function render(markdown: string): string {
-        return marked(markdown, {renderer});
-    }
-}
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
@@ -135,11 +77,9 @@ function prepareMarkdownPreview(file: string, exts: string[], font_size: string,
             return;
         }
 
-        const html = MarkdownRenderer.render(markdown);
-
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
-            markdown_preview.content = html;
+            markdown_preview.document = markdown;
             return;
         }
 
@@ -153,7 +93,7 @@ function prepareMarkdownPreview(file: string, exts: string[], font_size: string,
 
         markdown_preview.exts = exts;
         markdown_preview.openMarkdownDoc = onPathChanged;
-        markdown_preview.content = html;
+        markdown_preview.document = markdown;
     });
 }
 

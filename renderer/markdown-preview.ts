@@ -1,7 +1,67 @@
+/// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
 
-import {shell} from 'electron';
+import * as path from 'path';
 import {unescape} from 'querystring';
+import {shell} from 'electron';
+import * as marked from 'marked';
+import * as katex from 'katex';
+import {highlight} from 'highlight.js';
+
+const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
+
+namespace MarkdownRenderer {
+    marked.setOptions({
+        highlight: function(code: string, lang: string): string {
+            if (lang === undefined) {
+                return code;
+            }
+
+            if (lang === 'mermaid') {
+                return '<div class="mermaid">' + code + '</div>';
+            }
+
+            if (lang === 'katex') {
+                return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
+            }
+
+            try {
+                return highlight(lang, code).value;
+            } catch (e) {
+                console.log('Error on highlight: ' + e.message);
+                return code;
+            }
+        },
+    });
+
+    const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
+    const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
+    const renderer = new marked.Renderer();
+
+    renderer.listitem = function(text) {
+        let matched = text.match(REGEX_CHECKED_LISTITEM);
+        if (matched && matched[0]) {
+            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
+                + text.slice(matched[0].length) + '</li>\n';
+        }
+
+        matched = text.match(REGEX_UNCHECKED_LISTITEM);
+        if (matched && matched[0]) {
+            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
+                + text.slice(matched[0].length) + '</li>\n';
+        }
+
+        return marked.Renderer.prototype.listitem.call(this, text);
+    };
+
+    renderer.text = function(text) {
+        return emoji_replacer.replaceWithImages(text);
+    };
+
+    export function render(markdown: string): string {
+        return marked(markdown, {renderer});
+    }
+}
 
 interface LinkOpenerType {
     openMarkdownDoc(path: string, modifier: boolean): void;
@@ -32,18 +92,13 @@ function openHashLink(event: MouseEvent) {
     location.hash = hash_name;
 }
 
-interface MarkdownPreviewComponent extends polymer.Base {
-    openLinkWithExternalBrowser(event: Event): void;
-    _contentUpdated(new_content: string): void;
-}
-
 Polymer({
     is: 'markdown-preview',
 
     properties: {
-        content: {
+        document: {
             type: String,
-            observer: '_contentUpdated',
+            observer: '_documentUpdated',
         },
 
         exts: {
@@ -71,9 +126,10 @@ Polymer({
         body.style.fontSize = this.fontSize;
     },
 
-    _contentUpdated: function(new_content) {
+    _documentUpdated: function(updated_doc) {
+        console.log('foo!');
         const body = document.querySelector('.markdown-body') as HTMLDivElement;
-        body.innerHTML = new_content;
+        body.innerHTML = MarkdownRenderer.render(updated_doc);
 
         // Prevent external links from opening in page
         const links = body.querySelectorAll('a');
