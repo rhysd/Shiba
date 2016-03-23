@@ -180,6 +180,19 @@ function prepareHtmlPreview(file: string) {
     setChildToViewerWrapper(html_preview);
 }
 
+function getDialogDefaultPath() {
+    try {
+        const stats = fs.lstatSync(current_path);
+        if (stats.isDirectory()) {
+            return current_path;
+        }
+        return path.dirname(current_path);
+    } catch (e) {
+        // Note: Path not found
+        return '';
+    }
+}
+
 (function(){
     const lint = getLintArea();
     if (config.voice.enabled) {
@@ -191,7 +204,7 @@ function prepareHtmlPreview(file: string) {
         // TODO: Filter by extentions
         const paths = remote.dialog.showOpenDialog({
             title: 'Choose file or directory to watch',
-            defaultPath: current_path,
+            defaultPath: getDialogDefaultPath(),
             filters: [
                 {
                     name: 'Markdown',
@@ -258,7 +271,11 @@ function prepareHtmlPreview(file: string) {
     lint.lint_url = watcher.getLintRuleURL();
 
     onPathButtonPushed = function() {
-        current_path = chooseFileOrDirWithDialog();
+        const chosen = chooseFileOrDirWithDialog();
+        if (chosen === '') {
+            return;
+        }
+        current_path = chosen;
         document.title = makeTitle(current_path);
         watcher.changeWatchingDir(current_path);
     };
