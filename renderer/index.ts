@@ -201,20 +201,20 @@ function getDialogDefaultPath() {
     }
 
     function chooseFileOrDirWithDialog() {
-        // TODO: Filter by extentions
+        const filters = [
+            {
+                name: 'Markdown',
+                extensions: config.file_ext.markdown,
+            },
+            {
+                name: 'HTML',
+                extensions: config.file_ext.html,
+            },
+        ];
         const paths = remote.dialog.showOpenDialog({
             title: 'Choose file or directory to watch',
             defaultPath: getDialogDefaultPath(),
-            filters: [
-                {
-                    name: 'Markdown',
-                    extensions: ['md', 'markdown', 'mkd'],
-                },
-                {
-                    name: 'HTML',
-                    extensions: ['html'],
-                },
-            ],
+            filters,
             properties: ['openFile', 'openDirectory'],
         });
         console.log(paths);
