@@ -16,6 +16,8 @@ drawer:
     responsive: false
 menu:
     visible: false
+markdown:
+    font_size: 10px
 ```
 
 All keys for the YAML configuration file is below:
@@ -34,6 +36,7 @@ All keys for the YAML configuration file is below:
 | `menu.visible`        | Left menu visibility    | Left menu is visible or not (boolean value)     | true                    |
 | `ignore_path_pattern` | Regex to ignore  path   | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles) |
 | `hide_title_bar`      | Hide a title bar (OS X) | hide a tool bar if true                         | false                   |
+| `markdown.font_size`  | Size of font in preview | Specify font size by string (e.g. "10px")       | ''                      |
 
 
 ## Customize Keyboard Shortcuts

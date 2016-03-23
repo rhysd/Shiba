@@ -26,6 +26,9 @@ export interface Config {
     };
     ignore_path_pattern: string;
     hide_title_bar: boolean;
+    markdown: {
+        font_size: string;
+    };
     [name: string]: any;
 }
 
@@ -57,9 +60,13 @@ export function load(): Config {
             visible: true,
         },
         hide_title_bar: false,
+        markdown: {
+            font_size: '',
+        },
         shortcuts: {
             'j':        'PageDown',
             'k':        'PageUp',
+
             'down':     'PageDown',
             'up':       'PageUp',
             'pagedown': 'PageDown',

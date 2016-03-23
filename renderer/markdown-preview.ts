@@ -52,6 +52,8 @@ Polymer({
         },
 
         openMarkdownDoc: Object,
+
+        fontSize: String,
     },
 
     openLinkWithExternalBrowser: function(event) {
@@ -64,8 +66,13 @@ Polymer({
         element_env = this; // XXX
     },
 
+    attached: function() {
+        const body = document.querySelector('.markdown-body') as HTMLDivElement;
+        body.style.fontSize = this.fontSize;
+    },
+
     _contentUpdated: function(new_content) {
-        let body = document.querySelector('.markdown-body') as HTMLDivElement;
+        const body = document.querySelector('.markdown-body') as HTMLDivElement;
         body.innerHTML = new_content;
 
         // Prevent external links from opening in page

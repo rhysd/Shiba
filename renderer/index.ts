@@ -128,7 +128,7 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
     }
 }
 
-function prepareMarkdownPreview(file: string, exts: string[], onPathChanged: (p: string, m: boolean) => void): void {
+function prepareMarkdownPreview(file: string, exts: string[], font_size: string, onPathChanged: (p: string, m: boolean) => void): void {
     fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
         if (err) {
             console.error(err);
@@ -145,6 +145,9 @@ function prepareMarkdownPreview(file: string, exts: string[], onPathChanged: (p:
 
         markdown_preview = document.createElement('markdown-preview') as MarkdownPreview;
         markdown_preview.id = 'current-markdown-preview';
+        if (font_size !== '') {
+            markdown_preview.setAttribute('font-size', font_size);
+        }
 
         setChildToViewerWrapper(markdown_preview);
 
@@ -235,7 +238,7 @@ function getDialogDefaultPath() {
             base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
             switch (kind) {
                 case 'markdown': {
-                    prepareMarkdownPreview(file, config.file_ext.markdown, (file_path: string, modifier: boolean) => {
+                    prepareMarkdownPreview(file, config.file_ext.markdown, config.markdown.font_size, (file_path: string, modifier: boolean) => {
                         if (modifier) {
                             watcher.changeWatchingDir(file_path);
                             document.title = makeTitle(file_path);
