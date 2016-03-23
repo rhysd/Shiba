@@ -18,7 +18,7 @@ class Watcher {
         this.config = config.load();
         this.linter = new Linter(this.config.linter, this.config.lint_options);
 
-        console.log('Watcher starts with ' + this.path);
+        console.log('Start to watch ' + this.path);
 
         this.startWatching();
     }
@@ -62,7 +62,7 @@ class Watcher {
             return;
         }
 
-        console.log('Change watching path' + this.path + ' -> ' + new_path);
+        console.log(`Change watching path ${this.path} -> ${new_path}`);
 
         this.path = new_path;
         this.startWatching();

@@ -12,6 +12,7 @@ html
     link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html"
     link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html"
     link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html"
+    link rel="import" href="../../bower_components/paper-tooltip/paper-tooltip.html"
     link rel="import" href="markdown-preview.html"
     link rel="import" href="lint-panel.html"
     link rel="import" href="paw-filechooser.html"
@@ -108,14 +109,17 @@ html
           div#menu.shiba-menu
             span#inset-spacer
             span
-              paper-icon-button#path-button.giant.menu-button icon="folder" alt="Watching dir" onclick="onPathButtonPushed()"
+              paper-icon-button#path-button.giant.menu-button icon="folder" alt="watching path" onclick="onPathButtonPushed()"
+              paper-tooltip for="path-button" offset="0" Open
             span
-              paper-icon-button#lint-button.menu-button[icon="error" alt="Lint" paper-drawer-toggle]
+              paper-icon-button#lint-button.menu-button[icon="error" alt="lint" paper-drawer-toggle]
+              paper-tooltip for="lint-button" offset="0" Lint
             span
               paper-icon-button#search-button.menu-button icon="search" alt="search" onclick="onSearchButtonPushed()"
+              paper-tooltip for="search-button" offset="0" Search
             span
-              paper-icon-button#reload-button.menu-button icon="refresh" alt="Reload"
-            span
+              paper-icon-button#reload-button.menu-button icon="refresh" alt="reload"
+              paper-tooltip for="reload-button" offset="0" Reload
           div.preview#viewer-wrapper
             paw-filechooser.file-chooser
               paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"

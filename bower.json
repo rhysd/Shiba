@@ -14,6 +14,7 @@
     "paper-toolbar": "PolymerElements/paper-toolbar#^1.0.0",
     "iron-icons": "PolymerElements/iron-icons#^1.0.0",
     "paper-input": "PolymerElements/paper-input#^1.0.0",
-    "paper-material": "PolymerElements/paper-material#^1.0.0"
+    "paper-material": "PolymerElements/paper-material#^1.0.0",
+    "paper-tooltip": "PolymerElements/paper-tooltip#^1.0.0"
   }
 }

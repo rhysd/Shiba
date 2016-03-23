@@ -11,7 +11,7 @@ import {remote, ipcRenderer as ipc} from 'electron';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
 
-let current_path = remote.require('./initial_path.js')();
+let watching_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
 let onSearchButtonPushed = function(){ /* do nothing */ };
 const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
@@ -182,11 +182,11 @@ function prepareHtmlPreview(file: string) {
 
 function getDialogDefaultPath() {
     try {
-        const stats = fs.lstatSync(current_path);
+        const stats = fs.lstatSync(watching_path);
         if (stats.isDirectory()) {
-            return current_path;
+            return watching_path;
         }
-        return path.dirname(current_path);
+        return path.dirname(watching_path);
     } catch (e) {
         // Note: Path not found
         return '';
@@ -225,7 +225,7 @@ function getDialogDefaultPath() {
     }
 
     const watcher = new Watcher(
-        current_path,
+        watching_path,
 
         // Markdown renderer
         function(kind: string, file: string): void {
@@ -241,18 +241,18 @@ function getDialogDefaultPath() {
                             watcher.sendUpdate(file_path);
                         }
                     });
-                    return;
                 }
+                break;
 
                 case 'html': {
                     prepareHtmlPreview(file);
-                    return;
                 }
+                break;
 
                 default: {
                     // Do nothing
-                    break;
                 }
+                break;
             }
         },
 
@@ -275,12 +275,12 @@ function getDialogDefaultPath() {
         if (chosen === '') {
             return;
         }
-        current_path = chosen;
-        document.title = makeTitle(current_path);
-        watcher.changeWatchingDir(current_path);
+        watching_path = chosen;
+        document.title = makeTitle(watching_path);
+        watcher.changeWatchingDir(watching_path);
     };
 
-    if (current_path === '') {
+    if (watching_path === '') {
         onPathButtonPushed();
     }
 
