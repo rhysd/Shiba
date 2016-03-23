@@ -197,6 +197,8 @@ function getDialogDefaultPath() {
     const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;
+    }
+    if (config.hide_title_bar) {
         lint.enable_inset = config.hide_title_bar;
     }
 

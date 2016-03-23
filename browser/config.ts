@@ -43,7 +43,7 @@ export function load(): Config {
             html: ['html'],
             // TODO: Add slim?
         },
-        width: 900,
+        width: 920,
         height: 800,
         ignore_path_pattern: '[\\\\/]\\.',
         voice: {

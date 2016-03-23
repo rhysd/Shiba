@@ -52,7 +52,7 @@ app.on('ready', function(){
     const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
     const options: Electron.BrowserWindowOptions = {
             icon: icon_path,
-            width: getConfigLength('width', 900),
+            width: getConfigLength('width', 920),
             height: getConfigLength('height', 800),
         };
     if (config.hide_title_bar) {

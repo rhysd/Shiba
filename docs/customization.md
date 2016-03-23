@@ -7,7 +7,7 @@ You can put `config.yml` (__not__ `config.yaml`) in Shiba's application director
 Below is an example for `config.yml`.
 
 ```YAML
-width: 900
+width: 1000
 height: "max"
 linter: "remark-lint"
 lint_options:
@@ -22,7 +22,7 @@ All keys for the YAML configuration file is below:
 
 | Key                   | Description             | Value                                           | Default                 |
 | --------------------- | ----------------------- | ----------------------------------------------- | ----------------------- |
-| `width`               | Window width            | Number of pixel or `"max"`                      | `900`                   |
+| `width`               | Window width            | Number of pixel or `"max"`                      | `920`                   |
 | `height`              | Window height           | Number of pixel or `"max"`                      | `800`                   |
 | `linter`              | Linter name             | `"remark-lint"` or `"markdownlint"` or `"none"` | `"remark-lint"`         |
 | `file_ext`            | Extensions to detect    | Array of extensions for each file types         | See below section       |
