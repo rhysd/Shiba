@@ -126,9 +126,19 @@ function openMarkdownLink(event: MouseEvent) {
 /* tslint:enable:no-unused-variable */
     event.preventDefault();
 
-    const anchor = event.target as HTMLAnchorElement;
+    let target = event.target as HTMLAnchorElement;
+    while (target !== null) {
+        if (target.href) {
+            break;
+        }
+        target = target.parentElement as HTMLAnchorElement;
+    }
+    if (target === null) {
+        console.log('openMarkdownLink(): No target <a> was found', event);
+        return;
+    }
 
-    let path = unescape(anchor.href);
+    let path = unescape(target.href);
     if (path.startsWith('file://')) {
         path = path.slice(7); // Omit 'file://'
     }
