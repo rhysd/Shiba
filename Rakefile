@@ -25,6 +25,7 @@ def make_archive_dir
   cd 'archive' do
     sh 'npm install --production'
     sh 'bower install --production'
+    sh 'npm uninstall electron-prebuilt'
   end
 end
 
@@ -113,11 +114,12 @@ task :release => [:build] do
       end
     end
   end
-  release '--platform=darwin --arch=x64 --version=0.36.5 --asar --icon=../resource/image/icon/shibainu.icns'
-  release '--platform=win32 --arch=ia32 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
-  release '--platform=win32 --arch=x64 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
-  release '--platform=linux --arch=ia32 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
-  release '--platform=linux --arch=x64 --version=0.36.5 --asar --icon=./resource/image/icon/shibainu.ico'
+  ver = ENV['ELECTRON']
+  release "--platform=darwin --arch=x64 --version=#{ver} --asar --icon=../resource/image/icon/shibainu.icns"
+  release "--platform=win32 --arch=ia32 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
+  release "--platform=win32 --arch=x64 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
+  release "--platform=linux --arch=ia32 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
+  release "--platform=linux --arch=x64 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
 end
 
 task :clean do
