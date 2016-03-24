@@ -9,102 +9,105 @@ import * as katex from 'katex';
 import {highlight} from 'highlight.js';
 
 let element_env: MarkdownPreview = null; // XXX
+const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
-namespace MarkdownRenderer {
-    const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
-
-    marked.setOptions({
-        highlight: function(code: string, lang: string): string {
-            if (lang === undefined) {
-                return code;
-            }
-
-            if (lang === 'mermaid') {
-                return '<div class="mermaid">' + code + '</div>';
-            }
-
-            if (lang === 'katex') {
-                return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
-            }
-
-            try {
-                return highlight(lang, code).value;
-            } catch (e) {
-                console.log('Error on highlight: ' + e.message);
-                return code;
-            }
-        },
-    });
-
-    const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
-    const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
-    const renderer = new marked.Renderer();
-
-    renderer.listitem = function(text) {
-        let matched = text.match(REGEX_CHECKED_LISTITEM);
-        if (matched && matched[0]) {
-            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
-                + text.slice(matched[0].length) + '</li>\n';
+marked.setOptions({
+    highlight: function(code: string, lang: string): string {
+        if (lang === undefined) {
+            return code;
         }
 
-        matched = text.match(REGEX_UNCHECKED_LISTITEM);
-        if (matched && matched[0]) {
-            return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
-                + text.slice(matched[0].length) + '</li>\n';
+        if (lang === 'mermaid') {
+            return '<div class="mermaid">' + code + '</div>';
         }
 
-        return marked.Renderer.prototype.listitem.call(this, text);
-    };
-
-    renderer.text = function(text) {
-        return emoji_replacer.replaceWithImages(text);
-    };
-
-    renderer.link = function(href, title, text) {
-        const link = marked.Renderer.prototype.link;
-        if (!href) {
-            return link.call(this, href, title, text);
+        if (lang === 'katex') {
+            return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
         }
 
-        if (this.options.sanitize) {
-            try {
-                const prot = decodeURIComponent(unescape(href))
-                    .replace(/[^\w:]/g, '')
-                    .toLowerCase();
-                if (prot.startsWith('javascript:') || prot.startsWith('vbscript:')) {
+        try {
+            return highlight(lang, code).value;
+        } catch (e) {
+            console.log('Error on highlight: ' + e.message);
+            return code;
+        }
+    },
+});
+
+const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
+const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
+
+class MarkdownRenderer {
+    private renderer: MarkedRenderer;
+
+    constructor(public markdown_exts: string[]) {
+        console.log(this.markdown_exts);
+        this.renderer = new marked.Renderer();
+        const self = this;
+
+        this.renderer.listitem = function(text: string) {
+            let matched = text.match(REGEX_CHECKED_LISTITEM);
+            if (matched && matched[0]) {
+                return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
+                    + text.slice(matched[0].length) + '</li>\n';
+            }
+
+            matched = text.match(REGEX_UNCHECKED_LISTITEM);
+            if (matched && matched[0]) {
+                return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
+                    + text.slice(matched[0].length) + '</li>\n';
+            }
+
+            return marked.Renderer.prototype.listitem.call(this, text);
+        };
+
+        this.renderer.text = function(text: string) {
+            return emoji_replacer.replaceWithImages(text);
+        };
+
+        this.renderer.link = function(href: string, title: string, text: string) {
+            const link = marked.Renderer.prototype.link;
+            if (!href) {
+                return link.call(this, href, title, text);
+            }
+
+            if (this.options.sanitize) {
+                try {
+                    const prot = decodeURIComponent(unescape(href))
+                        .replace(/[^\w:]/g, '')
+                        .toLowerCase();
+                    if (prot.startsWith('javascript:') || prot.startsWith('vbscript:')) {
+                        return '';
+                    }
+                } catch (e) {
                     return '';
                 }
-            } catch (e) {
-                return '';
             }
-        }
 
-        let onclick = 'cancelClick(event)';
-        const ext_idx = href.lastIndexOf('.');
+            let onclick = 'cancelClick(event)';
+            const ext_idx = href.lastIndexOf('.');
 
-        if (href.startsWith('http://') || href.startsWith('https://')) {
-            onclick = 'openLinkWithExternalBrowser(event)';
-        } else if (ext_idx !== -1) {
-            const ext = href.slice(ext_idx + 1);
-            const exts = element_env !== null ? element_env.exts : ['md', 'markdown', 'mkd'];
-            if (exts.indexOf(ext) !== -1) {
-                onclick = 'openMarkdownLink(event)';
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+                onclick = 'openLinkWithExternalBrowser(event)';
+            } else if (ext_idx !== -1) {
+                const ext = href.slice(ext_idx + 1);
+                if (self.markdown_exts.indexOf(ext) !== -1) {
+                    onclick = 'openMarkdownLink(event)';
+                }
+            } else if (href.indexOf('#') !== -1) {
+                onclick = 'openHashLink(event)';
             }
-        } else if (href.indexOf('#') !== -1) {
-            onclick = 'openHashLink(event)';
-        } else {
-            console.log('Cancel: ' + href);
-        }
 
-        if (title !== null) {
-            return `<a href="${href}" onclick="${onclick}" title=${title}>${text}</a>`;
-        } else {
-            return `<a href="${href}" onclick="${onclick}">${text}</a>`;
-        }
-    };
+            if (title !== null) {
+                return `<a href="${href}" onclick="${onclick}" title=${title}>${text}</a>`;
+            } else {
+                return `<a href="${href}" onclick="${onclick}">${text}</a>`;
+            }
+        };
+    }
 
-    export function render(markdown: string): string {
-        return marked(markdown, {renderer});
+    render(markdown: string): string {
+        return marked(markdown, {renderer: this.renderer});
     }
 }
 
@@ -174,13 +177,14 @@ Polymer({
     },
 
     attached: function() {
+        this.renderer = new MarkdownRenderer(this.exts);
         const body = document.querySelector('.markdown-body') as HTMLDivElement;
         body.style.fontSize = this.fontSize;
     },
 
     _documentUpdated: function(updated_doc) {
         const body = document.querySelector('.markdown-body') as HTMLDivElement;
-        body.innerHTML = MarkdownRenderer.render(updated_doc);
+        body.innerHTML = this.renderer.render(updated_doc);
         if (document.querySelector('.lang-mermaid') !== null) {
             mermaid.init();
         }

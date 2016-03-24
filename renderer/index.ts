@@ -89,10 +89,10 @@ function prepareMarkdownPreview(file: string, exts: string[], font_size: string,
             markdown_preview.setAttribute('font-size', font_size);
         }
 
-        setChildToViewerWrapper(markdown_preview);
-
         markdown_preview.exts = exts;
         markdown_preview.openMarkdownDoc = onPathChanged;
+        setChildToViewerWrapper(markdown_preview);
+
         markdown_preview.document = markdown;
     });
 }
