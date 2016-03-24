@@ -7,6 +7,7 @@ import {shell} from 'electron';
 import * as marked from 'marked';
 import * as katex from 'katex';
 import {highlight} from 'highlight.js';
+import * as he from 'he';
 
 let element_env: MarkdownPreview = null; // XXX
 const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
@@ -39,10 +40,15 @@ const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
 
 class MarkdownRenderer {
     private renderer: MarkedRenderer;
+    private link_id: number;
+    private tooltips: string;
 
     constructor(public markdown_exts: string[]) {
-        console.log(this.markdown_exts);
         this.renderer = new marked.Renderer();
+
+        // TODO:
+        // 'this' is set to renderer methods automatically so we need to preserve
+        // this scope's 'this' as 'self'.
         const self = this;
 
         this.renderer.listitem = function(text: string) {
@@ -98,16 +104,20 @@ class MarkdownRenderer {
                 onclick = 'openHashLink(event)';
             }
 
-            if (title !== null) {
-                return `<a href="${href}" onclick="${onclick}" title=${title}>${text}</a>`;
-            } else {
-                return `<a href="${href}" onclick="${onclick}">${text}</a>`;
-            }
+            self.link_id += 1;
+            const id = `md-link-${self.link_id}`;
+            self.tooltips += `<paper-tooltip for="${id}" offset="0">${he.encode(href)}</paper-tooltip>`;
+
+            return title !== null ?
+                `<a id="${id}" href="${href}" onclick="${onclick}" title=${title}>${text}</a>` :
+                `<a id="${id}" href="${href}" onclick="${onclick}">${text}</a>`;
         };
     }
 
     render(markdown: string): string {
-        return marked(markdown, {renderer: this.renderer});
+        this.link_id = 0;
+        this.tooltips = '';
+        return marked(markdown, {renderer: this.renderer}) + this.tooltips;
     }
 }
 
