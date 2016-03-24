@@ -30,6 +30,7 @@ interface MarkdownPreview extends HTMLElement {
     document: string;
     exts: string[];
     openMarkdownDoc: (path: string, modifier: boolean) => void;
+    fontSize: string;
 }
 
 interface LintMessage {
@@ -84,7 +85,6 @@ interface BuiltinSearch extends HTMLElement {
 }
 
 interface MarkdownPreviewComponent extends polymer.Base {
-    openLinkWithExternalBrowser(event: Event): void;
     _documentUpdated(markdown_doc: string): void;
 }
 

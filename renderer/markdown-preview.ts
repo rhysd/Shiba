@@ -8,9 +8,11 @@ import * as marked from 'marked';
 import * as katex from 'katex';
 import {highlight} from 'highlight.js';
 
-const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
+let element_env: MarkdownPreview = null; // XXX
 
 namespace MarkdownRenderer {
+    const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
+
     marked.setOptions({
         highlight: function(code: string, lang: string): string {
             if (lang === undefined) {
@@ -58,17 +60,57 @@ namespace MarkdownRenderer {
         return emoji_replacer.replaceWithImages(text);
     };
 
+    renderer.link = function(href, title, text) {
+        const link = marked.Renderer.prototype.link;
+        if (!href) {
+            return link.call(this, href, title, text);
+        }
+
+        if (this.options.sanitize) {
+            try {
+                const prot = decodeURIComponent(unescape(href))
+                    .replace(/[^\w:]/g, '')
+                    .toLowerCase();
+                if (prot.startsWith('javascript:') || prot.startsWith('vbscript:')) {
+                    return '';
+                }
+            } catch (e) {
+                return '';
+            }
+        }
+
+        let onclick = 'cancelClick(event)';
+        const ext_idx = href.lastIndexOf('.');
+
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+            onclick = 'openLinkWithExternalBrowser(event)';
+        } else if (ext_idx !== -1) {
+            const ext = href.slice(ext_idx + 1);
+            const exts = element_env !== null ? element_env.exts : ['md', 'markdown', 'mkd'];
+            if (exts.indexOf(ext) !== -1) {
+                onclick = 'openMarkdownLink(event)';
+            }
+        } else if (href.indexOf('#') !== -1) {
+            onclick = 'openHashLink(event)';
+        } else {
+            console.log('Cancel: ' + href);
+        }
+
+        if (title !== null) {
+            return `<a href="${href}" onclick="${onclick}" title=${title}>${text}</a>`;
+        } else {
+            return `<a href="${href}" onclick="${onclick}">${text}</a>`;
+        }
+    };
+
     export function render(markdown: string): string {
         return marked(markdown, {renderer});
     }
 }
 
-interface LinkOpenerType {
-    openMarkdownDoc(path: string, modifier: boolean): void;
-}
-
-let element_env: LinkOpenerType = null; // XXX
+/* tslint:disable:no-unused-variable */
 function openMarkdownLink(event: MouseEvent) {
+/* tslint:enable:no-unused-variable */
     event.preventDefault();
 
     const anchor = event.target as HTMLAnchorElement;
@@ -85,11 +127,27 @@ function openMarkdownLink(event: MouseEvent) {
     }
 }
 
+/* tslint:disable:no-unused-variable */
 function openHashLink(event: MouseEvent) {
+/* tslint:enable:no-unused-variable */
     event.preventDefault();
-
-    let hash_name: string = (<HTMLAnchorElement>event.target).href.split('#')[1];
+    const target = event.target as HTMLAnchorElement;
+    const hash_name: string = target.href.split('#')[1];
     location.hash = hash_name;
+}
+
+/* tslint:disable:no-unused-variable */
+function openLinkWithExternalBrowser(event: MouseEvent) {
+/* tslint:enable:no-unused-variable */
+    event.preventDefault();
+    const e = event.target as HTMLElement & {src?: string; href?: string};
+    shell.openExternal(e.href ? e.href : e.src);
+}
+
+/* tslint:disable:no-unused-variable */
+function cancelClick(event: MouseEvent) {
+/* tslint:enable:no-unused-variable */
+    event.preventDefault();
 }
 
 Polymer({
@@ -111,12 +169,6 @@ Polymer({
         fontSize: String,
     },
 
-    openLinkWithExternalBrowser: function(event) {
-        event.preventDefault();
-        const e = event.target as HTMLElement & {src?: string; href?: string};
-        shell.openExternal(e.href ? e.href : e.src);
-    },
-
     ready: function() {
         element_env = this; // XXX
     },
@@ -127,45 +179,8 @@ Polymer({
     },
 
     _documentUpdated: function(updated_doc) {
-        console.log('foo!');
         const body = document.querySelector('.markdown-body') as HTMLDivElement;
         body.innerHTML = MarkdownRenderer.render(updated_doc);
-
-        // Prevent external links from opening in page
-        const links = body.querySelectorAll('a');
-        for (let i = 0; i < links.length; ++i) {
-            const link = links.item(i) as HTMLAnchorElement;
-            if (!link.href) {
-                continue;
-            }
-
-            // Note: External link
-            if (link.href.startsWith('http')) {
-                link.onclick = this.openLinkWithExternalBrowser;
-                continue;
-            }
-
-            // Note: Link to local markdown document
-            const ext_idx = link.href.lastIndexOf('.');
-            if (ext_idx !== -1) {
-                const ext = link.href.slice(ext_idx + 1);
-                if (this.exts.indexOf(ext) !== -1) {
-                    link.onclick = openMarkdownLink;
-                    continue;
-                }
-            }
-
-            // Note: Inner link (<base> tag appends prefix to the hash name)
-            if (link.href.indexOf('#') !== -1) {
-                link.onclick = openHashLink;
-                continue;
-            }
-
-            // Note:
-            // If the link is local link, it should not work
-            link.onclick = event => event.preventDefault();
-        }
-
         if (document.querySelector('.lang-mermaid') !== null) {
             mermaid.init();
         }
