@@ -1,0 +1,17 @@
+link rel="import" href="../../bower_components/polymer/polymer.html"
+link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html"
+link rel="import" href="../../bower_components/paper-dialog-behavior/paper-dialog-behavior.html"
+link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html"
+link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html"
+link rel="import" href="../../bower_components/paper-item/paper-item.html"
+
+dom-module#toc-dialog
+  template
+    paper-dialog#toc-body[entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal]
+      h2 Outline
+      paper-dialog-scrollable
+        paper-listbox
+          paper-item First section
+          paper-item Second section
+          paper-item Third section
+  script src="../src/renderer/toc-dialog.js"

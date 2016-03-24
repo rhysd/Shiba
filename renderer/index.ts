@@ -10,6 +10,7 @@ const config = remote.require('./config').load();
 let watching_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
 let onSearchButtonPushed = function(){ /* do nothing */ };
+let onTOCButtonPushed = function(){ /* do nothing */ };
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
@@ -230,9 +231,18 @@ function getDialogDefaultPath() {
     }
 
     const searcher = document.getElementById('builtin-page-searcher') as BuiltinSearch;
-
     onSearchButtonPushed = function() {
         searcher.toggle();
+    };
+
+    const toc = document.getElementById('table-of-contents') as TOCComponent;
+    onTOCButtonPushed = function() {
+        const preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
+        if (preview === null) {
+            // TODO: Error handling
+            return;
+        }
+        toc.toggle(preview.currentOutline);
     };
 
     const cancel_event = function(e: Event) {

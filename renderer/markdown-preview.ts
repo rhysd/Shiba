@@ -39,6 +39,7 @@ const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
 const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
 
 class MarkdownRenderer {
+    public outline: Heading[];
     private renderer: MarkedRenderer;
     private link_id: number;
     private tooltips: string;
@@ -72,9 +73,8 @@ class MarkdownRenderer {
         };
 
         this.renderer.link = function(href: string, title: string, text: string) {
-            const link = marked.Renderer.prototype.link;
             if (!href) {
-                return link.call(this, href, title, text);
+                return marked.Renderer.prototype.link.call(this, href, title, text);
             }
 
             if (this.options.sanitize) {
@@ -112,11 +112,22 @@ class MarkdownRenderer {
                 `<a id="${id}" href="${href}" onclick="${onclick}" title=${title}>${text}</a>` :
                 `<a id="${id}" href="${href}" onclick="${onclick}">${text}</a>`;
         };
+
+        this.renderer.heading = function(text: string, level: number, raw: string) {
+            const hash = this.options.headerPrefix + raw.toLowerCase().replace(/[^\w]+/g, '-');
+            self.outline.push({
+                title: text,
+                hash,
+                level,
+            });
+            return marked.Renderer.prototype.heading.call(this, text, level, raw);
+        };
     }
 
     render(markdown: string): string {
         this.link_id = 0;
         this.tooltips = '';
+        this.outline = [];
         return marked(markdown, {renderer: this.renderer}) + this.tooltips;
     }
 }
@@ -187,6 +198,11 @@ Polymer({
             value: function(){ return [] as string[]; },
         },
 
+        currentOutline: {
+            type: Array,
+            value: function(){ return [] as Heading[]; },
+        },
+
         openMarkdownDoc: Object,
 
         fontSize: String,
@@ -205,6 +221,7 @@ Polymer({
     _documentUpdated: function(updated_doc) {
         const body = document.querySelector('.markdown-body') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
+        this.currentOutline = this.renderer.outline;
         if (document.querySelector('.lang-mermaid') !== null) {
             mermaid.init();
         }

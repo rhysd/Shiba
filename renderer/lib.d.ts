@@ -26,11 +26,18 @@ interface HeaderPanel extends HTMLElement {
     scroller: Scroller;
 }
 
+interface Heading {
+    title: string;
+    hash: string;
+    level: number;
+}
+
 interface MarkdownPreview extends HTMLElement {
     document: string;
     exts: string[];
     openMarkdownDoc: (path: string, modifier: boolean) => void;
     fontSize: string;
+    currentOutline: Heading[];
 }
 
 interface LintMessage {
@@ -88,3 +95,15 @@ interface MarkdownPreviewComponent extends polymer.Base {
     _documentUpdated(markdown_doc: string): void;
 }
 
+interface PaperDialogElement {
+    open(): void;
+    close(): void;
+}
+
+interface TOCComponent extends HTMLElement {
+    opened: boolean;
+    innerDialog: PaperDialogElement;
+    open(): void;
+    close(): void;
+    toggle(outline?: Heading[]): void;
+}
