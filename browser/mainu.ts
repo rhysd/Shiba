@@ -79,7 +79,8 @@ app.on('ready', function(){
         app.dock.setIcon(icon_path);
     }
 
-    if (process.env.NODE_ENV === 'debug') {
+    if (process.env.NODE_ENV === 'development') {
+        mainWindow.webContents.on('devtools-opened', () => setImmediate(() => mainWindow.focus()));
         mainWindow.webContents.openDevTools({detach: true});
     }
 });
