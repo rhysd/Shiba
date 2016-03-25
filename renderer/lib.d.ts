@@ -66,6 +66,7 @@ declare var mermaid: any;
 interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
+    repeat(count: number): string;
 }
 
 interface FoundInPage {

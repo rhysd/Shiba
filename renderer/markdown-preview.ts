@@ -116,7 +116,7 @@ class MarkdownRenderer {
         this.renderer.heading = function(text: string, level: number, raw: string) {
             const hash = this.options.headerPrefix + raw.toLowerCase().replace(/[^\w]+/g, '-');
             self.outline.push({
-                title: text,
+                title: raw,
                 hash,
                 level,
             });

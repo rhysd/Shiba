@@ -4,14 +4,11 @@ link rel="import" href="../../bower_components/paper-dialog-behavior/paper-dialo
 link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html"
 link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html"
 link rel="import" href="../../bower_components/paper-item/paper-item.html"
+link rel="import" href="../../bower_components/paper-item/paper-item-body.html"
 
 dom-module#toc-dialog
   template
     paper-dialog#toc-body[entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal]
-      h2 Outline
       paper-dialog-scrollable
-        paper-listbox
-          paper-item First section
-          paper-item Second section
-          paper-item Third section
+        paper-listbox#toc-listbox
   script src="../src/renderer/toc-dialog.js"
