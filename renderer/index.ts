@@ -172,10 +172,13 @@ function getDialogDefaultPath() {
     const watcher = new Watcher(
         watching_path,
 
-        // Markdown renderer
         function(kind: string, file: string): void {
             const base = document.querySelector('base');
             base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
+
+            const reload_button = document.getElementById('reload-button');
+            reload_button.classList.add('rotate');
+
             switch (kind) {
                 case 'markdown': {
                     prepareMarkdownPreview(file, config.file_ext.markdown, config.markdown.font_size, (file_path: string, modifier: boolean) => {
@@ -270,13 +273,18 @@ function getDialogDefaultPath() {
         document.title = makeTitle(file.path);
     });
 
-    (<PawFilechooser>document.querySelector('paw-filechooser')).onFileChosen = (file: string) => {
+    (document.querySelector('paw-filechooser') as PawFilechooser).onFileChosen = (file: string) => {
         watcher.changeWatchingDir(file);
         document.title = makeTitle(file);
     };
 
     const reload_button = document.getElementById('reload-button');
     reload_button.onclick = () => watcher.startWatching();
+    reload_button.classList.add('animated');
+    const reload_anime_listener = () => {
+        reload_button.classList.remove('rotate');
+    };
+    reload_button.addEventListener('animationend', reload_anime_listener);
 
     if (!config.drawer.responsive) {
         const drawer: any = document.getElementById('main-drawer');

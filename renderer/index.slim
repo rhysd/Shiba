@@ -21,6 +21,8 @@ html
 
     link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
     link rel="stylesheet" href="../../bower_components/katex/dist/katex.min.css"
+    link rel="stylesheet" href="../../node_modules/animate.css/animate.min.css"
+
     style is="custom-style"
       |
         .menu-button {
@@ -78,6 +80,26 @@ html
       }
       #mainContainer {
         height: 100%;
+      }
+      @keyframes rotate {
+        from {
+          -webkit-transform-origin: center;
+          transform-origin: center;
+          -webkit-transform: rotate3d(0, 0, 1, -360deg);
+          transform: rotate3d(0, 0, 1, -360deg);
+        }
+        to {
+          -webkit-transform-origin: center;
+          transform-origin: center;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+      .rotate {
+        -webkit-animation-name: rotate;
+        animation-name: rotate;
+        -webkit-animation-duration: 1s;
+        animation-duration: 1s;
       }
       @media print {
         html, body {
