@@ -9,7 +9,7 @@
     "highlightjs": "github:DefinitelyTyped/DefinitelyTyped/highlightjs/highlightjs.d.ts#2da55a09042047ef9ecd8cafd5c1ed97d216ba29",
     "js-yaml": "github:DefinitelyTyped/DefinitelyTyped/js-yaml/js-yaml.d.ts#1ff6156a58d0e9002df8a2178c00d39b4886a691",
     "katex": "github:DefinitelyTyped/DefinitelyTyped/katex/katex.d.ts#b05ea8139c03b72773b6d0e6c74cbe5a7fc89b08",
-    "marked": "github:DefinitelyTyped/DefinitelyTyped/marked/marked.d.ts#4de74cb527395c13ba20b438c3a7a419ad931f1c",
+    "marked": "github:DefinitelyTyped/DefinitelyTyped/marked/marked.d.ts#9cfdb11648f823b889287c770254b85b78a7a4a4",
     "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#d6dd320291705694ba8e1a79497a908e9f5e6617",
     "mousetrap": "github:DefinitelyTyped/DefinitelyTyped/mousetrap/mousetrap.d.ts#4de74cb527395c13ba20b438c3a7a419ad931f1c",
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#81506d0602d4f15b153c6a8a7657a45e42c8346f",
