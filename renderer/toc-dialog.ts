@@ -59,7 +59,6 @@ Polymer({
 
     selectItem: function(idx: number) {
         if (idx !== undefined && 0 <= idx && idx < this.currentItems.length) {
-            console.log('selected: ', this.currentItems[idx], this.currentOutline[idx]);
             if (this.scrollCallback) {
                 this.scrollCallback(this.currentOutline[idx]);
             }
@@ -115,7 +114,6 @@ Polymer({
     ready: function() {
         this.innerDialog = (document.getElementById('toc-body') as any) as PaperDialogElement;
         document.getElementById('toc-body').addEventListener('keydown', (event: KeyboardEvent & {code: string}) => {
-            console.log(event);
             switch (event.code) {
             case 'Enter':
                 this.selectItem(this.selectedIdx);

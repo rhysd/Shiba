@@ -322,7 +322,8 @@ function getDialogDefaultPath() {
     });
     receiver.on('Reload', () => watcher.startWatching());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
-    receiver.on('Search', () => searcher.toggle());
+    receiver.on('Search', () => onSearchButtonPushed());
+    receiver.on('Outline', () => onTOCButtonPushed());
 
     searcher.onMount = () => { receiver.enabled = false; };
     searcher.onUnmount = () => { receiver.enabled = true; };
@@ -331,6 +332,8 @@ function getDialogDefaultPath() {
 
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
+    ipc.on('shiba:outline', () => onTOCButtonPushed());
+    ipc.on('shiba:search', () => onSearchButtonPushed());
     ipc.on('shiba:reload', () => watcher.startWatching());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
