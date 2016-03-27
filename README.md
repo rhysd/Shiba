@@ -22,7 +22,8 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - [x] Cross platform (OS X, Linux, Windows)
 - [x] [Easy to install](docs/installation.md)
 - [x] [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
-- [x] Search text in preview
+- [x] [Search text in preview](docs/usage.md#search-text)
+- [x] [Outline window](docs/usage.md#outline-window)
 - [x] Print preview (to paper / to PDF file)
 - [x] HTML preview
 - [x] Dog-respected :dog2:
