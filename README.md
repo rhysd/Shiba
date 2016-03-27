@@ -61,18 +61,6 @@ You can customize Shiba by making YAML configuration file.
 Please refer [customization document](docs/customization.md).
 
 
-## TODOs
-
-- Outline
-- Search
-- More markdown theme (e.g. [tufte-css](https://github.com/daveliepmann/tufte-css))
-- More formats
-  - PDF with [PDF.js](https://mozilla.github.io/pdf.js/)
-  - org
-- Separate converter as plugin
-- Watch multiple paths (Now Shiba can only one directory or file)
-
-
 ## Special Thanks
 
 - The logo of this app came from [いらすとや](http://www.irasutoya.com/).
