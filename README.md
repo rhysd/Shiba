@@ -1,4 +1,4 @@
-![shibainu](https://raw.githubusercontent.com/rhysd/Shiba/master/resource/image/doc-shibainu.png)
+![shibainu](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/title-bar.jpg)
 =====================
 
 [![npm version](https://img.shields.io/npm/v/shiba.svg?style=flat-square)](https://www.npmjs.com/package/shiba)
