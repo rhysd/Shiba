@@ -50,13 +50,6 @@ task :build_slim do
   end
 end
 
-task :build_test do
-  ensure_cmd 'tsc'
-  ensure_cmd 'bower'
-  sh 'tsc -p tests/browser'
-  sh 'tsc tests/renderer/*.ts --out tests/renderer/index.js'
-end
-
 file "typings" do
   raise "'typings' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/typings"
   sh "#{BIN_DIR}/typings install"
@@ -79,12 +72,6 @@ task :npm_publish => [:build] do
     sh 'npm publish'
   end
   rm_rf 'npm-publish'
-end
-
-task :test => [:build_test] do
-  sh 'tsc -p tests/browser'
-  sh 'tsc tests/renderer/keyboard_test.ts --out tests/renderer/index.js'
-  sh 'npm test'
 end
 
 task :asar => [:build] do
@@ -127,5 +114,5 @@ task :clean do
 end
 
 task :watch do
-  sh 'guard --watchdir browser renderer tests typings'
+  sh 'guard --watchdir browser renderer typings'
 end
