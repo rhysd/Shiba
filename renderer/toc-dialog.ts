@@ -1,5 +1,7 @@
 /// <reference path="lib.d.ts" />
 
+import {clipboard} from 'electron';
+
 Polymer({
     is: 'toc-dialog',
 
@@ -110,8 +112,23 @@ Polymer({
         this.currentItems[this.selectedIdx].focus();
     },
 
+    copyOutlineToClipboard: function() {
+        console.log('TODO!');
+        if (this.currentItems.length > 0) {
+            const headings: string[] = [];
+            for (const h of this.currentOutline) {
+                headings.push(`${' '.repeat(h.level)}- [${h.title}](#${h.hash})`);
+            }
+            clipboard.writeText(headings.join('\n'));
+        }
+        this.close();
+    },
+
     ready: function() {
         this.innerDialog = (document.getElementById('toc-body') as any) as PaperDialogElement;
+        const button = document.getElementById('toc-copy-to-clipboard-button') as HTMLButtonElement;
+        button.addEventListener('click', () => this.copyOutlineToClipboard());
+
         document.getElementById('toc-body').addEventListener('keydown', (event: KeyboardEvent & {code: string}) => {
             switch (event.code) {
             case 'Enter':
@@ -131,6 +148,10 @@ Polymer({
                     this.close();
                 }
                 break;
+            case 'KeyC':
+                if (event.ctrlKey) {
+                    this.copyOutlineToClipboard();
+                }
             default:
                 break;
             }

@@ -117,4 +117,5 @@ interface TOCComponent extends HTMLElement {
     toggle(outline?: Heading[]): void;
     focusNext(): void;
     focusPrevious(): void;
+    copyOutlineToClipboard(): void;
 }
