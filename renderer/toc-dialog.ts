@@ -33,7 +33,7 @@ Polymer({
                 const outer = document.createElement('paper-item');
                 const inner = document.createElement('paper-item-body');
                 const header = document.createElement('h' + h.level);
-                header.innerText = `${'#'.repeat(h.level)} ${h.title}`;
+                header.innerHTML = '#'.repeat(h.level) + h.html;
                 outer.addEventListener('click', () => this.selectItem(i));
                 inner.appendChild(header);
                 outer.appendChild(inner);

@@ -30,6 +30,7 @@ interface Heading {
     title: string;
     hash: string;
     level: number;
+    html: string;
 }
 
 interface MarkdownPreview extends HTMLElement {

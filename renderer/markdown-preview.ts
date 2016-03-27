@@ -119,6 +119,7 @@ class MarkdownRenderer {
                 title: raw,
                 hash,
                 level,
+                html: text,
             });
             return marked.Renderer.prototype.heading.call(this, text, level, raw);
         };
