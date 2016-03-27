@@ -107,4 +107,6 @@ interface TOCComponent extends HTMLElement {
     open(): void;
     close(): void;
     toggle(outline?: Heading[]): void;
+    focusNext(): void;
+    focusPrevious(): void;
 }

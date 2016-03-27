@@ -8,41 +8,56 @@ Polymer({
             type: Boolean,
             value: false,
         },
+        currentItems: {
+            type: Array,
+            value: [],
+        },
+        selectedIdx: Number,
         innerDialog: Object,
     },
 
     open: function(outline: Heading[]) {
         if (this.innerDialog) {
             if (outline.length > 0) {
-                const elems = outline.map(h => {
+                const elems = outline.map((h, i) => {
                     const outer = document.createElement('paper-item');
                     const inner = document.createElement('paper-item-body');
                     const header = document.createElement('h' + h.level);
                     header.innerText = `${'#'.repeat(h.level)} ${h.title}`;
-                    // outer.addEventListener('click', () => {
-                    //     // TODO
-                    //     console.log('clicked: ', h.hash);
-                    // });
+                    outer.addEventListener('click', () => this.selectItem(i));
                     inner.appendChild(header);
                     outer.appendChild(inner);
                     return outer;
                 });
-                (elems[0] as any).focused = true;
-
                 const listbox = document.getElementById('toc-listbox');
+                while (listbox.firstChild) {
+                    listbox.removeChild(listbox.firstChild);
+                }
                 for (const e of elems) {
                     listbox.appendChild(e);
                 }
+                this.currentItems = elems;
+                this.selectedIdx = -1;
             }
             this.innerDialog.open();
             this.opened = true;
         }
     },
 
+    selectItem: function(idx: number) {
+        if (idx !== undefined && 0 <= idx && idx < this.currentItems.length) {
+            // TODO
+            console.log('selected: ', this.currentItems[idx]);
+        }
+        this.close();
+    },
+
     close: function() {
         if (this.innerDialog) {
             this.innerDialog.close();
             this.opened = false;
+            this.selectedIdx = undefined;
+            this.currentItems = [];
         }
     },
 
@@ -54,7 +69,53 @@ Polymer({
         }
     },
 
+    focusNext: function() {
+        if (this.selectedIdx === undefined || this.currentItems.length === 0) {
+            return;
+        }
+        ++this.selectedIdx;
+        if (this.selectedIdx >= this.currentItems.length) {
+            this.selectedIdx = 0;
+        }
+        this.currentItems[this.selectedIdx].focus();
+    },
+
+    focusPrevious: function() {
+        if (this.selectedIdx === undefined || this.currentItems.length === 0) {
+            return;
+        }
+        --this.selectedIdx;
+        if (this.selectedIdx < 0) {
+            this.selectedIdx = this.currentItems.length - 1;
+        }
+        this.currentItems[this.selectedIdx].focus();
+    },
+
     ready: function() {
         this.innerDialog = (document.getElementById('toc-body') as any) as PaperDialogElement;
+        document.getElementById('toc-body').addEventListener('keydown', (event: KeyboardEvent & {code: string}) => {
+            console.log(event);
+            switch (event.code) {
+            case 'Enter':
+                this.selectItem(this.selectedIdx);
+                break;
+            case 'KeyJ':
+                this.focusNext();
+                break;
+            case 'KeyK':
+                this.focusPrevious();
+                break;
+            case 'Escape':
+                this.close();
+                break;
+            case 'KeyG':
+                if (event.ctrlKey) {
+                    this.close();
+                }
+                break;
+            default:
+                break;
+            }
+        });
     },
 });
