@@ -31,12 +31,11 @@ Polymer({
         if (outline.length > 0) {
             const elems = outline.map((h, i) => {
                 const outer = document.createElement('paper-item');
-                const inner = document.createElement('paper-item-body');
                 const header = document.createElement('h' + h.level);
-                header.innerHTML = '#'.repeat(h.level) + h.html;
+                header.innerHTML = `${'#'.repeat(h.level)} ${h.html}`;
                 outer.addEventListener('click', () => this.selectItem(i));
-                inner.appendChild(header);
-                outer.appendChild(inner);
+                outer.className = 'toc-section-item';
+                outer.appendChild(header);
                 return outer;
             });
             const listbox = document.getElementById('toc-listbox');
