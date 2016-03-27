@@ -41,10 +41,36 @@ When you want to know the detail of lint errors, simply click the red button.  I
 
 Shortcut `CTRL + L` is also available to toggle lint result drawer.
 
+
 ## Shortcuts
 
 Keyboard shortcuts are available for above all operations.
 Please refer [shortcuts document](shortcuts.md).
+
+## Outline Window
+
+<!-- TODO: add screenshot -->
+
+Clicking 'textboard' icon in menu or `o` shortcut will show an outline window.
+
+In the outline window, you can see all section headers such as `# ...`, `## ...`, ...  You can move to the section by clicking it in the window.
+
+And you can also find 'COPY OUTLINE' button.  When you click it, the outline can be copied to your clipboard as Markdown format.
+
+In outline window, below local shortcuts are available and global shortcuts would be disabled.  Please see [the document](shortcuts.md#outline-window-shortcuts).
+
+
+## Search Text
+
+<!-- TODO: add screenshot -->
+
+Clicking 'search' icon in menu or `s` shortcut will show a search box at top-right of the window.
+
+In the search box, you can search text in the preview.
+
+You can put the text in a text-form and input `Enter` key to search the text in current preview.  All matched text will be highlighted with yellow color and current active match will be highlighted with orange color.  You can move to next match with more `Enter` key.  You can also move to next/previous match with arrow buttons in the box.  Finally, you can close the box with 'close' button in the box.
+
+All operations are available with buttons and key shortcuts.  Please see [the local shortcuts document](shortcuts.md#search-box-shortcuts).
 
 ## Clicking Links in Documents
 

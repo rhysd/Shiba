@@ -14,15 +14,16 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
   - task list
   - links with tooltip
   - tree diagram and flowchart using [mermaid](https://github.com/knsv/mermaid)
-  - math rendering using [katex](https://github.com/Khan/KaTeX))
+  - math rendering using [katex](https://github.com/Khan/KaTeX)
 - [x] Live reload
 - [x] Automatic lint (remark-lint, markdownlint)
-- [x] Cross platform (OS X, Linux, Windows)
+- [x] [Keyboard shortcuts](docs/shortcuts.md); All operations are ready for mouse and keyboard.
 - [x] Both GUI and CLI friendly
+- [x] Cross platform (OS X, Linux, Windows)
 - [x] [Easy to install](docs/installation.md)
-- [x] [Keyboard shortcuts](docs/shortcuts.md)
 - [x] [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
-- [x] Search text in preview
+- [x] [Search text in preview](docs/usage.md#search-text)
+- [x] [Outline window](docs/usage.md#outline-window)
 - [x] Print preview (to paper / to PDF file)
 - [x] HTML preview
 - [x] Dog-respected :dog2:

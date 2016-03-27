@@ -10,6 +10,7 @@ const config = remote.require('./config').load();
 let watching_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
 let onSearchButtonPushed = function(){ /* do nothing */ };
+let onTOCButtonPushed = function(){ /* do nothing */ };
 
 function getMainDrawerPanel() {
     return <MainDrawerPanel>document.getElementById('main-drawer');
@@ -162,7 +163,6 @@ function getDialogDefaultPath() {
             filters,
             properties: ['openFile', 'openDirectory'],
         });
-        console.log(paths);
         if (!paths || paths.length === 0) {
             return '';
         }
@@ -230,9 +230,24 @@ function getDialogDefaultPath() {
     }
 
     const searcher = document.getElementById('builtin-page-searcher') as BuiltinSearch;
-
     onSearchButtonPushed = function() {
         searcher.toggle();
+    };
+
+    const toc = document.getElementById('table-of-contents') as TOCComponent;
+    onTOCButtonPushed = function() {
+        const preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
+        if (preview === null) {
+            // TODO: Error handling
+            return;
+        }
+        toc.toggle(preview.currentOutline);
+    };
+    toc.scrollCallback = function(h: Heading) {
+        const preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
+        if (preview !== null) {
+            preview.scrollToHeading(getScroller(), h);
+        }
     };
 
     const cancel_event = function(e: Event) {
@@ -307,13 +322,18 @@ function getDialogDefaultPath() {
     });
     receiver.on('Reload', () => watcher.startWatching());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
-    receiver.on('Search', () => searcher.toggle());
+    receiver.on('Search', () => onSearchButtonPushed());
+    receiver.on('Outline', () => onTOCButtonPushed());
 
     searcher.onMount = () => { receiver.enabled = false; };
     searcher.onUnmount = () => { receiver.enabled = true; };
+    toc.onMount = () => { receiver.enabled = false; };
+    toc.onUnmount = () => { receiver.enabled = true; };
 
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
+    ipc.on('shiba:outline', () => onTOCButtonPushed());
+    ipc.on('shiba:search', () => onSearchButtonPushed());
     ipc.on('shiba:reload', () => watcher.startWatching());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');

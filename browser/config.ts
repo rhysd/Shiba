@@ -83,6 +83,7 @@ export function load(): Config {
             'ctrl+l':   'Lint',
             'r':        'Reload',
             's':        'Search',
+            'o':        'Outline',
         },
     } as Config;
 

@@ -54,6 +54,14 @@ export function build(main_window: Electron.BrowserWindow) {
                     click: () => main_window.webContents.send('shiba:lint'),
                 },
                 {
+                    label: 'Outline',
+                    click: () => main_window.webContents.send('shiba:outline'),
+                },
+                {
+                    label: 'Search',
+                    click: () => main_window.webContents.send('shiba:search'),
+                },
+                {
                     label: 'Reload',
                     click: () => main_window.webContents.send('shiba:reload'),
                 },

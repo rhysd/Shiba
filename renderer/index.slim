@@ -17,6 +17,7 @@ html
     link rel="import" href="lint-panel.html"
     link rel="import" href="paw-filechooser.html"
     link rel="import" href="builtin-search.html"
+    link rel="import" href="toc-dialog.html"
 
     link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
     link rel="stylesheet" href="../../bower_components/katex/dist/katex.min.css"
@@ -115,6 +116,9 @@ html
               paper-icon-button#lint-button.menu-button[icon="error" alt="lint" paper-drawer-toggle]
               paper-tooltip for="lint-button" offset="0" Lint
             span
+              paper-icon-button#toc-button.menu-button icon="assignment" alt="outline" onclick="onTOCButtonPushed()"
+              paper-tooltip for="toc-button" offset="0" Outline
+            span
               paper-icon-button#search-button.menu-button icon="search" alt="search" onclick="onSearchButtonPushed()"
               paper-tooltip for="search-button" offset="0" Search
             span
@@ -126,6 +130,7 @@ html
       paper-header-panel[drawer]
         lint-panel#lint-area.lint-area
     builtin-search#builtin-page-searcher
+    toc-dialog#table-of-contents
 
     script src="../../node_modules/mousetrap/mousetrap.min.js"
     script src="../src/renderer/keyboard.js"

@@ -1,6 +1,8 @@
 Keyboard shortcuts
 ==================
 
+## Global Shourtcuts
+
 You can set some keyboard shortcuts by `config.yml` (See 'Customization' section).
 Currently below actions can be assigned to keyboard shortcuts.
 
@@ -22,7 +24,32 @@ Currently below actions can be assigned to keyboard shortcuts.
 
 You can customize all key assigns.  Please see [customization document](customization.md).
 
-Note: When a search box is opened with `Search` action, all shortcuts are disabled temporarily to input a text into it.  In search box, `escape` and `ctrl+g` shortcuts are available to close it.
+
+## Local Shortcuts
+
+### Outline window shortcuts
+
+In [outliine window](usage.md), you can use below shortcuts instead of global ones.
+
+| Shortcut | Description                        |
+| ---------| ---------------------------------- |
+| `j`      | Move focus to next section.        |
+| `k`      | Move focus to previous section.    |
+| `ctrl+c` | Copy the outline to your clipboard |
+| `ctrl+g` | Close outline window.              |
+| `escape` | Close outline window.              |
+
+
+### Search box shortcuts
+
+In [search box](usage.md), you can use below shortcuts instead of global ones.
+
+| Shortcut  | Description                            |
+| --------- | -------------------------------------- |
+| `Enter`   | Start to search or move to next match. |
+| `ctrl+g`  | Close the search box.                  |
+| `escape`  | Close the search box.                  |
+
 
 
 -----------------

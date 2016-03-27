@@ -26,11 +26,20 @@ interface HeaderPanel extends HTMLElement {
     scroller: Scroller;
 }
 
+interface Heading {
+    title: string;
+    hash: string;
+    level: number;
+    html: string;
+}
+
 interface MarkdownPreview extends HTMLElement {
     document: string;
     exts: string[];
-    openMarkdownDoc: (path: string, modifier: boolean) => void;
     fontSize: string;
+    currentOutline: Heading[];
+    openMarkdownDoc: (path: string, modifier: boolean) => void;
+    scrollToHeading(e: Scroller, h: Heading): void;
 }
 
 interface LintMessage {
@@ -59,6 +68,7 @@ declare var mermaid: any;
 interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
+    repeat(count: number): string;
 }
 
 interface FoundInPage {
@@ -88,3 +98,24 @@ interface MarkdownPreviewComponent extends polymer.Base {
     _documentUpdated(markdown_doc: string): void;
 }
 
+interface PaperDialogElement {
+    open(): void;
+    close(): void;
+}
+
+interface TOCComponent extends HTMLElement {
+    opened: boolean;
+    innerDialog: PaperDialogElement;
+    currentItems: HTMLElement[];
+    selectedIdx: number;
+    currentOutline: Heading[];
+    scrollCallback: (h: Heading) => void;
+    onMount: () => void;
+    onUnmount: () => void;
+    open(): void;
+    close(): void;
+    toggle(outline?: Heading[]): void;
+    focusNext(): void;
+    focusPrevious(): void;
+    copyOutlineToClipboard(): void;
+}
