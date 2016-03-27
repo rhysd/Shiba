@@ -3,9 +3,11 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
+import {homedir} from 'os';
 import {remote, ipcRenderer as ipc} from 'electron';
 const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
+const home_dir = config.hide_title_bar ?  '' : homedir();
 
 let watching_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
@@ -26,12 +28,16 @@ function getLintArea() {
     return document.getElementById('lint-area') as LintResultArea;
 }
 
-function makeTitle(p: string): string {
-    if (p === '') {
+function make_title(p: string): string {
+    if (!p || config.hide_title_bar) {
         return 'Shiba';
-    } else {
-        return `Shiba (${p})`;
     }
+
+    if (p.startsWith(home_dir)) {
+        p = `~${p.slice(home_dir.length)}`;
+    }
+
+    return `Shiba (${p})`;
 }
 
 function getScroller(): Scroller {
@@ -184,7 +190,8 @@ function getDialogDefaultPath() {
                     prepareMarkdownPreview(file, config.file_ext.markdown, config.markdown.font_size, (file_path: string, modifier: boolean) => {
                         if (modifier) {
                             watcher.changeWatchingDir(file_path);
-                            document.title = makeTitle(file_path);
+                            document.title = make_title(file_path);
+                            watching_path = file_path;
                         } else {
                             watcher.sendUpdate(file_path);
                         }
@@ -224,12 +231,14 @@ function getDialogDefaultPath() {
             return;
         }
         watching_path = chosen;
-        document.title = makeTitle(watching_path);
+        document.title = make_title(watching_path);
         watcher.changeWatchingDir(watching_path);
     };
 
     if (watching_path === '') {
         onPathButtonPushed();
+    } else {
+        document.title = make_title(watching_path);
     }
 
     const searcher = document.getElementById('builtin-page-searcher') as BuiltinSearch;
@@ -264,18 +273,20 @@ function getDialogDefaultPath() {
         if (file === undefined) {
             return;
         }
-        // XXX: `path` is not standard member of `File` class
-        if (file.path === undefined) {
+        const p: string = file.path;
+        if (!p) {
             console.log('Failed to get the path of dropped file');
             return;
         }
-        watcher.changeWatchingDir(file.path);
-        document.title = makeTitle(file.path);
+        watching_path = p;
+        watcher.changeWatchingDir(p);
+        document.title = make_title(p);
     });
 
     (document.querySelector('paw-filechooser') as PawFilechooser).onFileChosen = (file: string) => {
+        watching_path = file;
         watcher.changeWatchingDir(file);
-        document.title = makeTitle(file);
+        document.title = make_title(file);
     };
 
     const reload_button = document.getElementById('reload-button');
