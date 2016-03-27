@@ -12,52 +12,73 @@ Polymer({
             type: Array,
             value: [],
         },
+        currentOutline: {
+            type: Array,
+            value: [],
+        },
         selectedIdx: Number,
         innerDialog: Object,
+        scrollCallback: Object,
+        onMount: Object,
+        onUnmount: Object,
     },
 
     open: function(outline: Heading[]) {
-        if (this.innerDialog) {
-            if (outline.length > 0) {
-                const elems = outline.map((h, i) => {
-                    const outer = document.createElement('paper-item');
-                    const inner = document.createElement('paper-item-body');
-                    const header = document.createElement('h' + h.level);
-                    header.innerText = `${'#'.repeat(h.level)} ${h.title}`;
-                    outer.addEventListener('click', () => this.selectItem(i));
-                    inner.appendChild(header);
-                    outer.appendChild(inner);
-                    return outer;
-                });
-                const listbox = document.getElementById('toc-listbox');
-                while (listbox.firstChild) {
-                    listbox.removeChild(listbox.firstChild);
-                }
-                for (const e of elems) {
-                    listbox.appendChild(e);
-                }
-                this.currentItems = elems;
-                this.selectedIdx = -1;
+        if (!this.innerDialog) {
+            return;
+        }
+
+        if (outline.length > 0) {
+            const elems = outline.map((h, i) => {
+                const outer = document.createElement('paper-item');
+                const inner = document.createElement('paper-item-body');
+                const header = document.createElement('h' + h.level);
+                header.innerText = `${'#'.repeat(h.level)} ${h.title}`;
+                outer.addEventListener('click', () => this.selectItem(i));
+                inner.appendChild(header);
+                outer.appendChild(inner);
+                return outer;
+            });
+            const listbox = document.getElementById('toc-listbox');
+            while (listbox.firstChild) {
+                listbox.removeChild(listbox.firstChild);
             }
-            this.innerDialog.open();
-            this.opened = true;
+            for (const e of elems) {
+                listbox.appendChild(e);
+            }
+            this.currentItems = elems;
+            this.currentOutline = outline;
+            this.selectedIdx = -1;
+        }
+        this.innerDialog.open();
+        this.opened = true;
+        if (this.onMount) {
+            this.onMount();
         }
     },
 
     selectItem: function(idx: number) {
         if (idx !== undefined && 0 <= idx && idx < this.currentItems.length) {
-            // TODO
-            console.log('selected: ', this.currentItems[idx]);
+            console.log('selected: ', this.currentItems[idx], this.currentOutline[idx]);
+            if (this.scrollCallback) {
+                this.scrollCallback(this.currentOutline[idx]);
+            }
         }
         this.close();
     },
 
     close: function() {
-        if (this.innerDialog) {
-            this.innerDialog.close();
-            this.opened = false;
-            this.selectedIdx = undefined;
-            this.currentItems = [];
+        if (!this.innerDialog) {
+            return;
+        }
+
+        this.innerDialog.close();
+        this.opened = false;
+        this.selectedIdx = undefined;
+        this.currentItems = [];
+        this.currentOutline = [];
+        if (this.onUnmount) {
+            this.onUnmount();
         }
     },
 

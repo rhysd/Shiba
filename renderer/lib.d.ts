@@ -35,9 +35,10 @@ interface Heading {
 interface MarkdownPreview extends HTMLElement {
     document: string;
     exts: string[];
-    openMarkdownDoc: (path: string, modifier: boolean) => void;
     fontSize: string;
     currentOutline: Heading[];
+    openMarkdownDoc: (path: string, modifier: boolean) => void;
+    scrollToHeading(e: Scroller, h: Heading): void;
 }
 
 interface LintMessage {
@@ -104,6 +105,12 @@ interface PaperDialogElement {
 interface TOCComponent extends HTMLElement {
     opened: boolean;
     innerDialog: PaperDialogElement;
+    currentItems: HTMLElement[];
+    selectedIdx: number;
+    currentOutline: Heading[];
+    scrollCallback: (h: Heading) => void;
+    onMount: () => void;
+    onUnmount: () => void;
     open(): void;
     close(): void;
     toggle(outline?: Heading[]): void;

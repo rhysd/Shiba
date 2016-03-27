@@ -163,7 +163,6 @@ function getDialogDefaultPath() {
             filters,
             properties: ['openFile', 'openDirectory'],
         });
-        console.log(paths);
         if (!paths || paths.length === 0) {
             return '';
         }
@@ -244,6 +243,12 @@ function getDialogDefaultPath() {
         }
         toc.toggle(preview.currentOutline);
     };
+    toc.scrollCallback = function(h: Heading) {
+        const preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
+        if (preview !== null) {
+            preview.scrollToHeading(getScroller(), h);
+        }
+    };
 
     const cancel_event = function(e: Event) {
         e.preventDefault();
@@ -321,6 +326,8 @@ function getDialogDefaultPath() {
 
     searcher.onMount = () => { receiver.enabled = false; };
     searcher.onUnmount = () => { receiver.enabled = true; };
+    toc.onMount = () => { receiver.enabled = false; };
+    toc.onUnmount = () => { receiver.enabled = true; };
 
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());

@@ -226,4 +226,11 @@ Polymer({
             mermaid.init();
         }
     },
+
+    scrollToHeading: function(scroller: Scroller, h: Heading) {
+        const elem = document.getElementById(h.hash);
+        if (elem) {
+            scroller.scrollTop = elem.offsetTop;
+        }
+    },
 } as MarkdownPreviewComponent);
