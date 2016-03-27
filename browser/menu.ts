@@ -1,4 +1,6 @@
-import {shell, Menu} from 'electron';
+import * as path from 'path';
+import {Menu} from 'electron';
+import openAboutWindow from 'about-window';
 
 export function build(main_window: Electron.BrowserWindow) {
     const template = [
@@ -24,7 +26,10 @@ export function build(main_window: Electron.BrowserWindow) {
                 },
                 {
                     label: 'About Shiba',
-                    click: function(){ shell.openExternal('https://github.com/rhysd/Shiba'); },
+                    click: () => openAboutWindow({
+                        icon_path: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
+                        copyright: 'Copyright (c) 2015 rhysd',
+                    }),
                 },
             ],
         },
