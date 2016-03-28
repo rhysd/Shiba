@@ -2,18 +2,16 @@ link rel="import" href="../../bower_components/polymer/polymer.html"
 
 dom-module id="markdown-preview"
   link rel="stylesheet" href="../../bower_components/mermaid/dist/mermaid.css"
-  link rel="stylesheet" href="../../bower_components/github-markdown-css/github-markdown.css"
-  link rel="stylesheet" href="../../node_modules/highlight.js/styles/github.css"
+  link rel="stylesheet" href="../../bower_components/katex/dist/katex.min.css"
 
-  style is="custom-style"
-    |
-      .markdown-body {
-        min-width: 200px;
-        max-width: 790px;
-        margin: 0 auto;
-        padding: 30px;
-        font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
-      }
+  css:
+    .markdown-body {
+      min-width: 200px;
+      max-width: 790px;
+      margin: 0 auto;
+      padding: 30px;
+      font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
+    }
 
   template
     div.markdown-body

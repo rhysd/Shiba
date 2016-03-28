@@ -152,6 +152,20 @@ function getDialogDefaultPath() {
         lint.enable_inset = config.hide_title_bar;
     }
 
+    const markdown_css_link = document.createElement('link') as HTMLLinkElement;
+    markdown_css_link.rel = 'stylesheet';
+    markdown_css_link.href = config.markdown.css_path;
+    document.head.appendChild(markdown_css_link);
+
+    const code_theme_css_link = document.createElement('link') as HTMLLinkElement;
+    code_theme_css_link.rel = 'stylesheet';
+    code_theme_css_link.href = `../../node_modules/highlight.js/styles/${config.markdown.code_theme}.css`;
+    document.head.appendChild(code_theme_css_link);
+
+    if (config.markdown.code_theme !== 'github' && config.markdown.css_link.endsWith('/github-markdown.css')) {
+        console.warn('github-markdown.css overrides background color of code block.');
+    }
+
     function chooseFileOrDirWithDialog() {
         const filters = [
             {

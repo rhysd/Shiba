@@ -28,6 +28,8 @@ export interface Config {
     hide_title_bar: boolean;
     markdown: {
         font_size: string;
+        css_path: string;
+        code_theme: string;
     };
     [name: string]: any;
 }
@@ -62,6 +64,8 @@ export function load(): Config {
         hide_title_bar: false,
         markdown: {
             font_size: '',
+            css_path: '../../bower_components/github-markdown-css/github-markdown.css',
+            code_theme: 'github',
         },
         shortcuts: {
             'j':        'PageDown',
