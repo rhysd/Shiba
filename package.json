@@ -1,7 +1,7 @@
 {
   "name": "shiba",
   "productName": "Shiba",
-  "version": "0.9.0",
+  "version": "0.10.1",
   "description": "Live markdown previewer with linter",
   "main": "./build/src/browser/mainu.js",
   "bin": {
@@ -43,6 +43,10 @@
     "typings": "^0.6.3"
   },
   "scripts": {
-    "start": "npm install && bower install && typings install && rake build && ./bin/cli.js README.md"
+    "dep": "npm install && bower install && typings install",
+    "build": "rake build",
+    "watch": "rake watch",
+    "app": "NODE_ENV=development ./bin/cli.js README.md",
+    "start": "npm run dep && npm run build && npm run app"
   }
 }
