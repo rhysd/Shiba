@@ -123,6 +123,26 @@ class MarkdownRenderer {
             });
             return marked.Renderer.prototype.heading.call(this, text, level, raw);
         };
+
+        this.renderer.code = function(code: string, lang: string, escaped: boolean) {
+            if (!lang || lang === 'mermaid' || lang === 'katex') {
+                return marked.Renderer.prototype.code.call(this, code, lang, escaped);
+            }
+
+            if (this.options.highlight) {
+                const out = this.options.highlight(code, lang);
+                if (out != null && out !== code) {
+                    escaped = true;
+                    code = out;
+                }
+            }
+
+            if (!escaped) {
+                code = he.encode(code);
+            }
+
+            return `<code-block lang="${he.encode(lang)}">${code}\n</code-block>\n`;
+        };
     }
 
     render(markdown: string): string {
