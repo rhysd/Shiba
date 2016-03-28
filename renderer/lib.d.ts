@@ -38,6 +38,7 @@ interface MarkdownPreview extends HTMLElement {
     exts: string[];
     fontSize: string;
     currentOutline: Heading[];
+    isGithubStyle: boolean;
     openMarkdownDoc: (path: string, modifier: boolean) => void;
     scrollToHeading(e: Scroller, h: Heading): void;
 }

@@ -205,6 +205,11 @@ Polymer({
             value: function(){ return [] as Heading[]; },
         },
 
+        isGithubStyle: {
+            type: Boolean,
+            value: true,
+        },
+
         openMarkdownDoc: Object,
 
         fontSize: String,
@@ -216,12 +221,17 @@ Polymer({
 
     attached: function() {
         this.renderer = new MarkdownRenderer(this.exts);
-        const body = document.querySelector('.markdown-body') as HTMLDivElement;
-        body.style.fontSize = this.fontSize;
+        const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
+        if (this.fontSize) {
+            body.style.fontSize = this.fontSize;
+        }
+        if (!this.isGithubStyle) {
+            body.classList.remove('markdown-body');
+        }
     },
 
     _documentUpdated: function(updated_doc) {
-        const body = document.querySelector('.markdown-body') as HTMLDivElement;
+        const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
         if (document.querySelector('.lang-mermaid') !== null) {

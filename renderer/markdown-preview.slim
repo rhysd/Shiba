@@ -8,13 +8,15 @@ dom-module id="markdown-preview"
     .markdown-body {
       min-width: 200px;
       max-width: 790px;
+      font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
+    }
+    #shiba-markdown-component {
       margin: 0 auto;
       padding: 30px;
-      font-family: "Helvetica Neue", Helvetica, "Segoe UI", Meiryo, Arial, freesans, sans-serif;
     }
 
   template
-    div.markdown-body
+      div#shiba-markdown-component.markdown-body
 
   script src="../../bower_components/mermaid/dist/mermaid.min.js"
   javascript:
