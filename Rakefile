@@ -1,7 +1,10 @@
 require 'fileutils'
 include FileUtils
 
-BIN_DIR = './node_modules/.bin'.freeze
+PREFIX = `npm prefix`.chomp
+BIN_DIR = "#{PREFIX}/node_modules/.bin"
+
+Dir.chdir PREFIX
 
 def cmd_exists?(cmd)
   File.exists?(cmd) && File.executable?(cmd)
@@ -20,7 +23,7 @@ def ensure_cmd(cmd)
 end
 
 def make_archive_dir
-  mkdir_p 'archive'
+  mkdir_p "archive"
   %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
   cd 'archive' do
     sh 'npm install --production'
@@ -39,20 +42,20 @@ file "bower_components" do
   sh 'bower install'
 end
 
-task :dep => [:node_modules, :bower_components]
+file "typings" do
+  raise "'typings' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/typings"
+  sh "#{BIN_DIR}/typings install"
+end
+
+task :dep => [:node_modules, :bower_components, :typings]
 
 task :build_slim do
   ensure_cmd 'slimrb'
-  directory 'build/static'
+  mkdir_p 'build/static'
 
   Dir['renderer/*.slim'].each do |slim_file|
     sh "slimrb #{slim_file} build/static/#{File.basename(slim_file, '.slim')}.html"
   end
-end
-
-file "typings" do
-  raise "'typings' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/typings"
-  sh "#{BIN_DIR}/typings install"
 end
 
 task :build_typescript => [:typings] do

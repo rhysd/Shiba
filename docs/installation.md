@@ -45,15 +45,18 @@ Then you can simply execute `shiba` command from command line.
 ```sh
 $ git clone https://github.com/rhysd/Shiba.git && cd Shiba
 
-$ gem install slimrb
+$ gem install slim
 $ npm install -g typescript bower
-$ bower install && npm install && ./node_modules/.bin/typings install
+$ rake dep
 
 # Build Shiba
 $ rake build
 
 # Execute Shiba
-$ ./bin/cli.js
+$ ./bin/cli.js README.md
+
+# With DevTools
+$ NODE_ENV=development ./bin/cli.js README.md
 
 # Watch and differential build
 $ rake watch
