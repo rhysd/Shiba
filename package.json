@@ -49,6 +49,7 @@
     "build": "rake build",
     "watch": "rake watch",
     "app": "NODE_ENV=development ./bin/cli.js README.md",
+    "test": "rake test",
     "start": "npm run dep && npm run build && npm run app"
   }
 }

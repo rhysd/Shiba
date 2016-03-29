@@ -60,6 +60,7 @@ end
 
 task :build_typescript => [:typings] do
   ensure_cmd 'tsc'
+  mkdir_p 'build/src/renderer'
   sh 'tsc -p ./browser'
   sh 'tsc -p ./renderer'
 end
@@ -118,7 +119,13 @@ task :build_test do
 end
 
 task :test => [:build_test] do
-  sh "#{BIN_DIR}/mocha test"
+  sh "#{BIN_DIR}/mocha test/main/test/main"
+end
+
+task :lint do
+  ensure_cmd 'tslint'
+  ts = `git ls-files`.split("\n").select{|p| p =~ /.ts$/}.join(' ')
+  sh "tslint #{ts}"
 end
 
 task :clean do
