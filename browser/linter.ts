@@ -5,11 +5,6 @@ import * as markdownlint from 'markdownlint';
 import * as remark from 'remark';
 import * as remarklint from 'remark-lint';
 
-interface Message {
-    header: string;
-    body: string;
-}
-
 interface RemarkFile {
     messages: {
         line: number;
@@ -19,7 +14,7 @@ interface RemarkFile {
 }
 
 export default class Linter {
-    lint: (filename: string, callback: (msgs: Message[]) => void) => void;
+    lint: (filename: string, callback: (msgs: LinterMessage[]) => void) => void;
     lint_url: string;
     remark: any;
     options: Object;
@@ -43,7 +38,7 @@ export default class Linter {
         }
     }
 
-    markdownlint(filename: string, callback: (msgs: Message[]) => void) {
+    markdownlint(filename: string, callback: (msgs: LinterMessage[]) => void) {
         readFile(filename, 'utf8', (read_err: Error, content: string) => {
             if (read_err) {
                 console.error(read_err);
@@ -65,7 +60,7 @@ export default class Linter {
                 const messages = result.toString()
                                 .split('\n')
                                 .filter((msg: string) => msg !== '')
-                                .map(function(msg: string): Message {
+                                .map(function(msg: string): LinterMessage {
                                     const m = msg.match(is_space);
                                     if (!m) {
                                         return {header: '', body: msg};
@@ -81,7 +76,7 @@ export default class Linter {
         });
     }
 
-    remark_lint(filename: string, callback: (msgs: Message[]) => void) {
+    remark_lint(filename: string, callback: (msgs: LinterMessage[]) => void) {
         readFile(filename, 'utf8', (read_err: Error, content: string) => {
             if (read_err) {
                 console.error(read_err);
@@ -97,7 +92,7 @@ export default class Linter {
                 }
 
                 callback(
-                    file.messages.map(function(m): Message {
+                    file.messages.map(function(m): LinterMessage {
                         // Note:
                         // Should I include m.ruleId to check the detail of message?
                         // I don't include it now because message gets too long.

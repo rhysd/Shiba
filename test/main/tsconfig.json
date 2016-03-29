@@ -8,6 +8,8 @@
     "sourceMap": true
   },
   "files": [
-    "initial_path_test.ts"
+    "initial_path_test.ts",
+    "linter_test.ts",
+    "watcher_test.ts"
   ]
 }

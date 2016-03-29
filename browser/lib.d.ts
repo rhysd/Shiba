@@ -35,3 +35,9 @@ declare module 'remark' {
     const remark: () => Remark.Processor;
     export = remark;
 }
+
+interface LinterMessage {
+    header: string;
+    body: string;
+}
+

@@ -16,6 +16,7 @@
     "polymer": "github:DefinitelyTyped/DefinitelyTyped/polymer/polymer.d.ts#128875c022a87573439f0c426d24bc682fab61a4",
     "power-assert": "github:DefinitelyTyped/DefinitelyTyped/power-assert/power-assert.d.ts#56295f5058cac7ae458540423c50ac2dcf9fc711",
     "power-assert-formatter": "github:DefinitelyTyped/DefinitelyTyped/power-assert-formatter/power-assert-formatter.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
+    "proxyquire": "github:DefinitelyTyped/DefinitelyTyped/proxyquire/proxyquire.d.ts#56295f5058cac7ae458540423c50ac2dcf9fc711",
     "webcomponents.js": "github:DefinitelyTyped/DefinitelyTyped/webcomponents.js/webcomponents.js.d.ts#4a3cfb0f70c4f42c503fde8f61fb00a4516b86d5"
   }
 }
