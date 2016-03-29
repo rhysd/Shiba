@@ -7,6 +7,7 @@ install:
     - gem install slim
     - tslint --version
     - tsc --version
+    - rake dep
 
 before_script:
     - export DISPLAY=:99.0
@@ -15,7 +16,7 @@ before_script:
 
 script:
     - rake lint
-    - rake build
+    - rake compile
     - rake test
 
 after_sccess:

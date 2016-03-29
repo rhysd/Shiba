@@ -37,7 +37,7 @@ guard :shell do
       execute(m[0], 'tsc', '-p', dir)
     when 'test/main'
       execute(m[0], 'tsc', '-p', dir) &&
-        execute(m[0], './node_modules/.bin/mocha', "#{dir}/test/main")
+      execute(m[0], './node_modules/.bin/mocha', "#{dir}/test/main")
     end
   end
 

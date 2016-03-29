@@ -65,7 +65,9 @@ task :build_typescript => [:typings] do
   sh 'tsc -p ./renderer'
 end
 
-task :build => [:dep, :build_slim, :build_typescript]
+task :compile => [:build_slim, :build_typescript]
+
+task :build => [:dep, :compile]
 
 task :npm_publish => [:build] do
   mkdir 'npm-publish'
