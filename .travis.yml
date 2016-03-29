@@ -13,15 +13,21 @@ install:
     - mkdir -p build/static
 
 before_script:
-    - "export DISPLAY=:99.0"
-    - "sh -e /etc/init.d/xvfb start"
+    - export DISPLAY=:99.0
+    - sh -e /etc/init.d/xvfb start
     - sleep 3
 
 script:
     - tslint $(git ls-files | grep '.ts$')
     - tsc -p browser/
     - tsc -p renderer/
-    - if [[ "$TRAVIS_TAG" ]]; then rake release; fi
+
+after_sccess:
+    - |
+        if [[ "$TRAVIS_TAG" ]]; then
+            npm install -g electron-packger
+            rake release
+        fi
 
 deploy:
     provider: releases

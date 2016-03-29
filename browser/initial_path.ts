@@ -21,7 +21,7 @@ export = function(): string {
         return defaultPath();
     }
 
-    let last_arg = process.argv[process.argv.length - 1];
+    const last_arg = process.argv[process.argv.length - 1];
     if (fs.existsSync(last_arg)) {
         return path.resolve(last_arg);
     } else {

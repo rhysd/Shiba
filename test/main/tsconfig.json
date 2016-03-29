@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": ".",
+    "noImplicitAny": true,
+    "target": "es5",
+    "sourceMap": true
+  },
+  "files": [
+    "initial_path_test.ts"
+  ]
+}

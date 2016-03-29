@@ -20,8 +20,10 @@ def execute(f, *args)
   unless system(*args)
     puts "NG"
     notify f
+    false
   else
     puts "OK"
+    true
   end
 end
 
@@ -33,8 +35,9 @@ guard :shell do
     case dir
     when 'browser', 'renderer', 'tests/browser'
       execute(m[0], 'tsc', '-p', dir)
-    when 'tests/renderer'
-      execute(m[0], 'tsc', *Dir['tests/renderer/*.ts'], '--out', 'tests/renderer/index.js')
+    when 'test/main'
+      execute(m[0], 'tsc', '-p', dir) &&
+        execute(m[0], './node_modules/.bin/mocha', "#{dir}/test/main")
     end
   end
 

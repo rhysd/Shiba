@@ -112,10 +112,19 @@ task :release => [:build] do
   release "--platform=linux --arch=x64 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
 end
 
+task :build_test do
+  ensure_cmd 'tsc'
+  sh 'tsc -p test/main'
+end
+
+task :test => [:build_test] do
+  sh "#{BIN_DIR}/mocha test"
+end
+
 task :clean do
   %w(npm-publish build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
 end
 
 task :watch do
-  sh 'guard --watchdir browser renderer typings'
+  sh 'guard --watchdir browser renderer typings test'
 end
