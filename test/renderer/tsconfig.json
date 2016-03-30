@@ -8,6 +8,7 @@
     "sourceMap": true
   },
   "files": [
-    "emoji_test.ts"
+    "emoji_test.ts",
+    "keyboard_test.ts"
   ]
 }
