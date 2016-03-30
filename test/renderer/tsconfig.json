@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": ".",
+    "noImplicitAny": true,
+    "target": "es5",
+    "sourceMap": true
+  },
+  "files": [
+    "emoji_test.ts"
+  ]
+}

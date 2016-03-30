@@ -118,10 +118,11 @@ end
 task :build_test do
   ensure_cmd 'tsc'
   sh 'tsc -p test/main'
+  sh 'tsc -p test/renderer'
 end
 
 task :test => [:build_test] do
-  sh "#{BIN_DIR}/mocha test/main/test/main"
+  sh "#{BIN_DIR}/mocha --require intelli-espower-loader test/main/test/main test/renderer/test/renderer"
 end
 
 task :lint do

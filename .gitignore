@@ -10,3 +10,4 @@ npm-debug.log
 /packages
 /test/**/*.js
 /test/**/*.js.map
+!/test/main/node_modules/electron/index.js
