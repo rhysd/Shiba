@@ -120,3 +120,7 @@ interface TOCComponent extends HTMLElement {
     focusPrevious(): void;
     copyOutlineToClipboard(): void;
 }
+
+interface WebViewElement extends HTMLElement {
+    src: string;
+}

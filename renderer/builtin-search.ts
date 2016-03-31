@@ -19,6 +19,10 @@ Polymer({
             type: Number,
             value: 0,
         },
+        webviewLoaded: {
+            type: Boolean,
+            value: false,
+        },
         onMount: Object,
         onUnmount: Object,
     },
@@ -28,8 +32,14 @@ Polymer({
         this.webview.send('builtin-search:focus');
     },
 
-    ready: function() {
-        this.webview = document.querySelector('.input-workaround') as HTMLElement;
+    _prepareWebView() {
+        this.webview = document.createElement('webview') as WebViewElement;
+        // Note: className is unavailable because a custom element adds style-scope to class automatically
+        this.webview.style.width = '300px';
+        this.webview.style.height = '80px';
+        this.webview.style.outline = 'none';
+        this.webview.setAttribute('nodeintegration', 'on');
+        this.webview.setAttribute('autosize', 'on');
         this.webview.src = 'file://' + path.join(__dirname, 'search-input.html');
         this.webview.addEventListener('ipc-message', (e: any) => {
             const channel = e.channel as string;
@@ -47,16 +57,15 @@ Polymer({
                     break;
             }
         });
-        this.webview.addEventListener('console-message', (e: any) => {
-            console.log('console-message: ', e.line + ': ' + e.message);
-        });
-
         this.webview.addEventListener('dom-ready', () => {
             this.webview.addEventListener('blur', (e: Event) => {
                 this.focusOnInput();
             });
         });
+        document.querySelector('.input-workaround').appendChild(this.webview);
+    },
 
+    ready: function() {
         this.button = document.querySelector('.builtin-search-button') as HTMLButtonElement;
         this.button.addEventListener('click', () => {
             this.search(this.input.value);
@@ -104,6 +113,11 @@ Polymer({
     show: function() {
         if (this.displayed) {
             return;
+        }
+
+        if (!this.webviewLoaded) {
+            this._prepareWebView();
+            this.webviewLoaded = true;
         }
 
         this.body.classList.remove('slideOutUp');
