@@ -21,22 +21,31 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - [x] Both GUI and CLI friendly
 - [x] Cross platform (OS X, Linux, Windows)
 - [x] [Easy to install](docs/installation.md)
-- [x] [Customizable with YAML config file](docs/customization.md) (keyboard shortcuts, linter, etc)
+- [x] [Customizable with YAML config file](docs/customization.md)
+  - keyboard shortcuts
+  - linter
+  - user CSS
+  - code theme
+  - etc...
 - [x] [Search text in preview](docs/usage.md#search-text)
 - [x] [Outline window](docs/usage.md#outline-window)
 - [x] Print preview (to paper / to PDF file)
 - [x] HTML preview
 - [x] Dog-respected :dog2:
 
+
+## Documents
+
 All documents are in [docs](docs/) directory.  And I wrote [a Japanese blog post](http://rhysd.hatenablog.com/entry/2015/08/03/090646).
 
+- [Installation](docs/installation.md)
+- [Basic Usage](docs/usage.md)
+- [Keyboard Shortcuts](docs/shortcuts.md)
+- [Customization](docs/customization.md)
+- [Tips](docs/tips.md)
 
-## Installation
 
-You can install Shiba easily.  Please see [installation document](docs/installation.md).
-
-
-## Usage
+## Overview
 
 ![Shiba anime](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/shiba-screenshot.gif)
 
@@ -47,18 +56,6 @@ You can install Shiba easily.  Please see [installation document](docs/installat
 5. You can quit app by closing the window.
 
 Please see [usage document](docs/usage.md) for more detail.
-
-
-## Keyboard Shortcuts
-
-Keyboard shortcuts are available for above all operations.
-Please refer [shortcuts document](docs/shortcuts.md).
-
-
-## Customization
-
-You can customize Shiba by making YAML configuration file.
-Please refer [customization document](docs/customization.md).
 
 
 ## Special Thanks
