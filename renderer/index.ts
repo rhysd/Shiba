@@ -223,15 +223,16 @@ function prepareMarkdownStyle(markdown_config: {
                             config.file_ext.markdown,
                             config.markdown.font_size,
                             config.markdown.css_path.endsWith('/github-markdown.css'),
-                            (file_path: string, modifier: boolean) => {
-                        if (modifier) {
-                            watcher.changeWatchingDir(file_path);
-                            document.title = make_title(file_path);
-                            watching_path = file_path;
-                        } else {
-                            watcher.sendUpdate(file_path);
-                        }
-                    });
+                            (file_path: string, modifier_key: boolean) => {
+                                if (modifier_key) {
+                                    watcher.changeWatchingDir(file_path);
+                                    document.title = make_title(file_path);
+                                    watching_path = file_path;
+                                } else {
+                                    watcher.sendUpdate(file_path);
+                                }
+                            }
+                        );
                 }
                 break;
 

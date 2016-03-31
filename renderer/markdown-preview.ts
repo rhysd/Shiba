@@ -73,6 +73,7 @@ class MarkdownRenderer {
             return emoji_replacer.replaceWithImages(text);
         };
 
+        const re_ext = new RegExp(`\\.(:?${this.markdown_exts.join('|')})(:?$|#)`);
         this.renderer.link = function(href, title, text) {
             if (!href) {
                 return marked.Renderer.prototype.link.call(this, href, title, text);
@@ -92,15 +93,10 @@ class MarkdownRenderer {
             }
 
             let onclick = 'cancelClick(event)';
-            const ext_idx = href.lastIndexOf('.');
-
             if (href.startsWith('http://') || href.startsWith('https://')) {
                 onclick = 'openLinkWithExternalBrowser(event)';
-            } else if (ext_idx !== -1) {
-                const ext = href.slice(ext_idx + 1);
-                if (self.markdown_exts.indexOf(ext) !== -1) {
-                    onclick = 'openMarkdownLink(event)';
-                }
+            } else if (re_ext.test(href)) {
+                onclick = 'openMarkdownLink(event)';
             } else if (href.indexOf('#') !== -1) {
                 onclick = 'openHashLink(event)';
             }
@@ -154,6 +150,11 @@ function openMarkdownLink(event: MouseEvent) {
     let path = unescape(target.href);
     if (path.startsWith('file://')) {
         path = path.slice(7); // Omit 'file://'
+    }
+
+    const hash_idx = path.indexOf('#');
+    if (hash_idx !== -1) {
+        path = path.slice(0, hash_idx);
     }
 
     if (element_env.openMarkdownDoc) {
