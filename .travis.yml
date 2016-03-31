@@ -46,6 +46,10 @@ cache:
 
 addons:
     apt:
+        sources:
+            - llvm-toolchain-precise
         packages:
+            - g++-4.9
+            - clang-3.8
             - xvfb
             - wine
