@@ -35,6 +35,7 @@ end
 file "node_modules" do
   ensure_cmd 'npm'
   sh 'npm install'
+  sh "#{BIN_DIR}/electron-rebuild"
 end
 
 file "bower_components" do
@@ -92,12 +93,11 @@ task :asar => [:build] do
 end
 
 task :release => [:build] do
-  ensure_cmd 'electron-packager'
   make_archive_dir
   mkdir_p 'packages'
   def release(options)
     cd 'archive' do
-      sh "electron-packager ./ Shiba #{options}"
+      sh "#{BIN_DIR}/electron-packager ./ Shiba #{options}"
       Dir['Shiba-*'].each do |dst|
         cp_r '../README.md', dst
         cp_r '../docs', dst

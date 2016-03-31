@@ -8,13 +8,13 @@ const config = loadConfig();
 // Show versions {{{
 if (process.argv.indexOf('--version') !== -1) {
     const versions: any = process.versions;
-    console.log(`Shiba: rich markdown previewer
+    console.log(`Shiba v${app.getVersion()}: Rich markdown previewer
 
 Usage:
-  $ shiba [--detach|--version] {directory to watch}
+  $ shiba [--detach|--version] [{direcotyr/file to watch}]
 
-Versions:
-  Shiba:    ${app.getVersion()}
+Environment:
+  OS:       ${process.platform}-${process.arch}
   Electron: ${versions.electron}
   Chrome:   ${versions.chrome}
   Node.js:  ${versions.node}
