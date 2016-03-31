@@ -73,7 +73,7 @@ markdown:
     code_theme: 'tomorrow'
 ```
 
-<!-- TODO: Add screenshot -->
+![theme customization](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/tufte-tomorrow.png)
 
 
 ## File Extensions
