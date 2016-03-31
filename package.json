@@ -27,7 +27,7 @@
     "about-window": "^1.3.1",
     "animate.css": "^3.5.1",
     "chokidar": "^1.4.3",
-    "electron-prebuilt": "^0.37.2",
+    "electron-prebuilt": "^0.37.3",
     "he": "^0.5.0",
     "highlight.js": "^9.2.0",
     "js-yaml": "^3.5.4",
@@ -35,7 +35,7 @@
     "markdownlint": "^0.1.1",
     "marked": "^0.3.5",
     "mousetrap": "^1.5.3",
-    "remark": "^4.1.2",
+    "remark": "^4.2.0",
     "remark-lint": "^3.0.0"
   },
   "devDependencies": {
