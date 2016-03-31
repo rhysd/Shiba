@@ -210,11 +210,11 @@ function prepareMarkdownStyle(markdown_config: {
         watching_path,
 
         function(kind: string, file: string): void {
-            const base = document.querySelector('base');
-            base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
-
             const reload_button = document.getElementById('reload-button');
             reload_button.classList.add('rotate');
+
+            const base = document.querySelector('base');
+            base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
 
             switch (kind) {
                 case 'markdown': {

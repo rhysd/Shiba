@@ -3,7 +3,7 @@
 
 import * as path from 'path';
 import {unescape} from 'querystring';
-import {shell} from 'electron';
+import {shell, remote} from 'electron';
 import * as marked from 'marked';
 import * as katex from 'katex';
 import {highlight} from 'highlight.js';
@@ -11,6 +11,7 @@ import * as he from 'he';
 
 let element_env: MarkdownPreview = null; // XXX
 const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
+let loaded_mermaid = false;
 
 marked.setOptions({
     langPrefix: 'hljs ',
@@ -20,7 +21,14 @@ marked.setOptions({
         }
 
         if (lang === 'mermaid') {
-            return '<div class="mermaid">' + code + '</div>';
+            if (!loaded_mermaid) {
+                const script = document.createElement('script');
+                script.src = 'file://' + remote.app.getAppPath() + '/bower_components/mermaid/dist/mermaid.min.js';
+                document.head.appendChild(script);
+
+                loaded_mermaid = true;
+            }
+            return '<div class="mermaid">' + he.encode(code) + '</div>';
         }
 
         if (lang === 'katex') {
@@ -235,9 +243,6 @@ Polymer({
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
-        if (document.querySelector('.lang-mermaid') !== null) {
-            mermaid.init();
-        }
     },
 
     scrollToHeading: function(scroller: Scroller, h: Heading) {

@@ -5,6 +5,7 @@ html
     meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"
     meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes"
     title Shiba
+
     script src="../../bower_components/webcomponentsjs/webcomponents-lite.min.js"
 
     link rel="import" href="../../bower_components/iron-icons/iron-icons.html"
@@ -13,8 +14,13 @@ html
     link rel="import" href="../../bower_components/paper-drawer-panel/paper-drawer-panel.html"
     link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html"
     link rel="import" href="../../bower_components/paper-tooltip/paper-tooltip.html"
-    link rel="import" href="markdown-preview.html"
+
+    javascript:
+      console.time('load');
+      onload = function() { console.timeEnd('load'); };
+
     link rel="import" href="lint-panel.html"
+    link rel="import" href="markdown-preview.html"
     link rel="import" href="paw-filechooser.html"
     link rel="import" href="builtin-search.html"
     link rel="import" href="toc-dialog.html"
@@ -123,6 +129,7 @@ html
       }
     base
   body
+
     paper-drawer-panel#main-drawer drawer-width="320px" responsive-width="1120px" disable-swipe=true
       / Note: paper-header-panel is required to scroll content from JavaScript
       paper-header-panel[main]
