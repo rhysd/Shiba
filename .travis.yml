@@ -2,6 +2,8 @@ language: node_js
 node_js: stable
 sudo: false
 
+env: CC=gcc-4.9 CXX=g++-4.9
+
 install:
     - npm install -g tslint typescript bower
     - gem install slim
@@ -47,10 +49,8 @@ cache:
 addons:
     apt:
         sources:
-            - llvm-toolchain-precise
             - ubuntu-toolchain-r-test
         packages:
             - g++-4.9
-            - clang-3.8
             - xvfb
             - wine
