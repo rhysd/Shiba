@@ -20,7 +20,7 @@ dom-module#toc-dialog
       .toc-copy-to-clipboard-icon {
         margin-left: 4px;
       }
-    paper-dialog#toc-body[modal]
+    paper-dialog#toc-body[no-cancel-on-outside-click=false on-iron-overlay-canceled="reset" with-backdrop]
       paper-dialog-scrollable
         div#toc-listbox
       paper-button#toc-copy-to-clipboard-button.toc-copy-to-clip[raised]

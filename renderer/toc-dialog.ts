@@ -21,6 +21,10 @@ Polymer({
         selectedIdx: Number,
         innerDialog: Object,
         scrollCallback: Object,
+        reset: {
+            type: Object,
+            value: function() { return this._unmount; },
+        },
         onMount: Object,
         onUnmount: Object,
     },
@@ -67,12 +71,7 @@ Polymer({
         this.close();
     },
 
-    close: function() {
-        if (!this.innerDialog) {
-            return;
-        }
-
-        this.innerDialog.close();
+    _unmount: function() {
         this.opened = false;
         this.selectedIdx = undefined;
         this.currentItems = [];
@@ -80,6 +79,15 @@ Polymer({
         if (this.onUnmount) {
             this.onUnmount();
         }
+    },
+
+    close: function() {
+        if (!this.innerDialog) {
+            return;
+        }
+
+        this.innerDialog.close();
+        this._unmount();
     },
 
     toggle: function(outline: Heading[] = []) {
