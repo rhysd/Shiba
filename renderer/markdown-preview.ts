@@ -13,6 +13,7 @@ let element_env: MarkdownPreview = null; // XXX
 const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
 
 marked.setOptions({
+    langPrefix: 'hljs ',
     highlight: function(code: string, lang: string): string {
         if (lang === undefined) {
             return code;
@@ -52,7 +53,7 @@ class MarkdownRenderer {
         // this scope's 'this' as 'self'.
         const self = this;
 
-        this.renderer.listitem = function(text: string) {
+        this.renderer.listitem = function(text) {
             let matched = text.match(REGEX_CHECKED_LISTITEM);
             if (matched && matched[0]) {
                 return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
@@ -68,11 +69,11 @@ class MarkdownRenderer {
             return marked.Renderer.prototype.listitem.call(this, text);
         };
 
-        this.renderer.text = function(text: string) {
+        this.renderer.text = function(text) {
             return emoji_replacer.replaceWithImages(text);
         };
 
-        this.renderer.link = function(href: string, title: string, text: string) {
+        this.renderer.link = function(href, title, text) {
             if (!href) {
                 return marked.Renderer.prototype.link.call(this, href, title, text);
             }
@@ -113,7 +114,7 @@ class MarkdownRenderer {
                 `<a id="${id}" href="${href}" onclick="${onclick}">${text}</a>`;
         };
 
-        this.renderer.heading = function(text: string, level: number, raw: string) {
+        this.renderer.heading = function(text, level, raw) {
             const hash = this.options.headerPrefix + raw.toLowerCase().replace(/[^\w]+/g, '-');
             self.outline.push({
                 title: raw,
@@ -204,6 +205,11 @@ Polymer({
             value: function(){ return [] as Heading[]; },
         },
 
+        isGithubStyle: {
+            type: Boolean,
+            value: true,
+        },
+
         openMarkdownDoc: Object,
 
         fontSize: String,
@@ -215,12 +221,17 @@ Polymer({
 
     attached: function() {
         this.renderer = new MarkdownRenderer(this.exts);
-        const body = document.querySelector('.markdown-body') as HTMLDivElement;
-        body.style.fontSize = this.fontSize;
+        const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
+        if (this.fontSize) {
+            body.style.fontSize = this.fontSize;
+        }
+        if (!this.isGithubStyle) {
+            body.classList.remove('markdown-body');
+        }
     },
 
     _documentUpdated: function(updated_doc) {
-        const body = document.querySelector('.markdown-body') as HTMLDivElement;
+        const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
         if (document.querySelector('.lang-mermaid') !== null) {

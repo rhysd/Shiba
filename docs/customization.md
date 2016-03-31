@@ -22,21 +22,23 @@ markdown:
 
 All keys for the YAML configuration file is below:
 
-| Key                   | Description             | Value                                           | Default                 |
-| --------------------- | ----------------------- | ----------------------------------------------- | ----------------------- |
-| `width`               | Window width            | Number of pixel or `"max"`                      | `920`                   |
-| `height`              | Window height           | Number of pixel or `"max"`                      | `800`                   |
-| `linter`              | Linter name             | `"remark-lint"` or `"markdownlint"` or `"none"` | `"remark-lint"`         |
-| `file_ext`            | Extensions to detect    | Array of extensions for each file types         | See below section       |
-| `lint_options`        | Options for linter      | Depends on linter                               | Not specified           |
-| `shortcuts`           | Keyboard shortcuts      | Keyboard shortcuts definition                   | See below section       |
-| `voice.enabled`       | Notify with voice       | enable/disable with boolean value               | false                   |
-| `voice.source`        | Path to voice source    | Path string                                     | "../voices/bow.mp3"     |
-| `drawer.responsive`   | Make drawer responsive  | Enable responsive drawer with boolean value     | true                    |
-| `menu.visible`        | Left menu visibility    | Left menu is visible or not (boolean value)     | true                    |
-| `ignore_path_pattern` | Regex to ignore  path   | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles) |
-| `hide_title_bar`      | Hide a title bar (OS X) | hide a tool bar if true                         | false                   |
-| `markdown.font_size`  | Size of font in preview | Specify font size by string (e.g. "10px")       | ''                      |
+| Key                   | Description                | Value                                           | Default                        |
+| --------------------- | -------------------------- | ----------------------------------------------- | ------------------------------ |
+| `width`               | Window width               | Number of pixel or `"max"`                      | `920`                          |
+| `height`              | Window height              | Number of pixel or `"max"`                      | `800`                          |
+| `linter`              | Linter name                | `"remark-lint"` or `"markdownlint"` or `"none"` | `"remark-lint"`                |
+| `file_ext`            | Extensions to detect       | Array of extensions for each file types         | See below section              |
+| `lint_options`        | Options for linter         | Depends on linter                               | Not specified                  |
+| `shortcuts`           | Keyboard shortcuts         | Keyboard shortcuts definition                   | See below section              |
+| `voice.enabled`       | Notify with voice          | enable/disable with boolean value               | false                          |
+| `voice.source`        | Path to voice source       | Path string                                     | "../voices/bow.mp3"            |
+| `drawer.responsive`   | Make drawer responsive     | Enable responsive drawer with boolean value     | true                           |
+| `menu.visible`        | Left menu visibility       | Left menu is visible or not (boolean value)     | true                           |
+| `ignore_path_pattern` | Regex to ignore  path      | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles)        |
+| `hide_title_bar`      | Hide a title bar (OS X)    | hide a tool bar if true                         | false                          |
+| `markdown.font_size`  | Size of font in preview    | Specify font size by string (e.g. "10px")       | ''                             |
+| `markdown.css_path`   | Path to css file to load   | Specify CSS file to style a markdown preview    | '/path/to/github-markdown.css' |
+| `markdown.code_theme` | Color theme for code block | Specify highlight.js style theme for code block | 'github'                       |
 
 
 ## Customize Keyboard Shortcuts
@@ -56,6 +58,23 @@ shortcuts:
 ```
 
 If an action is empty string `""` or `null`, the shortcut is disabled.
+
+
+## CSS and Code Highlight
+
+You can use your favorite CSS file and code highlighting theme for markdown preview.
+Shiba uses [highlight.js](https://github.com/isagalaev/highlight.js), so you can specify the name of code theme supported by highlight.js.
+
+`css_path` and `code_theme` entries are available to customize them.  Below is an example for using [tufte-css](https://github.com/edwardtufte/tufte-css) and ['Tomorrow' theme](https://highlightjs.org/static/demo/).
+
+```yaml
+markdown:
+    css_path: '/path/to/tufte.css'
+    code_theme: 'tomorrow'
+```
+
+<!-- TODO: Add screenshot -->
+
 
 ## File Extensions
 

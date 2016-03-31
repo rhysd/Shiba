@@ -47,6 +47,13 @@ Shortcut `CTRL + L` is also available to toggle lint result drawer.
 Keyboard shortcuts are available for above all operations.
 Please refer [shortcuts document](shortcuts.md).
 
+
+## Using Your Favorite CSS and Code Highlighting
+
+You can specify your favorite CSS file for styling markdown preview.  And you can also specify highlight theme for code block in markdown document.
+Please refer [customization document](shortcuts.md).
+
+
 ## Outline Window
 
 <!-- TODO: add screenshot -->

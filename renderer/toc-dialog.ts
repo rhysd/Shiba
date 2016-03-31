@@ -113,7 +113,6 @@ Polymer({
     },
 
     copyOutlineToClipboard: function() {
-        console.log('TODO!');
         if (this.currentItems.length > 0) {
             const headings: string[] = [];
             for (const h of this.currentOutline) {

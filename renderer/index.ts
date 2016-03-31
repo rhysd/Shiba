@@ -77,7 +77,7 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
     }
 }
 
-function prepareMarkdownPreview(file: string, exts: string[], font_size: string, onPathChanged: (p: string, m: boolean) => void): void {
+function prepareMarkdownPreview(file: string, exts: string[], font_size: string, isGitHubStyle: boolean, onPathChanged: (p: string, m: boolean) => void): void {
     fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
         if (err) {
             console.error(err);
@@ -93,7 +93,10 @@ function prepareMarkdownPreview(file: string, exts: string[], font_size: string,
         markdown_preview = document.createElement('markdown-preview') as MarkdownPreview;
         markdown_preview.id = 'current-markdown-preview';
         if (font_size !== '') {
-            markdown_preview.setAttribute('font-size', font_size);
+            markdown_preview.fontSize = font_size;
+        }
+        if (!isGitHubStyle) {
+            markdown_preview.isGithubStyle = false;
         }
 
         markdown_preview.exts = exts;
@@ -143,6 +146,32 @@ function getDialogDefaultPath() {
     }
 }
 
+function prepareMarkdownStyle(markdown_config: {
+    css_path: string;
+    code_theme: string;
+}) {
+    const {css_path, code_theme} = markdown_config;
+
+    const markdown_css_link = document.createElement('link') as HTMLLinkElement;
+    markdown_css_link.rel = 'stylesheet';
+    markdown_css_link.href = css_path;
+    document.head.appendChild(markdown_css_link);
+
+    if (code_theme === '') {
+        return;
+    }
+
+    const code_theme_css_link = document.createElement('link') as HTMLLinkElement;
+    code_theme_css_link.rel = 'stylesheet';
+    code_theme_css_link.href = `../../node_modules/highlight.js/styles/${code_theme}.css`;
+    document.head.appendChild(code_theme_css_link);
+
+    if (code_theme !== 'github' && css_path.endsWith('/github-markdown.css')) {
+        console.warn('github-markdown.css overrides background color of code block.');
+    }
+
+}
+
 (function(){
     const lint = getLintArea();
     if (config.voice.enabled) {
@@ -151,6 +180,8 @@ function getDialogDefaultPath() {
     if (config.hide_title_bar) {
         lint.enable_inset = config.hide_title_bar;
     }
+
+    prepareMarkdownStyle(config.markdown);
 
     function chooseFileOrDirWithDialog() {
         const filters = [
@@ -187,7 +218,12 @@ function getDialogDefaultPath() {
 
             switch (kind) {
                 case 'markdown': {
-                    prepareMarkdownPreview(file, config.file_ext.markdown, config.markdown.font_size, (file_path: string, modifier: boolean) => {
+                    prepareMarkdownPreview(
+                            file,
+                            config.file_ext.markdown,
+                            config.markdown.font_size,
+                            config.markdown.css_path.endsWith('/github-markdown.css'),
+                            (file_path: string, modifier: boolean) => {
                         if (modifier) {
                             watcher.changeWatchingDir(file_path);
                             document.title = make_title(file_path);
