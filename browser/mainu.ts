@@ -2,8 +2,10 @@ import * as path from 'path';
 import {app, BrowserWindow, shell} from 'electron';
 import * as menu from './menu';
 import {load as loadConfig} from './config';
+import WatchDog from './watcher';
 
 const config = loadConfig();
+const dog = new WatchDog(config);
 
 // Show versions {{{
 if (process.argv.indexOf('--version') !== -1) {
@@ -24,11 +26,9 @@ Environment:
 // }}}
 
 // Main Window {{{
-let mainWindow: Electron.BrowserWindow = null;
+app.on('window-all-closed', function() { app.quit(); });
 
-app.on('window-all-closed', function(){ app.quit(); });
-
-app.on('ready', function(){
+app.on('ready', function() {
     const display_size = require('screen').getPrimaryDisplay().workAreaSize;
 
     function getConfigLength(key: string, default_len: number): number {
@@ -58,30 +58,33 @@ app.on('ready', function(){
     if (config.hide_title_bar) {
         options.titleBarStyle = 'hidden-inset';
     }
-    mainWindow = new BrowserWindow(options);
+    let win = new BrowserWindow(options);
 
     const html = 'file://' + path.resolve(__dirname, '..', '..', 'static', 'index.html');
-    mainWindow.loadURL(html);
+    win.loadURL(html);
 
-    mainWindow.on('closed', function(){
-        mainWindow = null;
+    dog.wakeup(win.webContents);
+
+    win.on('closed', function(){
+        win = null;
     });
 
-    mainWindow.on('will-navigate', function(e: Event, url: string){
+    win.on('will-navigate', function(e: Event, url: string){
         e.preventDefault();
         shell.openExternal(url);
     });
 
-    menu.build(mainWindow);
+    menu.build(win);
 
     if (process.argv[0].endsWith('Electron') && process.platform === 'darwin') {
+        // Note:
         // If Shiba is run as npm package, replace dock app icon
         app.dock.setIcon(icon_path);
     }
 
     if (process.env.NODE_ENV === 'development') {
-        mainWindow.webContents.on('devtools-opened', () => setImmediate(() => mainWindow.focus()));
-        mainWindow.webContents.openDevTools({detach: true});
+        win.webContents.on('devtools-opened', () => setImmediate(() => win.focus()));
+        win.webContents.openDevTools({detach: true});
     }
 });
 // }}}

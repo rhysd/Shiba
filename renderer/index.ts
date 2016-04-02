@@ -5,7 +5,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import {homedir} from 'os';
 import {remote, ipcRenderer as ipc} from 'electron';
-const Watcher = remote.require('./watcher.js');
 const config = remote.require('./config').load();
 const home_dir = config.hide_title_bar ?  '' : homedir();
 
@@ -77,7 +76,21 @@ function setChildToViewerWrapper(new_child: HTMLElement): void {
     }
 }
 
-function prepareMarkdownPreview(file: string, exts: string[], font_size: string, isGitHubStyle: boolean, onPathChanged: (p: string, m: boolean) => void): void {
+function openMarkdownDoc(file_path: string, modifier_key: boolean) {
+    // Note:
+    // This callback is called when open other document is opened.
+    ipc.send('shiba:notify-path', file_path);
+    if (modifier_key) {
+        document.title = make_title(file_path);
+        watching_path = file_path;
+    }
+}
+
+function renderMarkdownPreview(file: string) {
+    const exts = config.file_ext.markdown;
+    const font_size = config.markdown.font_size;
+    const isGitHubStyle = config.markdown.css_path.endsWith('/github-markdown.css');
+
     fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
         if (err) {
             console.error(err);
@@ -100,14 +113,14 @@ function prepareMarkdownPreview(file: string, exts: string[], font_size: string,
         }
 
         markdown_preview.exts = exts;
-        markdown_preview.openMarkdownDoc = onPathChanged;
+        markdown_preview.openMarkdownDoc = openMarkdownDoc;
         setChildToViewerWrapper(markdown_preview);
 
         markdown_preview.document = markdown;
     });
 }
 
-function prepareHtmlPreview(file: string) {
+function renderHtmlPreview(file: string) {
     let html_preview = document.getElementById('current-html-preview') as HTMLIFrameElement;
     if (html_preview !== null) {
         html_preview.src = 'file://' + file;
@@ -206,61 +219,41 @@ function prepareMarkdownStyle(markdown_config: {
         return paths[0];
     }
 
-    const watcher = new Watcher(
-        watching_path,
+    ipc.on('shiba:notify-content-updated', (_: Event, kind: string, file: string) => {
+        const reload_button = document.getElementById('reload-button');
+        reload_button.classList.add('rotate');
 
-        function(kind: string, file: string): void {
-            const reload_button = document.getElementById('reload-button');
-            reload_button.classList.add('rotate');
+        const base = document.querySelector('base');
+        base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
 
-            const base = document.querySelector('base');
-            base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
-
-            switch (kind) {
-                case 'markdown': {
-                    prepareMarkdownPreview(
-                            file,
-                            config.file_ext.markdown,
-                            config.markdown.font_size,
-                            config.markdown.css_path.endsWith('/github-markdown.css'),
-                            (file_path: string, modifier_key: boolean) => {
-                                if (modifier_key) {
-                                    watcher.changeWatchingDir(file_path);
-                                    document.title = make_title(file_path);
-                                    watching_path = file_path;
-                                } else {
-                                    watcher.sendUpdate(file_path);
-                                }
-                            }
-                        );
-                }
-                break;
-
-                case 'html': {
-                    prepareHtmlPreview(file);
-                }
-                break;
-
-                default: {
-                    // Do nothing
-                }
+        switch (kind) {
+            case 'markdown': {
+                renderMarkdownPreview(file);
                 break;
             }
-        },
-
-        // Linter result renderer
-        function(messages: LintMessage[]): void {
-            lint.content = messages;
-            const button = document.getElementById('lint-button');
-            if (messages.length === 0) {
-                button.style.color = '#d99e5f';
-            } else {
-                button.style.color = '#ce3c4a';
+            case 'html': {
+                renderHtmlPreview(file);
+                break;
             }
+            default:
+                // Do nothing
+                break;
         }
-    );
+    });
 
-    lint.lint_url = watcher.getLintRuleURL();
+    ipc.on('shiba:notify-linter-result', (_: Event, messages: LintMessage[]) => {
+        lint.content = messages;
+        const button = document.getElementById('lint-button');
+        if (messages.length === 0) {
+            button.style.color = '#d99e5f';
+        } else {
+            button.style.color = '#ce3c4a';
+        }
+    });
+
+    ipc.on('return-lint-url', (_: Event, url: string) => {
+        lint.lint_url = url;
+    });
 
     onPathButtonPushed = function() {
         const chosen = chooseFileOrDirWithDialog();
@@ -269,7 +262,7 @@ function prepareMarkdownStyle(markdown_config: {
         }
         watching_path = chosen;
         document.title = make_title(watching_path);
-        watcher.changeWatchingDir(watching_path);
+        ipc.send('shiba:notify-path', watching_path);
     };
 
     if (watching_path === '') {
@@ -316,18 +309,18 @@ function prepareMarkdownStyle(markdown_config: {
             return;
         }
         watching_path = p;
-        watcher.changeWatchingDir(p);
+        ipc.send('shiba:notify-path', p);
         document.title = make_title(p);
     });
 
     (document.querySelector('paw-filechooser') as PawFilechooser).onFileChosen = (file: string) => {
         watching_path = file;
-        watcher.changeWatchingDir(file);
+        ipc.send('shiba:notify-path', file);
         document.title = make_title(file);
     };
 
     const reload_button = document.getElementById('reload-button');
-    reload_button.onclick = () => watcher.startWatching();
+    reload_button.onclick = () => renderMarkdownPreview(watching_path);
     reload_button.classList.add('animated');
     const reload_anime_listener = () => {
         reload_button.classList.remove('rotate');
@@ -376,7 +369,7 @@ function prepareMarkdownStyle(markdown_config: {
         this.bw = this.bw || remote.BrowserWindow;
         this.bw.getFocusedWindow().openDevTools({detach: true});
     });
-    receiver.on('Reload', () => watcher.startWatching());
+    receiver.on('Reload', () => renderMarkdownPreview(watching_path));
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
     receiver.on('Search', () => onSearchButtonPushed());
     receiver.on('Outline', () => onTOCButtonPushed());
@@ -390,7 +383,7 @@ function prepareMarkdownStyle(markdown_config: {
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
     ipc.on('shiba:outline', () => onTOCButtonPushed());
     ipc.on('shiba:search', () => onSearchButtonPushed());
-    ipc.on('shiba:reload', () => watcher.startWatching());
+    ipc.on('shiba:reload', () => renderMarkdownPreview(watching_path));
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
     fs.exists(user_css_path, (exists: boolean) => {
