@@ -56,7 +56,7 @@ export default class Linter {
                 config: this.options,
             };
 
-            markdownlint(opts, function(err: Error, result: any) {
+            markdownlint(opts, (err: Error, result: any) => {
                 if (err) {
                     return;
                 }
@@ -89,7 +89,7 @@ export default class Linter {
 
             this.remark = this.remark || remark().use(remarklint, this.options);
 
-            this.remark.process(content, function(err: NodeJS.ErrnoException, file: RemarkFile) {
+            this.remark.process(content, (err: NodeJS.ErrnoException, file: RemarkFile) => {
                 if (err) {
                     console.log('Lint failed: ', err.stack);
                     return;

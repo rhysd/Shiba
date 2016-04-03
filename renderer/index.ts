@@ -268,6 +268,7 @@ function prepareMarkdownStyle(markdown_config: {
     if (watching_path === '') {
         onPathButtonPushed();
     } else {
+        ipc.send('shiba:notify-path', watching_path);
         document.title = make_title(watching_path);
     }
 

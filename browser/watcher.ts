@@ -98,7 +98,7 @@ export default class WatchDog {
             this.sendContentUpdated(this.watching_path);
         }
 
-        assert(stats.isDirectory());
+        assert(path_is_file || stats.isDirectory());
 
         const ext_pattern = Object.
                 keys(this.config.file_ext).
