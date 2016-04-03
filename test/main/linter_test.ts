@@ -4,6 +4,7 @@ import Linter from '../../browser/linter';
 import DummyWebContents from './dummy_webcontents';
 import * as assert from 'power-assert';
 import {join} from 'path';
+import {ipcMain as ipc} from 'electron';
 
 // Compiled into './test/main/' directory
 const ok_doc = join(__dirname, '..', '..', 'doc', 'ok.md');
@@ -108,10 +109,20 @@ context('Linter', () => {
         });
     });
 
-    it('doesn not crash on invalid file path', () => {
+    it('does not crash on invalid file path', () => {
         const c = new DummyWebContents() as any;
         const linter = new Linter(c, 'remark-lint', {});
         linter.lint('path/to/not/existing/file');
         linter.lint('');
+    });
+
+    it('returns linter\'s rules URL via IPC', done => {
+        const c = new DummyWebContents() as any;
+        const linter = new Linter(c, 'remark-lint', {});
+        c.once('shiba:return-lint-rule-url', (_: any, url: string) => {
+            assert(url.indexOf('http') === 0);
+            done();
+        });
+        ipc.emit('shiba:request-lint-rule-url', {});
     });
 });

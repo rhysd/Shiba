@@ -1,6 +1,6 @@
 /// <reference path="lib.d.ts" />
 
-import {shell} from 'electron';
+import {shell, ipcRenderer as ipc} from 'electron';
 
 interface LintPanelComponent extends polymer.Base {
     showLintResult(): void;
@@ -44,6 +44,10 @@ Polymer({
             const header = document.getElementById('lint-header');
             header.style.textAlign = 'center';
         }
+        ipc.on('shiba:return-lint-rule-url', (_: Event, url: string) => {
+            this.lint_url = url;
+        });
+        ipc.send('shiba:request-lint-rule-url');
     },
 
     showLintResult: function() {

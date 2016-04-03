@@ -1,6 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 
 import {readFile} from 'fs';
+import {ipcMain as ipc} from 'electron';
 import * as markdownlint from 'markdownlint';
 import * as remark from 'remark';
 import * as remarklint from 'remark-lint';
@@ -32,10 +33,14 @@ export default class Linter {
             this.lint = function(f){ /* do nothing */ };
             this.lint_url = '';
         } else {
-            console.log("linter.js: Invalid linter name '" + name + "'");
+            console.log(`linter.js: Invalid linter name '${name}'`);
             this.lint = function(f){ /* do nothing */ };
             this.lint_url = '';
         }
+
+        ipc.on('shiba:request-lint-rule-url', () => {
+            this.sender.send('shiba:return-lint-rule-url', this.lint_url);
+        });
     }
 
     sendResult(messages: LinterMessage[]) {

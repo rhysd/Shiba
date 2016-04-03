@@ -23,9 +23,6 @@ export default class WatchDog {
         ipc.on('shiba:request-path', () => {
             this.sender.send('shiba:return-path', this.watching_path);
         });
-        ipc.on('shiba:request-lint-url', () => {
-            this.sender.send('shiba:return-lint-url', this.linter.lint_url);
-        });
         this.linter = new Linter(this.sender, this.config.linter, this.config.lint_options);
     }
 
