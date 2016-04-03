@@ -27,6 +27,18 @@ def execute(f, *args)
   end
 end
 
+def tsc(f, dir)
+  execute(f, 'tsc', '-p', dir)
+end
+
+def mocha(f, path)
+  execute(f, './node_modules/.bin/mocha', '--require', 'intelli-espower-loader', path)
+end
+
+def slimrb(input, output)
+  execute(input, 'slimrb', input, output)
+end
+
 ignore /^node_modules/, /^build/, /^typings/, /^bower_components/
 
 guard :shell do
@@ -34,16 +46,17 @@ guard :shell do
     dir = File.dirname m[0]
     case dir
     when 'browser', 'renderer', 'tests/browser'
-      execute(m[0], 'tsc', '-p', dir)
+      tsc(m[0], dir)
     when 'test/main'
-      execute(m[0], 'tsc', '-p', dir) &&
-      execute(m[0], './node_modules/.bin/mocha', "#{dir}/test/main")
+      tsc(m[0], dir) && mocha(m[0], "#{dir}/test/main/#{File.basename(m[0], '.ts')}.js")
+    when 'test/renderer'
+      tsc(m[0], dir) && mocha(m[0], "#{dir}/test/renderer/#{File.basename(m[0], '.ts')}.js")
     end
   end
 
   watch /^.+\.slim/ do |m|
     if File.dirname(m[0]) == 'renderer'
-      execute(m[0], 'slimrb', m[0], "build/static/#{File.basename(m[0], '.slim')}.html")
+      slimrb(m[0], "build/static/#{File.basename(m[0], '.slim')}.html")
     end
   end
 end

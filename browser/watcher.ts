@@ -1,18 +1,18 @@
 import {app, ipcMain as ipc} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as assert from 'assert';
+import * as assertTruthy from 'assert';
 import * as chokidar from 'chokidar';
 import * as config from './config';
 import Linter from './linter';
 
 export default class WatchDog {
-    private sender: Electron.WebContents;
-    private watching_path: string;
-    private eyes: fs.FSWatcher;
-    private linter: Linter;
+    public sender: Electron.WebContents;
+    public watching_path: string;
+    public eyes: fs.FSWatcher;
+    public linter: Linter;
 
-    constructor(private config: config.Config) {
+    constructor(public config: config.Config) {
     }
 
     wakeup(sender: Electron.WebContents) {
@@ -98,7 +98,7 @@ export default class WatchDog {
             this.sendContentUpdated(this.watching_path);
         }
 
-        assert(path_is_file || stats.isDirectory());
+        assertTruthy(path_is_file || stats.isDirectory());
 
         const ext_pattern = Object.
                 keys(this.config.file_ext).
