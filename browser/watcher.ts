@@ -1,53 +1,134 @@
-import {app} from 'electron';
+import {app, ipcMain as ipc} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as assert from 'assert';
 import * as chokidar from 'chokidar';
 import * as config from './config';
 import Linter from './linter';
 
-class Watcher {
-    config: config.Config;
-    linter: Linter;
-    file_watcher: fs.FSWatcher;
+export default class WatchDog {
+    private sender: Electron.WebContents;
+    private watching_path: string;
+    private eyes: fs.FSWatcher;
+    private linter: Linter;
 
-    constructor(
-        public path: string,
-        public render: (kind: string, content: Object) => void,
-        public renderLintResult: (msgs: any[]) => void
-    ) {
-        this.config = config.load();
-        this.linter = new Linter(this.config.linter, this.config.lint_options);
-
-        console.log('Start to watch ' + this.path);
-
-        this.startWatching();
+    constructor(private config: config.Config) {
     }
 
-    sendUpdate(file: string) {
+    wakeup(sender: Electron.WebContents) {
+        this.sender = sender;
+        ipc.on('shiba:notify-path', (_: Electron.IPCMainEvent, new_path: string) => {
+            this.setWatchingPath(new_path);
+        });
+        ipc.on('shiba:request-path', () => {
+            this.sender.send('shiba:return-path', this.watching_path);
+        });
+        ipc.on('shiba:request-lint-url', () => {
+            this.sender.send('shiba:return-lint-url', this.linter.lint_url);
+        });
+        this.linter = new Linter(this.sender, this.config.linter, this.config.lint_options);
+    }
+
+    getDocumentKindFor(ext: string) {
+        for (const k in this.config.file_ext) {
+            if (this.config.file_ext[k].indexOf(ext) !== -1) {
+                return k;
+            }
+        }
+        return undefined;
+    }
+
+    statWatchingPath() {
+        try {
+            return fs.lstatSync(this.watching_path);
+        } catch (e) {
+            // Path is not found
+            return null;
+        }
+    }
+
+    openEyes(pattern: string) {
+        const eyes = chokidar.watch(
+            pattern, {
+                ignoreInitial: true,
+                persistent: true,
+                ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
+            }
+        );
+
+        eyes.on('change', (file: string) => {
+            console.log('File changed: ' + file);
+            this.sendContentUpdated(file);
+        });
+        eyes.on('add', (file: string) => {
+            console.log('File added: ' + file);
+            this.sendContentUpdated(file);
+        });
+        eyes.on('error', (error: Error) => {
+            console.log(`Error on watching: ${error.message}`);
+        });
+
+        return eyes;
+    }
+
+    setWatchingPath(new_path: string) {
+        if (new_path === this.watching_path || new_path === '') {
+            return;
+        }
+
+        if (this.watching_path === undefined) {
+            console.log(`Start watching path: ${new_path}`);
+        } else {
+            console.log(`Change watching path: ${this.watching_path} -> ${new_path}`);
+        }
+
+        this.watching_path = new_path;
+
+        if (this.eyes) {
+            this.eyes.close();
+        }
+
+        const stats = this.statWatchingPath();
+        if (stats === null) {
+            return;
+        }
+
+        const path_is_file = stats.isFile();
+        if (path_is_file) {
+            this.sendContentUpdated(this.watching_path);
+        }
+
+        assert(path_is_file || stats.isDirectory());
+
+        const ext_pattern = Object.
+                keys(this.config.file_ext).
+                map((k: string) => this.config.file_ext[k].join('|')).
+                join('|');
+
+        const watched = path_is_file ?
+                this.watching_path :
+                path.join(this.watching_path, '**', `*.(${ext_pattern})`);
+
+        this.eyes = this.openEyes(watched);
+    }
+
+    sendContentUpdated(file: string) {
         const ext = path.extname(file).substr(1);
         if (ext === '') {
             return;
         }
 
-        const kind = (() => {
-            for (const k in this.config.file_ext) {
-                if (this.config.file_ext[k].indexOf(ext) !== -1) {
-                    return k;
-                }
-            }
-            return '';
-        })();
-
+        const kind = this.getDocumentKindFor(ext);
         switch (kind) {
             case 'markdown': {
                 app.addRecentDocument(file);
-                this.render(kind, file);
-                this.linter.lint(file, this.renderLintResult);
+                this.sender.send('shiba:notify-content-updated', kind, file);
+                this.linter.lint(file);
                 break;
             }
             case 'html': {
                 app.addRecentDocument(file);
-                this.render(kind, file);
+                this.sender.send('shiba:notify-content-updated', kind, file);
                 break;
             }
             default: {
@@ -57,60 +138,8 @@ class Watcher {
         }
     }
 
-    changeWatchingDir(new_path: string) {
-        if (new_path === this.path) {
-            return;
-        }
-
-        console.log(`Change watching path ${this.path} -> ${new_path}`);
-
-        this.path = new_path;
-        this.startWatching();
-    }
-
-    getLintRuleURL() {
-        return this.linter.lint_url;
-    }
-
-    private startWatching() {
-        if (this.file_watcher) {
-            this.file_watcher.close();
-        }
-
-        if (!fs.existsSync(this.path)) {
-            return;
-        }
-
-        const is_file = fs.statSync(this.path).isFile();
-        if (is_file) {
-            this.sendUpdate(this.path);
-        }
-
-        const ext_pattern = Object.keys(this.config.file_ext)
-                                .map((k: string) => this.config.file_ext[k].join('|'))
-                                .join('|');
-
-        const watched = is_file ? this.path : path.join(this.path, '**', `*.(${ext_pattern})`);
-        this.file_watcher = chokidar.watch(
-            watched, {
-                ignoreInitial: true,
-                persistent: true,
-                ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
-            }
-        );
-
-        this.file_watcher.on('change', (file: string) => {
-            console.log('File changed: ' + file);
-            this.sendUpdate(file);
-        });
-        this.file_watcher.on('add', (file: string) => {
-            console.log('File added: ' + file);
-            this.sendUpdate(file);
-        });
-        this.file_watcher.on('error', (error: Error) => {
-            console.log(`Error on watching: ${error}`);
-        });
+    hasStarted() {
+        return this.sender !== undefined;
     }
 }
 
-export = Watcher;

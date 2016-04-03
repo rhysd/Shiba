@@ -220,8 +220,8 @@ Polymer({
         },
 
         openMarkdownDoc: Object,
-
         fontSize: String,
+        onDocumentUpdated: Object,
     },
 
     ready: function() {
@@ -243,6 +243,9 @@ Polymer({
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
+        if (this.onDocumentUpdated) {
+            this.onDocumentUpdated();
+        }
     },
 
     scrollToHeading: function(scroller: Scroller, h: Heading) {

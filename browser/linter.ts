@@ -14,12 +14,12 @@ interface RemarkFile {
 }
 
 export default class Linter {
-    lint: (filename: string, callback: (msgs: LinterMessage[]) => void) => void;
+    lint: (filename: string) => void;
     lint_url: string;
     remark: any;
     options: Object;
 
-    constructor(name: string, options: Object) {
+    constructor(public sender: Electron.WebContents, name: string, options: Object) {
         this.options = options || {};
 
         if (name === 'markdownlint') {
@@ -29,16 +29,20 @@ export default class Linter {
             this.lint = this.remark_lint;
             this.lint_url = 'https://github.com/wooorm/remark-lint/blob/master/doc/rules.md';
         } else if (name === 'none') {
-            this.lint = function(f, p){ /* do nothing */ };
+            this.lint = function(f){ /* do nothing */ };
             this.lint_url = '';
         } else {
             console.log("linter.js: Invalid linter name '" + name + "'");
-            this.lint = function(f, p){ /* do nothing */ };
+            this.lint = function(f){ /* do nothing */ };
             this.lint_url = '';
         }
     }
 
-    markdownlint(filename: string, callback: (msgs: LinterMessage[]) => void) {
+    sendResult(messages: LinterMessage[]) {
+        this.sender.send('shiba:notify-linter-result', messages);
+    }
+
+    markdownlint(filename: string) {
         readFile(filename, 'utf8', (read_err: Error, content: string) => {
             if (read_err) {
                 console.error(read_err);
@@ -52,7 +56,7 @@ export default class Linter {
                 config: this.options,
             };
 
-            markdownlint(opts, function(err: Error, result: any) {
+            markdownlint(opts, (err: Error, result: any) => {
                 if (err) {
                     return;
                 }
@@ -71,12 +75,12 @@ export default class Linter {
                                         body: msg.slice(m.index),
                                     };
                                 });
-                callback(messages);
+                this.sendResult(messages);
             });
         });
     }
 
-    remark_lint(filename: string, callback: (msgs: LinterMessage[]) => void) {
+    remark_lint(filename: string) {
         readFile(filename, 'utf8', (read_err: Error, content: string) => {
             if (read_err) {
                 console.error(read_err);
@@ -85,13 +89,13 @@ export default class Linter {
 
             this.remark = this.remark || remark().use(remarklint, this.options);
 
-            this.remark.process(content, function(err: NodeJS.ErrnoException, file: RemarkFile) {
+            this.remark.process(content, (err: NodeJS.ErrnoException, file: RemarkFile) => {
                 if (err) {
                     console.log('Lint failed: ', err.stack);
                     return;
                 }
 
-                callback(
+                this.sendResult(
                     file.messages.map(function(m): LinterMessage {
                         // Note:
                         // Should I include m.ruleId to check the detail of message?

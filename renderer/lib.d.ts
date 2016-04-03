@@ -40,6 +40,7 @@ interface MarkdownPreview extends HTMLElement {
     currentOutline: Heading[];
     isGithubStyle: boolean;
     openMarkdownDoc: (path: string, modifier: boolean) => void;
+    onDocumentUpdated: () => void;
     scrollToHeading(e: Scroller, h: Heading): void;
 }
 
@@ -49,10 +50,12 @@ interface LintMessage {
 }
 
 interface LintResultArea extends HTMLElement {
-    content: LintMessage[];
+    messages: LintMessage[];
     lint_url: string;
     voice_src: string;
     enable_inset: boolean;
+    already_previewed: boolean;
+    showLintResult(): void;
 }
 
 interface LintMessageElement extends HTMLElement {
