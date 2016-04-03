@@ -62,7 +62,12 @@
     "no-trailing-whitespace": true,
     "no-unreachable": true,
     "no-unused-expression": true,
-    "no-unused-variable": true,
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^(_|unused)$"
+      }
+    ],
     "no-use-before-declare": true,
     "no-var-keyword": true,
     "no-var-requires": false,
