@@ -90,7 +90,6 @@ function renderMarkdownPreview(file: string) {
     const exts = config.file_ext.markdown;
     const font_size = config.markdown.font_size;
     const isGitHubStyle = config.markdown.css_path.endsWith('/github-markdown.css');
-
     fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
         if (err) {
             console.error(err);
@@ -114,10 +113,17 @@ function renderMarkdownPreview(file: string) {
 
         markdown_preview.exts = exts;
         markdown_preview.openMarkdownDoc = openMarkdownDoc;
+        markdown_preview.onDocumentUpdated = () => getLintArea().showLintResult();
         setChildToViewerWrapper(markdown_preview);
 
         markdown_preview.document = markdown;
     });
+
+    // Note:
+    // This is a workaround to show linter result lazily.
+    const lint = getLintArea();
+    lint.already_previewed = false;
+    lint.messages = undefined;
 }
 
 function renderHtmlPreview(file: string) {
@@ -242,7 +248,7 @@ function prepareMarkdownStyle(markdown_config: {
     });
 
     ipc.on('shiba:notify-linter-result', (_: Event, messages: LintMessage[]) => {
-        lint.content = messages;
+        lint.messages = messages;
         const button = document.getElementById('lint-button');
         if (messages.length === 0) {
             button.style.color = '#d99e5f';
@@ -300,11 +306,11 @@ function prepareMarkdownStyle(markdown_config: {
     document.body.addEventListener('dragover', cancel_event);
     document.body.addEventListener('drop', event => {
         event.preventDefault();
-        const file: any = event.dataTransfer.files[0];
-        if (file === undefined) {
+        const files = event.dataTransfer.files;
+        if (files.length === 0) {
             return;
         }
-        const p: string = file.path;
+        const p: string = (files[0] as any).path;
         if (!p) {
             console.log('Failed to get the path of dropped file');
             return;
