@@ -1,11 +1,12 @@
 /// <reference path="./keyboard.ts" />
 /// <reference path="lib.d.ts" />
+/// <reference path="../browser/config.d.ts" />
 
 import * as path from 'path';
 import * as fs from 'fs';
 import {homedir} from 'os';
 import {remote, ipcRenderer as ipc} from 'electron';
-const config = remote.require('./config').load();
+const config = remote.getGlobal('config') as Config;
 const home_dir = config.hide_title_bar ?  '' : homedir();
 
 let watching_path = remote.require('./initial_path.js')();
@@ -14,7 +15,7 @@ let onSearchButtonPushed = function(){ /* do nothing */ };
 let onTOCButtonPushed = function(){ /* do nothing */ };
 
 function getMainDrawerPanel() {
-    return <MainDrawerPanel>document.getElementById('main-drawer');
+    return document.getElementById('main-drawer') as MainDrawerPanel;
 }
 
 /* tslint:disable no-unused-variable*/

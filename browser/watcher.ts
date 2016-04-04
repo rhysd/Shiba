@@ -1,9 +1,10 @@
+/// <reference path="lib.d.ts" />
+
 import {app, ipcMain as ipc} from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as assertTruthy from 'assert';
 import * as chokidar from 'chokidar';
-import * as config from './config';
 import Linter from './linter';
 
 export default class WatchDog {
@@ -12,7 +13,7 @@ export default class WatchDog {
     public eyes: fs.FSWatcher;
     public linter: Linter;
 
-    constructor(public config: config.Config) {
+    constructor(public config: Config) {
     }
 
     wakeup(sender: Electron.WebContents) {

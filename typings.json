@@ -4,6 +4,7 @@
   "ambientDependencies": {
     "chokidar": "github:DefinitelyTyped/DefinitelyTyped/chokidar/chokidar.d.ts#ae81e340a9e897167cfef3122a5a3aed04293814",
     "empower": "github:DefinitelyTyped/DefinitelyTyped/empower/empower.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
+    "es6-promise": "github:DefinitelyTyped/DefinitelyTyped/es6-promise/es6-promise.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
     "github-electron": "github:DefinitelyTyped/DefinitelyTyped/github-electron/github-electron.d.ts#f16c4922a7dd6d359a197e4cc5103463ba68cf9e",
     "he": "github:DefinitelyTyped/DefinitelyTyped/he/he.d.ts#56295f5058cac7ae458540423c50ac2dcf9fc711",
     "highlightjs": "github:DefinitelyTyped/DefinitelyTyped/highlightjs/highlightjs.d.ts#2da55a09042047ef9ecd8cafd5c1ed97d216ba29",

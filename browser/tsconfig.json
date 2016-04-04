@@ -9,6 +9,7 @@
     "sourceMap": true
   },
   "files": [
+    "config.d.ts",
     "config.ts",
     "initial_path.ts",
     "lib.d.ts",
