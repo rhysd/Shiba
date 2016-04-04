@@ -94,7 +94,7 @@ context('WatchDog', () => {
                 done();
             });
 
-            touch(doc1);
+            setTimeout(() => touch(doc1), 100);
         });
 
         it('watches directory path', done => {
@@ -106,7 +106,7 @@ context('WatchDog', () => {
                 done();
             });
 
-            touch(doc1);
+            setTimeout(() => touch(doc1), 100);
         });
 
         it('changes watching path', done => {
