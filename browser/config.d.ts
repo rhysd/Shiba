@@ -5,8 +5,8 @@ interface Config {
         html: string[];
         [n: string]: string[];
     };
-    width: number | string;
-    height: number | string;
+    width: number | 'max';
+    height: number | 'max';
     shortcuts: {[keyseq: string]: string};
     voice: {
         enabled: boolean;

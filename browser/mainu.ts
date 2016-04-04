@@ -1,5 +1,5 @@
 import * as path from 'path';
-import {app, BrowserWindow, shell} from 'electron';
+import {app, BrowserWindow, shell, screen} from 'electron';
 import * as menu from './menu';
 import loadConfig from './config';
 import WatchDog from './watcher';
@@ -32,14 +32,14 @@ app.on('ready', function() {
         const [config, dog] = loaded;
         global.config = config;
 
-        const display_size = require('screen').getPrimaryDisplay().workAreaSize;
+        const display_size = screen.getPrimaryDisplay().workAreaSize;
 
-        function getConfigLength(key: string, default_len: number): number {
+        function getConfigLength(key: 'width' | 'height', default_len: number): number {
             const len = config[key];
             switch (typeof len) {
                 case 'string': {
                     if (len === 'max') {
-                        return display_size[key];
+                        return (display_size as any)[key]; // XXX
                     }
                     return default_len;
                 }
