@@ -406,3 +406,4 @@ function prepareMarkdownStyle(markdown_config: {
         document.head.appendChild(link);
     });
 })();
+
