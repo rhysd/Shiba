@@ -36,10 +36,11 @@
     "marked": "^0.3.5",
     "mousetrap": "^1.5.3",
     "remark": "^4.2.0",
-    "remark-lint": "^3.0.0"
+    "remark-lint": "rhysd/remark-lint#support-electron"
   },
   "devDependencies": {
     "asar": "^0.10.0",
+    "electron-packager": "^6.0.0",
     "electron-rebuild": "^1.1.3",
     "intelli-espower-loader": "^1.0.1",
     "mocha": "^2.4.5",
