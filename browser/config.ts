@@ -5,6 +5,55 @@ import {join} from 'path';
 import {readFileSync} from 'fs';
 import {app} from 'electron';
 
+export const default_config = {
+    linter: 'remark-lint',
+    file_ext: {
+        markdown: ['md', 'markdown', 'mkd'],
+        html: ['html'],
+        // TODO: Add slim?
+    },
+    width: 920,
+    height: 800,
+    ignore_path_pattern: '[\\\\/]\\.',
+    voice: {
+        enabled: false,
+        source: '../voices/bow.mp3',
+    },
+    drawer: {
+        responsive: true,
+    },
+    menu: {
+        visible: true,
+    },
+    hide_title_bar: false,
+    markdown: {
+        font_size: '',
+        css_path: '../../bower_components/github-markdown-css/github-markdown.css',
+        code_theme: 'github',
+    },
+    shortcuts: {
+        'j':        'PageDown',
+        'k':        'PageUp',
+        'down':     'PageDown',
+        'up':       'PageUp',
+        'pagedown': 'PageDown',
+        'pageup':   'PageUp',
+        'h':        'PageLeft',
+        'l':        'PageRight',
+        'left':     'PageLeft',
+        'right':    'PageRight',
+        'i':        'PageTop',
+        'm':        'PageBottom',
+        'home':     'PageTop',
+        'end':      'PageBottom',
+        'ctrl+p':   'ChangePath',
+        'ctrl+l':   'Lint',
+        'r':        'Reload',
+        's':        'Search',
+        'o':        'Outline',
+    },
+} as Config;
+
 function mergeConfig(c1: Config, c2: Config) {
     for (const k in c2) {
         const v2 = c2[k];
@@ -29,55 +78,6 @@ export default function loadConfig(): Promise<Config> {
     return new Promise<Config>((resolve, reject) => {
         const config_dir = app.getPath('userData');
         const file = join(config_dir, 'config.yml');
-        const default_config = {
-            linter: 'remark-lint',
-            file_ext: {
-                markdown: ['md', 'markdown', 'mkd'],
-                html: ['html'],
-                // TODO: Add slim?
-            },
-            width: 920,
-            height: 800,
-            ignore_path_pattern: '[\\\\/]\\.',
-            voice: {
-                enabled: false,
-                source: '../voices/bow.mp3',
-            },
-            drawer: {
-                responsive: true,
-            },
-            menu: {
-                visible: true,
-            },
-            hide_title_bar: false,
-            markdown: {
-                font_size: '',
-                css_path: '../../bower_components/github-markdown-css/github-markdown.css',
-                code_theme: 'github',
-            },
-            shortcuts: {
-                'j':        'PageDown',
-                'k':        'PageUp',
-                'down':     'PageDown',
-                'up':       'PageUp',
-                'pagedown': 'PageDown',
-                'pageup':   'PageUp',
-                'h':        'PageLeft',
-                'l':        'PageRight',
-                'left':     'PageLeft',
-                'right':    'PageRight',
-                'i':        'PageTop',
-                'm':        'PageBottom',
-                'home':     'PageTop',
-                'end':      'PageBottom',
-                'ctrl+p':   'ChangePath',
-                'ctrl+l':   'Lint',
-                'r':        'Reload',
-                's':        'Search',
-                'o':        'Outline',
-            },
-        } as Config;
-
         try {
             this.user_config = loadYAML(readFileSync(file, {encoding: 'utf8'})) as Config;
             mergeConfig(this.user_config, default_config);
