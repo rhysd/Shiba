@@ -24,6 +24,9 @@ marked.setOptions({
             if (!loaded_mermaid) {
                 const script = document.createElement('script');
                 script.src = 'file://' + remote.app.getAppPath() + '/bower_components/mermaid/dist/mermaid.min.js';
+                script.onload = () => {
+                    mermaid.init(undefined, 'div.mermaid');
+                };
                 document.head.appendChild(script);
 
                 loaded_mermaid = true;
@@ -243,6 +246,10 @@ Polymer({
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
+        const mermaid_blocks = document.querySelectorAll('div.mermaid');
+        if (mermaid_blocks.length > 0 && typeof(mermaid) !== 'undefined') {
+            mermaid.init(undefined, mermaid_blocks);
+        }
         if (this.onDocumentUpdated) {
             this.onDocumentUpdated();
         }
