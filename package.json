@@ -36,7 +36,7 @@
     "marked": "^0.3.5",
     "mousetrap": "^1.5.3",
     "remark": "^4.2.0",
-    "remark-lint": "rhysd/remark-lint#support-electron"
+    "remark-lint": "^3.2.0"
   },
   "devDependencies": {
     "asar": "^0.10.0",

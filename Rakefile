@@ -22,16 +22,6 @@ def ensure_cmd(cmd)
   end
 end
 
-def make_archive_dir
-  mkdir_p "archive"
-  %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
-  cd 'archive' do
-    sh 'npm install --production'
-    sh 'bower install --production'
-    sh 'npm uninstall electron-prebuilt'
-  end
-end
-
 file "node_modules" do
   ensure_cmd 'npm'
   sh 'npm install'
@@ -81,19 +71,17 @@ task :npm_publish => [:build] do
   rm_rf 'npm-publish'
 end
 
-task :asar => [:build] do
-  raise "'asar' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/asar"
-
-  begin
-    make_archive_dir
-    sh "#{BIN_DIR}/asar pack archive app.asar"
-  ensure
-    rm_rf 'archive'
+task :prepare_release => [:build] do
+  mkdir_p "archive"
+  %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
+  cd 'archive' do
+    sh 'npm install --production'
+    sh 'bower install --production'
+    sh 'npm uninstall electron-prebuilt'
   end
 end
 
-task :release => [:build] do
-  make_archive_dir
+task :package do
   mkdir_p 'packages'
   def release(options)
     cd 'archive' do
@@ -114,6 +102,8 @@ task :release => [:build] do
   release "--platform=linux --arch=ia32 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
   release "--platform=linux --arch=x64 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
 end
+
+task :release => [:prepare_release, :package]
 
 task :build_test do
   ensure_cmd 'tsc'
