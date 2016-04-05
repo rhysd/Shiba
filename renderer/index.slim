@@ -147,9 +147,11 @@ html
             span
               paper-icon-button#reload-button.menu-button icon="refresh" alt="reload"
               paper-tooltip for="reload-button" offset="0" Reload
+            span
+              paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"
+              paper-tooltip for="print-button" offset="0" Print
           div.preview#viewer-wrapper
             paw-filechooser.file-chooser
-              paper-icon-button#print-button.menu-button icon="print" alt="Print" onclick="onPrintButtonPushed()"
       paper-header-panel[drawer]
         lint-panel#lint-area.lint-area
     builtin-search#builtin-page-searcher
