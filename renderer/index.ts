@@ -8,6 +8,7 @@ import {homedir} from 'os';
 import {remote, ipcRenderer as ipc} from 'electron';
 const config = remote.getGlobal('config') as Config;
 const home_dir = config.hide_title_bar ?  '' : homedir();
+const on_darwin = process.platform === 'darwin';
 
 let watching_path = remote.require('./initial_path.js')();
 let onPathButtonPushed = function(){ /* do nothing */ };
@@ -214,11 +215,20 @@ function prepareMarkdownStyle(markdown_config: {
                 extensions: config.file_ext.html,
             },
         ];
+        const properties = ['openFile'];
+        if (on_darwin) {
+            // Note:
+            // On Windows and Linux an open dialog can not be both a file selector
+            // and a directory selector, so if you set properties to
+            // ['openFile', 'openDirectory'] on these platforms, a directory
+            // selector will be shown.
+            properties.push('openDirectory');
+        }
         const paths = remote.dialog.showOpenDialog({
             title: 'Choose file or directory to watch',
             defaultPath: getDialogDefaultPath(),
             filters,
-            properties: ['openFile', 'openDirectory'],
+            properties,
         });
         if (!paths || paths.length === 0) {
             return '';
@@ -343,7 +353,7 @@ function prepareMarkdownStyle(markdown_config: {
     const menu = document.getElementById('menu');
     if (!config.menu.visible) {
         menu.style.display = 'none';
-    } else if (config.hide_title_bar && process.platform === 'darwin') {
+    } else if (config.hide_title_bar && on_darwin) {
         const spacer = document.getElementById('inset-spacer');
         spacer.style.height = '25px';
         // Note:
