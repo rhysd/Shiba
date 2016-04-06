@@ -60,6 +60,7 @@ app.on('ready', function() {
                 icon: icon_path,
                 width: getConfigLength('width'),
                 height: getConfigLength('height'),
+                autoHideMenuBar: config.hide_menu_bar,
             };
         if (config.hide_title_bar) {
             options.titleBarStyle = 'hidden-inset';

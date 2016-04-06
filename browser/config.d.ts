@@ -21,6 +21,7 @@ interface Config {
     };
     ignore_path_pattern: string;
     hide_title_bar: boolean;
+    hide_menu_bar: boolean;
     markdown: {
         font_size: string;
         css_path: string;

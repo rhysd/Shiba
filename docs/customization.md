@@ -36,6 +36,7 @@ All keys for the YAML configuration file is below:
 | `menu.visible`        | Left menu visibility       | Left menu is visible or not (boolean value)     | true                           |
 | `ignore_path_pattern` | Regex to ignore  path      | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles)        |
 | `hide_title_bar`      | Hide a title bar (OS X)    | hide a tool bar if true                         | false                          |
+| `hide_menu_bar`       | Hide a menu bar  (Windows) | hide a menu bar (will be shown on alt key)      | true                           |
 | `markdown.font_size`  | Size of font in preview    | Specify font size by string (e.g. "10px")       | ''                             |
 | `markdown.css_path`   | Path to css file to load   | Specify CSS file to style a markdown preview    | '/path/to/github-markdown.css' |
 | `markdown.code_theme` | Color theme for code block | Specify highlight.js style theme for code block | 'github'                       |

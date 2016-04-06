@@ -26,6 +26,7 @@ export const default_config = {
         visible: true,
     },
     hide_title_bar: false,
+    hide_menu_bar: true,
     markdown: {
         font_size: '',
         css_path: '../../bower_components/github-markdown-css/github-markdown.css',
