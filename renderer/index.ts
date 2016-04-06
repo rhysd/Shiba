@@ -190,7 +190,20 @@ function prepareMarkdownStyle(markdown_config: {
     if (code_theme !== 'github' && css_path.endsWith('/github-markdown.css')) {
         console.warn('github-markdown.css overrides background color of code block.');
     }
+}
 
+function reloadPreview() {
+    if (document.getElementById('current-markdown-preview') !== null) {
+        renderMarkdownPreview(watching_path);
+    } else if (document.getElementById('current-html-preview') !== null) {
+        renderHtmlPreview(watching_path);
+    } else {
+        // Did not preview yet
+        return;
+    }
+
+    // Finally start animation
+    document.getElementById('reload-button').classList.add('rotate');
 }
 
 (function(){
@@ -338,7 +351,7 @@ function prepareMarkdownStyle(markdown_config: {
     };
 
     const reload_button = document.getElementById('reload-button');
-    reload_button.onclick = () => renderMarkdownPreview(watching_path);
+    reload_button.onclick = () => reloadPreview();
     reload_button.classList.add('animated');
     const reload_anime_listener = () => {
         reload_button.classList.remove('rotate');
@@ -387,7 +400,7 @@ function prepareMarkdownStyle(markdown_config: {
         this.bw = this.bw || remote.BrowserWindow;
         this.bw.getFocusedWindow().openDevTools({detach: true});
     });
-    receiver.on('Reload', () => renderMarkdownPreview(watching_path));
+    receiver.on('Reload', () => reloadPreview());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
     receiver.on('Search', () => onSearchButtonPushed());
     receiver.on('Outline', () => onTOCButtonPushed());
@@ -401,7 +414,7 @@ function prepareMarkdownStyle(markdown_config: {
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
     ipc.on('shiba:outline', () => onTOCButtonPushed());
     ipc.on('shiba:search', () => onSearchButtonPushed());
-    ipc.on('shiba:reload', () => renderMarkdownPreview(watching_path));
+    ipc.on('shiba:reload', () => reloadPreview());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
     fs.exists(user_css_path, (exists: boolean) => {
