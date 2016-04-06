@@ -3,7 +3,12 @@ Customization
 
 ## Customize Shiba with YAML
 
-You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is `~/Library/Application\ Support/Shiba` for OS X, `~/.config/Shiba` for Linux, `%APPDATA%\Shiba` for Windows.
+You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is
+
+- `~/Library/Application\ Support/Shiba` for OS X
+- `~/.config/Shiba` for Linux
+- `%APPDATA%\Shiba` for Windows.
+
 Below is an example for `config.yml`.
 
 ```YAML
@@ -20,7 +25,7 @@ markdown:
     font_size: 10px
 ```
 
-All keys for the YAML configuration file is below:
+All keys for the YAML configuration file is below (`.` means a nested object):
 
 | Key                   | Description                | Value                                           | Default                        |
 | --------------------- | -------------------------- | ----------------------------------------------- | ------------------------------ |
@@ -34,19 +39,19 @@ All keys for the YAML configuration file is below:
 | `voice.source`        | Path to voice source       | Path string                                     | "../voices/bow.mp3"            |
 | `drawer.responsive`   | Make drawer responsive     | Enable responsive drawer with boolean value     | true                           |
 | `menu.visible`        | Left menu visibility       | Left menu is visible or not (boolean value)     | true                           |
-| `ignore_path_pattern` | Regex to ignore  path      | Regex string which path should be ignored       | '[\\\\/]\\.' (dotfiles)        |
+| `ignore_path_pattern` | Regex to ignore  path      | Regex string which path should be ignored       | "[\\\\/]\\." (dotfiles)        |
 | `hide_title_bar`      | Hide a title bar (OS X)    | hide a tool bar if true                         | false                          |
 | `hide_menu_bar`       | Hide a menu bar  (Windows) | hide a menu bar (will be shown on alt key)      | true                           |
-| `markdown.font_size`  | Size of font in preview    | Specify font size by string (e.g. "10px")       | ''                             |
-| `markdown.css_path`   | Path to css file to load   | Specify CSS file to style a markdown preview    | '/path/to/github-markdown.css' |
-| `markdown.code_theme` | Color theme for code block | Specify highlight.js style theme for code block | 'github'                       |
+| `markdown.font_size`  | Size of font in preview    | Specify font size by string (e.g. "10px")       | ""                             |
+| `markdown.css_path`   | Path to css file to load   | Specify CSS file to style a markdown preview    | "/path/to/github-markdown.css" |
+| `markdown.code_theme` | Color theme for code block | Specify highlight.js style theme for code block | "github"                       |
 
 
 ## Customize Keyboard Shortcuts
 
 You can customize the keyboard shortcuts as the value of `shortcuts` key in configuration.  You can specify a shortcut and corresponding action as key-value configuration.
-Below is a vim-like keymaps customization example.
 Shiba uses [Mousetrap](https://craig.is/killing/mice). Please see the Mousetrap's document to know how to write the key sequence.
+Below is a vim-like keymaps customization example.
 
 ```yaml
 shortcuts:
@@ -58,7 +63,18 @@ shortcuts:
     "shift+z shift+z": "QuitApp"
 ```
 
-If an action is empty string `""` or `null`, the shortcut is disabled.
+If an action is empty string `""` or `null`, the shortcut will be disabled.
+
+
+## Remove Title Bar
+
+![hidden title bar](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/hide-title-bar.png)
+
+On OS X, you can hide the title bar and use full of entire window to show preview.  To enable this, please write config as below in `config.yml`.
+
+```yaml
+hide_title_bar: true
+```
 
 
 ## CSS and Code Highlight
@@ -79,7 +95,7 @@ markdown:
 
 ## File Extensions
 
-You can specify file extensions to watch with key `file_ext` as above table.
+You can specify file extensions to watch with key `file_ext` as described in above table.
 The extensions are array of string for each file types.  Below is default configuration.
 
 ```yaml
@@ -92,17 +108,6 @@ file_ext:
         - "html"
 ```
 
-## User CSS
-
-You can put `user.css` in configuration directory.  It is loaded at opening main window and enables to control the style of Shiba.  Below is an example to remove a reload button from menu.
-
-```css
-#reload-button {
-  display: none;
-}
-```
-
-Note that Shiba uses web components.  Some components' style can not be modified directly because Stylesheets are isolated in web components.  `Devtools` option may be useful to check the attributes in HTML document.
 
 ## Voice Notification
 

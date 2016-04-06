@@ -29,7 +29,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
   - etc...
 - [x] [Search text in preview](docs/usage.md#search-text)
 - [x] [Outline window](docs/usage.md#outline-window)
-- [x] Print preview (to paper / to PDF file)
+- [x] Print preview (to a paper / to a PDF file)
 - [x] HTML preview
 - [x] Dog-respected :dog2:
 
@@ -47,15 +47,15 @@ All documents are in [docs](docs/) directory.  And I wrote [a Japanese blog post
 
 ## Overview
 
-![Shiba anime](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/shiba-screenshot.gif)
+![main screenshot](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/shiba-screenshot.gif)
 
-1. At start up, Shiba is watching the current working directory (watching directory is shown in title of window).
-2. When you edit the markdown file in current working directory, Shiba finds the update, renders the file in window and set the result of lint.
-3. You can see the result of lint by pushing the '!' button in left above of window.  When the button is red, it means that linter reported some errors.
-4. You can change the watching directory/file using 'directory' button in left above of window or dropping file to window.  Watching path is shown in title of window.
+1. At start up, Shiba is watching the current working directory (the path is in title of window).
+2. When you edit the markdown file in current working directory, Shiba finds the update, renders the file in window and sets the result of lint.
+3. You can see the result of lint by clicking the '!' button in menu.  When the button is red, it means that linter reported some errors.
+4. You can change the watching directory/file using 'directory' button in menu or dropping file to window.
 5. You can quit app by closing the window.
 
-Please see [usage document](docs/usage.md) for more detail.
+This is the simplest use case.  Please see [usage document](docs/usage.md) for more detail.
 
 
 ## Special Thanks

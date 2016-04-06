@@ -11,9 +11,10 @@ If you [install Shiba with npm](installation.md), `shiba` command is available t
 
 Shiba opens the window and starts to watch and preview the current buffer.
 
+
 ## Use from Emacs
 
-You can open shiba from emacs by adding following code to your .emacs:
+You can open Shiba from Emacs by adding following code to your `.emacs`:
 
 ```lisp
 (defun open-with-shiba ()
@@ -23,11 +24,12 @@ You can open shiba from emacs by adding following code to your .emacs:
 (define-key markdown-mode-map (kbd "C-c C-c") 'open-with-shiba)
 ```
 
-Simply type `C-c C-c` and you can preview your markdown file with shiba.
+Simply type `C-c C-c` and you can preview your markdown file with Shiba.
 
-## Shiba consumes CPU power
 
-In directories which contain so many files and directories, they cost CPU power because of so many targets to be watched.  Please consider using [`ignore_path_pattern`](customization.md) to ignore such directories.
+## Shiba may consume CPU power
+
+In directories which contain so many files and directories, they cost CPU power because of so many targets to be watched.  Please consider using [`ignore_path_pattern`](customization.md) to ignore such directories.  For example, if you are developing something with Node.js, `node_modules` directory may contain so many files and you might ignore it to save CPU power.
 
 -----------------
 [installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)

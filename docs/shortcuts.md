@@ -27,12 +27,12 @@ You can customize all key assigns.  Please see [customization document](customiz
 
 ## Local Shortcuts
 
-### Outline window shortcuts
+### In outline window
 
-In [outliine window](usage.md), you can use below shortcuts instead of global ones.
+In [outliine window](usage.md#outline-window), you can use below shortcuts instead of global ones.
 
 | Shortcut | Description                        |
-| ---------| ---------------------------------- |
+| -------- | ---------------------------------- |
 | `j`      | Move focus to next section.        |
 | `k`      | Move focus to previous section.    |
 | `ctrl+c` | Copy the outline to your clipboard |
@@ -40,9 +40,9 @@ In [outliine window](usage.md), you can use below shortcuts instead of global on
 | `escape` | Close outline window.              |
 
 
-### Search box shortcuts
+### In search box
 
-In [search box](usage.md), you can use below shortcuts instead of global ones.
+In [search box](usage.md#search-text), you can use below shortcuts instead of global ones.
 
 | Shortcut  | Description                            |
 | --------- | -------------------------------------- |
