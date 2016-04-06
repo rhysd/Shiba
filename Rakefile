@@ -1,3 +1,4 @@
+require 'json'
 require 'fileutils'
 include FileUtils
 
@@ -85,7 +86,7 @@ task :package do
   mkdir_p 'packages'
   def release(options)
     cd 'archive' do
-      sh "#{BIN_DIR}/electron-packager ./ Shiba #{options}"
+      sh "#{BIN_DIR}/electron-packager ./ Shiba #{options.join ' '}"
       Dir['Shiba-*'].each do |dst|
         cp_r '../README.md', dst
         cp_r '../docs', dst
@@ -95,12 +96,56 @@ task :package do
       end
     end
   end
-  ver = ENV['ELECTRON']
-  release "--platform=darwin --arch=x64 --version=#{ver} --asar --icon=../resource/image/icon/shibainu.icns"
-  release "--platform=win32 --arch=ia32 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
-  release "--platform=win32 --arch=x64 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
-  release "--platform=linux --arch=ia32 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
-  release "--platform=linux --arch=x64 --version=#{ver} --asar --icon=./resource/image/icon/shibainu.ico"
+
+  electron_json = JSON.load(File.open('node_modules/electron-prebuilt/package.json'))
+  electron_ver = electron_json['version']
+  app_json = JSON.load(File.open('package.json'))
+  ver = app_json['version']
+  release %W(
+    --platform=darwin
+    --arch=x64
+    --version=#{electron_ver}
+    --asar
+    --icon=../resource/image/icon/shibainu.icns
+    --app-version='#{ver}'
+    --build-version='#{ver}'
+  )
+  release %W(
+    --platform=win32
+    --arch=ia32
+    --version=#{electron_ver}
+    --asar
+    --icon=../resource/image/icon/shibainu.ico
+    --app-version='#{ver}'
+    --build-version='#{ver}'
+  )
+  release %W(
+    --platform=win32
+    --arch=x64
+    --version=#{electron_ver}
+    --asar
+    --icon=../resource/image/icon/shibainu.ico
+    --app-version='#{ver}'
+    --build-version='#{ver}'
+  )
+  release %W(
+    --platform=linux
+    --arch=ia32
+    --version=#{electron_ver}
+    --asar
+    --icon=../resource/image/icon/shibainu.ico
+    --app-version='#{ver}'
+    --build-version='#{ver}'
+  )
+  release %W(
+    --platform=linux
+    --arch=x64
+    --version=#{electron_ver}
+    --asar
+    --icon=../resource/image/icon/shibainu.ico
+    --app-version='#{ver}'
+    --build-version='#{ver}'
+  )
 end
 
 task :release => [:prepare_release, :package]
