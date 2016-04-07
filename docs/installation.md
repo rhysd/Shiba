@@ -23,6 +23,12 @@ Please simply execute `open -a Shiba` to execute Shiba from command line.  Note 
 
 If you want to put Shiba.app in Dock and start with double click, put `Shiba.app` to your Application directory (`~/Applications` or `/Applications`).
 
+And you can also use [Homebrew Cask](https://caskroom.github.io/) to install Shiba.
+
+```
+$ brew cask install shiba
+```
+
 ### Windows
 
 You can find `shiba.exe` in the directory.  Please simply use it by double click or from command prompt.  You need to install nothing.
