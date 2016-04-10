@@ -90,3 +90,8 @@ MIT License.
     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
     THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
+In packaged app, Electron part is licensed with below notice:
+
+    Copyright (c) 2014 GitHub Inc.
+
