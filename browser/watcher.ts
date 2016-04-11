@@ -18,7 +18,7 @@ export default class WatchDog {
 
     wakeup(sender: Electron.WebContents) {
         this.sender = sender;
-        ipc.on('shiba:notify-path', (_: Electron.IPCMainEvent, new_path: string) => {
+        ipc.on('shiba:notify-path', (_: Electron.IpcMainEvent, new_path: string) => {
             this.setWatchingPath(new_path);
         });
         ipc.on('shiba:request-path', () => {

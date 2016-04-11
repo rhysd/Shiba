@@ -32,6 +32,7 @@ export const default_config = {
         css_path: '../../bower_components/github-markdown-css/github-markdown.css',
         code_theme: 'github',
     },
+    restore_window_state: true,
     shortcuts: {
         'j':        'PageDown',
         'k':        'PageUp',

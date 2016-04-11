@@ -228,7 +228,7 @@ function reloadPreview() {
                 extensions: config.file_ext.html,
             },
         ];
-        const properties = ['openFile'];
+        const properties = ['openFile'] as ('openFile' | 'openDirectory' | 'multiSelections' | 'createDirectory')[];
         if (on_darwin) {
             // Note:
             // On Windows and Linux an open dialog can not be both a file selector
@@ -249,7 +249,7 @@ function reloadPreview() {
         return paths[0];
     }
 
-    ipc.on('shiba:notify-content-updated', (_: Event, kind: string, file: string) => {
+    ipc.on('shiba:notify-content-updated', (_: Electron.IpcRendererEvent, kind: string, file: string) => {
         const reload_button = document.getElementById('reload-button');
         reload_button.classList.add('rotate');
 
@@ -271,7 +271,7 @@ function reloadPreview() {
         }
     });
 
-    ipc.on('shiba:notify-linter-result', (_: Event, messages: LintMessage[]) => {
+    ipc.on('shiba:notify-linter-result', (_: Electron.IpcRendererEvent, messages: LintMessage[]) => {
         lint.messages = messages;
         const button = document.getElementById('lint-button');
         if (messages.length === 0) {
@@ -281,7 +281,7 @@ function reloadPreview() {
         }
     });
 
-    ipc.on('return-lint-url', (_: Event, url: string) => {
+    ipc.on('return-lint-url', (_: Electron.IpcRendererEvent, url: string) => {
         lint.lint_url = url;
     });
 

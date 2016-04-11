@@ -27,6 +27,7 @@ interface Config {
         css_path: string;
         code_theme: string;
     };
+    restore_window_state: boolean;
     _config_dir_path?: string;  // Set in renderer for cache
     [name: string]: any;
 }
