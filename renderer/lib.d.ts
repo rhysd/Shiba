@@ -47,6 +47,8 @@ interface MarkdownPreview extends HTMLElement {
 interface LintMessage {
     header: string;
     body: string;
+    line?: number;
+    column?: number;
 }
 
 interface LintResultArea extends HTMLElement {

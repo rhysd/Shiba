@@ -43,6 +43,8 @@ declare module 'remark' {
 interface LinterMessage {
     header: string;
     body: string;
+    line?: number;
+    column?: number;
 }
 
 declare namespace ElectronWindowState {
