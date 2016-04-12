@@ -1,8 +1,6 @@
 /// <reference path="lib.d.ts" />
 
 namespace Emoji {
-    'use strict';
-
     const EMOJI = new Set<string>([
         '+1',
         '-1',
