@@ -70,3 +70,10 @@ declare module 'electron-window-state' {
     function windowStateKeeper(opts: ElectronWindowState.WindowStateKeeperOptions): ElectronWindowState.WindowState;
     export = windowStateKeeper;
 }
+
+interface String {
+    startsWith(needle: string): boolean;
+    endsWith(needle: string): boolean;
+    repeat(count: number): string;
+}
+

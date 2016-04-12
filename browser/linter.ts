@@ -1,10 +1,13 @@
 /// <reference path="../typings/main.d.ts" />
 
 import {readFile} from 'fs';
+import {homedir} from 'os';
 import {ipcMain as ipc} from 'electron';
 import * as markdownlint from 'markdownlint';
 import * as remark from 'remark';
 import * as remarklint from 'remark-lint';
+
+const home_dir = homedir();
 
 interface RemarkFile {
     messages: {
@@ -100,13 +103,18 @@ export default class Linter {
                     return;
                 }
 
+                let fpath = filename;
+                if (home_dir !== '' && fpath.startsWith(home_dir)) {
+                    fpath = `~${fpath.slice(home_dir.length)}`;
+                }
+
                 this.sendResult(
                     file.messages.map(function(m): LinterMessage {
                         // Note:
                         // Should I include m.ruleId to check the detail of message?
                         // I don't include it now because message gets too long.
                         return {
-                            header: `${filename}:${m.line}:${m.column}:`,
+                            header: `${fpath}:${m.line}:${m.column}:`,
                             body: m.reason,
                         };
                     })
