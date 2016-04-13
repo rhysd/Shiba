@@ -30,6 +30,7 @@ Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](htt
 - [x] [Search text in preview](docs/usage.md#search-text)
 - [x] [Outline window](docs/usage.md#outline-window)
 - [x] Print preview (to a paper / to a PDF file)
+- [x] Support multi japanese encodings (utf8, utf16, sjis, euc-jp, unicode)
 - [x] HTML preview
 - [x] Dog-respected :dog2:
 
