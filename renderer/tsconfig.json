@@ -10,6 +10,7 @@
   "files": [
     "builtin-search.ts",
     "emoji.ts",
+    "encoding-japanese.d.ts",
     "index.ts",
     "keyboard.ts",
     "lib.d.ts",

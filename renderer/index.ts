@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import {homedir} from 'os';
 import {remote, ipcRenderer as ipc} from 'electron';
+import * as encoding from 'encoding-japanese';
 const config = remote.getGlobal('config') as Config;
 const home_dir = config.hide_title_bar ?  '' : homedir();
 const on_darwin = process.platform === 'darwin';
@@ -92,11 +93,17 @@ function renderMarkdownPreview(file: string) {
     const exts = config.file_ext.markdown;
     const font_size = config.markdown.font_size;
     const isGitHubStyle = config.markdown.css_path.endsWith('/github-markdown.css');
-    fs.readFile(file, 'utf8', (err: Error, markdown: string) => {
+    fs.readFile(file, null, (err: Error, bytes: Buffer) => {
         if (err) {
             console.error(err);
             return;
         }
+
+        const enc = encoding.detect(bytes);
+        const markdown =
+                !enc || enc === 'UTF8' ?
+                    bytes.toString() :
+                    (new Buffer(encoding.convert(bytes, 'UTF8', enc))).toString();
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
