@@ -99,9 +99,15 @@ function renderMarkdownPreview(file: string) {
             return;
         }
 
+        // Note:
+        // ASCII, BINARY and UTF32 are detection only, not convertable.
         const enc = encoding.detect(bytes);
         const markdown =
-                !enc || enc === 'UTF8' ?
+                !enc ||
+                enc === 'UTF8' ||
+                enc === 'ASCII' ||
+                enc === 'BINARY' ||
+                enc === 'UTF32' ?
                     bytes.toString() :
                     (new Buffer(encoding.convert(bytes, 'UTF8', enc))).toString();
 
