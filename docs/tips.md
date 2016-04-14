@@ -31,5 +31,14 @@ Simply type `C-c C-c` and you can preview your markdown file with Shiba.
 
 In directories which contain so many files and directories, they cost CPU power because of so many targets to be watched.  Please consider using [`ignore_path_pattern`](customization.md) to ignore such directories.  For example, if you are developing something with Node.js, `node_modules` directory may contain so many files and you might ignore it to save CPU power.
 
+## How to Disable Linter
+
+If you only want a preview, you can customize to disable a linter as below with [YAML configuration file](customization.md)
+
+```yaml
+linter: none
+```
+
+
 -----------------
 [installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)
