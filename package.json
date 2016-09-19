@@ -1,7 +1,7 @@
 {
   "name": "shiba",
   "productName": "Shiba",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Live markdown previewer with linter",
   "main": "./build/src/browser/mainu.js",
   "bin": {
@@ -57,7 +57,6 @@
     "watch": "rake watch",
     "app": "NODE_ENV=development ./bin/cli.js README.md",
     "test": "rake test",
-    "start": "npm run dep && npm run build && npm run app",
-    "postinstall": "electron-rebuild"
+    "start": "npm run dep && npm run build && npm run app"
   }
 }
