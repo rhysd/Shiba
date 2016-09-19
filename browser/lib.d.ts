@@ -53,6 +53,7 @@ declare namespace ElectronWindowState {
         isMaximized: boolean;
         isFullScreen: boolean;
         manage(win: Electron.BrowserWindow): void;
+        unmanage(): void;
         saveState(win: Electron.BrowserWindow): void;
     }
     interface WindowStateKeeperOptions {
