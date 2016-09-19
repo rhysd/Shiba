@@ -1,10 +1,7 @@
-/// <reference path="../typings/main.d.ts" />
+/// <reference path="../typings/index.d.ts" />
 /// <reference path="./config.d.ts" />
 
 declare module NodeJS {
-    interface Process {
-        resourcesPath: string;
-    }
     interface Global {
         config: Config;
     }

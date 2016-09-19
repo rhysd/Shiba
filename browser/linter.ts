@@ -1,5 +1,3 @@
-/// <reference path="../typings/main.d.ts" />
-
 import {readFile} from 'fs';
 import {ipcMain as ipc} from 'electron';
 import * as markdownlint from 'markdownlint';

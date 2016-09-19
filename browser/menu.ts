@@ -14,7 +14,7 @@ export function build(main_window: Electron.BrowserWindow) {
                 },
                 {
                     label: 'DevTools',
-                    click: () => main_window.webContents.openDevTools({detach: true}),
+                    click: () => main_window.webContents.openDevTools({mode: 'detach'}),
                 },
                 {
                     label: 'Quit App',

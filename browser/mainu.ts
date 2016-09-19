@@ -28,7 +28,7 @@ Environment:
 // Main Window {{{
 app.on('window-all-closed', function() { app.quit(); });
 
-type DisplaySize = Electron.Dimension & {[k: string]: number};
+type DisplaySize = Electron.Size & {[k: string]: number};
 
 function createWindow(config: Config, icon_path: string) {
     const display_size = screen.getPrimaryDisplay().workAreaSize as DisplaySize;
@@ -126,7 +126,7 @@ app.on('ready', function() {
 
         if (process.env.NODE_ENV === 'development') {
             win.webContents.on('devtools-opened', () => setImmediate(() => win.focus()));
-            win.webContents.openDevTools({detach: true});
+            win.webContents.openDevTools({mode: 'detach'});
         }
     }).catch(e => {
         console.error('Unknown error: ', e);

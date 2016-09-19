@@ -25,18 +25,18 @@
   ],
   "dependencies": {
     "about-window": "^1.3.1",
-    "animate.css": "^3.5.1",
-    "chokidar": "^1.4.3",
+    "animate.css": "^3.5.2",
+    "chokidar": "^1.6.0",
     "electron-prebuilt": "0.37.2",
     "electron-window-state": "^2.0.0",
     "encoding-japanese": "^1.0.24",
     "he": "^0.5.0",
-    "highlight.js": "^9.2.0",
-    "js-yaml": "^3.5.4",
+    "highlight.js": "^9.6.0",
+    "js-yaml": "^3.6.1",
     "katex": "^0.5.1",
     "markdownlint": "^0.1.1",
-    "marked": "^0.3.5",
-    "mousetrap": "^1.5.3",
+    "marked": "^0.3.6",
+    "mousetrap": "^1.6.0",
     "remark": "^4.2.0",
     "remark-lint": "^3.2.0"
   },
@@ -45,10 +45,11 @@
     "electron-packager": "^6.0.0",
     "electron-rebuild": "^1.1.3",
     "intelli-espower-loader": "^1.0.1",
-    "mocha": "^2.4.5",
-    "power-assert": "^1.3.1",
+    "mocha": "^3.0.2",
+    "power-assert": "^1.4.1",
     "touch": "^1.0.0",
-    "typings": "^0.7.12"
+    "typescript": "^2.0.2",
+    "typings": "^1.3.3"
   },
   "scripts": {
     "dep": "npm install && bower install && typings install",
@@ -56,6 +57,7 @@
     "watch": "rake watch",
     "app": "NODE_ENV=development ./bin/cli.js README.md",
     "test": "rake test",
-    "start": "npm run dep && npm run build && npm run app"
+    "start": "npm run dep && npm run build && npm run app",
+    "postinstall": "electron-rebuild"
   }
 }
