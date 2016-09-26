@@ -24,7 +24,10 @@
     "preview",
     "electron"
   ],
-  "scripts": {},
+  "scripts": {
+    "build:main": "tsc -p main/",
+    "build": "npm run build:main"
+  },
   "dependencies": {
     "about-window": "^1.3.1",
     "chokidar": "^1.6.0",
