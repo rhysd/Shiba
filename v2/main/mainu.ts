@@ -2,6 +2,10 @@ import windowState = require('electron-window-state');
 import * as path from 'path';
 import {app, BrowserWindow, screen} from 'electron';
 import loadAppConfig from './config';
+import Doghouse from './doghouse';
+import Ipc from './ipc';
+
+let win = null as (Electron.BrowserWindow | null);
 
 function isRunFromNpmPackageOnDarwin() {
     return process.platform === 'darwin' && app.getAppPath().indexOf('/Shiba.app/') === -1;
@@ -27,7 +31,7 @@ function getWindowSize(config: AppConfig): {width: number, height: number} {
 }
 
 function openWindow(config: AppConfig) {
-    return new Promise<Electron.BrowserWindow>(resolve => {
+    return new Promise<[Electron.BrowserWindow, AppConfig]>(resolve => {
         const config_size = getWindowSize(config);
         const window_state = windowState({
             defaultWidth: config_size.width,
@@ -63,7 +67,7 @@ function openWindow(config: AppConfig) {
         win.once('closed', () => { win = null; });
 
         win.webContents.on('dom-ready', () => {
-            resolve(win);
+            resolve([win, config]);
         });
 
         const index_html = 'file://' + path.join(__dirname, '..', 'renderer', 'index.html');
@@ -80,7 +84,16 @@ function openWindow(config: AppConfig) {
     });
 }
 
-let win = null as (Electron.BrowserWindow | null);
+function setupDoghouse([win, config]: [Electron.BrowserWindow, AppConfig]) {
+    const doghouse = new Doghouse(config);
+    Ipc.onReceive('shiba:tab-opened', (p: string) => {
+        doghouse.newDog(p).then(dog => new Ipc(dog, win.webContents));
+    });
+    Ipc.onReceive('shiba:tab-closed', (id: number) => {
+        doghouse.removeDog(id);
+        // Note: Should send FIN to renderer?
+    });
+}
 
 app.once('window-all-closed', () => app.quit());
 app.on('activate', () => {
@@ -88,4 +101,4 @@ app.on('activate', () => {
         win.show();
     }
 });
-app.once('ready', () => loadAppConfig().then(openWindow));
+app.once('ready', () => loadAppConfig().then(openWindow).then(setupDoghouse));
