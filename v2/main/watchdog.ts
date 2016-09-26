@@ -3,6 +3,15 @@ import * as path from 'path';
 import {EventEmitter} from 'events';
 import * as chokidar from 'chokidar';
 
+// XXX:
+// Currently, we create FsEvent handler for each Watchdog instance.
+// But I'm not sure that it's good for performance.
+// If it's terrible in terms of file watching performance, we need to change
+// implementation.  Create one FsEvent handler as singleton, and every Watchdog
+// instances must add()/unwatch() its file path on its lifecycle.
+// This implementation is a bit more complex, so I won't implement it until current
+// implementation has a performance issue obviously.
+
 const IGNORE_ASAR = /\.asar[\\\/]/;
 
 export interface WatchingTarget {
