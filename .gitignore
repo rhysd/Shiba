@@ -10,7 +10,9 @@ npm-debug.log
 /packages
 /test/**/*.js
 /test/**/*.js.map
-!/test/main/node_modules/electron/index.js
 /v2/node_modules
-/v2/**/*.js
-/v2/**/*.map
+/v2/main/**/*.js
+/v2/main/**/*.map
+/v2/renderer/**/*.js
+/v2/renderer/**/*.map
+/v2/test/main/js

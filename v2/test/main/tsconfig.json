@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noEmitOnError": true,
+    "target": "es2015",
+    "outDir": "./js"
+  },
+  "include": [
+    "**/*.ts",
+    "../../main/typings/*.d.ts"
+  ]
+}
