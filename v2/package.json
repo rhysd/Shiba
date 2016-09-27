@@ -59,12 +59,7 @@
     "@types/katex": "0.0.28",
     "@types/mousetrap": "^1.5.31",
     "@types/node": "^6.0.38",
-    "chai": "^3.5.0",
-    "chai-as-promised": "^5.3.0",
     "electron-rebuild": "^1.2.1",
-    "mocha": "^3.1.0",
-    "sinon": "^1.17.6",
-    "touch": "^1.0.0",
-    "typescript": "^2.0.3"
+    "typescript": "^2.0.2"
   }
 }
