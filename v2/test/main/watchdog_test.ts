@@ -14,6 +14,7 @@ function wait(ms: number) {
 const TEST_DIR = join(__dirname, '_test');
 const TEST_FILE1 = join(TEST_DIR, 'test1.md');
 const TEST_FILE2 = join(TEST_DIR, 'test2.md');
+const THIS_FILE = join(__dirname, 'watchdog_test.js');
 
 test.before(t => {
     mkdir(TEST_DIR);
@@ -137,6 +138,11 @@ test('Multiple instances are supported', async(t) => {
     dog2.stop();
 });
 
-test.only('Invalid path occurs an error', async(t) => {
+test('Invalid path occurs an error', async(t) => {
     t.throws(Watchdog.create(0, '/path/to/unknown/file', config), Error);
+});
+
+test('Watchdog.create() raises an error when the file is not a watching target', async(t) => {
+    const dog = await Watchdog.create(0, THIS_FILE, config);
+    t.throws(dog.start(), Error);
 });

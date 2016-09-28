@@ -36,6 +36,9 @@ export default class Watchdog extends EventEmitter {
     }
 
     stop() {
+        if (this.eyes === null) {
+            return;
+        }
         this.eyes.close();
         this.eyes = null;
     }
