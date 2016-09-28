@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {EventEmitter} from 'events';
 import * as chokidar from 'chokidar';
+import log from './log';
 
 // XXX:
 // Currently, we create FsEvent handler for each Watchdog instance.
@@ -39,6 +40,7 @@ export default class Watchdog extends EventEmitter {
         if (this.eyes === null) {
             return;
         }
+        log.debug('Watchdog stopped: id', this.id);
         this.eyes.close();
         this.eyes = null;
     }
@@ -68,9 +70,11 @@ export default class Watchdog extends EventEmitter {
     }
 
     start() {
+        log.debug('Watchdog is starting: id', this.id, this.target);
         return new Promise((resolve, reject) => {
             const pattern = this.getWatchingPattern();
             if (pattern === null) {
+                log.debug('Invalid pattern for watching path: id', this.id);
                 return reject(new Error(`'${this.target.path}' is not a target to watch`));
             }
 
@@ -86,9 +90,10 @@ export default class Watchdog extends EventEmitter {
 
             eyes.on('change', (f: string) => this.emitUpdate(f, 'change'));
             eyes.on('add', (f: string) => this.emitUpdate(f, 'add'));
-            eyes.on('error', (e: Error) => this.emit('error', e));
+            eyes.on('error', this.onError.bind(this));
             eyes.on('ready', () => {
                 this.emit('ready');
+                log.debug('Watchdog started: id', this.id, 'watching pattern:', pattern);
                 resolve(this);
             });
 
@@ -100,8 +105,14 @@ export default class Watchdog extends EventEmitter {
         return this.eyes !== null;
     }
 
+    private onError(err: Error) {
+        log.debug('Watchdog event: error: id', this.id, 'message:', err.message, 'stack:', err.stack);
+        this.emit('error', err);
+    }
+
     private emitUpdate(file: string, event: 'add' | 'change') {
         if (this.target.is_file || this.shouldWatch(file)) {
+            log.debug('Watchdog event: update: id', this.id, 'event:', event, 'file:', file);
             this.emit('update', file, event);
         }
     }
@@ -115,5 +126,3 @@ export default class Watchdog extends EventEmitter {
         this.eyes = null;
     }
 }
-
-

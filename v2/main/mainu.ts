@@ -4,6 +4,7 @@ import {app, BrowserWindow, screen} from 'electron';
 import loadAppConfig from './config';
 import Doghouse from './doghouse';
 import Ipc from './ipc';
+import log from './log';
 
 let win = null as (Electron.BrowserWindow | null);
 
@@ -31,6 +32,7 @@ function getWindowSize(config: AppConfig): {width: number, height: number} {
 }
 
 function openWindow(config: AppConfig) {
+    log.debug('Starting window with config', config);
     return new Promise<[Electron.BrowserWindow, AppConfig]>(resolve => {
         const config_size = getWindowSize(config);
         const window_state = windowState({
@@ -53,6 +55,7 @@ function openWindow(config: AppConfig) {
             } else if (window_state.isMaximized) {
                 win.maximize();
             }
+            log.debug('Restored window state', window_state);
             window_state.manage(win);
         } else {
             win = new BrowserWindow({
@@ -62,24 +65,29 @@ function openWindow(config: AppConfig) {
                 autoHideMenuBar: !!config.hide_menu_bar,
                 icon: icon_path,
             });
+            log.debug('Created window without restoring state', config_size);
         }
 
         win.once('closed', () => { win = null; });
 
         win.webContents.on('dom-ready', () => {
+            log.debug('DOM ready');
             resolve([win, config]);
         });
 
         const index_html = 'file://' + path.join(__dirname, '..', 'renderer', 'index.html');
         win.loadURL(index_html);
+        log.debug('Loaded HTML to window', index_html);
 
         if (isRunFromNpmPackageOnDarwin()) {
             app.dock.setIcon(icon_path);
+            log.debug('Icon was set to dock', icon_path);
         }
 
         if (process.env.NODE_ENV === 'development') {
             win.webContents.once('devtools-opened', () => setImmediate(() => win && win.focus()));
             win.webContents.openDevTools({mode: 'detach'});
+            log.debug('DevTools was opened in background');
         }
     });
 }
@@ -97,6 +105,7 @@ function setupDoghouse([w, c]: [Electron.BrowserWindow, AppConfig]) {
 
 app.once('window-all-closed', () => app.quit());
 app.on('activate', () => {
+    log.debug('Application was activated');
     if (win) {
         win.show();
     }

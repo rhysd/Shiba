@@ -2,6 +2,7 @@ import * as yaml from 'js-yaml';
 import * as path from 'path';
 import {readFileSync, writeFileSync} from 'fs';
 import {app} from 'electron';
+import log from './log';
 
 export const DEFAULT_CONFIG = {
     linter: 'remark-lint',
@@ -51,17 +52,19 @@ export default function loadAppConfig() {
             const config = yaml.safeLoad(readFileSync(file, {encoding: 'utf8'})) as AppConfig;
             config._config_dir_path = dir;
             if (config.drawer) {
-                console.error("'drawer' option was removed. It'll be ignored.");
+                log.warn("'drawer' option was removed. It'll be ignored.");
             }
             if (config.markdown) {
+                log.warn("Deprecated configration 'markdown' will be converted to 'preview_customize.markdown'");
                 config.preview_customize = {
                     markdown: config.markdown,
                 };
             }
+            log.debug('Configuration was loaded from', file, config);
             resolve(config);
         } catch (_) {
             writeFileSync(file, yaml.safeDump(DEFAULT_CONFIG));
-            console.log('New configuration file created: ' + file);
+            log.info('New configuration file created:', file);
             DEFAULT_CONFIG._config_dir_path = dir;
             resolve(DEFAULT_CONFIG);
         }

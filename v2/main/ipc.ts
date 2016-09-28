@@ -1,11 +1,13 @@
 import {ipcMain as ipc, BrowserWindow} from 'electron';
 import Watchdog from './watchdog';
+import log from './log';
 
 // Wrapper to subscribe/unsubscribe dog's file events
 
 export default class Ipc {
     static onReceive(c: ChannelFromRenderer, cb: Function) {
         const subscriber = (_: Electron.IpcMainEvent, ...args: any[]) => {
+            log.debug('channel:', c, '<---', args);
             cb.apply(this, args);
         };
         // Note: Should remember the callback to remove it later?
@@ -40,6 +42,7 @@ export default class Ipc {
     }
 
     private send(c: ChannelFromMain, ...args: any[]) {
+        log.debug('channel:', c, '--->', args);
         this.sender.send(c, ...args);
     }
 }

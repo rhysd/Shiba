@@ -31,9 +31,12 @@
     "test:main": "npm run build:test:main && ava --verbose --serial test/main/js/test/main/*_test.js",
     "test": "npm run test:main",
     "lint": "tslint main/*.ts renderer/*.ts",
-    "watch": "guard --watchdir main renderer test"
+    "watch": "guard --watchdir main renderer test",
+    "debug": "NODE_ENV=development electron .",
+    "start": "NODE_ENV=production electron ."
   },
   "dependencies": {
+    "@types/loglevel": "^1.4.29",
     "about-window": "^1.3.1",
     "chokidar": "^1.6.0",
     "electron-prebuilt": "^1.4.0",
@@ -42,9 +45,10 @@
     "highlight.js": "^9.6.0",
     "immutable": "^3.8.1",
     "js-yaml": "^3.6.1",
+    "loglevel": "^1.4.1",
     "mousetrap": "^1.6.0",
-    "react": "^15.3.1",
-    "react-dom": "^15.3.1",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
     "react-redux": "^4.4.5",
     "redux": "^3.6.0",
     "remark": "^6.0.1",
