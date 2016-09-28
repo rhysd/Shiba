@@ -4,6 +4,14 @@ import Watchdog from './watchdog';
 // Wrapper to subscribe/unsubscribe dog's file events
 
 export default class Ipc {
+    static onReceive(c: ChannelFromRenderer, cb: Function) {
+        const subscriber = (_: Electron.IpcMainEvent, ...args: any[]) => {
+            cb.apply(this, args);
+        };
+        // Note: Should remember the callback to remove it later?
+        ipc.once(c, subscriber);
+    }
+
     constructor(
         private dog: Watchdog,
         private sender: Electron.WebContents = BrowserWindow.getFocusedWindow().webContents,
@@ -23,8 +31,8 @@ export default class Ipc {
         this.send('shiba:dog-ready', this.dog.id);
     }
 
-    private onFileUpdate(file: string) {
-        this.send('shiba:file-update', this.dog.id, file);
+    private onFileUpdate(file: string, event: 'add' | 'change') {
+        this.send('shiba:file-update', this.dog.id, file, event);
     }
 
     private onError(err: Error) {
@@ -33,13 +41,5 @@ export default class Ipc {
 
     private send(c: ChannelFromMain, ...args: any[]) {
         this.sender.send(c, ...args);
-    }
-
-    static onReceive(c: ChannelFromRenderer, cb: Function) {
-        const subscriber = (_: Electron.IpcMainEvent, ...args: any[]) => {
-            cb.apply(this, args);
-        }
-        // Note: Should remember the callback to remove it later?
-        ipc.once(c, subscriber);
     }
 }

@@ -51,12 +51,6 @@ export default class Watchdog extends EventEmitter {
         return false;
     }
 
-    emitUpdate(file: string) {
-        if (this.target.is_file || this.shouldWatch(file)) {
-            this.emit('update', file);
-        }
-    }
-
     getWatchingPattern() {
         if (this.target.is_file) {
             if (this.shouldWatch(this.target.path)) {
@@ -87,8 +81,8 @@ export default class Watchdog extends EventEmitter {
                     ignored: [new RegExp(this.config.ignore_path_pattern), IGNORE_ASAR],
                 });
 
-            eyes.on('change', this.emitUpdate);
-            eyes.on('add', this.emitUpdate);
+            eyes.on('change', (f: string) => this.emitUpdate(f, 'change'));
+            eyes.on('add', (f: string) => this.emitUpdate(f, 'add'));
             eyes.on('error', (e: Error) => this.emit('error', e));
             eyes.on('ready', () => {
                 this.emit('ready');
@@ -103,6 +97,12 @@ export default class Watchdog extends EventEmitter {
         return this.eyes !== null;
     }
 
+    private emitUpdate(file: string, event: 'add' | 'change') {
+        if (this.target.is_file || this.shouldWatch(file)) {
+            this.emit('update', file, event);
+        }
+    }
+
     private constructor(public id: number, watching: string, public config: AppConfig, stats: fs.Stats) {
         super();
         this.target = {
@@ -110,7 +110,6 @@ export default class Watchdog extends EventEmitter {
             is_file: stats.isFile(),
         };
         this.eyes = null;
-        this.emitUpdate = this.emitUpdate.bind(this);
     }
 }
 
