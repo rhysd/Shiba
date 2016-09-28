@@ -84,10 +84,10 @@ function openWindow(config: AppConfig) {
     });
 }
 
-function setupDoghouse([win, config]: [Electron.BrowserWindow, AppConfig]) {
-    const doghouse = new Doghouse(config);
+function setupDoghouse([w, c]: [Electron.BrowserWindow, AppConfig]) {
+    const doghouse = new Doghouse(c);
     Ipc.onReceive('shiba:tab-opened', (p: string) => {
-        doghouse.newDog(p).then(dog => new Ipc(dog, win.webContents));
+        doghouse.newDog(p).then(dog => new Ipc(dog, w.webContents));
     });
     Ipc.onReceive('shiba:tab-closed', (id: number) => {
         doghouse.removeDog(id);

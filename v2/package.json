@@ -30,6 +30,7 @@
     "build:test:main": "tsc --pretty -p test/main/",
     "test:main": "npm run build:test:main && ava --verbose --serial test/main/js/test/main/*_test.js",
     "test": "npm run test:main",
+    "lint": "tslint main/*.ts renderer/*.ts",
     "watch": "guard --watchdir main renderer test"
   },
   "dependencies": {
@@ -72,6 +73,7 @@
     "rimraf": "^2.5.4",
     "sinon": "^1.17.6",
     "touch": "^1.0.0",
+    "tslint": "^3.15.1",
     "typescript": "^2.0.2"
   }
 }

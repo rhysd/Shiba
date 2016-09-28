@@ -59,7 +59,7 @@ export default function loadAppConfig() {
                 };
             }
             resolve(config);
-        } catch(_) {
+        } catch (_) {
             writeFileSync(file, yaml.safeDump(DEFAULT_CONFIG));
             console.log('New configuration file created: ' + file);
             DEFAULT_CONFIG._config_dir_path = dir;
