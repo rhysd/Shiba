@@ -28,7 +28,7 @@
     "build:main": "tsc --pretty -p main/",
     "build": "npm run build:main",
     "build:test:main": "tsc --pretty -p test/main/",
-    "test:main": "npm run build:test:main && ava --verbose test/main/js/test/main/*_test.js",
+    "test:main": "npm run build:test:main && ava --verbose --serial test/main/js/test/main/*_test.js",
     "test": "npm run test:main"
   },
   "dependencies": {
