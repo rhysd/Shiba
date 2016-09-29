@@ -42,7 +42,6 @@
     "electron-prebuilt": "^1.4.0",
     "electron-window-state": "^3.0.4",
     "font-awesome": "^4.6.3",
-    "highlight.js": "^9.6.0",
     "immutable": "^3.8.1",
     "js-yaml": "^3.6.1",
     "loglevel": "^1.4.1",
@@ -51,13 +50,12 @@
     "react-dom": "^15.3.2",
     "react-redux": "^4.4.5",
     "redux": "^3.6.0",
-    "remark": "^6.0.1",
     "remark-autolink-headings": "^4.0.0",
     "remark-github": "^6.0.1",
-    "remark-highlight.js": "^4.0.1",
-    "remark-lint": "^5.0.1",
-    "remark-react": "^3.0.1",
-    "remark-toc": "^3.1.0"
+    "remark-parse": "^2.0.1",
+    "remark-slug": "^4.2.2",
+    "remark-toc": "^3.1.0",
+    "unified": "^5.0.0"
   },
   "devDependencies": {
     "@types/chokidar": "^1.4.29",
