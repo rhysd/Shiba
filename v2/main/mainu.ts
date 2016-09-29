@@ -6,6 +6,10 @@ import Doghouse from './doghouse';
 import Ipc from './ipc';
 import log from './log';
 
+process.on('unhandledRejection', (reason: string, p: Promise<any>) => {
+    log.error('FATAL: Unhandled rejection at Promise', p, ', Reason:', reason);
+});
+
 let win = null as (Electron.BrowserWindow | null);
 
 function isRunFromNpmPackageOnDarwin() {
