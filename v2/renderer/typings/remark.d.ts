@@ -68,7 +68,7 @@ declare namespace Unified {
     export class Processor {
         Parser: Remark.ParserPlugin;
         Compiler: Remark.CompilerPlugin;
-        use(plugin: Plugin | Plugin[], options?: Options): Processor;
+        use(plugin: Plugin | Plugin[], settings?: Settings): Processor;
         run(node: Remark.MarkdownNode, file?: VFile, done?: (err: Error, node: Remark.MarkdownNode, file: VFile) => void): Remark.MarkdownNode;
         process(source: string | string[], cb: ProcessCallback): void;
         parse(file: VFile, options?: Options): Remark.MarkdownNode;
@@ -82,7 +82,7 @@ declare namespace Unified {
 }
 
 declare module 'unified' {
-    function engine(): Unified.Processor;
+    const engine: (options?: Unified.Options) => Unified.Processor;
     export = engine;
 }
 
@@ -299,7 +299,7 @@ declare namespace Remark {
         (processor: Unified.Processor, options: Unified.Options): Unified.Processor;
     }
     export interface TransformerPlugin {
-        (processor: Unified.Processor, options: Unified.Options): (tree: Root) => void;
+        (processor: Unified.Processor, options: Unified.Options): (tree: Root, file?: Unified.VFile) => void;
     }
     export interface ParserPlugin {
         (processor: Unified.Processor, options: Unified.Options): Unified.Processor;

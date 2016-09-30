@@ -6,8 +6,8 @@ import Doghouse from './doghouse';
 import Ipc from './ipc';
 import log from './log';
 
-process.on('unhandledRejection', (reason: string, p: Promise<any>) => {
-    log.error('FATAL: Unhandled rejection at Promise', p, ', Reason:', reason);
+process.on('unhandledRejection', (reason: string) => {
+    log.error('FATAL: Unhandled rejection! Reason:', reason);
 });
 
 let win = null as (Electron.BrowserWindow | null);
@@ -43,7 +43,7 @@ function openWindow(config: AppConfig) {
             defaultWidth: config_size.width,
             defaultHeight: config_size.height,
         });
-        const icon_path = path.join(__dirname, '..', 'images', 'icon', 'icon.png');
+        const icon_path = path.join(__dirname, '..', 'images', 'icon', 'shibainu.png');
         if (config.restore_window_state !== false) {
             win = new BrowserWindow({
                 x: window_state.x,
