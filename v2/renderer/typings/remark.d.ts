@@ -197,6 +197,10 @@ declare module 'remark-rehype' {
     const plugin: Remark.TransformerPlugin;
     export = plugin;
 }
+declare module 'remark-emoji' {
+    const plugin: Remark.TransformerPlugin;
+    export = plugin;
+}
 declare module 'remark-react' {
     const plugin: Remark.CompilerPlugin;
     export = plugin;

@@ -1,27 +1,7 @@
 import * as React from 'react';
-import * as fs from 'fs';
-import * as unified from 'unified';
-import * as parse from 'remark-parse';
-import * as react from 'remark-react';
-import * as toc from 'remark-toc';
-import * as slug from 'remark-slug';
-import * as headings from 'remark-autolink-headings';
-import * as github from 'remark-github';
-import * as lint from 'remark-lint';
+import MarkdownProcessor from '../markdown/processor';
 
-const processor = unified({
-    presets: ['lint-recommended'],
-}).use([
-    parse,
-    react,
-]).use(
-    lint, {firstHeadingLevel: true}
-).use([
-    toc,
-    slug,
-    headings,
-    github,
-]);
+const Processor = new MarkdownProcessor();
 
 interface Props extends React.Props<MarkdownTest> {
 }
@@ -43,23 +23,10 @@ export default class MarkdownTest extends React.Component<Props, State> {
     }
 
     showPreview(file: string) {
-        fs.readFile(file, 'utf8', (err, doc) => {
-            if (err) {
-                console.error(err);
-                alert(err.message);
-                return;
-            }
-            processor.process(doc, (e, result) => {
-                if (e) {
-                    console.error(e);
-                    alert(e.message);
-                    return;
-                }
-                console.log('Result:', result);
-                this.setState({
-                    preview: result.contents,
-                });
-            });
+        Processor.processFile(file).then(elems => {
+            this.setState({preview: elems});
+        }).catch(err => {
+            console.error(err);
         });
     }
 
@@ -70,13 +37,13 @@ export default class MarkdownTest extends React.Component<Props, State> {
                 this.showPreview(i.value);
             }
         });
-        this.showPreview('../README.md');
+        this.showPreview('./foo.md');
     }
 
     render() {
         return <div>
             <input ref="input" />
-            <div className="preview">
+            <div className="markdown-body">
                 {this.state.preview}
             </div>
         </div>;

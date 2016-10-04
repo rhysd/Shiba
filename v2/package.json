@@ -43,21 +43,26 @@
     "electron-prebuilt": "^1.4.0",
     "electron-window-state": "^3.0.4",
     "font-awesome": "^4.6.3",
+    "github-markdown-css": "^2.4.1",
     "immutable": "^3.8.1",
     "js-yaml": "^3.6.1",
     "loglevel": "^1.4.1",
     "mousetrap": "^1.6.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
+    "rehype-react": "^1.0.0",
     "remark-autolink-headings": "^4.0.0",
+    "remark-emoji": "^1.1.0",
     "remark-github": "^6.0.1",
     "remark-lint": "^5.0.1",
     "remark-parse": "^2.0.1",
     "remark-preset-lint-recommended": "^1.0.0",
-    "remark-react": "github:rhysd/remark-react#fix-sanitize",
+    "remark-rehype": "^1.0.1",
     "remark-slug": "^4.2.2",
     "remark-toc": "^3.1.0",
-    "unified": "^5.0.0"
+    "trim-lines": "^1.0.0",
+    "unified": "^5.0.0",
+    "unist-util-visit": "^1.1.0"
   },
   "devDependencies": {
     "@types/chokidar": "^1.4.29",
@@ -80,6 +85,6 @@
     "sinon": "^1.17.6",
     "touch": "^1.0.0",
     "tslint": "^3.15.1",
-    "typescript": "^2.0.2"
+    "typescript": "^2.0.3"
   }
 }
