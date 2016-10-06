@@ -1,12 +1,14 @@
 declare namespace Hast {
-    export interface Root extends Unist.Parent {
+    export interface Root extends Unist.Node {
         type: 'root';
+        children: Hast.HastNode[];
     }
 
-    export interface Element extends Unist.Parent {
+    export interface Element extends Unist.Node {
         type: 'element';
         tagName: string;
         properties: Object;
+        children: Hast.HastNode[];
     }
 
     export interface Doctype extends Unist.Node {
@@ -57,3 +59,4 @@ declare module 'rehype-react' {
     const plugin: Hast.CompilerPlugin;
     export = plugin;
 }
+

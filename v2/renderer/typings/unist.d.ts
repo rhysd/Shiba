@@ -31,7 +31,9 @@ declare namespace Unist {
     }
 
     interface U {
-        (type: string, value: string): Unist.Node;
+        (type: 'text', value: string): Unist.Text;
+        (type: 'element', props: Object, children: Unist.Node[]): Unist.Node;
+        (type: string, ...args: any[]): Unist.Node;
     }
 }
 
@@ -104,21 +106,21 @@ declare namespace Unified {
         files?: VFile[];
         [name: string]: any;
     }
-    export interface VFileMessage {
+    export interface VMessage {
         message: string;
         name: string;
         file: string;
         reason: string;
         line: number;
         column: number;
-        location: any;
+        location: Unist.Position;
         ruleId: string | null;
         source: string | null; // Plugin name
         fatal: boolean;
     }
     export class VFile {
         data: Object;
-        messages: VFileMessage[];
+        messages: VMessage[];
         history: any[];
         cwd: string;
         contents: any;

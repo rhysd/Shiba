@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as React from 'react';
+import {ReactElement} from 'react';
 import * as unified from 'unified';
 import * as parse from 'remark-parse';
 import * as toc from 'remark-toc';
@@ -10,26 +10,7 @@ import * as lint from 'remark-lint';
 import * as remark2rehype from 'remark-rehype';
 import * as rehype2react from 'rehype-react';
 import * as emoji from 'remark-emoji';
-
-/*
-function isUnistParent(node: Unist.Node): node is Unist.Parent {
-    return 'children' in node;
-}
-
-function test() {
-    function visit(node: Hast.HastNode) {
-        if (isUnistParent(node)) {
-            for (const c of node.children) {
-                visit(c);
-            }
-        }
-        if (node.type === 'text') {
-            node.value = 'Hello, from transformer';
-        }
-    }
-    return visit;
-}
-*/
+import marker from './rehype-message-markers';
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
@@ -37,10 +18,11 @@ export default class MarkdownProcessor {
     constructor() {
         this.compiler = unified({
             presets: ['lint-recommended'],
-        }).use([
-            parse,
-            rehype2react,
-        ]).use(
+        }).use(
+            parse
+        ).use(
+            rehype2react, {sanitize: false} // XXX: Temporary.  I need to define our original schema for sanitition
+        ).use(
             lint, {firstHeadingLevel: true}
         ).use(
             emoji, {padSpaceAfter: true}
@@ -50,10 +32,11 @@ export default class MarkdownProcessor {
             github,
             toc,
             remark2rehype,
+            marker,
         ]);
     }
 
-    processFile(file: string): Promise<React.ReactElement<any>> {
+    processFile(file: string): Promise<ReactElement<any>> {
         return new Promise<string>((resolve, reject) => {
             fs.readFile(file, 'utf8', (err, doc) => {
                 if (err) {
@@ -64,8 +47,8 @@ export default class MarkdownProcessor {
         }).then(doc => this.process(doc));
     }
 
-    process(markdown: string): Promise<React.ReactElement<any>> {
-        return new Promise<React.ReactElement<any>>((resolve, reject) => {
+    process(markdown: string): Promise<ReactElement<any>> {
+        return new Promise<ReactElement<any>>((resolve, reject) => {
             this.compiler.process(markdown, (err, vfile) => {
                 if (err) {
                     return reject(err);
