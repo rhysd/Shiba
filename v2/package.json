@@ -31,7 +31,7 @@
     "build:test:main": "tsc --pretty -p test/main/",
     "test:main": "npm run build:test:main && ava --verbose --serial test/main/js/test/main/*_test.js",
     "test": "npm run test:main",
-    "lint": "tslint main/*.ts renderer/*.ts",
+    "lint": "tslint $(git ls-files | grep -E \"\\.tsx?$\") && stylelint renderer/style.css",
     "watch": "guard --watchdir main renderer test",
     "debug": "NODE_ENV=development electron .",
     "start": "NODE_ENV=production electron ."
@@ -83,6 +83,8 @@
     "mkdirp": "^0.5.1",
     "rimraf": "^2.5.4",
     "sinon": "^1.17.6",
+    "stylelint": "^7.3.1",
+    "stylelint-config-standard": "^13.0.2",
     "touch": "^1.0.0",
     "tslint": "^3.15.1",
     "typescript": "^2.0.3"

@@ -21,6 +21,7 @@ export const DEFAULT_CONFIG = {
     hide_title_bar: false,
     hide_menu_bar: true,
     preview_customize: null,
+    /* tslint:disable:object-literal-key-quotes */
     shortcuts: {
         'j':        'PageDown',
         'k':        'PageUp',
@@ -42,6 +43,7 @@ export const DEFAULT_CONFIG = {
         's':        'Search',
         'o':        'Outline',
     },
+    /* tslint:enable:object-literal-key-quotes */
 } as AppConfig;
 
 export default function loadAppConfig() {
