@@ -23,8 +23,8 @@ export default class MarkdownTest extends React.Component<Props, State> {
     }
 
     showPreview(file: string) {
-        Processor.processFile(file).then(elems => {
-            this.setState({preview: elems});
+        Processor.processFile(file).then(vfile => {
+            this.setState({preview: vfile.contents});
         }).catch(err => {
             console.error(err);
         });

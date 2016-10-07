@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import {ReactElement} from 'react';
 import * as unified from 'unified';
 import * as parse from 'remark-parse';
 import * as toc from 'remark-toc';
@@ -10,7 +9,7 @@ import * as lint from 'remark-lint';
 import * as remark2rehype from 'remark-rehype';
 import * as rehype2react from 'rehype-react';
 import * as emoji from 'remark-emoji';
-import marker from './rehype-message-markers';
+import marker from './rehype_message_markers';
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
@@ -36,7 +35,7 @@ export default class MarkdownProcessor {
         ]);
     }
 
-    processFile(file: string): Promise<ReactElement<any>> {
+    processFile(file: string): Promise<Unified.VFile> {
         return new Promise<string>((resolve, reject) => {
             fs.readFile(file, 'utf8', (err, doc) => {
                 if (err) {
@@ -47,13 +46,13 @@ export default class MarkdownProcessor {
         }).then(doc => this.process(doc));
     }
 
-    process(markdown: string): Promise<ReactElement<any>> {
-        return new Promise<ReactElement<any>>((resolve, reject) => {
+    process(markdown: string): Promise<Unified.VFile> {
+        return new Promise<Unified.VFile>((resolve, reject) => {
             this.compiler.process(markdown, (err, vfile) => {
                 if (err) {
                     return reject(err);
                 }
-                resolve(vfile.contents);
+                resolve(vfile);
             });
         });
     }
