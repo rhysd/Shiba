@@ -43,6 +43,15 @@ declare namespace Hast {
     export interface ParserPlugin {
         (processor: Unified.Processor, options: Unified.Options): Unified.Processor;
     }
+    export interface SanitationSchema {
+        strip: string[];
+        clobberPrefix: string;
+        clobber: string[];
+        ancestors: {[e: string]: string[]};
+        protocols: {[e: string]: string[]};
+        tagNames: string[];
+        attributes: {[e: string]: string[]};
+    }
 }
 
 declare module 'rehype' {
@@ -59,4 +68,7 @@ declare module 'rehype-react' {
     const plugin: Hast.CompilerPlugin;
     export = plugin;
 }
-
+declare module 'hast-util-sanitize/lib/github' {
+    const schema: Hast.SanitationSchema;
+    export = schema;
+}

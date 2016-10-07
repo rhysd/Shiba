@@ -10,6 +10,7 @@ import * as remark2rehype from 'remark-rehype';
 import * as rehype2react from 'rehype-react';
 import * as emoji from 'remark-emoji';
 import marker from './rehype_message_markers';
+import schema from './sanitation_schema';
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
@@ -20,7 +21,7 @@ export default class MarkdownProcessor {
         }).use(
             parse
         ).use(
-            rehype2react, {sanitize: false} // XXX: Temporary.  I need to define our original schema for sanitition
+            rehype2react, {sanitize: schema}
         ).use(
             lint, {firstHeadingLevel: true}
         ).use(
