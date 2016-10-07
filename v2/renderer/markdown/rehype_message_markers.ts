@@ -9,13 +9,17 @@ function compareLocation(l: Unist.Location, r: Unist.Location): number {
     return l.column - r.column;
 }
 
-// XXX: I need to refactor getMarkedParts() to make it a class.
-
 // Note: Returns one of
 //         - ['text', '<span>text</span>']
 //         - ['<span>text</span>']
 //         - ['<span>text</span>', 'text']
-function getMarkedParts(node: Hast.TextNode, msg: Unified.VMessage): Hast.HastNode[] {
+function getMarkedParts(
+    node: Hast.TextNode,
+    msg: Unified.VMessage,
+    msg_index: number,
+    class_name: string[],
+    id_prefix: string,
+): Hast.HastNode[] {
     const parts = [] as Hast.HastNode[];
     const pos = node.position;
     const marker_start = msg.location.start;
@@ -56,7 +60,8 @@ function getMarkedParts(node: Hast.TextNode, msg: Unified.VMessage): Hast.HastNo
             type: 'element',
             tagName: 'span',
             properties: {
-                className: ['rehype-message-marker'], // TODO: Temporary
+                className: class_name || ['rehype-message-marker'],
+                id: (id_prefix || 'rehype-message-index-') + msg_index,
                 title: msg.message,
             },
             children: [{
@@ -109,7 +114,11 @@ function getMarkedParts(node: Hast.TextNode, msg: Unified.VMessage): Hast.HastNo
 class Transformer {
     public messages: Unified.VMessage[];
 
-    constructor(public root: Hast.Root, file: Unified.VFile) {
+    constructor(
+        public root: Hast.Root,
+        file: Unified.VFile,
+        public options: MessageMarkersOptions,
+    ) {
         this.messages = file.messages;
         this.messages.sort(compareMessageByStartLocation);
     }
@@ -118,6 +127,19 @@ class Transformer {
         this.visit(this.root);
     }
 
+    // Modify children for message markers.
+    // When children contains marked text, this method splits the text and add proper properties to marked element.
+    //
+    // e.g.
+    //   input:
+    //     children ['This is foo text']
+    //     marked text: 'foo'
+    //   output:
+    //     children [
+    //       'This is ',
+    //       <span class="..." title="...">foo<span>
+    //       ' text'
+    //     ]
     private visit(node: Hast.HastNode) {
         if (node.type === 'doctype' ||
             node.type === 'comment' ||
@@ -163,7 +185,9 @@ class Transformer {
         }
 
         const pos = node.position;
-        for (const msg of this.messages) {
+        for (let idx = 0; idx < this.messages.length; ++idx) {
+            const msg = this.messages[idx];
+
             if (compareLocation(pos.end, msg.location.start) < 0) {
                 // Note: this.messages were sorted by its start location
                 return null;
@@ -173,19 +197,30 @@ class Transformer {
                 continue;
             }
 
-            return getMarkedParts(node, msg);
+            // Note: Reaches here when a marker is partially or entirely wrapping the text
+
+            return getMarkedParts(node, msg, idx, this.options.className, this.options.idPrefix);
         }
+
         return null;
     }
 }
 
-export default function plugin() {
+interface MessageMarkersOptions {
+    className?: string[];
+    idPrefix?: string;
+}
+
+export default function plugin(_: Unified.Processor, options?: MessageMarkersOptions) {
+    options = options || {};
+
     function transformer(n: Hast.Root, f: Unified.VFile) {
         if (f.messages.length === 0) {
             return;
         }
-        new Transformer(n, f).transform();
+        new Transformer(n, f, options).transform();
     }
+
     return transformer;
 }
 
