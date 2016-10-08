@@ -14,8 +14,21 @@ interface AppConfig {
     drawer?: {
         responsive: boolean;
     };
-    linter: string;
-    lint_options: Object | null;
+    linter: {
+        remark_lint: {
+            enabled: boolean;
+            presets: string[],
+            rules: string[],
+        },
+        proselint: {
+            enabled: boolean;
+            // TODO
+        },
+        text_lint: {
+            enabled: boolean;
+            // TODO
+        },
+    };
     menu: {
         visible: boolean;
     };
