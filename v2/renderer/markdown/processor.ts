@@ -9,8 +9,12 @@ import * as lint from 'remark-lint';
 import * as remark2rehype from 'remark-rehype';
 import * as rehype2react from 'rehype-react';
 import * as emoji from 'remark-emoji';
+import * as presetRecommended from 'remark-preset-lint-recommended';
+import * as presetConsistent from 'remark-preset-lint-consistent';
 import marker from './rehype_message_markers';
 import schema from './sanitation_schema';
+
+const rules = Object.assign({}, presetRecommended.plugins.lint, presetConsistent.plugins.lint);
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
@@ -23,7 +27,7 @@ export default class MarkdownProcessor {
         ).use(
             rehype2react, {sanitize: schema}
         ).use(
-            lint, {firstHeadingLevel: true}
+            lint, rules
         ).use(
             emoji, {padSpaceAfter: true}
         ).use([

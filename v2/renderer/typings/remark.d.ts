@@ -209,3 +209,19 @@ declare module 'remark-lint' {
     const plugin: Remark.CompilerPlugin;
     export = plugin;
 }
+declare module 'remark-preset-lint-recommended' {
+    const config: {
+        plugins: {
+            lint: Object;
+        };
+    };
+    export = config;
+}
+declare module 'remark-preset-lint-consistent' {
+    const config: {
+        plugins: {
+            lint: Object;
+        };
+    };
+    export = config;
+}
