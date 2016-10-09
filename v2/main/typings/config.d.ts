@@ -24,7 +24,7 @@ interface AppConfig {
             enabled: boolean;
             // TODO
         },
-        text_lint: {
+        textlint: {
             enabled: boolean;
             // TODO
         },

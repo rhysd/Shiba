@@ -6,12 +6,12 @@ import log from './log';
 
 export default class Ipc {
     static onReceive(c: ChannelFromRenderer, cb: Function) {
-        const subscriber = (_: Electron.IpcMainEvent, ...args: any[]) => {
+        const subscriber = (e: Electron.IpcMainEvent, ...args: any[]) => {
             log.debug('channel:', c, '<---', args);
-            cb.apply(this, args);
+            cb.apply(e, args);
         };
         // Note: Should remember the callback to remove it later?
-        ipc.once(c, subscriber);
+        ipc.on(c, subscriber);
     }
 
     constructor(

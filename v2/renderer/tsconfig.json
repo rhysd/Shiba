@@ -18,6 +18,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "../main/typings/channel.d.ts"
+    "../main/typings/channel.d.ts",
+    "../main/typings/config.d.ts"
   ]
 }

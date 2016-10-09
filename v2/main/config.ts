@@ -3,6 +3,7 @@ import * as path from 'path';
 import {readFileSync, writeFileSync} from 'fs';
 import {app} from 'electron';
 import log from './log';
+import Ipc from './ipc';
 
 export const DEFAULT_CONFIG = {
     linter: {
@@ -15,7 +16,7 @@ export const DEFAULT_CONFIG = {
             enabled: false,
             // TODO
         },
-        text_lint: {
+        textlint: {
             enabled: false,
             // TODO
         },
@@ -74,6 +75,10 @@ function loadConfigFromFile(dir: string): AppConfig | null {
 
 export default function loadAppConfig() {
     return new Promise<AppConfig>(resolve => {
+        if (global.application_config) {
+            return resolve(global.application_config);
+        }
+
         const dir = app.getPath('userData');
         const config = loadConfigFromFile(dir);
         if (config !== null) {
@@ -88,13 +93,18 @@ export default function loadAppConfig() {
                 };
             }
             log.debug('Configuration was loaded from', dir, config);
+            global.application_config = config;
             resolve(config);
         } else {
             const file = path.join(dir, 'config.yaml');
             writeFileSync(file, yaml.safeDump(DEFAULT_CONFIG));
             log.info('New configuration file created:', file);
             DEFAULT_CONFIG._config_dir_path = dir;
+            global.application_config = DEFAULT_CONFIG;
             resolve(DEFAULT_CONFIG);
         }
+        Ipc.onReceive('shiba:request-config', function (this: Electron.IpcMainEvent) {
+            this.sender.send('shiba:send-config', global.application_config);
+        });
     });
 }
