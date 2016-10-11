@@ -1,3 +1,5 @@
+import log from '../log';
+
 function compareMessageByStartLocation(l: Unified.VMessage, r: Unified.VMessage): number {
     return compareLocation(l.location.start, r.location.start);
 }
@@ -46,7 +48,7 @@ function getMarkedParts(
     function proceed(dest: Unist.Location) {
         while (line < dest.line || col < dest.column) {
             if (index >= max_index) {
-                console.error('Unexpected end of text:', node, msg, 'line:', line, 'col:', col, 'index:', index);
+                log.error('Unexpected end of text:', node, msg, 'line:', line, 'col:', col, 'index:', index);
                 return false;
             }
             next_char();

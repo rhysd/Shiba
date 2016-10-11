@@ -1,5 +1,6 @@
 import * as React from 'react';
 import MarkdownProcessor from '../markdown/processor';
+import log from '../log';
 
 const Processor = new MarkdownProcessor();
 
@@ -26,7 +27,7 @@ export default class MarkdownTest extends React.Component<Props, State> {
         Processor.processFile(file).then(vfile => {
             this.setState({preview: vfile.contents});
         }).catch(err => {
-            console.error(err);
+            log.error(err);
         });
     }
 

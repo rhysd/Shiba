@@ -11,33 +11,34 @@ import * as rehype2react from 'rehype-react';
 import * as emoji from 'remark-emoji';
 import * as presetRecommended from 'remark-preset-lint-recommended';
 import * as presetConsistent from 'remark-preset-lint-consistent';
+import log from '../log';
 import marker from './rehype_message_markers';
 import schema from './sanitation_schema';
 
-const rules = Object.assign({}, presetRecommended.plugins.lint, presetConsistent.plugins.lint);
+const Rules = Object.assign({}, presetRecommended.plugins.lint, presetConsistent.plugins.lint);
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
 
     constructor() {
-        this.compiler = unified({
-            presets: ['lint-recommended'],
-        }).use(
-            parse
-        ).use(
-            rehype2react, {sanitize: schema}
-        ).use(
-            lint, rules
-        ).use(
-            emoji, {padSpaceAfter: true}
-        ).use([
-            slug,
-            headings,
-            github,
-            toc,
-            remark2rehype,
-            marker,
-        ]);
+        log.debug('Lint rules:', Rules);
+        this.compiler =
+            unified().use(
+                parse
+            ).use(
+                rehype2react, {sanitize: schema}
+            ).use(
+                lint, Rules
+            ).use(
+                emoji, {padSpaceAfter: true}
+            ).use([
+                slug,
+                headings,
+                github,
+                toc,
+                remark2rehype,
+                marker,
+            ]);
     }
 
     processFile(file: string): Promise<Unified.VFile> {
@@ -48,6 +49,7 @@ export default class MarkdownProcessor {
                 }
                 resolve(doc);
             });
+            log.debug('Start compiling:', file);
         }).then(doc => this.process(doc));
     }
 
@@ -57,6 +59,7 @@ export default class MarkdownProcessor {
                 if (err) {
                     return reject(err);
                 }
+                log.debug('Compilation succeeded:', vfile);
                 resolve(vfile);
             });
         });
