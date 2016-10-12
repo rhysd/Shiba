@@ -81,18 +81,38 @@ function loadConfigFromFile(dir: string): AppConfig | null {
     }
 }
 
+function validateConfig(config: AppConfig): boolean {
+    if (config.drawer) {
+        log.warn("'drawer' option was removed. It'll be ignored.");
+    }
+    if (config.markdown) {
+        log.warn("Deprecated configration 'markdown' will be converted to 'preview_customize.markdown'");
+        config.preview_customize = {
+            markdown: config.markdown,
+        };
+    }
+
+    return Object.keys(DEFAULT_CONFIG).reduce((acc, k) => {
+        if (config[k] !== undefined) {
+            return acc;
+        }
+        log.warn(`Warning: Key '${k}' is not found in your configuration.`);
+        return false;
+    }, true);
+}
+
 function loadOrCreateConfigFile(dir: string) {
     const config = loadConfigFromFile(dir);
     if (config !== null) {
         config._config_dir_path = dir;
-        if (config.drawer) {
-            log.warn("'drawer' option was removed. It'll be ignored.");
-        }
-        if (config.markdown) {
-            log.warn("Deprecated configration 'markdown' will be converted to 'preview_customize.markdown'");
-            config.preview_customize = {
-                markdown: config.markdown,
-            };
+        if (!validateConfig(config)) {
+            log.warn(`Warning: Invalid configuration was detected. To ensure Shiba to work properly, please recreate your configuration:
+
+  $ cd ${dir}
+  $ mv config.yaml old.yaml
+  $ shiba
+  $ ${process.env.EDITOR || 'vim'} config.yaml old.yaml # Merge old config
+           `);
         }
         log.debug('Configuration was loaded from', dir, config);
         global.application_config = config;
