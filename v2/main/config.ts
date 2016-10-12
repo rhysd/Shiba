@@ -13,13 +13,20 @@ export const DEFAULT_CONFIG = {
             presets: ['lint-consistent'],
             rules: [],
         },
-        proselint: {
+        redpen: {
             enabled: false,
-            // TODO
+            server_command: '',
+            port: 7890,
+            // TODO: Not implemented yet
         },
         textlint: {
             enabled: false,
-            // TODO
+            // TODO: Not implemented yet
+        },
+        proselint: {
+            enabled: false,
+            command: 'proselint',
+            // TODO: Not implemented yet
         },
     },
     file_ext: {

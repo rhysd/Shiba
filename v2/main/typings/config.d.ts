@@ -1,3 +1,27 @@
+interface RemarkLintConfig {
+    enabled: boolean;
+    presets: string[];
+    rules: string[];
+}
+
+interface RedpenConfig {
+    enabled: boolean;
+    server_command: string;
+    port: number;
+    // TODO
+}
+
+interface TextLintConfig {
+    enabled: boolean;
+    // TODO
+}
+
+interface ProseLintConfig {
+    enabled: boolean;
+    command: string;
+    // TODO
+}
+
 interface AppConfig {
     file_ext: {
         markdown: string[];
@@ -15,19 +39,10 @@ interface AppConfig {
         responsive: boolean;
     };
     linter: {
-        remark_lint: {
-            enabled: boolean;
-            presets: string[],
-            rules: string[],
-        },
-        proselint: {
-            enabled: boolean;
-            // TODO
-        },
-        textlint: {
-            enabled: boolean;
-            // TODO
-        },
+        remark_lint: RemarkLintConfig,
+        redpen: RedpenConfig,
+        textlint: TextLintConfig,
+        proselint: ProseLintConfig,
     };
     menu: {
         visible: boolean;
