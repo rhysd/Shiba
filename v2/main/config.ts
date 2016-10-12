@@ -97,6 +97,7 @@ function validateConfig(config: AppConfig): boolean {
             return acc;
         }
         log.warn(`Warning: Key '${k}' is not found in your configuration.`);
+        config[k] = DEFAULT_CONFIG[k];
         return false;
     }, true);
 }
