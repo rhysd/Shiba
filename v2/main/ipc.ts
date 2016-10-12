@@ -30,7 +30,7 @@ export default class Ipc {
     }
 
     private onDogReady() {
-        this.send('shiba:dog-ready', this.dog.id);
+        this.send('shiba:dog-ready', this.dog.id, this.dog.target.path);
     }
 
     private onFileUpdate(file: string, event: 'add' | 'change') {

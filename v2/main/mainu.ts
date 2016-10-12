@@ -98,9 +98,18 @@ function openWindow(config: AppConfig) {
 
 function setupDoghouse([w, c]: [Electron.BrowserWindow, AppConfig]) {
     const doghouse = new Doghouse(c);
+
+    // Note:
+    // First argument is a path to 'electron' binary
+    // Second argument is a path to application directory
+    for (const p of process.argv.slice(2)) {
+        doghouse.newDog(path.normalize(p)).then(dog => new Ipc(dog, w.webContents));
+    }
+
     Ipc.onReceive('shiba:tab-opened', (p: string) => {
         doghouse.newDog(p).then(dog => new Ipc(dog, w.webContents));
     });
+
     Ipc.onReceive('shiba:tab-closed', (id: number) => {
         doghouse.removeDog(id);
         // Note: Should send FIN to renderer?

@@ -16,5 +16,15 @@ export function setupReceivers() {
             config,
         });
     });
+
+    ipc.on('shiba:file-update', (_: any, id: number, file: string, change: string) => {
+        log.debug('shiba:file-update -->', id, file, change);
+        // TODO
+    });
+
+    ipc.on('shiba:dog-ready', (_: any, id: number, watching: string) => {
+        log.debug('shiba:dog-ready -->', id, watching);
+        // TODO
+    });
 }
 
