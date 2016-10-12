@@ -11,7 +11,7 @@ send('shiba:request-config');
 
 ReactDOM.render(
     <Provider store={Store}>
-        <MarkdownTest/>,
+        <MarkdownTest/>
     </Provider>,
     document.getElementById('shiba-app')
 );

@@ -1,24 +1,24 @@
 interface RemarkLintConfig {
-    enabled: boolean;
-    presets: string[];
-    rules: string[];
+    enabled?: boolean;
+    presets?: string[];
+    rules?: string[];
 }
 
 interface RedpenConfig {
-    enabled: boolean;
-    server_command: string;
-    port: number;
+    enabled?: boolean;
+    server_command?: string;
+    port?: number;
     // TODO
 }
 
 interface TextLintConfig {
-    enabled: boolean;
+    enabled?: boolean;
     // TODO
 }
 
 interface ProseLintConfig {
-    enabled: boolean;
-    command: string;
+    enabled?: boolean;
+    command?: string;
     // TODO
 }
 
@@ -39,10 +39,10 @@ interface AppConfig {
         responsive: boolean;
     };
     linter: {
-        remark_lint: RemarkLintConfig,
-        redpen: RedpenConfig,
-        textlint: TextLintConfig,
-        proselint: ProseLintConfig,
+        remark_lint?: RemarkLintConfig,
+        redpen?: RedpenConfig,
+        textlint?: TextLintConfig,
+        proselint?: ProseLintConfig,
     };
     menu: {
         visible: boolean;

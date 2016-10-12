@@ -15,23 +15,29 @@ import log from '../log';
 import marker from './rehype_message_markers';
 import schema from './sanitation_schema';
 
-const Rules = Object.assign({}, presetRecommended.plugins.lint, presetConsistent.plugins.lint);
+const DEFAULT_RULES = Object.assign({}, presetRecommended.plugins.lint, presetConsistent.plugins.lint);
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
+    config: RemarkLintConfig;
 
-    constructor() {
-        log.debug('Lint rules:', Rules);
+    constructor(conf?: RemarkLintConfig | null) {
+        this.config = conf || {};
+
+        let rules = DEFAULT_RULES;
+        if (this.config.rules && this.config.rules.length > 0) {
+            rules = this.config.rules;
+        }
+
+        this.compiler = unified().use(parse).use(rehype2react, {sanitize: schema});
+
+        if (this.config.enabled) {
+            log.debug('remark-lint enabled:', rules);
+            this.compiler = this.compiler.use(lint, rules);
+        }
+
         this.compiler =
-            unified().use(
-                parse
-            ).use(
-                rehype2react, {sanitize: schema}
-            ).use(
-                lint, Rules
-            ).use(
-                emoji, {padSpaceAfter: true}
-            ).use([
+            this.compiler.use(emoji, {padSpaceAfter: true}).use([
                 slug,
                 headings,
                 github,

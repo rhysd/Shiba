@@ -123,8 +123,24 @@ function loadOrCreateConfigFile(dir: string) {
         log.info('New configuration file created:', file);
         DEFAULT_CONFIG._config_dir_path = dir;
         global.application_config = DEFAULT_CONFIG;
-        return config;
+        return DEFAULT_CONFIG;
     }
+}
+
+function startWatchingConfig(dir: string) {
+    chokidar.watch(path.join(dir, 'config.(yaml|json)'), {
+        ignoreInitial: true,
+        persistent: true,
+    }).on('add', () => {
+        const config = loadOrCreateConfigFile(dir);
+        log.debug('Configuration was update. Will send a new configuration to renderer process', config);
+        const wins = BrowserWindow.getAllWindows();
+        if (wins.length === 0) {
+            log.warn('No browser window was found! Updating configuration will be skipped');
+            return;
+        }
+        wins[0].webContents.send('shiba:send-config', config);
+    });
 }
 
 export default function loadAppConfig() {
@@ -139,18 +155,6 @@ export default function loadAppConfig() {
             this.sender.send('shiba:send-config', global.application_config);
         });
 
-        chokidar.watch(path.join(dir, 'config.(yaml|json)'), {
-            ignoreInitial: true,
-            persistent: true,
-        }).on('add', () => {
-            const config = loadOrCreateConfigFile(dir);
-            log.debug('Configuration was update. Will send a new configuration to renderer process', config);
-            const wins = BrowserWindow.getAllWindows();
-            if (wins.length === 0) {
-                log.warn('No browser window was found! Updating configuration will be skipped');
-                return;
-            }
-            wins[0].webContents.send('shiba:send-config', config);
-        });
+        process.nextTick(() => startWatchingConfig(dir));
     });
 }

@@ -1,8 +1,9 @@
 export enum ActionKind {
-    Unknown,
+    SetConfig,
 }
 
 export type ActionType = {
-    type: ActionKind.Unknown,
+    type: ActionKind.SetConfig;
+    config: AppConfig;
 };
 
