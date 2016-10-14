@@ -19,19 +19,21 @@ const DEFAULT_RULES = Object.assign({}, presetRecommended.plugins.lint, presetCo
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
-    config: RemarkLintConfig;
 
-    constructor(conf?: RemarkLintConfig | null) {
-        this.config = conf || {};
-
+    constructor(public config: RemarkLintConfig = {}) {
         let rules = DEFAULT_RULES;
-        if (this.config.rules && this.config.rules.length > 0) {
-            rules = this.config.rules;
+        if (config.rules && config.rules.length > 0) {
+            rules = config.rules;
         }
+
+        // TODO:
+        // Handle presets.  Users finally should be able to use
+        // their favorite presets by installing remark-presets-lint-*
+        // to data directory.
 
         this.compiler = unified().use(parse).use(rehype2react, {sanitize: schema});
 
-        if (this.config.enabled) {
+        if (config.enabled) {
             log.debug('remark-lint enabled:', rules);
             this.compiler = this.compiler.use(lint, rules);
         }

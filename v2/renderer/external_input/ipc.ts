@@ -24,7 +24,15 @@ export function setupReceivers() {
 
     ipc.on('shiba:dog-ready', (_: any, id: number, watching: string) => {
         log.debug('shiba:dog-ready -->', id, watching);
-        // TODO
+        Store.dispatch({
+            type: ActionKind.NewTab,
+            config: {}, // TODO: Get the directory/file local configuration
+            id,
+            path: watching,
+        });
+        // Note:
+        // We can't render preview at first time here because the path may be
+        // directory. In the case, we can't determine which file should be rendered.
     });
 }
 
