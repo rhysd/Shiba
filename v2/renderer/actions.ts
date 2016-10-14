@@ -1,3 +1,5 @@
+import {Tab} from './reducers/tabs';
+
 export enum ActionKind {
     SetConfig,
     NewTab,
@@ -8,8 +10,6 @@ export type ActionType = {
     config: AppConfig;
 } | {
     type: ActionKind.NewTab;
-    config: RemarkLintConfig;
-    id: number;
-    path: string;
+    tab: Tab;
 };
 

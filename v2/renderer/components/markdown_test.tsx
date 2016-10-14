@@ -1,4 +1,5 @@
 import * as React from 'react';
+import PathDialog from './path_dialog';
 import MarkdownProcessor from '../markdown/processor';
 import log from '../log';
 
@@ -12,15 +13,12 @@ interface State {
 }
 
 export default class MarkdownTest extends React.Component<Props, State> {
-    refs: {
-        input: HTMLInputElement;
-    };
-
     constructor(props: Props) {
         super(props);
         this.state = {
             preview: null,
         };
+        this.showPreview = this.showPreview.bind(this);
     }
 
     showPreview(file: string) {
@@ -32,18 +30,14 @@ export default class MarkdownTest extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        this.refs.input.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                const i = e.target as HTMLInputElement;
-                this.showPreview(i.value);
-            }
-        });
         this.showPreview('./foo.md');
     }
 
     render() {
         return <div>
-            <input ref="input" />
+            <PathDialog fileExts={['md', 'markdown', 'mkd']} onOpen={this.showPreview}>
+                <button>Choose Path</button>
+            </PathDialog>
             <div className="markdown-body">
                 {this.state.preview}
             </div>

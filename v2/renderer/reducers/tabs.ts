@@ -15,6 +15,7 @@ export type Tabs = Map<number, Tab>;
 export interface TabsState {
     currentId: number | null;
     transformConfig: RemarkLintConfig | null;
+    mdExtensions: string[];
     tabs: Tabs;
 }
 
@@ -22,6 +23,7 @@ export const DefaultTabsState = {
     currentId: null,
     tabs: Map<number, Tab>(),
     transformConfig: null,
+    mdExtensions: [],
 } as TabsState;
 
 export default function tabs(state: TabsState = DefaultTabsState, action: ActionType): TabsState {
@@ -29,19 +31,13 @@ export default function tabs(state: TabsState = DefaultTabsState, action: Action
         case ActionKind.SetConfig: {
             return Object.assign({}, state, {
                 transformConfig: action.config.linter.remark_lint || {},
+                mdExtensions: action.config.file_ext.markdown || ['md', 'markdown', 'mkd'],
             });
         }
         case ActionKind.NewTab: {
             return Object.assign({}, state, {
-                currentId: action.id, // Focus to new tab
-                tabs: state.tabs.set(action.id, {
-                    id: action.id,
-                    processor: new MarkdownProcessor(
-                        Object.assign({}, (state.transformConfig || {}), action.config)
-                    ),
-                    watchingPath: action.path,
-                    preview: null,
-                }),
+                currentId: action.tab.id, // Focus to new tab
+                tabs: state.tabs.set(action.tab.id, action.tab),
             });
         }
         default:

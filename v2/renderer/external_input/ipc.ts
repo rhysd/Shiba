@@ -1,7 +1,10 @@
+import * as fs from 'fs';
 import {ipcRenderer} from 'electron';
+import {ReactElement} from 'react';
 import log from '../log';
 import Store from '../store';
 import {ActionKind} from '../actions';
+import MarkdownProcessor from '../markdown/processor';
 
 interface Ipc {
     on(c: ChannelFromMain, callback: Electron.IpcRendererEventListener): this;
@@ -24,15 +27,41 @@ export function setupReceivers() {
 
     ipc.on('shiba:dog-ready', (_: any, id: number, watching: string) => {
         log.debug('shiba:dog-ready -->', id, watching);
-        Store.dispatch({
-            type: ActionKind.NewTab,
-            config: {}, // TODO: Get the directory/file local configuration
+        const default_config = Store.getState().tabs.transformConfig;
+        // TODO: Get the directory/file local configuration
+        const config = Object.assign({}, default_config || {});
+        const processor = new MarkdownProcessor(config);
+        const tab = {
             id,
-            path: watching,
-        });
+            processor,
+            watchingPath: watching,
+            preview: null as ReactElement<any>,
+        };
+
         // Note:
-        // We can't render preview at first time here because the path may be
-        // directory. In the case, we can't determine which file should be rendered.
+        // Should we use lstat to stat symlinks?
+        fs.stat(watching, (err, stats) => {
+            if (err) {
+                log.error('Error on statting path:', watching, 'Error:', err);
+                return;
+            }
+            if (stats.isFile()) {
+                processor.processFile(watching).then(v => {
+                    tab.preview = v.contents;
+                    Store.dispatch({
+                        type: ActionKind.NewTab,
+                        tab,
+                    });
+                });
+            } else if (stats.isDirectory()) {
+                Store.dispatch({
+                    type: ActionKind.NewTab,
+                    tab,
+                });
+            } else {
+                log.error('Watching path is not a file nor a directory:', watching, 'Stats:', stats);
+            }
+        });
     });
 }
 
