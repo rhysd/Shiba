@@ -2,6 +2,8 @@ import * as React from 'react';
 import {connect} from 'react-redux';
 import {State} from '../reducers/root';
 import Markdown from './markdown';
+import SideMenu from './side_menu';
+import Landing from './landing_page';
 
 type AppProps = State & React.Props<App>;
 
@@ -9,12 +11,15 @@ export class App extends React.PureComponent<AppProps, {}> {
     render() {
         const {tabs} = this.props;
         if (tabs.currentId === null) {
-            return <div>Nothing to watch. Landing page (TODO)</div>;
+            return <Landing/>;
         }
 
         const preview = tabs.previews.get(tabs.currentId);
         return (
-            <Markdown preview={preview}/>
+            <div className="app-root">
+                <SideMenu/>
+                <Markdown preview={preview}/>
+            </div>
         );
     }
 }

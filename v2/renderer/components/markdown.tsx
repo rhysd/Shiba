@@ -10,8 +10,10 @@ export default class Markdown extends React.PureComponent<MarkdownProps, {}> {
         if (this.props.preview.contents === null) {
             return <div>Watching directory.</div>;
         }
-        return <div className="markdown-body">
-            {this.props.preview.contents}
+        return <div className="markdown-preview">
+            <div className="markdown-body">
+                {this.props.preview.contents}
+            </div>
         </div>;
     }
 }
