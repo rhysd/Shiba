@@ -1,5 +1,5 @@
 import {ReactElement} from 'react';
-import {Tab} from './reducers/tabs';
+import {Preview} from './reducers/tabs';
 
 export enum ActionKind {
     SetConfig,
@@ -12,10 +12,10 @@ export type ActionType = {
     config: AppConfig;
 } | {
     type: ActionKind.NewTab;
-    tab: Tab;
+    preview: Preview;
 } | {
     type: ActionKind.UpdatePreview;
     id: number;
-    preview: ReactElement<any> | null;  // When the updated tab is in background, rendering preview will be skipped as null.
+    contents: ReactElement<any> | null;  // When the updated tab is in background, rendering preview will be skipped as null.
 };
 

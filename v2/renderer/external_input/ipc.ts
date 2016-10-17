@@ -24,27 +24,27 @@ export function setupReceivers() {
         log.debug('shiba:file-update -->', id, file, change);
 
         const tabs = Store.getState().tabs;
-        const tab = tabs.tabs.get(id);
-        if (!tab) {
-            log.error('Invalid ID was updated: id', id, 'tabs:', tabs.tabs);
+        const preview = tabs.previews.get(id);
+        if (!preview) {
+            log.error('Invalid ID was updated: id', id, 'previews:', tabs.previews);
             return;
         }
 
         const action = {
-            type: ActionKind.NewTab,
+            type: ActionKind.UpdatePreview,
             id,
-            preview: null as ReactElement<any>,
+            contents: null as ReactElement<any>,
         };
 
-        if (tab.id !== tabs.currentId) {
-            log.debug('File updated but not a current id tab. Updated:', tab.id, 'Curent:', tabs.currentId);
+        if (preview.id !== tabs.currentId) {
+            log.debug('File updated but not a current id preview. Updated:', preview.id, 'Curent:', tabs.currentId);
             Store.dispatch(action);
             return;
         }
 
-        tab.processor.processFile(file).then(v => {
+        preview.processor.processFile(file).then(v => {
             log.debug('Converted new preview for file:', file);
-            action.preview = v.contents;
+            action.contents = v.contents;
             Store.dispatch(action);
         });
         // TODO: Error handling?
@@ -56,11 +56,14 @@ export function setupReceivers() {
         // TODO: Get the directory/file local configuration
         const config = Object.assign({}, default_config || {});
         const processor = new MarkdownProcessor(config);
-        const tab = {
-            id,
-            processor,
-            watchingPath: watching,
-            preview: null as ReactElement<any>,
+        const action = {
+            type: ActionKind.NewTab,
+            preview: {
+                id,
+                processor,
+                watchingPath: watching,
+                contents: null as ReactElement<any>,
+            },
         };
 
         // Note:
@@ -72,17 +75,11 @@ export function setupReceivers() {
             }
             if (stats.isFile()) {
                 processor.processFile(watching).then(v => {
-                    tab.preview = v.contents;
-                    Store.dispatch({
-                        type: ActionKind.NewTab,
-                        tab,
-                    });
+                    action.preview.contents = v.contents;
+                    Store.dispatch(action);
                 });
             } else if (stats.isDirectory()) {
-                Store.dispatch({
-                    type: ActionKind.NewTab,
-                    tab,
-                });
+                Store.dispatch(action);
             } else {
                 log.error('Watching path is not a file nor a directory:', watching, 'Stats:', stats);
             }

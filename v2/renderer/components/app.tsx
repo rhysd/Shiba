@@ -12,9 +12,9 @@ export class App extends React.PureComponent<AppProps, {}> {
             return <div>Nothing to watch. Landing page (TODO)</div>;
         }
 
-        const tab = tabs.tabs.get(tabs.currentId);
+        const preview = tabs.previews.get(tabs.currentId);
         return (
-            <Markdown tab={tab}/>
+            <Markdown preview={preview}/>
         );
     }
 }

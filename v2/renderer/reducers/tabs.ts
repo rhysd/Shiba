@@ -3,25 +3,25 @@ import {ReactElement} from 'react';
 import {ActionType, ActionKind} from '../actions';
 import MarkdownProcessor from '../markdown/processor';
 
-export interface Tab {
+export interface Preview {
     id: number | null;
     processor: MarkdownProcessor;
     watchingPath: string;
-    preview: ReactElement<any> | null;
+    contents: ReactElement<any> | null;
 }
 
-export type Tabs = Map<number, Tab>;
+export type Previews = Map<number, Preview>;
 
 export interface TabsState {
     currentId: number | null;
     transformConfig: RemarkLintConfig | null;
     mdExtensions: string[];
-    tabs: Tabs;
+    previews: Previews;
 }
 
 export const DefaultTabsState = {
     currentId: null,
-    tabs: Map<number, Tab>(),
+    previews: Map<number, Preview>(),
     transformConfig: null,
     mdExtensions: [],
 } as TabsState;
@@ -36,16 +36,16 @@ export default function tabs(state: TabsState = DefaultTabsState, action: Action
         }
         case ActionKind.NewTab: {
             return Object.assign({}, state, {
-                currentId: action.tab.id, // Focus to new tab
-                tabs: state.tabs.set(action.tab.id, action.tab),
+                currentId: action.preview.id, // Focus to new tab
+                previews: state.previews.set(action.preview.id, action.preview),
             });
         }
         case ActionKind.UpdatePreview: {
             return Object.assign({}, state, {
-                tabs: state.tabs.set(
+                previews: state.previews.set(
                     action.id,
-                    Object.assign({}, state.tabs.get(action.id), {
-                        preview: action.preview,
+                    Object.assign({}, state.previews.get(action.id), {
+                        contents: action.contents,
                     }),
                 ),
             });

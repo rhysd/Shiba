@@ -1,17 +1,17 @@
 import * as React from 'react';
-import {Tab} from '../reducers/tabs';
+import {Preview} from '../reducers/tabs';
 
 interface MarkdownProps extends React.Props<Markdown> {
-    tab: Tab;
+    preview: Preview;
 }
 
 export default class Markdown extends React.PureComponent<MarkdownProps, {}> {
     render() {
-        if (this.props.tab.preview === null) {
+        if (this.props.preview.contents === null) {
             return <div>Watching directory.</div>;
         }
         return <div className="markdown-body">
-            {this.props.tab.preview}
+            {this.props.preview.contents}
         </div>;
     }
 }
