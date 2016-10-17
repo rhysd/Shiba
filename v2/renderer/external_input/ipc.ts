@@ -22,7 +22,32 @@ export function setupReceivers() {
 
     ipc.on('shiba:file-update', (_: any, id: number, file: string, change: string) => {
         log.debug('shiba:file-update -->', id, file, change);
-        // TODO
+
+        const tabs = Store.getState().tabs;
+        const tab = tabs.tabs.get(id);
+        if (!tab) {
+            log.error('Invalid ID was updated: id', id, 'tabs:', tabs.tabs);
+            return;
+        }
+
+        const action = {
+            type: ActionKind.NewTab,
+            id,
+            preview: null as ReactElement<any>,
+        };
+
+        if (tab.id !== tabs.currentId) {
+            log.debug('File updated but not a current id tab. Updated:', tab.id, 'Curent:', tabs.currentId);
+            Store.dispatch(action);
+            return;
+        }
+
+        tab.processor.processFile(file).then(v => {
+            log.debug('Converted new preview for file:', file);
+            action.preview = v.contents;
+            Store.dispatch(action);
+        });
+        // TODO: Error handling?
     });
 
     ipc.on('shiba:dog-ready', (_: any, id: number, watching: string) => {

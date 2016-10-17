@@ -40,6 +40,16 @@ export default function tabs(state: TabsState = DefaultTabsState, action: Action
                 tabs: state.tabs.set(action.tab.id, action.tab),
             });
         }
+        case ActionKind.UpdatePreview: {
+            return Object.assign({}, state, {
+                tabs: state.tabs.set(
+                    action.id,
+                    Object.assign({}, state.tabs.get(action.id), {
+                        preview: action.preview,
+                    }),
+                ),
+            });
+        }
         default:
             return state;
     }
