@@ -167,6 +167,11 @@ declare namespace Remark {
     export interface ParserPlugin {
         (processor: Unified.Processor, options: Unified.Options): Unified.Processor;
     }
+    export interface Preset {
+        plugins: {
+            lint: Object;
+        };
+    }
 }
 
 declare module 'remark' {
@@ -210,18 +215,10 @@ declare module 'remark-lint' {
     export = plugin;
 }
 declare module 'remark-preset-lint-recommended' {
-    const config: {
-        plugins: {
-            lint: Object;
-        };
-    };
+    const config: Remark.Preset;
     export = config;
 }
 declare module 'remark-preset-lint-consistent' {
-    const config: {
-        plugins: {
-            lint: Object;
-        };
-    };
+    const config: Remark.Preset;
     export = config;
 }

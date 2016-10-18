@@ -1,10 +1,12 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import {ipcRenderer} from 'electron';
 import {ReactElement} from 'react';
 import log from '../log';
 import Store from '../store';
 import {ActionKind} from '../actions';
-import MarkdownProcessor from '../markdown/processor';
+import {createProcessor} from '../markdown/processor';
+import {loadUserInstalledPresets} from '../markdown/preset_loader';
 
 interface Ipc {
     on(c: ChannelFromMain, callback: Electron.IpcRendererEventListener): this;
@@ -18,6 +20,8 @@ export function setupReceivers() {
             type: ActionKind.SetConfig,
             config,
         });
+        // Note: Optimization: Load remark lint presets in advance
+        loadUserInstalledPresets();
     });
 
     ipc.on('shiba:file-update', (_: any, id: number, file: string, change: string) => {
@@ -52,19 +56,7 @@ export function setupReceivers() {
 
     ipc.on('shiba:dog-ready', (_: any, id: number, watching: string) => {
         log.debug('shiba:dog-ready -->', id, watching);
-        const default_config = Store.getState().tabs.transformConfig;
-        // TODO: Get the directory/file local configuration
-        const config = Object.assign({}, default_config || {});
-        const processor = new MarkdownProcessor(config);
-        const action = {
-            type: ActionKind.NewTab,
-            preview: {
-                id,
-                processor,
-                watchingPath: watching,
-                contents: null as ReactElement<any>,
-            },
-        };
+        const global_config = Store.getState().tabs.transformConfig;
 
         // Note:
         // Should we use lstat to stat symlinks?
@@ -74,12 +66,31 @@ export function setupReceivers() {
                 return;
             }
             if (stats.isFile()) {
-                processor.processFile(watching).then(v => {
-                    action.preview.contents = v.contents;
-                    Store.dispatch(action);
-                });
+                createProcessor(path.dirname(watching), global_config).then(processor =>
+                    processor.processFile(watching).then(v =>
+                        Store.dispatch({
+                            type: ActionKind.NewTab,
+                            preview: {
+                                id,
+                                processor,
+                                watchingPath: watching,
+                                contents: v.contents,
+                            },
+                        })
+                    )
+                );
             } else if (stats.isDirectory()) {
-                Store.dispatch(action);
+                createProcessor(watching, global_config).then(processor =>
+                    Store.dispatch({
+                        type: ActionKind.NewTab,
+                        preview: {
+                            id,
+                            processor,
+                            watchingPath: watching,
+                            contents: null,
+                        },
+                    })
+                );
             } else {
                 log.error('Watching path is not a file nor a directory:', watching, 'Stats:', stats);
             }

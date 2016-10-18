@@ -9,31 +9,31 @@ import * as lint from 'remark-lint';
 import * as remark2rehype from 'remark-rehype';
 import * as rehype2react from 'rehype-react';
 import * as emoji from 'remark-emoji';
-import * as presetRecommended from 'remark-preset-lint-recommended';
-import * as presetConsistent from 'remark-preset-lint-consistent';
 import log from '../log';
 import marker from './rehype_message_markers';
 import schema from './sanitation_schema';
+import {loadGlobalRules, loadRules} from './preset_loader';
+import loadLocalConfigFor from '../local_config';
 
-const DEFAULT_RULES = Object.assign({}, presetRecommended.plugins.lint, presetConsistent.plugins.lint);
+export function createProcessor(dir: string, global_config: RemarkLintConfig): Promise<MarkdownProcessor> {
+    return loadLocalConfigFor(dir)
+        .then(local_config => {
+            if (local_config === null) {
+                return loadGlobalRules(global_config);
+            } else {
+                return loadRules(local_config.linter || {}, global_config);
+            }
+        })
+        .then(rules => new MarkdownProcessor(rules));
+}
 
 export default class MarkdownProcessor {
     compiler: Unified.Processor;
 
-    constructor(public config: RemarkLintConfig = {}) {
-        let rules = DEFAULT_RULES;
-        if (config.rules && config.rules.length > 0) {
-            rules = config.rules;
-        }
-
-        // TODO:
-        // Handle presets.  Users finally should be able to use
-        // their favorite presets by installing remark-presets-lint-*
-        // to data directory.
-
+    constructor(public rules?: Object) {
         this.compiler = unified().use(parse).use(rehype2react, {sanitize: schema});
 
-        if (config.enabled) {
+        if (rules) {
             log.debug('remark-lint enabled:', rules);
             this.compiler = this.compiler.use(lint, rules);
         }
