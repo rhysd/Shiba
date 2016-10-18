@@ -10,7 +10,7 @@ export const DEFAULT_CONFIG = {
     linter: {
         remark_lint: {
             enabled: true,
-            presets: ['lint-consistent'],
+            presets: ['consistent'],
             rules: [],
         },
         redpen: {

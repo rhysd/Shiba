@@ -16,15 +16,13 @@ import {loadGlobalRules, loadRules} from './preset_loader';
 import loadLocalConfigFor from '../local_config';
 
 export function createProcessor(dir: string, global_config: RemarkLintConfig): Promise<MarkdownProcessor> {
-    return loadLocalConfigFor(dir)
-        .then(local_config => {
-            if (local_config === null) {
-                return loadGlobalRules(global_config);
-            } else {
-                return loadRules(local_config.linter || {}, global_config);
-            }
-        })
-        .then(rules => new MarkdownProcessor(rules));
+    return loadLocalConfigFor(dir).then(local_config => {
+        if (local_config === null) {
+            return loadGlobalRules(global_config);
+        } else {
+            return loadRules(local_config.linter || {}, global_config);
+        }
+    }).then(rules => new MarkdownProcessor(rules));
 }
 
 export default class MarkdownProcessor {

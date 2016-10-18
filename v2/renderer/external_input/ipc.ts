@@ -66,8 +66,10 @@ export function setupReceivers() {
                 return;
             }
             if (stats.isFile()) {
-                createProcessor(path.dirname(watching), global_config).then(processor =>
-                    processor.processFile(watching).then(v =>
+                createProcessor(path.dirname(watching), global_config).then(processor => {
+                    log.debug('Processor created for', watching, processor);
+                    processor.processFile(watching).then(v => {
+                        log.debug('First compilation succeeded for directory:', watching, 'Result:', v);
                         Store.dispatch({
                             type: ActionKind.NewTab,
                             preview: {
@@ -76,11 +78,12 @@ export function setupReceivers() {
                                 watchingPath: watching,
                                 contents: v.contents,
                             },
-                        })
-                    )
-                );
+                        });
+                    });
+                });
             } else if (stats.isDirectory()) {
-                createProcessor(watching, global_config).then(processor =>
+                createProcessor(watching, global_config).then(processor => {
+                    log.debug('Processor created for', watching, processor);
                     Store.dispatch({
                         type: ActionKind.NewTab,
                         preview: {
@@ -89,12 +92,11 @@ export function setupReceivers() {
                             watchingPath: watching,
                             contents: null,
                         },
-                    })
-                );
+                    });
+                });
             } else {
                 log.error('Watching path is not a file nor a directory:', watching, 'Stats:', stats);
             }
         });
     });
 }
-
