@@ -1,7 +1,7 @@
 import {createStore} from 'redux';
 import root from './reducers/root';
-import {ActionType} from './actions';
+import * as A from './actions/type';
 
-export type Dispatch = (action: ActionType) => void;
+export type Dispatch = (action: A.Type) => void;
 
 export default createStore(root);

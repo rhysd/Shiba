@@ -1,6 +1,6 @@
 import {Map} from 'immutable';
 import {ReactElement} from 'react';
-import {ActionType, ActionKind} from '../actions';
+import * as A from '../actions/type';
 import MarkdownProcessor from '../markdown/processor';
 
 export interface Preview {
@@ -26,21 +26,21 @@ export const DefaultTabsState = {
     mdExtensions: [],
 } as TabsState;
 
-export default function tabs(state: TabsState = DefaultTabsState, action: ActionType): TabsState {
+export default function tabs(state: TabsState = DefaultTabsState, action: A.Type): TabsState {
     switch (action.type) {
-        case ActionKind.SetConfig: {
+        case A.Kind.SetConfig: {
             return Object.assign({}, state, {
                 transformConfig: action.config.linter.remark_lint || {},
                 mdExtensions: action.config.file_ext.markdown || ['md', 'markdown', 'mkd'],
             });
         }
-        case ActionKind.NewTab: {
+        case A.Kind.NewTab: {
             return Object.assign({}, state, {
                 currentId: action.preview.id, // Focus to new tab
                 previews: state.previews.set(action.preview.id, action.preview),
             });
         }
-        case ActionKind.UpdatePreview: {
+        case A.Kind.UpdatePreview: {
             return Object.assign({}, state, {
                 previews: state.previews.set(
                     action.id,

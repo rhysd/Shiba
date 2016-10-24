@@ -1,20 +1,20 @@
 import {ReactElement} from 'react';
-import {Preview} from './reducers/tabs';
+import {Preview} from '../reducers/tabs';
 
-export enum ActionKind {
+export enum Kind {
     SetConfig,
     NewTab,
     UpdatePreview,
 }
 
-export type ActionType = {
-    type: ActionKind.SetConfig;
+export type Type = {
+    type: Kind.SetConfig;
     config: AppConfig;
 } | {
-    type: ActionKind.NewTab;
+    type: Kind.NewTab;
     preview: Preview;
 } | {
-    type: ActionKind.UpdatePreview;
+    type: Kind.UpdatePreview;
     id: number;
     contents: ReactElement<any> | null;  // When the updated tab is in background, rendering preview will be skipped as null.
 };
