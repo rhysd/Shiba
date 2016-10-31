@@ -11,7 +11,7 @@ interface Ipc {
 const ipc: Ipc = ipcRenderer;
 
 export function setupReceivers() {
-    ipc.on('shiba:send-config', (_, config) => {
+    ipc.on('shiba:send-config', (_: any, config: AppConfig) => {
         log.debug('shiba:send-config --> ', config);
         Store.dispatch({
             type: A.Kind.SetConfig,

@@ -36,6 +36,44 @@ body {
   padding: 45px;
 }
 
+.landing-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.landing-page__dropdown {
+  box-sizing: border-box;
+  margin: 20px;
+  width: calc(100% - 40px);
+  height: calc(100% - 40px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #eeeeee;
+  color: grey;
+  border: 2px dashed grey;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: xx-large;
+}
+
+.landing-page__paw-icon {
+  cursor: pointer;
+}
+
+.landing-page__message {
+  margin-top: 8px;
+}
+
+.landing-page__message > i {
+  margin: 0 4px;
+}
+
 /* TEMPORARY */
 .rehype-message-marker {
   background-color: #fcdede;

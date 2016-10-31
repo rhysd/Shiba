@@ -11,7 +11,7 @@ export class App extends React.PureComponent<AppProps, {}> {
     render() {
         const {tabs} = this.props;
         if (tabs.currentId === null) {
-            return <Landing/>;
+            return <Landing markdownExts={tabs.mdExtensions}/>;
         }
 
         const preview = tabs.previews.get(tabs.currentId);

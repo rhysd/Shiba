@@ -6,6 +6,7 @@ interface PathDialogProps extends React.Props<PathDialog> {
     defaultPath?: string;
     fileExts: string[];
     onOpen: (path: string) => void;
+    className?: string;
 }
 
 export default class PathDialog extends React.PureComponent<PathDialogProps, {}> {
@@ -48,7 +49,7 @@ export default class PathDialog extends React.PureComponent<PathDialogProps, {}>
 
     render() {
         return (
-            <div className="path-dialog" onClick={this.open}>
+            <div className={this.props.className || 'path-dialog'} onClick={this.open}>
                 {this.props.children}
             </div>
         );
