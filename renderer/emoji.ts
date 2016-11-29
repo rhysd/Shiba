@@ -310,7 +310,6 @@ namespace Emoji {
         'flower_playing_cards',
         'flushed',
         'foggy',
-        'foo.txt',
         'football',
         'fork_and_knife',
         'fountain',
