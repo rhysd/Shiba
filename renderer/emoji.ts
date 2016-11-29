@@ -885,23 +885,16 @@ namespace Emoji {
         'zzz',
     ]);
 
-    const REGEX_EMOJI = /:(\+1|-1|\w+):/g;
-
     export class Replacer {
-        replacer: (m: string, n: string) => string;
-
-        constructor(image_path: string) {
-            this.replacer = (match: string, name: string) => {
-                if (EMOJI.has(name)) {
-                    return `<img src="${image_path}/emoji/${name}.png" title="${match}" height="16px" alt="${name}"></img>`;
-                } else {
-                    return match;
-                }
-            };
+        constructor(public images_dir: string) {
         }
 
-        replaceWithImages(str: string) {
-            return str.replace(REGEX_EMOJI, this.replacer);
+        replaceOne(name: string) {
+            if (EMOJI.has(name)) {
+                return `<img src="${this.images_dir}/emoji/${name}.png" title=":${name}:" height="16px" alt="${name}"></img>`;
+            } else {
+                return name;
+            }
         }
     }
 }

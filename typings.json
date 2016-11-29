@@ -10,7 +10,6 @@
     "highlightjs": "registry:dt/highlightjs#9.1.0+20160317120654",
     "js-yaml": "registry:dt/js-yaml#3.5.2+20160316171810",
     "katex": "registry:dt/katex#0.5.0+20160316155526",
-    "marked": "registry:dt/marked#0.0.0+20160325085301",
     "mocha": "registry:dt/mocha#2.2.5+20160720003353",
     "mousetrap": "registry:dt/mousetrap#1.5.0+20160501152135",
     "node": "registry:dt/node#6.0.0+20161014191813",

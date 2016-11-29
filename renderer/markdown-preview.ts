@@ -15,6 +15,7 @@ let loaded_mermaid = false;
 
 marked.setOptions({
     langPrefix: 'hljs ',
+
     highlight: function(code: string, lang: string): string {
         if (lang === undefined) {
             return code;
@@ -44,6 +45,10 @@ marked.setOptions({
             console.log('Error on highlight: ' + e.message);
             return code;
         }
+    },
+
+    emoji: function(name: string) {
+        return emoji_replacer.replaceOne(name);
     },
 });
 
@@ -78,10 +83,6 @@ class MarkdownRenderer {
             }
 
             return marked.Renderer.prototype.listitem.call(this, text);
-        };
-
-        this.renderer.text = function(text) {
-            return emoji_replacer.replaceWithImages(text);
         };
 
         const re_ext = new RegExp(`\\.(:?${this.markdown_exts.join('|')})(:?$|#)`);
