@@ -885,7 +885,7 @@ namespace Emoji {
         'zzz',
     ]);
 
-    const REGEX_EMOJI = /:(\w+):/g;
+    const REGEX_EMOJI = /:(\+1|-1|\w+):/g;
 
     export class Replacer {
         replacer: (m: string, n: string) => string;
@@ -893,7 +893,7 @@ namespace Emoji {
         constructor(image_path: string) {
             this.replacer = (match: string, name: string) => {
                 if (EMOJI.has(name)) {
-                    return `<img src="${image_path}/emoji/${name}.png" title="${match}" height="16px"></img>`;
+                    return `<img src="${image_path}/emoji/${name}.png" title="${match}" height="16px" alt="${name}"></img>`;
                 } else {
                     return match;
                 }
