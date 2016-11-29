@@ -61,24 +61,13 @@ task :compile => [:build_slim, :build_typescript]
 
 task :build => [:dep, :compile]
 
-task :npm_publish => [:build] do
-  mkdir 'npm-publish'
-  %w(bower.json package.json build bin README.md).each{|p| cp_r p, 'npm-publish' }
-  cd 'npm-publish' do
-    sh 'bower install --production'
-    sh 'npm install --save electron-prebuilt'
-    sh 'npm publish'
-  end
-  rm_rf 'npm-publish'
-end
-
 task :prepare_release => [:build] do
   mkdir_p "archive"
   %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
   cd 'archive' do
     sh 'npm install --production'
     sh 'bower install --production'
-    sh 'npm uninstall electron-prebuilt'
+    sh 'npm uninstall electron'
   end
 end
 
@@ -97,7 +86,7 @@ task :package do
     end
   end
 
-  electron_json = JSON.load(File.open('node_modules/electron-prebuilt/package.json'))
+  electron_json = JSON.load(File.open('node_modules/electron/package.json'))
   electron_ver = electron_json['version']
   app_json = JSON.load(File.open('package.json'))
   ver = app_json['version']
@@ -167,7 +156,7 @@ task :lint do
 end
 
 task :clean do
-  %w(npm-publish build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
+  %w(build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
 end
 
 task :watch do
