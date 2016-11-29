@@ -150,9 +150,8 @@ task :test => [:build_test] do
 end
 
 task :lint do
-  ensure_cmd 'tslint'
   ts = `git ls-files`.split("\n").select{|p| p =~ /.ts$/}.join(' ')
-  sh "tslint #{ts}"
+  sh "#{BIN_DIR}/tslint #{ts}"
 end
 
 task :clean do

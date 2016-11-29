@@ -16,7 +16,7 @@ Polymer({
         onFileChosen: Object,
     },
 
-    ready: function() {
+    ready() {
         const uploader = document.querySelector('.hidden-uploader') as HTMLInputElement;
         uploader.addEventListener('change', (event: Event) => {
             const file: any = (event.target as HTMLInputElement).files[0];

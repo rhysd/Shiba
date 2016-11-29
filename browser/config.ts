@@ -34,6 +34,7 @@ export const default_config = {
     },
     restore_window_state: true,
     shortcuts: {
+        /* tslint:disable:object-literal-key-quotes */
         'j':        'PageDown',
         'k':        'PageUp',
         'down':     'PageDown',
@@ -53,6 +54,7 @@ export const default_config = {
         'r':        'Reload',
         's':        'Search',
         'o':        'Outline',
+        /* tslint:enable:object-literal-key-quotes */
     },
 } as Config;
 

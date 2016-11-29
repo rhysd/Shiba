@@ -5,7 +5,7 @@ sudo: false
 env: CC=gcc-4.9 CXX=g++-4.9
 
 install:
-    - npm install -g tslint typescript bower
+    - npm install -g bower
     - gem install slim
     - tslint --version
     - tsc --version
@@ -20,28 +20,6 @@ script:
     - rake lint
     - rake compile
     - rake test
-
-after_sccess:
-    - |
-        if [[ "$TRAVIS_TAG" ]]; then
-            npm install -g electron-packger
-            rake release
-        fi
-
-deploy:
-    provider: releases
-    api_key: $GITHUB_RELEASE_TOKEN
-    file:
-        - packages/Shiba-darwin-x64.zip
-        - packages/Shiba-linux-ia32.zip
-        - packages/Shiba-linux-x64.zip
-        - packages/Shiba-win32-ia32.zip
-        - packages/Shiba-win32-x64.zip
-    skip_cleanup: true
-    on:
-        repo: rhysd/Shiba
-        tags: true
-        all_branches: true
 
 cache:
     - apt

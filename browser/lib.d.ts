@@ -1,7 +1,7 @@
 /// <reference path="../typings/index.d.ts" />
 /// <reference path="./config.d.ts" />
 
-declare module NodeJS {
+declare namespace NodeJS {
     interface Global {
         config: Config;
     }

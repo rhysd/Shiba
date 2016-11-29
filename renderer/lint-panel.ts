@@ -39,7 +39,7 @@ Polymer({
         },
     },
 
-    attached: function() {
+    attached() {
         if (this.enable_inset && process.platform === 'darwin') {
             const header = document.getElementById('lint-header');
             header.style.textAlign = 'center';
@@ -50,7 +50,7 @@ Polymer({
         ipc.send('shiba:request-lint-rule-url');
     },
 
-    showLintResult: function() {
+    showLintResult() {
         this.already_previewed = true;
         if (!this.messages) {
             return;
@@ -90,7 +90,7 @@ Polymer({
         }
     },
 
-    _showLintRules: function() {
+    _showLintRules() {
         if (this.lint_url === undefined) {
             console.log('No lint URL');
             return;

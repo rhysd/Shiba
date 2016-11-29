@@ -65,7 +65,7 @@ Polymer({
         document.querySelector('.input-workaround').appendChild(this.webview);
     },
 
-    ready: function() {
+    ready() {
         this.button = document.querySelector('.builtin-search-button') as HTMLButtonElement;
         this.button.addEventListener('click', () => {
             this.search(this.input.value);
@@ -110,7 +110,7 @@ Polymer({
         }
     },
 
-    show: function() {
+    show() {
         if (this.displayed) {
             return;
         }
@@ -129,7 +129,7 @@ Polymer({
         }
     },
 
-    dismiss: function() {
+    dismiss() {
         if (!this.displayed) {
             return;
         }
@@ -151,7 +151,7 @@ Polymer({
         }
     },
 
-    search: function(word: string) {
+    search(word: string) {
         if (word === '') {
             this.dismiss();
             return;
@@ -181,7 +181,7 @@ Polymer({
         this.focusOnInput();
     },
 
-    stopSearch: function() {
+    stopSearch() {
         if (!this.searching) {
             return;
         }
@@ -193,7 +193,7 @@ Polymer({
         this.activeIdx = 0;
     },
 
-    setResult: function(no: number, all: number) {
+    setResult(no: number, all: number) {
         this.matches.innerText = `${no}/${all}`;
     },
 });

@@ -16,7 +16,7 @@ let loaded_mermaid = false;
 marked.setOptions({
     langPrefix: 'hljs ',
 
-    highlight: function(code: string, lang: string): string {
+    highlight(code: string, lang: string): string {
         if (lang === undefined) {
             return code;
         }
@@ -47,7 +47,7 @@ marked.setOptions({
         }
     },
 
-    emoji: function(name: string) {
+    emoji(name: string) {
         return emoji_replacer.replaceOne(name);
     },
 });
@@ -210,12 +210,12 @@ Polymer({
 
         exts: {
             type: Array,
-            value: function(){ return [] as string[]; },
+            value() { return [] as string[]; },
         },
 
         currentOutline: {
             type: Array,
-            value: function(){ return [] as Heading[]; },
+            value() { return [] as Heading[]; },
         },
 
         isGithubStyle: {
@@ -228,11 +228,11 @@ Polymer({
         onDocumentUpdated: Object,
     },
 
-    ready: function() {
+    ready() {
         element_env = this; // XXX
     },
 
-    attached: function() {
+    attached() {
         this.renderer = new MarkdownRenderer(this.exts);
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         if (this.fontSize) {
@@ -243,7 +243,7 @@ Polymer({
         }
     },
 
-    _documentUpdated: function(updated_doc) {
+    _documentUpdated(updated_doc) {
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
@@ -256,7 +256,7 @@ Polymer({
         }
     },
 
-    scrollToHeading: function(scroller: Scroller, h: Heading) {
+    scrollToHeading(scroller: Scroller, h: Heading) {
         const elem = document.getElementById(h.hash);
         if (elem) {
             scroller.scrollTop = elem.offsetTop;
