@@ -34,12 +34,7 @@ file "bower_components" do
   sh 'bower install'
 end
 
-file "typings" do
-  raise "'typings' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/typings"
-  sh "#{BIN_DIR}/typings install"
-end
-
-task :dep => [:node_modules, :bower_components, :typings]
+task :dep => [:node_modules, :bower_components]
 
 task :build_slim do
   ensure_cmd 'slimrb'
@@ -50,7 +45,7 @@ task :build_slim do
   end
 end
 
-task :build_typescript => [:typings] do
+task :build_typescript do
   ensure_cmd 'tsc'
   mkdir_p 'build/src/renderer'
   sh 'tsc -p ./browser'
@@ -159,5 +154,5 @@ task :clean do
 end
 
 task :watch do
-  sh 'guard --watchdir browser renderer typings test'
+  sh 'guard --watchdir browser renderer test'
 end

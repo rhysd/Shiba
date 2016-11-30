@@ -64,11 +64,10 @@
     "power-assert": "^1.4.2",
     "touch": "^1.0.0",
     "tslint": "^4.0.2",
-    "typescript": "^2.0.10",
-    "typings": "^2.0.0"
+    "typescript": "^2.0.10"
   },
   "scripts": {
-    "dep": "npm install && bower install && typings install",
+    "dep": "npm install && bower install",
     "build": "rake build",
     "watch": "rake watch",
     "app": "NODE_ENV=development ./bin/cli.js README.md",
