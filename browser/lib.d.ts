@@ -1,4 +1,3 @@
-/// <reference path="../typings/index.d.ts" />
 /// <reference path="./config.d.ts" />
 
 declare namespace NodeJS {

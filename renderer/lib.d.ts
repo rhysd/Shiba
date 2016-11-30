@@ -1,5 +1,3 @@
-/// <reference path="../typings/index.d.ts" />
-
 interface Set<T> {
     has(value: T): boolean;
 }
