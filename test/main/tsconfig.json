@@ -5,7 +5,10 @@
     "outDir": ".",
     "noImplicitAny": true,
     "target": "es5",
-    "sourceMap": true
+    "sourceMap": true,
+    "typeRoots": [
+      "../../node_modules/@types"
+    ]
   },
   "files": [
     "initial_path_test.ts",
