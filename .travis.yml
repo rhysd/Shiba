@@ -7,9 +7,9 @@ env: CC=gcc-4.9 CXX=g++-4.9
 install:
     - npm install -g bower
     - gem install slim
-    - tslint --version
-    - tsc --version
     - rake dep
+    - ./node_modules/.bin/tslint --version
+    - ./node_modules/.bin/tsc --version
 
 before_script:
     - export DISPLAY=:99.0
