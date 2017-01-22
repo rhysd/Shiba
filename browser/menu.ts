@@ -18,7 +18,7 @@ export function build(main_window: Electron.BrowserWindow) {
                 },
                 {
                     label: 'Quit App',
-                    accelerator: 'Command+Q',
+                    accelerator: 'CommandOrControl+Q',
                     click: () => main_window.close(),
                 },
                 {
