@@ -76,7 +76,7 @@ export function build(main_window: Electron.BrowserWindow) {
                 },
             ],
         },
-    ] as Electron.MenuItemOptions[];
+    ] as Electron.MenuItemConstructorOptions[];
 
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);

@@ -44,7 +44,7 @@ Polymer({
             const header = document.getElementById('lint-header');
             header.style.textAlign = 'center';
         }
-        ipc.on('shiba:return-lint-rule-url', (_: Electron.IpcRendererEvent, url: string) => {
+        ipc.on('shiba:return-lint-rule-url', (_: any, url: string) => {
             this.lint_url = url;
         });
         ipc.send('shiba:request-lint-rule-url');

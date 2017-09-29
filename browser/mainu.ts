@@ -35,7 +35,7 @@ function createWindow(config: Config, icon_path: string) {
 
     function getConfigLength(key: 'width'|'height'): number {
         const len = config[key];
-        const default_len = default_config[key];
+        const default_len = default_config[key] as number;
         switch (typeof len) {
             case 'string': {
                 if (len === 'max') {
@@ -44,7 +44,7 @@ function createWindow(config: Config, icon_path: string) {
                 return default_len;
             }
             case 'number': {
-                return len;
+                return len as number;
             }
             default: {
                 return default_len;
@@ -59,7 +59,7 @@ function createWindow(config: Config, icon_path: string) {
         defaultHeight: config_height,
     });
 
-    let options: Electron.BrowserWindowOptions;
+    let options: Electron.BrowserWindowConstructorOptions;
 
     if (config.restore_window_state) {
         options = {
@@ -111,7 +111,7 @@ app.on('ready', function() {
             win = null;
         });
 
-        win.on('will-navigate', function(e: Event, url: string){
+        win.webContents.on('will-navigate', function(e: Event, url: string){
             e.preventDefault();
             shell.openExternal(url);
         });

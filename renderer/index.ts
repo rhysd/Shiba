@@ -262,7 +262,7 @@ function reloadPreview() {
         return paths[0];
     }
 
-    ipc.on('shiba:notify-content-updated', (_: Electron.IpcRendererEvent, kind: string, file: string) => {
+    ipc.on('shiba:notify-content-updated', (_: any, kind: string, file: string) => {
         const reload_button = document.getElementById('reload-button');
         reload_button.classList.add('rotate');
 
@@ -284,7 +284,7 @@ function reloadPreview() {
         }
     });
 
-    ipc.on('shiba:notify-linter-result', (_: Electron.IpcRendererEvent, messages: LintMessage[]) => {
+    ipc.on('shiba:notify-linter-result', (_: any, messages: LintMessage[]) => {
         lint.messages = messages;
         const button = document.getElementById('lint-button');
         if (messages.length === 0) {
@@ -294,7 +294,7 @@ function reloadPreview() {
         }
     });
 
-    ipc.on('return-lint-url', (_: Electron.IpcRendererEvent, url: string) => {
+    ipc.on('return-lint-url', (_: any, url: string) => {
         lint.lint_url = url;
     });
 
