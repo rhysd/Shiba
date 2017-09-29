@@ -2,7 +2,7 @@ import {readFile} from 'fs';
 import {ipcMain as ipc} from 'electron';
 import * as markdownlint from 'markdownlint';
 import * as remark from 'remark';
-import * as remarklint from 'remark-lint';
+import remarkLintConsistent = require('remark-preset-lint-consistent');
 
 interface RemarkFile {
     messages: {
@@ -90,7 +90,8 @@ export default class Linter {
                 return;
             }
 
-            this.remark = this.remark || remark().use(remarklint, this.options);
+            this.remark = this.remark ||
+                remark().use(remarkLintConsistent);
 
             this.remark.process(content, (err: NodeJS.ErrnoException, file: RemarkFile) => {
                 if (err) {

@@ -46,10 +46,9 @@ task :build_slim do
 end
 
 task :build_typescript do
-  ensure_cmd 'tsc'
   mkdir_p 'build/src/renderer'
-  sh 'tsc -p ./browser'
-  sh 'tsc -p ./renderer'
+  sh "#{BIN_DIR}/tsc -p ./browser"
+  sh "#{BIN_DIR}/tsc -p ./renderer"
 end
 
 task :compile => [:build_slim, :build_typescript]

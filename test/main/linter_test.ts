@@ -52,7 +52,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length === 0);
                     done();
-                }
+                },
             );
             linter.lint(ok_doc);
         });
@@ -67,7 +67,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length > 0);
                     done();
-                }
+                },
             );
             linter.lint(not_ok_doc);
         });
@@ -80,7 +80,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length === 0);
                     done();
-                }
+                },
             );
             linter.lint(ok_doc);
         });
@@ -95,7 +95,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length === 0);
                     done();
-                }
+                },
             );
             linter.lint(ok_doc);
         });

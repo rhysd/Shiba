@@ -19,14 +19,13 @@ declare namespace RemarkLint {
     class Linter {}
 }
 
-declare module 'remark-lint' {
-    const remarklint: RemarkLint.Linter;
-    export = remarklint;
+declare module 'remark-preset-lint-consistent' {
+    export = {};
 }
 
 declare namespace Remark {
     interface Processor {
-        use(plugin: RemarkLint.Linter, opts: object): Processor;
+        use(plugin: RemarkLint.Linter, opts?: object): Processor;
         process(content: string, callback: (err: Error, file: any) => void): void;
     }
 }
