@@ -158,7 +158,10 @@ Polymer({
         }
 
         if (!this.searching || this.query !== word) {
+            // XXX: Bug of Electron type definition
+            /* tslint:disable:no-void-expression */
             this.requestId = remote.getCurrentWebContents().findInPage(word);
+            /* tslint:enable:no-void-expression */
             this.searching = true;
             this.query = word;
             this.focusOnInput();
@@ -177,7 +180,10 @@ Polymer({
             forward,
             findNext: true,
         };
+        // XXX: Bug of Electron type definition
+        /* tslint:disable:no-void-expression */
         this.requestId = remote.getCurrentWebContents().findInPage(text, options);
+        /* tslint:enable:no-void-expression */
         this.focusOnInput();
     },
 

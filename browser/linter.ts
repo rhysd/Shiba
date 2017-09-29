@@ -109,7 +109,7 @@ export default class Linter {
                             line: m.line,
                             column: m.column,
                         };
-                    })
+                    }),
                 );
             });
         });

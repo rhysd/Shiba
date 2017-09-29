@@ -59,7 +59,7 @@ export const default_config = {
 } as Config;
 
 function mergeConfig(c1: Config, c2: Config) {
-    for (const k in c2) {
+    for (const k of Object.keys(c2)) {
         const v2 = c2[k];
 
         if (k in c1) {

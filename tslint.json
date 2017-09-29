@@ -1,5 +1,5 @@
+
 {
-  "extends": ["tslint:recommended"],
   "rules": {
     "align": [
       true,
@@ -14,7 +14,7 @@
     ],
     "curly": true,
     "eofline": true,
-    "forin": false,
+    "forin": true,
     "indent": [
       true,
       "spaces"
@@ -22,7 +22,10 @@
     "interface-name": false,
     "jsdoc-format": true,
     "label-position": true,
-    "max-line-length": false,
+    "max-line-length": [
+      true,
+      140
+    ],
     "member-access": false,
     "member-ordering": [
       true,
@@ -44,6 +47,7 @@
       "trace"
     ],
     "no-construct": true,
+    "no-constructor-vars": false,
     "no-debugger": true,
     "no-duplicate-variable": true,
     "no-empty": true,
@@ -56,15 +60,10 @@
     "no-switch-case-fall-through": false,
     "no-trailing-whitespace": true,
     "no-unused-expression": true,
-    "no-unsafe-finally": true,
     "no-use-before-declare": true,
     "no-var-keyword": true,
-    "no-var-requires": true,
+    "no-var-requires": false,
     "object-literal-sort-keys": false,
-    "object-literal-key-quotes": [
-      true,
-      "as-needed"
-    ],
     "one-line": [
       true,
       "check-open-brace",
@@ -75,8 +74,7 @@
     "quotemark": [
       true,
       "single",
-      "avoid-escape",
-      "jsx-double"
+      "avoid-escape"
     ],
     "radix": true,
     "semicolon": true,
@@ -105,6 +103,9 @@
         "variable-declaration": "nospace"
       }
     ],
+    "use-strict": [
+      false
+    ],
     "variable-name": [
       false,
       "check-format",
@@ -115,16 +116,19 @@
       true,
       "check-branch",
       "check-decl",
-      "check-operator",
       "check-separator",
       "check-type"
     ],
-    "no-namespace": false,
-    "ordered-imports": false,
-    "trailing-comma": true,
-    "arrow-parens": false,
-    "no-reference": false,
-    "only-arrow-functions": false,
-    "array-type": false
+    "no-unnecessary-type-assertion": true,
+    "no-floating-promises": true,
+    "no-for-in-array": true,
+    "no-void-expression": [
+      true,
+      "ignore-arrow-function-shorthand"
+    ],
+    "use-default-type-parameter": true,
+    "deprecation": true,
+    "no-unnecessary-qualifier": true,
+    "return-undefined": true
   }
 }

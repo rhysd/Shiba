@@ -46,13 +46,11 @@ export default class WatchDog {
     }
 
     openEyes(pattern: string) {
-        const eyes = chokidar.watch(
-            pattern, {
+        const eyes = chokidar.watch(pattern, {
                 ignoreInitial: true,
                 persistent: true,
                 ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
-            }
-        );
+            });
 
         eyes.on('change', (file: string) => {
             console.log('File changed: ' + file);

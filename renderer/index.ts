@@ -186,7 +186,7 @@ function prepareMarkdownStyle(markdown_config: {
 }) {
     const {css_path, code_theme} = markdown_config;
 
-    const markdown_css_link = document.createElement('link') as HTMLLinkElement;
+    const markdown_css_link = document.createElement('link');
     markdown_css_link.rel = 'stylesheet';
     markdown_css_link.href = css_path;
     document.head.appendChild(markdown_css_link);
@@ -195,7 +195,7 @@ function prepareMarkdownStyle(markdown_config: {
         return;
     }
 
-    const code_theme_css_link = document.createElement('link') as HTMLLinkElement;
+    const code_theme_css_link = document.createElement('link');
     code_theme_css_link.rel = 'stylesheet';
     code_theme_css_link.href = `../../node_modules/highlight.js/styles/${code_theme}.css`;
     document.head.appendChild(code_theme_css_link);
@@ -430,7 +430,8 @@ function reloadPreview() {
     ipc.on('shiba:reload', () => reloadPreview());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
-    fs.exists(user_css_path, (exists: boolean) => {
+    fs.access(user_css_path, err => {
+        const exists = !err;
         if (!exists) {
             return;
         }

@@ -75,7 +75,9 @@ Polymer({
             if (this.voice_src !== '') {
                 const voice = document.querySelector('.voice-notification') as HTMLAudioElement;
                 if (voice) {
-                    voice.play();
+                    voice.play().catch(err => {
+                        console.error('Failed to play voice:', err);
+                    });
                 }
             }
         } else {

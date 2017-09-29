@@ -72,14 +72,22 @@ class MarkdownRenderer {
         this.renderer.listitem = function(text) {
             let matched = text.match(REGEX_CHECKED_LISTITEM);
             if (matched && matched[0]) {
-                return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
-                    + text.slice(matched[0].length) + '</li>\n';
+                return `
+                  <li class="task-list-item">
+                    <input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">
+                    ${text.slice(matched[0].length)}
+                  </li>
+                `;
             }
 
             matched = text.match(REGEX_UNCHECKED_LISTITEM);
             if (matched && matched[0]) {
-                return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
-                    + text.slice(matched[0].length) + '</li>\n';
+                return `
+                  <li class="task-list-item">
+                    <input type="checkbox" class="task-list-item-checkbox" disabled="disabled">
+                    ${text.slice(matched[0].length)}
+                  </li>
+                `;
             }
 
             return marked.Renderer.prototype.listitem.call(this, text);
