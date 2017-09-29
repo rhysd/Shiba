@@ -16,7 +16,7 @@ interface MarkedStatic {
      * @param callback Function called when the markdownString has been fully parsed when using async highlighting
      * @return String of compiled HTML
      */
-    (src: string, callback: Function): string;
+    (src: string, callback: (...args: any[]) => void): string;
 
     /**
      * Compiles markdown to HTML.
@@ -26,7 +26,7 @@ interface MarkedStatic {
      * @param callback Function called when the markdownString has been fully parsed when using async highlighting
      * @return String of compiled HTML
      */
-    (src: string, options?: MarkedOptions, callback?: Function): string;
+    (src: string, options?: MarkedOptions, callback?: (...args: any[]) => void): string;
 
     /**
      * @param src String of markdown source to be compiled
@@ -41,7 +41,7 @@ interface MarkedStatic {
      * @param callback Function called when the markdownString has been fully parsed when using async highlighting
      * @return String of compiled HTML
      */
-    parse(src: string, callback: Function): string;
+    parse(src: string, callback: (...args: any[]) => void): string;
 
     /**
      * Compiles markdown to HTML.
@@ -51,7 +51,7 @@ interface MarkedStatic {
      * @param callback Function called when the markdownString has been fully parsed when using async highlighting
      * @return String of compiled HTML
      */
-    parse(src: string, options?: MarkedOptions, callback?: Function): string;
+    parse(src: string, options?: MarkedOptions, callback?: (...args: any[]) => void): string;
 
     /**
      * @param options Hash of options
@@ -141,7 +141,7 @@ interface MarkedOptions {
     /**
      * A function to highlight code blocks. The function takes three arguments: code, lang, and callback.
      */
-    highlight?: (code: string, lang: string, callback?: Function) => string;
+    highlight?: (code: string, lang: string, callback?: (...args: any[]) => void) => string;
 
     /**
      * Set the prefix for code block classes.

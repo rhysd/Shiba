@@ -81,4 +81,4 @@ export function build(main_window: Electron.BrowserWindow) {
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
     return menu;
-};
+}

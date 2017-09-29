@@ -1,7 +1,7 @@
 /// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
 
-import * as path from 'path';
+import {dirname} from 'path';
 import {unescape} from 'querystring';
 import {shell, remote} from 'electron';
 import * as marked from 'marked';
@@ -10,7 +10,7 @@ import {highlight} from 'highlight.js';
 import * as he from 'he';
 
 let element_env: MarkdownPreview = null; // XXX
-const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
+const emoji_replacer = new Emoji.Replacer(dirname(__dirname) + '/images');
 let loaded_mermaid = false;
 
 marked.setOptions({

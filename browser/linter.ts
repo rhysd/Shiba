@@ -16,9 +16,9 @@ export default class Linter {
     lint: (filename: string) => void;
     lint_url: string;
     remark: any;
-    options: Object;
+    options: object;
 
-    constructor(public sender: Electron.WebContents, name: string, options: Object) {
+    constructor(public sender: Electron.WebContents, name: string, options: object) {
         this.options = options || {};
 
         if (name === 'markdownlint') {

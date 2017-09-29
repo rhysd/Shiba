@@ -263,8 +263,8 @@ function reloadPreview() {
     }
 
     ipc.on('shiba:notify-content-updated', (_: any, kind: string, file: string) => {
-        const reload_button = document.getElementById('reload-button');
-        reload_button.classList.add('rotate');
+        const button = document.getElementById('reload-button');
+        button.classList.add('rotate');
 
         const base = document.querySelector('base');
         base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);

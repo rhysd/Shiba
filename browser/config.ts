@@ -63,7 +63,7 @@ function mergeConfig(c1: Config, c2: Config) {
         const v2 = c2[k];
 
         if (k in c1) {
-            let v1 = c1[k];
+            const v1 = c1[k];
             if (typeof(v1) === 'object' && typeof(v2) === 'object') {
                 mergeConfig(v1, v2);
             }

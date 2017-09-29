@@ -11,12 +11,12 @@ interface String {
 }
 
 declare module 'markdownlint' {
-    const lint: (opts: Object, callback: (err: Error, result: any) => void) => void;
+    const lint: (opts: object, callback: (err: Error, result: any) => void) => void;
     export = lint;
 }
 
 declare namespace RemarkLint {
-    interface Linter { /* TODO */ }
+    class Linter {}
 }
 
 declare module 'remark-lint' {
@@ -26,7 +26,7 @@ declare module 'remark-lint' {
 
 declare namespace Remark {
     interface Processor {
-        use(plugin: RemarkLint.Linter, opts: Object): Processor;
+        use(plugin: RemarkLint.Linter, opts: object): Processor;
         process(content: string, callback: (err: Error, file: any) => void): void;
     }
 }

@@ -3,9 +3,8 @@ interface Set<T> {
 }
 
 interface SetConstructor {
-    new <T>(): Set<T>;
-    new <T>(iterable: any[]): Set<T>;
     prototype: Set<any>;
+    new <T>(iterable?: any[]): Set<T>;
 }
 declare var Set: SetConstructor;
 
@@ -80,7 +79,7 @@ interface FoundInPage {
     finalUpdate: boolean;
     activeMatchOrdinal?: number;
     matches?: number;
-    selectionArea: Object;
+    selectionArea: object;
 }
 
 interface BuiltinSearch extends HTMLElement {
