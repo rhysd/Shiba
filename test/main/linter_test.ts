@@ -9,6 +9,7 @@ import {ipcMain as ipc} from 'electron';
 // Compiled into './test/main/' directory
 const ok_doc = join(__dirname, '..', '..', 'doc', 'ok.md');
 const not_ok_doc = join(__dirname, '..', '..', 'doc', 'notok.md');
+const not_ok_doc_remark = join(__dirname, '..', '..', 'doc', 'notok_remark.md');
 
 context('Linter', () => {
     describe('constructor', () => {
@@ -69,7 +70,7 @@ context('Linter', () => {
                     done();
                 },
             );
-            linter.lint(not_ok_doc);
+            linter.lint(not_ok_doc_remark);
         });
 
         it('lints markdown source', done => {
