@@ -30,8 +30,7 @@ file "node_modules" do
 end
 
 file "bower_components" do
-  ensure_cmd 'bower'
-  sh 'bower install'
+  sh "#{BIN_DIR}/bower install"
 end
 
 task :dep => [:node_modules, :bower_components]
@@ -134,9 +133,8 @@ end
 task :release => [:prepare_release, :package]
 
 task :build_test do
-  ensure_cmd 'tsc'
-  sh 'tsc -p test/main'
-  sh 'tsc -p test/renderer'
+  sh "#{BIN_DIR}/tsc -p test/main"
+  sh "#{BIN_DIR}/tsc -p test/renderer"
 end
 
 task :test => [:build_test] do
