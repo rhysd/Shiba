@@ -145,6 +145,14 @@ task :test => [:build_test] do
   npm_sh 'mocha --require intelli-espower-loader test/main/test/main test/renderer/test/renderer'
 end
 
+task :build_e2e do
+  npm_sh 'tsc -p test/e2e'
+end
+
+task :e2e => [:build_e2e] do
+  npm_sh 'mocha test/e2e --opts test/e2e/mocha.opts'
+end
+
 task :lint do
   npm_sh 'tslint --type-check --project browser/'
   npm_sh 'tslint --type-check --project renderer/'
