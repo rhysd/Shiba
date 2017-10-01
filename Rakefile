@@ -23,14 +23,18 @@ def ensure_cmd(cmd)
   end
 end
 
+def npm_sh(cmd)
+  sh "#{BIN_DIR}/#{cmd}"
+end
+
 file "node_modules" do
   ensure_cmd 'npm'
   sh 'npm install'
-  sh "#{BIN_DIR}/electron-rebuild"
+  npm_sh 'electron-rebuild'
 end
 
 file "bower_components" do
-  sh "#{BIN_DIR}/bower install"
+  npm_sh 'bower install'
 end
 
 task :dep => [:node_modules, :bower_components]
@@ -46,8 +50,8 @@ end
 
 task :build_typescript do
   mkdir_p 'build/src/renderer'
-  sh "#{BIN_DIR}/tsc -p ./browser"
-  sh "#{BIN_DIR}/tsc -p ./renderer"
+  npm_sh 'tsc -p ./browser'
+  npm_sh 'tsc -p ./renderer'
 end
 
 task :compile => [:build_slim, :build_typescript]
@@ -68,7 +72,7 @@ task :package do
   mkdir_p 'packages'
   def release(options)
     cd 'archive' do
-      sh "#{BIN_DIR}/electron-packager ./ Shiba #{options.join ' '}"
+      npm_sh "electron-packager ./ Shiba #{options.join ' '}"
       Dir['Shiba-*'].each do |dst|
         cp_r '../README.md', dst
         cp_r '../docs', dst
@@ -133,17 +137,17 @@ end
 task :release => [:prepare_release, :package]
 
 task :build_test do
-  sh "#{BIN_DIR}/tsc -p test/main"
-  sh "#{BIN_DIR}/tsc -p test/renderer"
+  npm_sh 'tsc -p test/main'
+  npm_sh 'tsc -p test/renderer'
 end
 
 task :test => [:build_test] do
-  sh "#{BIN_DIR}/mocha --require intelli-espower-loader test/main/test/main test/renderer/test/renderer"
+  npm_sh 'mocha --require intelli-espower-loader test/main/test/main test/renderer/test/renderer'
 end
 
 task :lint do
-  sh "#{BIN_DIR}/tslint --type-check --project browser/"
-  sh "#{BIN_DIR}/tslint --type-check --project renderer/"
+  npm_sh 'tslint --type-check --project browser/'
+  npm_sh 'tslint --type-check --project renderer/'
 end
 
 task :clean do
