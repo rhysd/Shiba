@@ -41,6 +41,7 @@ Polymer({
                 header.innerHTML = `${'#'.repeat(h.level)} ${h.html}`;
                 outer.addEventListener('click', () => this.selectItem(i));
                 outer.className = 'toc-section-item';
+                outer.style.cursor = 'pointer'; // XXX: Styles for .toc-section-item does not affect
                 outer.appendChild(header);
                 return outer;
             });
