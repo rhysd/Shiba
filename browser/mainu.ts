@@ -10,15 +10,12 @@ const loading = loadConfig().then(config => [config, new WatchDog(config)]);
 // Show versions {{{
 if (process.argv.indexOf('--version') !== -1) {
     const versions: any = process.versions;
-    console.log(`Shiba v${app.getVersion()}: Rich markdown previewer
-
-Usage:
-  $ shiba [--detach|--version] [{direcotyr/file to watch}]
+    console.log(`Shiba v${app.getVersion()}
 
 Environment:
   OS:       ${process.platform}-${process.arch}
   Electron: ${versions.electron}
-  Chrome:   ${versions.chrome}
+  Chromium: ${versions.chrome}
   Node.js:  ${versions.node}
 `);
     app.quit();
