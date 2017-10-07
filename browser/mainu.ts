@@ -1,8 +1,8 @@
 import * as path from 'path';
 import {app, BrowserWindow, shell, screen} from 'electron';
 import windowState = require('electron-window-state');
-import * as menu from './menu';
 import loadConfig, {default_config} from './config';
+import * as menu from './menu';
 import WatchDog from './watcher';
 
 // Show versions {{{
@@ -77,7 +77,7 @@ function createWindow(config: Config, icon_path: string) {
 
     const win = new BrowserWindow(options);
 
-    win.webContents.once('dom-ready', () => {
+    win.once('ready-to-show', () => {
         win.show();
     });
 
@@ -102,14 +102,14 @@ app.once('ready', () => {
         const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
 
         let win = createWindow(config, icon_path);
+        win.once('closed', function() {
+            win = null;
+        });
+
         const html = 'file://' + path.join(__dirname, '..', '..', 'static', 'index.html');
         win.loadURL(html);
 
         dog.wakeup(win.webContents);
-
-        win.once('closed', function() {
-            win = null;
-        });
 
         win.webContents.on('will-navigate', function(e: Event, url: string){
             e.preventDefault();
