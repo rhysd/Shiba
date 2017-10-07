@@ -5,8 +5,6 @@ import * as menu from './menu';
 import loadConfig, {default_config} from './config';
 import WatchDog from './watcher';
 
-let do_nothing = false;
-
 // Show versions {{{
 if (process.argv.indexOf('--version') !== -1) {
     const versions: any = process.versions;
@@ -18,8 +16,7 @@ Environment:
   Chromium: ${versions.chrome}
   Node.js:  ${versions.node}
 `);
-    app.quit();
-    do_nothing = true;
+    app.exit();
 }
 // }}}
 
@@ -96,51 +93,45 @@ function createWindow(config: Config, icon_path: string) {
     return win;
 }
 
-function start() {
-    const loading = loadConfig().then(config => [config, new WatchDog(config)]);
-    app.once('window-all-closed', function() { app.quit(); });
-    app.once('ready', () => {
-        loading.then((loaded: [Config, WatchDog]) => {
-            const [config, dog] = loaded;
-            global.config = config;
-            const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
+const loading = loadConfig().then(config => [config, new WatchDog(config)]);
+app.once('window-all-closed', function() { app.quit(); });
+app.once('ready', () => {
+    loading.then((loaded: [Config, WatchDog]) => {
+        const [config, dog] = loaded;
+        global.config = config;
+        const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
 
-            let win = createWindow(config, icon_path);
-            const html = 'file://' + path.join(__dirname, '..', '..', 'static', 'index.html');
-            win.loadURL(html);
+        let win = createWindow(config, icon_path);
+        const html = 'file://' + path.join(__dirname, '..', '..', 'static', 'index.html');
+        win.loadURL(html);
 
-            dog.wakeup(win.webContents);
+        dog.wakeup(win.webContents);
 
-            win.once('closed', function() {
-                win = null;
-            });
-
-            win.webContents.on('will-navigate', function(e: Event, url: string){
-                e.preventDefault();
-                shell.openExternal(url);
-            });
-
-            menu.build(win);
-
-            if (process.argv[0].endsWith('Electron') && process.platform === 'darwin') {
-                // Note:
-                // If Shiba is run as npm package, replace dock app icon
-                app.dock.setIcon(icon_path);
-            }
-
-            if (process.env.NODE_ENV === 'development') {
-                win.webContents.once('devtools-opened', () => setImmediate(() => win.focus()));
-                win.webContents.openDevTools({mode: 'detach'});
-            }
-        }).catch(e => {
-            console.error('Unknown error: ', e);
-            app.quit();
+        win.once('closed', function() {
+            win = null;
         });
-    });
-}
 
-if (!do_nothing) {
-    start();
-}
+        win.webContents.on('will-navigate', function(e: Event, url: string){
+            e.preventDefault();
+            shell.openExternal(url);
+        });
+
+        menu.build(win);
+
+        if (process.argv[0].endsWith('Electron') && process.platform === 'darwin') {
+            // Note:
+            // If Shiba is run as npm package, replace dock app icon
+            app.dock.setIcon(icon_path);
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+            win.webContents.once('devtools-opened', () => setImmediate(() => win.focus()));
+            win.webContents.openDevTools({mode: 'detach'});
+        }
+    }).catch(e => {
+        console.error('Unknown error: ', e);
+        app.quit();
+    });
+});
 // }}}
 
