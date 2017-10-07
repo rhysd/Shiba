@@ -73,11 +73,16 @@ function createWindow(config: Config, icon_path: string) {
 
     options.icon = icon_path;
     options.autoHideMenuBar = config.hide_menu_bar;
+    options.show = false;
     if (config.hide_title_bar) {
         options.titleBarStyle = 'hidden-inset';
     }
 
     const win = new BrowserWindow(options);
+
+    win.webContents.once('dom-ready', () => {
+        win.show();
+    });
 
     if (config.restore_window_state) {
         if (win_state.isFullScreen) {
@@ -93,8 +98,8 @@ function createWindow(config: Config, icon_path: string) {
 
 function start() {
     const loading = loadConfig().then(config => [config, new WatchDog(config)]);
-    app.on('window-all-closed', function() { app.quit(); });
-    app.on('ready', () => {
+    app.once('window-all-closed', function() { app.quit(); });
+    app.once('ready', () => {
         loading.then((loaded: [Config, WatchDog]) => {
             const [config, dog] = loaded;
             global.config = config;
@@ -106,7 +111,7 @@ function start() {
 
             dog.wakeup(win.webContents);
 
-            win.on('closed', function() {
+            win.once('closed', function() {
                 win = null;
             });
 
@@ -124,7 +129,7 @@ function start() {
             }
 
             if (process.env.NODE_ENV === 'development') {
-                win.webContents.on('devtools-opened', () => setImmediate(() => win.focus()));
+                win.webContents.once('devtools-opened', () => setImmediate(() => win.focus()));
                 win.webContents.openDevTools({mode: 'detach'});
             }
         }).catch(e => {
