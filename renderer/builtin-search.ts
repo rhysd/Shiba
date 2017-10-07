@@ -58,7 +58,7 @@ Polymer({
             }
         });
         this.webview.addEventListener('dom-ready', () => {
-            this.webview.addEventListener('blur', (e: Event) => {
+            this.webview.addEventListener('blur', (_: Event) => {
                 this.focusOnInput();
             });
         });
@@ -79,7 +79,7 @@ Polymer({
 
         this.matches = document.querySelector('.builtin-search-matches') as HTMLDivElement;
 
-        remote.getCurrentWebContents().on('found-in-page', (event: Event, result: FoundInPage) => {
+        remote.getCurrentWebContents().on('found-in-page', (_: Event, result: FoundInPage) => {
             if (this.requestId !== result.requestId) {
                 return;
             }

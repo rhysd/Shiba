@@ -86,7 +86,7 @@ Polymer({
         }
     },
 
-    _messagesUpdated(messages: LintMessage[]) {
+    _messagesUpdated(_: LintMessage[]) {
         if (this.messages && this.already_previewed) {
             this.showLintResult();
         }

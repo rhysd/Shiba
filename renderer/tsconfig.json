@@ -4,6 +4,10 @@
     "preserveConstEnums": true,
     "outDir": "../build/src/renderer",
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noEmitOnError": true,
     "target": "es5",
     "sourceMap": true
   },

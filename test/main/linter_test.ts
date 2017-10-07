@@ -119,7 +119,7 @@ context('Linter', () => {
 
     it('returns linter\'s rules URL via IPC', done => {
         const c = new DummyWebContents() as any;
-        const unused = new Linter(c, 'remark-lint', {});
+        new Linter(c, 'remark-lint', {});
         c.once('shiba:return-lint-rule-url', (_: any, url: string) => {
             assert(url.indexOf('http') === 0);
             done();

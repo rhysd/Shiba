@@ -153,7 +153,7 @@ function renderHtmlPreview(file: string) {
     // html_preview = document.createElement('webview');
     html_preview.id = 'current-html-preview';
     html_preview.className = 'current-html-preview';
-    html_preview.onload = function(e) {
+    html_preview.onload = function(_) {
         // Note:
         // Adjust
         html_preview.setAttribute('height', html_preview.contentWindow.document.body.scrollHeight + 'px');

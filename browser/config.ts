@@ -79,7 +79,7 @@ export default function loadConfig(): Promise<Config> {
         return Promise.resolve(this.user_config);
     }
 
-    return new Promise<Config>((resolve, reject) => {
+    return new Promise<Config>(resolve => {
         const config_dir = app.getPath('userData');
         const file = join(config_dir, 'config.yml');
         try {
