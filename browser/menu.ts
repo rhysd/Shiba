@@ -9,6 +9,16 @@ export function build(main_window: Electron.BrowserWindow) {
 
             submenu: [
                 {
+                    label: 'About Shiba',
+                    click: () => openAboutWindow({
+                        icon_path: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
+                        copyright: 'Copyright (c) 2015 rhysd',
+                    }),
+                },
+                {
+                    type: 'separator',
+                },
+                {
                     label: 'Restart',
                     click: () => main_window.reload(),
                 },
@@ -17,19 +27,9 @@ export function build(main_window: Electron.BrowserWindow) {
                     click: () => main_window.webContents.openDevTools({mode: 'detach'}),
                 },
                 {
-                    label: 'Quit App',
+                    label: 'Quit',
                     accelerator: 'Command+Q',
                     click: () => main_window.close(),
-                },
-                {
-                    type: 'separator',
-                },
-                {
-                    label: 'About Shiba',
-                    click: () => openAboutWindow({
-                        icon_path: path.join(__dirname, '..', '..', 'images', 'shibainu.png'),
-                        copyright: 'Copyright (c) 2015 rhysd',
-                    }),
                 },
             ],
         },
