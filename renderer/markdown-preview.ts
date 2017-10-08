@@ -11,7 +11,7 @@ import * as he from 'he';
 
 let element_env: MarkdownPreview = null; // XXX
 const emoji_replacer = new Emoji.Replacer(dirname(__dirname) + '/images');
-let loaded_mermaid = false;
+let mermaid: any = undefined;
 
 marked.setOptions({
     langPrefix: 'hljs ',
@@ -22,15 +22,9 @@ marked.setOptions({
         }
 
         if (lang === 'mermaid') {
-            if (!loaded_mermaid) {
-                const script = document.createElement('script');
-                script.src = 'file://' + remote.app.getAppPath() + '/bower_components/mermaid/dist/mermaid.min.js';
-                script.onload = () => {
-                    mermaid.init(undefined, 'div.mermaid');
-                };
-                document.head.appendChild(script);
-
-                loaded_mermaid = true;
+            if (mermaid === undefined) {
+                mermaid = require('mermaid');
+                mermaid.init(undefined, 'div.mermaid');
             }
             return '<div class="mermaid">' + he.encode(code) + '</div>';
         }

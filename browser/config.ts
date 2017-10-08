@@ -29,7 +29,7 @@ export const default_config = {
     hide_menu_bar: true,
     markdown: {
         font_size: '',
-        css_path: '../../bower_components/github-markdown-css/github-markdown.css',
+        css_path: '../../node_modules/github-markdown-css/github-markdown.css',
         code_theme: 'github',
     },
     restore_window_state: true,

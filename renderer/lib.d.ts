@@ -66,8 +66,6 @@ interface PawFilechooser extends HTMLElement {
     onFileChosen: (path: string) => void;
 }
 
-declare var mermaid: any;
-
 interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;

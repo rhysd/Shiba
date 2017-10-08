@@ -1,12 +1,7 @@
 {
   "name": "Shiba",
   "dependencies": {
-    "font-awesome": "~4.5.0",
-    "github-markdown-css": "~2.2.1",
     "iron-flex-layout": "polymerelements/iron-flex-layout#^1.0.0",
-    "katex": "~0.5.1",
-    "mermaid": "~0.5.8",
-    "mousetrap": "~1.5.3",
     "paper-drawer-panel": "PolymerElements/paper-drawer-panel#^1.0.0",
     "paper-header-panel": "PolymerElements/paper-header-panel#^1.0.0",
     "paper-icon-button": "PolymerElements/paper-icon-button#^1.0.0",
