@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export = function(): string {
-    function defaultPath(): string {
+    function defaultPath() {
         const cwd = process.cwd();
         if (process.platform === 'darwin' && cwd === '/') {
             const doc_dir = path.join(process.env.HOME, 'Documents');
@@ -16,8 +16,9 @@ export = function(): string {
     }
 
     // Note:
-    // First argument is a path to Shiba app
-    if (process.argv.length < 2) {
+    // First argument is a path to Electron binary and second one is a path to Shiba app directory.
+    // So argv.length <= 2 means no path was specified.
+    if (process.argv.length <= 2) {
         return defaultPath();
     }
 
@@ -25,6 +26,7 @@ export = function(): string {
     if (fs.existsSync(last_arg)) {
         return path.resolve(last_arg);
     } else {
+        console.log(`Specified path '${last_arg}' not found. Ignored.`);
         return defaultPath();
     }
 };
