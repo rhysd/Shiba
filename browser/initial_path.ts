@@ -7,7 +7,11 @@ function resolveSpecifiedPath(specified: string) {
         return '';
     }
     if (specified[0] === '~') {
-        specified = os.homedir() + specified.slice(1);
+        const home = os.homedir();
+        if (home === '') {
+            return '';
+        }
+        specified = home + specified.slice(1);
     }
     if (!fs.existsSync(specified)) {
         console.log('Path specified in default_watch_path in config.yml does not exist:', specified);
