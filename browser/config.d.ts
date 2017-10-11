@@ -28,6 +28,7 @@ interface Config {
         code_theme: string;
     };
     restore_window_state: boolean;
+    default_watch_path?: string;
     _config_dir_path?: string;  // Set in renderer for cache
     [name: string]: any;
 }

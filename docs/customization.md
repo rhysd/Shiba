@@ -46,6 +46,7 @@ All keys for the YAML configuration file is below (`.` means a nested object):
 | `markdown.css_path`    | Path to css file to load         | Specify CSS file to style a markdown preview    | "/path/to/github-markdown.css" |
 | `markdown.code_theme`  | Color theme for code block       | Specify highlight.js style theme for code block | "github"                       |
 | `restore_window_state` | Restore window size and position | Restores the last window state on start if true | true                           |
+| `default_watch_path`   | Default path watching at startup | Path to directory or file by string             | Not specified                  |
 
 
 ## Customize Keyboard Shortcuts

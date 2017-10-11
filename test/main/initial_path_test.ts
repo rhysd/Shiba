@@ -24,29 +24,29 @@ describe('#initial_path()', () => {
 
     it('returns cwd when no argument is specified in general platform', () => {
         process.argv = [];
-        assert(initial_path() === process.cwd());
+        assert(initial_path('') === process.cwd());
     });
 
     it('returns document directory if started with Shiba.app in darwin', () => {
         if (process.platform === 'darwin') {
             process.argv = [];
             process.chdir('/');
-            assert(/Documents$/.test(initial_path()));
+            assert(/Documents$/.test(initial_path('')));
         }
     });
 
     it('returns the specified path if it exists', () => {
         process.argv = argv('./README.md');
-        assert(initial_path() === path.resolve('./README.md'));
+        assert(initial_path('') === path.resolve('./README.md'));
     });
 
     it('returns default path if specified path does not exist', () => {
         process.argv = argv('/this/file/does/not/exist');
-        assert(initial_path() === process.cwd());
+        assert(initial_path('') === process.cwd());
     });
 
     it('returns the last argument of argv if multiple argument specified', () => {
         process.argv = argv('foo', 'bar', './README.md');
-        assert(initial_path() === path.resolve('./README.md'));
+        assert(initial_path('') === path.resolve('./README.md'));
     });
 });

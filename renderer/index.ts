@@ -11,7 +11,7 @@ const config = remote.getGlobal('config') as Config;
 const home_dir = config.hide_title_bar ?  '' : homedir();
 const on_darwin = process.platform === 'darwin';
 
-let watching_path = remote.require('./initial_path.js')();
+let watching_path = remote.require('./initial_path.js')(config.default_watch_path || '');
 let onPathButtonPushed = function(){ /* do nothing */ };
 let onSearchButtonPushed = function(){ /* do nothing */ };
 let onTOCButtonPushed = function(){ /* do nothing */ };
