@@ -32,6 +32,9 @@ export const default_config = {
         css_path: '../../node_modules/github-markdown-css/github-markdown.css',
         code_theme: 'github',
     },
+    path_watcher: {
+        follow_symlinks: false,
+    },
     restore_window_state: true,
     shortcuts: {
         /* tslint:disable:object-literal-key-quotes */
@@ -74,24 +77,28 @@ function mergeConfig(c1: Config, c2: Config) {
     return c1;
 }
 
+let cache: Config | null = null;
+
 export default function loadConfig(): Promise<Config> {
-    if (this.user_config) {
-        return Promise.resolve(this.user_config);
+    if (cache !== null) {
+        return Promise.resolve(cache);
     }
 
     return new Promise<Config>(resolve => {
         const config_dir = app.getPath('userData');
         const file = join(config_dir, 'config.yml');
         try {
-            this.user_config = loadYAML(readFileSync(file, {encoding: 'utf8'})) as Config;
-            mergeConfig(this.user_config, default_config);
+            cache = loadYAML(readFileSync(file, {encoding: 'utf8'})) as Config;
+            mergeConfig(cache, default_config);
         } catch (e) {
             console.log('No configuration file was found: ' + file);
-            this.user_config = default_config;
+            cache = default_config;
         }
 
-        this.user_config._config_dir_path = config_dir;
+        cache._config_dir_path = config_dir;
 
-        resolve(this.user_config);
+        console.log('useur_config:', cache);
+
+        resolve(cache);
     });
 }

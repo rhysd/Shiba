@@ -28,7 +28,10 @@ interface Config {
         code_theme: string;
     };
     restore_window_state: boolean;
-    default_watch_path?: string;
+    path_watcher: {
+        default_path?: string;
+        follow_symlinks: boolean;
+    };
     _config_dir_path?: string;  // Set in renderer for cache
     [name: string]: any;
 }

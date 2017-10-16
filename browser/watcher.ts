@@ -50,6 +50,7 @@ export default class WatchDog {
                 ignoreInitial: true,
                 persistent: true,
                 ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
+                followSymlinks: !!this.config.path_watcher.follow_symlinks,
             });
 
         eyes.on('change', (file: string) => {
