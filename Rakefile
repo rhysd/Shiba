@@ -143,7 +143,7 @@ task :build_test do
 end
 
 task :test => [:build_test] do
-  npm_sh 'mocha --require intelli-espower-loader test/main/test/main test/renderer/test/renderer'
+  npm_sh 'mocha --exit --require intelli-espower-loader test/main/test/main test/renderer/test/renderer'
 end
 
 task :build_e2e do
@@ -151,7 +151,7 @@ task :build_e2e do
 end
 
 task :e2e => [:build_e2e] do
-  npm_sh 'mocha test/e2e --opts test/e2e/mocha.opts'
+  npm_sh 'mocha --exit test/e2e --opts test/e2e/mocha.opts'
 end
 
 task :lint do

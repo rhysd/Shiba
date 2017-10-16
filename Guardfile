@@ -42,7 +42,7 @@ def tsc(f, dir)
 end
 
 def mocha(f, path)
-  npm_exe(f, 'mocha', '--require', 'intelli-espower-loader', path)
+  npm_exe(f, 'mocha', '--exit', '--require', 'intelli-espower-loader', path)
 end
 
 def slimrb(input, output)
