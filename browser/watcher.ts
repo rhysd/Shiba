@@ -46,11 +46,12 @@ export default class WatchDog {
     }
 
     openEyes(pattern: string) {
+        const followSymlinks = !!(this.config.path_watcher || {} as PathWatcherConfig).follow_symlinks;
         const eyes = chokidar.watch(pattern, {
                 ignoreInitial: true,
                 persistent: true,
                 ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
-                followSymlinks: !!this.config.path_watcher.follow_symlinks,
+                followSymlinks,
             });
 
         eyes.on('change', (file: string) => {

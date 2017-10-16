@@ -1,3 +1,8 @@
+interface PathWatcherConfig {
+    default_path?: string;
+    follow_symlinks: boolean;
+}
+
 interface Config {
     linter: string;
     file_ext: {
@@ -28,10 +33,7 @@ interface Config {
         code_theme: string;
     };
     restore_window_state: boolean;
-    path_watcher: {
-        default_path?: string;
-        follow_symlinks: boolean;
-    };
+    path_watcher: PathWatcherConfig;
     _config_dir_path?: string;  // Set in renderer for cache
     [name: string]: any;
 }
