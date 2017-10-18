@@ -97,8 +97,6 @@ export default function loadConfig(): Promise<Config> {
 
         cache._config_dir_path = config_dir;
 
-        console.log('useur_config:', cache);
-
         resolve(cache);
     });
 }
