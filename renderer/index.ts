@@ -219,6 +219,17 @@ function reloadPreview() {
     document.getElementById('reload-button').classList.add('rotate');
 }
 
+function shouldWatch(file: string) {
+    const ext = path.extname(file).substr(1);
+    for (const kind of Object.keys(config.file_ext)) {
+        const exts = config.file_ext[kind];
+        if (exts.indexOf(ext) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 (function(){
     const lint = getLintArea();
     if (config.voice.enabled) {
@@ -352,6 +363,12 @@ function reloadPreview() {
             console.log('Failed to get the path of dropped file');
             return;
         }
+
+        if (!shouldWatch(p)) {
+            console.log(`Unknown kind of file (checking file extensions), iginored: ${p}`);
+            return;
+        }
+
         watching_path = p;
         ipc.send('shiba:notify-path', p);
         document.title = make_title(p);
