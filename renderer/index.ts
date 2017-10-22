@@ -11,10 +11,11 @@ const config = remote.getGlobal('config') as Config;
 const home_dir = config.hide_title_bar ?  '' : homedir();
 const on_darwin = process.platform === 'darwin';
 
+function noop() { /* do nothing */ }
 let watching_path = remote.require('./initial_path.js')(config.default_watch_path || '');
-let onPathButtonPushed = function(){ /* do nothing */ };
-let onSearchButtonPushed = function(){ /* do nothing */ };
-let onTOCButtonPushed = function(){ /* do nothing */ };
+let onPathButtonPushed = noop;
+let onSearchButtonPushed = noop;
+let onTOCButtonPushed = noop;
 
 function getMainDrawerPanel() {
     return document.getElementById('main-drawer') as MainDrawerPanel;
@@ -230,7 +231,7 @@ function shouldWatch(file: string) {
     return false;
 }
 
-(function(){
+(function() {
     const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;

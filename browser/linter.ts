@@ -28,11 +28,11 @@ export default class Linter {
             this.lint = this.remark_lint;
             this.lint_url = 'https://github.com/wooorm/remark-lint/blob/master/doc/rules.md';
         } else if (name === 'none') {
-            this.lint = function(_){ /* do nothing */ };
+            this.lint = function(_) { /* do nothing */ };
             this.lint_url = '';
         } else {
             console.log(`linter.js: Invalid linter name '${name}'`);
-            this.lint = function(_){ /* do nothing */ };
+            this.lint = function(_) { /* do nothing */ };
             this.lint_url = '';
         }
 

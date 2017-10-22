@@ -54,7 +54,7 @@
     "@types/katex": "0.5.0",
     "@types/mocha": "^2.2.43",
     "@types/mousetrap": "^1.5.34",
-    "@types/node": "8.0.34",
+    "@types/node": "8.0.46",
     "@types/polymer": "^1.2.1",
     "@types/power-assert": "^1.4.29",
     "@types/power-assert-formatter": "^1.4.28",
@@ -69,7 +69,7 @@
     "power-assert": "^1.4.4",
     "spectron": "^3.7.2",
     "touch": "^3.1.0",
-    "tslint": "^5.7.0",
+    "tslint": "^5.8.0",
     "typescript": "^2.5.3"
   },
   "scripts": {

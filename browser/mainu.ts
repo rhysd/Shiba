@@ -111,7 +111,7 @@ app.once('ready', () => {
 
         dog.wakeup(win.webContents);
 
-        win.webContents.on('will-navigate', function(e: Event, url: string){
+        win.webContents.on('will-navigate', function(e: Event, url: string) {
             e.preventDefault();
             shell.openExternal(url);
         });

@@ -155,8 +155,8 @@ task :e2e => [:build_e2e] do
 end
 
 task :lint do
-  npm_sh 'tslint --type-check --project browser/'
-  npm_sh 'tslint --type-check --project renderer/'
+  npm_sh 'tslint --project browser/'
+  npm_sh 'tslint --project renderer/'
 end
 
 task :clean do
