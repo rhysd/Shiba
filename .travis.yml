@@ -1,34 +1,22 @@
 language: node_js
 node_js: stable
-sudo: false
 
-env: CC=gcc-4.9 CXX=g++-4.9
+os:
+    - linux
+dist: trusty
 
 install:
-    - npm install -g bower
     - gem install slim
     - rake dep
     - ./node_modules/.bin/tslint --version
     - ./node_modules/.bin/tsc --version
-
-before_script:
-    - export DISPLAY=:99.0
-    - sh -e /etc/init.d/xvfb start
-    - sleep 3
 
 script:
     - rake lint
     - rake compile
     - rake test
 
-cache:
-    - apt
-
-addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-        packages:
-            - g++-4.9
-            - xvfb
-            - wine
+notifications:
+    email:
+        on_success: change
+        on_failure: change
