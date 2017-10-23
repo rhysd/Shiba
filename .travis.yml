@@ -2,8 +2,10 @@ language: node_js
 node_js: stable
 
 os:
+    - osx
     - linux
 dist: trusty
+osx_image: xcode9
 
 install:
     - gem install slim
