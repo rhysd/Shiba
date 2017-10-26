@@ -171,6 +171,13 @@ function openMarkdownLink(event: MouseEvent) {
         path = path.slice(0, hash_idx);
     }
 
+    if (process.platform === 'win32' && path[0] === '/') {
+        // Chromium convert relative path of 'href' into absolute path.
+        // But on Windows 'foo/bar' is converted into 'file:///C:/foo/bar'.
+        // C:/foo/bar is correct. So strip first '/' here (#37).
+        path = path.slice(1);
+    }
+
     if (element_env.openMarkdownDoc) {
         element_env.openMarkdownDoc(path, event.ctrlKey || event.metaKey);
     } else {
