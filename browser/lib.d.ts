@@ -20,7 +20,8 @@ declare namespace RemarkLint {
 }
 
 declare module 'remark-preset-lint-consistent' {
-    export = {};
+    const plugin: {};
+    export = plugin;
 }
 
 declare namespace Remark {

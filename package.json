@@ -52,9 +52,9 @@
     "@types/highlight.js": "^9.1.10",
     "@types/js-yaml": "^3.9.1",
     "@types/katex": "0.5.0",
-    "@types/mocha": "^2.2.43",
+    "@types/mocha": "^2.2.44",
     "@types/mousetrap": "^1.5.34",
-    "@types/node": "8.0.46",
+    "@types/node": "8.0.47",
     "@types/polymer": "^1.2.1",
     "@types/power-assert": "^1.4.29",
     "@types/power-assert-formatter": "^1.4.28",
@@ -70,7 +70,7 @@
     "spectron": "^3.7.2",
     "touch": "^3.1.0",
     "tslint": "^5.8.0",
-    "typescript": "^2.5.3"
+    "typescript": "^2.6.1"
   },
   "scripts": {
     "dep": "rake dep",
