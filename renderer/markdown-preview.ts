@@ -110,7 +110,7 @@ class MarkdownRenderer {
 
             let onclick = 'cancelClick(event)';
             if (href.startsWith('http://') || href.startsWith('https://')) {
-                onclick = 'openLinkWithExternalBrowser(event)';
+                onclick = `openLinkWithExternalBrowser(event, this.id)`;
             } else if (re_ext.test(href)) {
                 onclick = 'openMarkdownLink(event)';
             } else if (href.indexOf('#') !== -1) {
@@ -158,6 +158,7 @@ function openMarkdownLink(event: MouseEvent) {
         }
         target = target.parentElement as HTMLAnchorElement;
     }
+
     if (target === null) {
         console.log('openMarkdownLink(): No target <a> was found', event);
         return;
@@ -197,11 +198,11 @@ function openHashLink(event: MouseEvent) {
 }
 
 /* tslint:disable:no-unused-variable */
-function openLinkWithExternalBrowser(event: MouseEvent) {
+function openLinkWithExternalBrowser(event: MouseEvent, id: string) {
 /* tslint:enable:no-unused-variable */
     event.preventDefault();
-    const e = event.target as HTMLElement & {src?: string; href?: string};
-    shell.openExternal(e.href ? e.href : e.src);
+    const e = document.getElementById(id) as HTMLAnchorElement;
+    shell.openExternal(e.href);
 }
 
 /* tslint:disable:no-unused-variable */
