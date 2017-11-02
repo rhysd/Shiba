@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-function resolveSpecifiedPath(specified: string) {
+function resolveSpecifiedPath(specified: string): string {
     if (specified === '') {
         return '';
     }

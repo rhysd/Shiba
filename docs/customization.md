@@ -3,7 +3,7 @@ Customization
 
 ## Customize Shiba with YAML
 
-You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is
+You can put `config.yml` (or `config.yaml`) in Shiba's application directory.  Application directory is
 
 - `~/Library/Application\ Support/Shiba` for OS X
 - `~/.config/Shiba` for Linux
