@@ -21,19 +21,25 @@ export default class Linter {
     constructor(public sender: Electron.WebContents, name: string, options: object) {
         this.options = options || {};
 
-        if (name === 'markdownlint') {
+        switch (name) {
+        case 'markdownlint':
             this.lint = this.markdownlint;
             this.lint_url = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
-        } else if (name === 'remark-lint' || name === 'mdast-lint') {
+            break;
+        case 'remark-lint':
+        case 'mdast-lint':
             this.lint = this.remark_lint;
             this.lint_url = 'https://github.com/wooorm/remark-lint/blob/master/doc/rules.md';
-        } else if (name === 'none') {
+            break;
+        case 'none':
             this.lint = function(_) { /* do nothing */ };
             this.lint_url = '';
-        } else {
+            break;
+        default:
             console.log(`linter.js: Invalid linter name '${name}'`);
             this.lint = function(_) { /* do nothing */ };
             this.lint_url = '';
+            break;
         }
 
         ipc.on('shiba:request-lint-rule-url', () => {

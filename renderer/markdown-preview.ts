@@ -61,7 +61,9 @@ class MarkdownRenderer {
         // TODO:
         // 'this' is set to renderer methods automatically so we need to preserve
         // this scope's 'this' as 'self'.
+        /* tslint:disable:no-this-assignment */
         const self = this;
+        /* tslint:enable:no-this-assignment */
 
         this.renderer.listitem = function(text) {
             let matched = text.match(REGEX_CHECKED_LISTITEM);

@@ -11,7 +11,7 @@ function resolveSpecifiedPath(specified: string) {
         if (home === '') {
             return '';
         }
-        specified = home + specified.slice(1);
+        return resolveSpecifiedPath(home + specified.slice(1));
     }
     if (!fs.existsSync(specified)) {
         console.log('Path specified in default_watch_path in config.yml does not exist:', specified);
@@ -20,11 +20,12 @@ function resolveSpecifiedPath(specified: string) {
     return specified;
 }
 
-function defaultPath(specified: string) {
-    specified = resolveSpecifiedPath(specified);
+function defaultPath(user_config_path: string) {
+    const specified = resolveSpecifiedPath(user_config_path);
     if (specified !== '') {
         return specified;
     }
+
     const cwd = process.cwd();
     if (process.platform === 'darwin' && cwd === '/') {
         const doc_dir = path.join(process.env.HOME, 'Documents');
@@ -34,6 +35,7 @@ function defaultPath(specified: string) {
             return path.join(process.resourcesPath, 'README.md');
         }
     }
+
     return cwd;
 }
 

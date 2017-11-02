@@ -37,7 +37,7 @@ function make_title(p: string): string {
     }
 
     if (p.startsWith(home_dir)) {
-        p = `~${p.slice(home_dir.length)}`;
+        return make_title(`~${p.slice(home_dir.length)}`);
     }
 
     return `Shiba (${p})`;
