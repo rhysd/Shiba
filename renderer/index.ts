@@ -50,7 +50,7 @@ function getScroller(): Scroller {
     }
 
     if (selected === 'drawer') {
-        const panel = document.querySelector('paper-header-panel[drawer]') as HeaderPanel;
+        const panel: HeaderPanel = document.querySelector('paper-header-panel[drawer]');
         return panel.scroller;
     } else {
         return document.getElementById('viewer-wrapper');
@@ -375,7 +375,8 @@ function shouldWatch(file: string) {
         document.title = make_title(p);
     });
 
-    (document.querySelector('paw-filechooser') as PawFilechooser).onFileChosen = (file: string) => {
+    const chooser: PawFilechooser = document.querySelector('paw-filechooser');
+    chooser.onFileChosen = (file: string) => {
         watching_path = file;
         ipc.send('shiba:notify-path', file);
         document.title = make_title(file);

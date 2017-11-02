@@ -2,7 +2,7 @@
 
 /* tslint:disable no-unused-variable*/
 function launchFileChooser() {
-    const uploader = document.querySelector('.hidden-uploader') as HTMLInputElement;
+    const uploader: HTMLInputElement = document.querySelector('.hidden-uploader');
     if (uploader) {
         uploader.click();
     }
@@ -17,7 +17,7 @@ Polymer({
     },
 
     ready() {
-        const uploader = document.querySelector('.hidden-uploader') as HTMLInputElement;
+        const uploader: HTMLInputElement = document.querySelector('.hidden-uploader');
         uploader.addEventListener('change', (event: Event) => {
             const file: any = (event.target as HTMLInputElement).files[0];
             if (file !== undefined && file.path !== undefined) {

@@ -73,7 +73,7 @@ Polymer({
             header.innerText = 'Error';
             header.setAttribute('error', '');
             if (this.voice_src !== '') {
-                const voice = document.querySelector('.voice-notification') as HTMLAudioElement;
+                const voice: HTMLAudioElement = document.querySelector('.voice-notification');
                 if (voice) {
                     voice.play().catch(err => {
                         console.error('Failed to play voice:', err);

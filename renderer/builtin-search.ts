@@ -66,18 +66,18 @@ Polymer({
     },
 
     ready() {
-        this.button = document.querySelector('.builtin-search-button') as HTMLButtonElement;
+        this.button = document.querySelector('.builtin-search-button');
         this.button.addEventListener('click', () => {
             this.search(this.input.value);
         });
 
-        this.body = document.querySelector('.builtin-search-body') as HTMLDivElement;
+        this.body = document.querySelector('.builtin-search-body');
         this.body.classList.add('animated');
         if (this.displayed) {
             this.body.style.display = 'block';
         }
 
-        this.matches = document.querySelector('.builtin-search-matches') as HTMLDivElement;
+        this.matches = document.querySelector('.builtin-search-matches');
 
         remote.getCurrentWebContents().on('found-in-page', (_: Event, result: FoundInPage) => {
             if (this.requestId !== result.requestId) {
@@ -91,11 +91,11 @@ Polymer({
             }
         });
 
-        this.up_button = document.querySelector('.builtin-search-up') as HTMLButtonElement;
+        this.up_button = document.querySelector('.builtin-search-up');
         this.up_button.addEventListener('click', () => this.searchNext(this.query, false));
-        this.down_button = document.querySelector('.builtin-search-down') as HTMLButtonElement;
+        this.down_button = document.querySelector('.builtin-search-down');
         this.down_button.addEventListener('click', () => this.searchNext(this.query, true));
-        this.close_button = document.querySelector('.builtin-search-close') as HTMLButtonElement;
+        this.close_button = document.querySelector('.builtin-search-close');
         this.close_button.addEventListener('click', () => this.dismiss());
     },
 
