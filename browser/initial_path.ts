@@ -43,7 +43,9 @@ export = function initial_path(specified: string): string {
     // Note:
     // First argument is a path to Electron binary and second one is a path to Shiba app directory.
     // So argv.length <= 2 means no path was specified.
-    if (process.argv.length <= 2) {
+    const executable = process.argv[0];
+    const directly_executed = executable.endsWith(process.platform === 'win32' ? 'Shiba.exe' : 'Shiba');
+    if (process.argv.length <= (directly_executed ? 1 : 2)) {
         return defaultPath(specified);
     }
 
