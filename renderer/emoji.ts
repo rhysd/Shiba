@@ -692,6 +692,7 @@ namespace Emoji {
         'shoe',
         'shower',
         'signal_strength',
+        'simple_smile',
         'six',
         'six_pointed_star',
         'ski',
@@ -883,6 +884,8 @@ namespace Emoji {
         'zap',
         'zero',
         'zzz',
+        'basecamp',
+        'basecampy',
     ]);
 
     export class Replacer {
