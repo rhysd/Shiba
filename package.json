@@ -76,6 +76,7 @@
     "dep": "rake dep",
     "build": "rake build",
     "watch": "rake watch",
+    "update-emoji": "rake update_emoji",
     "show-readme": "./bin/cli.js README.md",
     "app": "./bin/cli.js",
     "debug": "NODE_ENV=development ./bin/cli.js",

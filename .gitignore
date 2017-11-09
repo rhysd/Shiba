@@ -12,3 +12,4 @@ npm-debug.log
 /test/**/*.js.map
 !/test/main/node_modules/electron/index.js
 /package-lock.json
+/scripts/gemoji

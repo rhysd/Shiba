@@ -166,3 +166,7 @@ end
 task :watch do
   sh 'guard --watchdir browser renderer test'
 end
+
+task :update_emojis do
+  sh './scripts/update_emoji.sh'
+end
