@@ -50,8 +50,8 @@ end
 
 task :build_typescript do
   mkdir_p 'build/src/renderer'
-  npm_sh 'tsc -p ./browser'
-  npm_sh 'tsc -p ./renderer'
+  npm_sh 'tsc --pretty -p ./browser'
+  npm_sh 'tsc --pretty -p ./renderer'
 end
 
 task :compile => [:build_slim, :build_typescript]
@@ -138,8 +138,8 @@ end
 task :release => [:prepare_release, :package]
 
 task :build_test do
-  npm_sh 'tsc -p test/main'
-  npm_sh 'tsc -p test/renderer'
+  npm_sh 'tsc --pretty -p test/main'
+  npm_sh 'tsc --pretty -p test/renderer'
 end
 
 task :test => [:build_test] do
@@ -147,7 +147,7 @@ task :test => [:build_test] do
 end
 
 task :build_e2e do
-  npm_sh 'tsc -p test/e2e'
+  npm_sh 'tsc --pretty -p test/e2e'
 end
 
 task :e2e => [:build_e2e] do
