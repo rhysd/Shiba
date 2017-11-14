@@ -24,6 +24,17 @@ declare module 'remark-preset-lint-consistent' {
     export = plugin;
 }
 
+declare module 'remark-preset-lint-recommended' {
+    const plugin: {};
+    export = plugin;
+}
+
+declare module 'remark-preset-lint-markdown-style-guide' {
+    const plugin: {};
+    export = plugin;
+}
+
+
 declare namespace Remark {
     interface Processor {
         use(plugin: RemarkLint.Linter, opts?: object): Processor;

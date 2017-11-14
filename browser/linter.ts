@@ -3,6 +3,8 @@ import {ipcMain as ipc} from 'electron';
 import * as markdownlint from 'markdownlint';
 import * as remark from 'remark';
 import remarkLintConsistent = require('remark-preset-lint-consistent');
+import remarkLintMarkdownStyleGuide = require('remark-preset-lint-markdown-style-guide');
+import remarkLintRecommended = require('remark-preset-lint-recommended');
 
 interface RemarkFile {
     messages: {
@@ -16,7 +18,7 @@ export default class Linter {
     lint: (filename: string) => void;
     lint_url: string;
     remark: any;
-    options: object;
+    options: any;
 
     constructor(public sender: Electron.WebContents, name: string, options: object) {
         this.options = options || {};
@@ -89,6 +91,24 @@ export default class Linter {
         });
     }
 
+    createRemarkProcessor() {
+        if (this.options.plugins === undefined) {
+            return remark().use(remarkLintConsistent);
+        }
+
+        let p = remark();
+        if (this.options.plugins.indexOf('preset-lint-consistent')) {
+            p = p.use(remarkLintConsistent);
+        }
+        if (this.options.plugins.indexOf('preset-lint-recommended')) {
+            p = p.use(remarkLintRecommended);
+        }
+        if (this.options.plugins.indexOf('preset-lint-markdown-style-guide')) {
+            p = p.use(remarkLintMarkdownStyleGuide);
+        }
+        return p;
+    }
+
     remark_lint(filename: string) {
         readFile(filename, 'utf8', (read_err: Error, content: string) => {
             if (read_err) {
@@ -96,8 +116,7 @@ export default class Linter {
                 return;
             }
 
-            this.remark = this.remark ||
-                remark().use(remarkLintConsistent);
+            this.remark = this.remark || this.createRemarkProcessor();
 
             this.remark.process(content, (err: NodeJS.ErrnoException, file: RemarkFile) => {
                 if (err) {

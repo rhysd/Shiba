@@ -16,7 +16,9 @@ width: 1000
 height: "max"
 linter: "remark-lint"
 lint_options:
-    maximum-line-length: false
+    plugins:
+        - preset-lint-consistent
+        - preset-lint-recommended
 drawer:
     responsive: false
 menu:
@@ -49,6 +51,7 @@ All keys for the YAML configuration file is below (`.` means a nested object):
 | `path_watcher.default_path`    | Default path watching at startup | Path to directory or file by string             | Not specified                  |
 | `path_watcher.follow_symlinks` | Only watches symlinks themselves | If true, following the links to bubble events   | false                          |
 
+- If you use `remark-lint` as linter, `linter_options` would accept only `plugins` config as array.
 
 ## Customize Keyboard Shortcuts
 
