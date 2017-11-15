@@ -40,7 +40,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length > 0);
                     done();
-                }
+                },
             );
             linter.lint(not_ok_doc);
         });
@@ -60,7 +60,7 @@ context('Linter', () => {
     });
 
     describe('remark-lint', () => {
-        it('lints markdown source', done => {
+        it('reports some errors', done => {
             const c = new DummyWebContents() as any;
             const linter = new Linter(c, 'remark-lint', {});
             c.once(
@@ -73,7 +73,7 @@ context('Linter', () => {
             linter.lint(not_ok_doc_remark);
         });
 
-        it('lints markdown source', done => {
+        it('reports no error for good doc', done => {
             const c = new DummyWebContents() as any;
             const linter = new Linter(c, 'remark-lint', {});
             c.once(
@@ -84,6 +84,20 @@ context('Linter', () => {
                 },
             );
             linter.lint(ok_doc);
+        });
+
+        it('refers "plugins" entry of config', done => {
+            const c = new DummyWebContents() as any;
+            const linter = new Linter(c, 'remark-lint', {plugins: []});
+            c.once(
+                'shiba:notify-linter-result',
+                (_: any, msgs: LinterMessage[]) => {
+                    // It should not raise an error because no preset is specified
+                    assert(msgs.length === 0);
+                    done();
+                },
+            );
+            linter.lint(not_ok_doc_remark);
         });
     });
 
@@ -121,7 +135,7 @@ context('Linter', () => {
         const c = new DummyWebContents() as any;
         new Linter(c, 'remark-lint', {});
         c.once('shiba:return-lint-rule-url', (_: any, url: string) => {
-            assert(url.indexOf('http') === 0);
+            assert.equal(url.indexOf('http'), 0);
             done();
         });
         ipc.emit('shiba:request-lint-rule-url', {});

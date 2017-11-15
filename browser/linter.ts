@@ -97,13 +97,13 @@ export default class Linter {
         }
 
         let p = remark();
-        if (this.options.plugins.indexOf('preset-lint-consistent')) {
+        if (this.options.plugins.indexOf('preset-lint-consistent') >= 0) {
             p = p.use(remarkLintConsistent);
         }
-        if (this.options.plugins.indexOf('preset-lint-recommended')) {
+        if (this.options.plugins.indexOf('preset-lint-recommended') >= 0) {
             p = p.use(remarkLintRecommended);
         }
-        if (this.options.plugins.indexOf('preset-lint-markdown-style-guide')) {
+        if (this.options.plugins.indexOf('preset-lint-markdown-style-guide') >= 0) {
             p = p.use(remarkLintMarkdownStyleGuide);
         }
         return p;
