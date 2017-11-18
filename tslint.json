@@ -144,6 +144,10 @@
     "number-literal-format": true,
     "interface-over-type-literal": true,
     "callable-types": true,
-    "return-undefined": true
+    "return-undefined": true,
+    "prefer-const": true,
+    "no-namespace": false,
+    "ordered-imports": false,
+    "arrow-parens": false
   }
 }
