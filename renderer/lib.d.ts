@@ -1,13 +1,10 @@
-/// <reference path="../typings/index.d.ts" />
-
 interface Set<T> {
     has(value: T): boolean;
 }
 
 interface SetConstructor {
-    new <T>(): Set<T>;
-    new <T>(iterable: any[]): Set<T>;
     prototype: Set<any>;
+    new <T>(iterable?: any[]): Set<T>;
 }
 declare var Set: SetConstructor;
 
@@ -69,8 +66,6 @@ interface PawFilechooser extends HTMLElement {
     onFileChosen: (path: string) => void;
 }
 
-declare var mermaid: any;
-
 interface String {
     startsWith(needle: string): boolean;
     endsWith(needle: string): boolean;
@@ -82,7 +77,7 @@ interface FoundInPage {
     finalUpdate: boolean;
     activeMatchOrdinal?: number;
     matches?: number;
-    selectionArea: Object;
+    selectionArea: object;
 }
 
 interface BuiltinSearch extends HTMLElement {

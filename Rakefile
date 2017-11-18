@@ -23,23 +23,21 @@ def ensure_cmd(cmd)
   end
 end
 
+def npm_sh(cmd)
+  sh "#{BIN_DIR}/#{cmd}"
+end
+
 file "node_modules" do
   ensure_cmd 'npm'
   sh 'npm install'
-  sh "#{BIN_DIR}/electron-rebuild"
+  npm_sh 'electron-rebuild'
 end
 
 file "bower_components" do
-  ensure_cmd 'bower'
-  sh 'bower install'
+  npm_sh 'bower install'
 end
 
-file "typings" do
-  raise "'typings' command doesn't exist" unless cmd_exists? "#{BIN_DIR}/typings"
-  sh "#{BIN_DIR}/typings install"
-end
-
-task :dep => [:node_modules, :bower_components, :typings]
+task :dep => [:node_modules, :bower_components]
 
 task :build_slim do
   ensure_cmd 'slimrb'
@@ -50,35 +48,24 @@ task :build_slim do
   end
 end
 
-task :build_typescript => [:typings] do
-  ensure_cmd 'tsc'
+task :build_typescript do
   mkdir_p 'build/src/renderer'
-  sh 'tsc -p ./browser'
-  sh 'tsc -p ./renderer'
+  npm_sh 'tsc --pretty -p ./browser'
+  npm_sh 'tsc --pretty -p ./renderer'
 end
 
 task :compile => [:build_slim, :build_typescript]
 
 task :build => [:dep, :compile]
 
-task :npm_publish => [:build] do
-  mkdir 'npm-publish'
-  %w(bower.json package.json build bin README.md).each{|p| cp_r p, 'npm-publish' }
-  cd 'npm-publish' do
-    sh 'bower install --production'
-    sh 'npm install --save electron-prebuilt'
-    sh 'npm publish'
-  end
-  rm_rf 'npm-publish'
-end
-
 task :prepare_release => [:build] do
   mkdir_p "archive"
   %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
   cd 'archive' do
     sh 'npm install --production'
-    sh 'bower install --production'
-    sh 'npm uninstall electron-prebuilt'
+    sh 'npm uninstall electron'
+    sh '../node_modules/.bin/bower install --production'
+    sh '../node_modules/.bin/electron-rebuild'
   end
 end
 
@@ -86,7 +73,7 @@ task :package do
   mkdir_p 'packages'
   def release(options)
     cd 'archive' do
-      sh "#{BIN_DIR}/electron-packager ./ Shiba #{options.join ' '}"
+      npm_sh "electron-packager ./ Shiba #{options.join ' '}"
       Dir['Shiba-*'].each do |dst|
         cp_r '../README.md', dst
         cp_r '../docs', dst
@@ -97,7 +84,7 @@ task :package do
     end
   end
 
-  electron_json = JSON.load(File.open('node_modules/electron-prebuilt/package.json'))
+  electron_json = JSON.load(File.open('node_modules/electron/package.json'))
   electron_ver = electron_json['version']
   app_json = JSON.load(File.open('package.json'))
   ver = app_json['version']
@@ -151,25 +138,35 @@ end
 task :release => [:prepare_release, :package]
 
 task :build_test do
-  ensure_cmd 'tsc'
-  sh 'tsc -p test/main'
-  sh 'tsc -p test/renderer'
+  npm_sh 'tsc --pretty -p test/main'
+  npm_sh 'tsc --pretty -p test/renderer'
 end
 
 task :test => [:build_test] do
-  sh "#{BIN_DIR}/mocha --require intelli-espower-loader test/main/test/main test/renderer/test/renderer"
+  npm_sh 'mocha --exit --require intelli-espower-loader test/main/test/main test/renderer/test/renderer'
+end
+
+task :build_e2e do
+  npm_sh 'tsc --pretty -p test/e2e'
+end
+
+task :e2e => [:build_e2e] do
+  npm_sh 'mocha --exit test/e2e --opts test/e2e/mocha.opts'
 end
 
 task :lint do
-  ensure_cmd 'tslint'
-  ts = `git ls-files`.split("\n").select{|p| p =~ /.ts$/}.join(' ')
-  sh "tslint #{ts}"
+  npm_sh 'tslint --project browser/'
+  npm_sh 'tslint --project renderer/'
 end
 
 task :clean do
-  %w(npm-publish build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
+  %w(build/src build/static archive).each{|tmpdir| rm_rf tmpdir}
 end
 
 task :watch do
-  sh 'guard --watchdir browser renderer typings test'
+  sh 'guard --watchdir browser renderer test'
+end
+
+task :update_emojis do
+  sh './scripts/update_emoji.sh'
 end

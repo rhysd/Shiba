@@ -39,18 +39,18 @@ Polymer({
         },
     },
 
-    attached: function() {
+    attached() {
         if (this.enable_inset && process.platform === 'darwin') {
             const header = document.getElementById('lint-header');
             header.style.textAlign = 'center';
         }
-        ipc.on('shiba:return-lint-rule-url', (_: Electron.IpcRendererEvent, url: string) => {
+        ipc.on('shiba:return-lint-rule-url', (_: any, url: string) => {
             this.lint_url = url;
         });
         ipc.send('shiba:request-lint-rule-url');
     },
 
-    showLintResult: function() {
+    showLintResult() {
         this.already_previewed = true;
         if (!this.messages) {
             return;
@@ -73,9 +73,11 @@ Polymer({
             header.innerText = 'Error';
             header.setAttribute('error', '');
             if (this.voice_src !== '') {
-                const voice = document.querySelector('.voice-notification') as HTMLAudioElement;
+                const voice: HTMLAudioElement = document.querySelector('.voice-notification');
                 if (voice) {
-                    voice.play();
+                    voice.play().catch(err => {
+                        console.error('Failed to play voice:', err);
+                    });
                 }
             }
         } else {
@@ -84,13 +86,13 @@ Polymer({
         }
     },
 
-    _messagesUpdated(messages: LintMessage[]) {
+    _messagesUpdated(_: LintMessage[]) {
         if (this.messages && this.already_previewed) {
             this.showLintResult();
         }
     },
 
-    _showLintRules: function() {
+    _showLintRules() {
         if (this.lint_url === undefined) {
             console.log('No lint URL');
             return;

@@ -1,7 +1,6 @@
-/// <reference path="../typings/index.d.ts" />
 /// <reference path="./config.d.ts" />
 
-declare module NodeJS {
+declare namespace NodeJS {
     interface Global {
         config: Config;
     }
@@ -12,22 +11,33 @@ interface String {
 }
 
 declare module 'markdownlint' {
-    const lint: (opts: Object, callback: (err: Error, result: any) => void) => void;
+    const lint: (opts: object, callback: (err: Error, result: any) => void) => void;
     export = lint;
 }
 
 declare namespace RemarkLint {
-    interface Linter { /* TODO */ }
+    class Linter {}
 }
 
-declare module 'remark-lint' {
-    const remarklint: RemarkLint.Linter;
-    export = remarklint;
+declare module 'remark-preset-lint-consistent' {
+    const plugin: {};
+    export = plugin;
 }
+
+declare module 'remark-preset-lint-recommended' {
+    const plugin: {};
+    export = plugin;
+}
+
+declare module 'remark-preset-lint-markdown-style-guide' {
+    const plugin: {};
+    export = plugin;
+}
+
 
 declare namespace Remark {
     interface Processor {
-        use(plugin: RemarkLint.Linter, opts: Object): Processor;
+        use(plugin: RemarkLint.Linter, opts?: object): Processor;
         process(content: string, callback: (err: Error, file: any) => void): void;
     }
 }

@@ -11,10 +11,11 @@ const config = remote.getGlobal('config') as Config;
 const home_dir = config.hide_title_bar ?  '' : homedir();
 const on_darwin = process.platform === 'darwin';
 
-let watching_path = remote.require('./initial_path.js')();
-let onPathButtonPushed = function(){ /* do nothing */ };
-let onSearchButtonPushed = function(){ /* do nothing */ };
-let onTOCButtonPushed = function(){ /* do nothing */ };
+function noop() { /* do nothing */ }
+let watching_path = remote.require('./initial_path.js')(config.default_watch_path || '');
+let onPathButtonPushed = noop;
+let onSearchButtonPushed = noop;
+let onTOCButtonPushed = noop;
 
 function getMainDrawerPanel() {
     return document.getElementById('main-drawer') as MainDrawerPanel;
@@ -36,7 +37,7 @@ function make_title(p: string): string {
     }
 
     if (p.startsWith(home_dir)) {
-        p = `~${p.slice(home_dir.length)}`;
+        return make_title(`~${p.slice(home_dir.length)}`);
     }
 
     return `Shiba (${p})`;
@@ -49,7 +50,7 @@ function getScroller(): Scroller {
     }
 
     if (selected === 'drawer') {
-        const panel = document.querySelector('paper-header-panel[drawer]') as HeaderPanel;
+        const panel: HeaderPanel = document.querySelector('paper-header-panel[drawer]');
         return panel.scroller;
     } else {
         return document.getElementById('viewer-wrapper');
@@ -153,7 +154,7 @@ function renderHtmlPreview(file: string) {
     // html_preview = document.createElement('webview');
     html_preview.id = 'current-html-preview';
     html_preview.className = 'current-html-preview';
-    html_preview.onload = function(e) {
+    html_preview.onload = function(_) {
         // Note:
         // Adjust
         html_preview.setAttribute('height', html_preview.contentWindow.document.body.scrollHeight + 'px');
@@ -186,7 +187,7 @@ function prepareMarkdownStyle(markdown_config: {
 }) {
     const {css_path, code_theme} = markdown_config;
 
-    const markdown_css_link = document.createElement('link') as HTMLLinkElement;
+    const markdown_css_link = document.createElement('link');
     markdown_css_link.rel = 'stylesheet';
     markdown_css_link.href = css_path;
     document.head.appendChild(markdown_css_link);
@@ -195,7 +196,7 @@ function prepareMarkdownStyle(markdown_config: {
         return;
     }
 
-    const code_theme_css_link = document.createElement('link') as HTMLLinkElement;
+    const code_theme_css_link = document.createElement('link');
     code_theme_css_link.rel = 'stylesheet';
     code_theme_css_link.href = `../../node_modules/highlight.js/styles/${code_theme}.css`;
     document.head.appendChild(code_theme_css_link);
@@ -219,7 +220,18 @@ function reloadPreview() {
     document.getElementById('reload-button').classList.add('rotate');
 }
 
-(function(){
+function shouldWatch(file: string) {
+    const ext = path.extname(file).substr(1);
+    for (const kind of Object.keys(config.file_ext)) {
+        const exts = config.file_ext[kind];
+        if (exts.indexOf(ext) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+(function() {
     const lint = getLintArea();
     if (config.voice.enabled) {
         lint.voice_src = config.voice.source;
@@ -262,9 +274,9 @@ function reloadPreview() {
         return paths[0];
     }
 
-    ipc.on('shiba:notify-content-updated', (_: Electron.IpcRendererEvent, kind: string, file: string) => {
-        const reload_button = document.getElementById('reload-button');
-        reload_button.classList.add('rotate');
+    ipc.on('shiba:notify-content-updated', (_: any, kind: string, file: string) => {
+        const button = document.getElementById('reload-button');
+        button.classList.add('rotate');
 
         const base = document.querySelector('base');
         base.setAttribute('href', 'file://' + path.dirname(file) + path.sep);
@@ -284,7 +296,7 @@ function reloadPreview() {
         }
     });
 
-    ipc.on('shiba:notify-linter-result', (_: Electron.IpcRendererEvent, messages: LintMessage[]) => {
+    ipc.on('shiba:notify-linter-result', (_: any, messages: LintMessage[]) => {
         lint.messages = messages;
         const button = document.getElementById('lint-button');
         if (messages.length === 0) {
@@ -294,7 +306,7 @@ function reloadPreview() {
         }
     });
 
-    ipc.on('return-lint-url', (_: Electron.IpcRendererEvent, url: string) => {
+    ipc.on('return-lint-url', (_: any, url: string) => {
         lint.lint_url = url;
     });
 
@@ -352,12 +364,19 @@ function reloadPreview() {
             console.log('Failed to get the path of dropped file');
             return;
         }
+
+        if (!shouldWatch(p)) {
+            console.log(`Unknown kind of file (checking file extensions), iginored: ${p}`);
+            return;
+        }
+
         watching_path = p;
         ipc.send('shiba:notify-path', p);
         document.title = make_title(p);
     });
 
-    (document.querySelector('paw-filechooser') as PawFilechooser).onFileChosen = (file: string) => {
+    const chooser: PawFilechooser = document.querySelector('paw-filechooser');
+    chooser.onFileChosen = (file: string) => {
         watching_path = file;
         ipc.send('shiba:notify-path', file);
         document.title = make_title(file);
@@ -430,7 +449,8 @@ function reloadPreview() {
     ipc.on('shiba:reload', () => reloadPreview());
 
     const user_css_path: string = path.join(config._config_dir_path, 'user.css');
-    fs.exists(user_css_path, (exists: boolean) => {
+    fs.access(user_css_path, err => {
+        const exists = !err;
         if (!exists) {
             return;
         }

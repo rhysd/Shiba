@@ -18,7 +18,7 @@ export default class WatchDog {
 
     wakeup(sender: Electron.WebContents) {
         this.sender = sender;
-        ipc.on('shiba:notify-path', (_: Electron.IpcMainEvent, new_path: string) => {
+        ipc.on('shiba:notify-path', (_: any, new_path: string) => {
             this.setWatchingPath(new_path);
         });
         ipc.on('shiba:request-path', () => {
@@ -46,13 +46,13 @@ export default class WatchDog {
     }
 
     openEyes(pattern: string) {
-        const eyes = chokidar.watch(
-            pattern, {
+        const followSymlinks = !!(this.config.path_watcher || {} as PathWatcherConfig).follow_symlinks;
+        const eyes = chokidar.watch(pattern, {
                 ignoreInitial: true,
                 persistent: true,
                 ignored: [new RegExp(this.config.ignore_path_pattern), /\.asar[\\\/]/],
-            }
-        );
+                followSymlinks,
+            });
 
         eyes.on('change', (file: string) => {
             console.log('File changed: ' + file);

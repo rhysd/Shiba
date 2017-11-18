@@ -3,7 +3,7 @@ Customization
 
 ## Customize Shiba with YAML
 
-You can put `config.yml` (__not__ `config.yaml`) in Shiba's application directory.  Application directory is
+You can put `config.yml` (or `config.yaml`) in Shiba's application directory.  Application directory is
 
 - `~/Library/Application\ Support/Shiba` for OS X
 - `~/.config/Shiba` for Linux
@@ -16,7 +16,9 @@ width: 1000
 height: "max"
 linter: "remark-lint"
 lint_options:
-    maximum-line-length: false
+    plugins:
+        - preset-lint-consistent
+        - preset-lint-recommended
 drawer:
     responsive: false
 menu:
@@ -27,26 +29,29 @@ markdown:
 
 All keys for the YAML configuration file is below (`.` means a nested object):
 
-| Key                    | Description                      | Value                                           | Default                        |
-| ---------------------- | -------------------------------- | ----------------------------------------------- | ------------------------------ |
-| `width`                | Window width                     | Number of pixel or `"max"`                      | `920`                          |
-| `height`               | Window height                    | Number of pixel or `"max"`                      | `800`                          |
-| `linter`               | Linter name                      | `"remark-lint"` or `"markdownlint"` or `"none"` | `"remark-lint"`                |
-| `file_ext`             | Extensions to detect             | Array of extensions for each file types         | See below section              |
-| `lint_options`         | Options for linter               | Depends on linter                               | Not specified                  |
-| `shortcuts`            | Keyboard shortcuts               | Keyboard shortcuts definition                   | See below section              |
-| `voice.enabled`        | Notify with voice                | enable/disable with boolean value               | false                          |
-| `voice.source`         | Path to voice source             | Path string                                     | "../voices/bow.mp3"            |
-| `drawer.responsive`    | Make drawer responsive           | Enable responsive drawer with boolean value     | true                           |
-| `menu.visible`         | Left menu visibility             | Left menu is visible or not (boolean value)     | true                           |
-| `ignore_path_pattern`  | Regex to ignore  path            | Regex string which path should be ignored       | "[\\\\/]\\." (dotfiles)        |
-| `hide_title_bar`       | Hide a title bar (OS X)          | hide a tool bar if true                         | false                          |
-| `hide_menu_bar`        | Hide a menu bar  (Windows)       | hide a menu bar (will be shown on alt key)      | true                           |
-| `markdown.font_size`   | Size of font in preview          | Specify font size by string (e.g. "10px")       | ""                             |
-| `markdown.css_path`    | Path to css file to load         | Specify CSS file to style a markdown preview    | "/path/to/github-markdown.css" |
-| `markdown.code_theme`  | Color theme for code block       | Specify highlight.js style theme for code block | "github"                       |
-| `restore_window_state` | Restore window size and position | Restores the last window state on start if true | true                           |
+| Key                            | Description                      | Value                                           | Default                        |
+| ----------------------         | -------------------------------- | ----------------------------------------------- | ------------------------------ |
+| `width`                        | Window width                     | Number of pixel or `"max"`                      | `920`                          |
+| `height`                       | Window height                    | Number of pixel or `"max"`                      | `800`                          |
+| `linter`                       | Linter name                      | `"remark-lint"` or `"markdownlint"` or `"none"` | `"remark-lint"`                |
+| `file_ext`                     | Extensions to detect             | Array of extensions for each file types         | See below section              |
+| `lint_options`                 | Options for linter               | Depends on linter                               | Not specified                  |
+| `shortcuts`                    | Keyboard shortcuts               | Keyboard shortcuts definition                   | See below section              |
+| `voice.enabled`                | Notify with voice                | enable/disable with boolean value               | false                          |
+| `voice.source`                 | Path to voice source             | Path string                                     | "../voices/bow.mp3"            |
+| `drawer.responsive`            | Make drawer responsive           | Enable responsive drawer with boolean value     | true                           |
+| `menu.visible`                 | Left menu visibility             | Left menu is visible or not (boolean value)     | true                           |
+| `ignore_path_pattern`          | Regex to ignore  path            | Regex string which path should be ignored       | "[\\\\/]\\." (dotfiles)        |
+| `hide_title_bar`               | Hide a title bar (OS X)          | hide a tool bar if true                         | false                          |
+| `hide_menu_bar`                | Hide a menu bar  (Windows)       | hide a menu bar (will be shown on alt key)      | true                           |
+| `markdown.font_size`           | Size of font in preview          | Specify font size by string (e.g. "10px")       | ""                             |
+| `markdown.css_path`            | Path to css file to load         | Specify CSS file to style a markdown preview    | "/path/to/github-markdown.css" |
+| `markdown.code_theme`          | Color theme for code block       | Specify highlight.js style theme for code block | "github"                       |
+| `restore_window_state`         | Restore window size and position | Restores the last window state on start if true | true                           |
+| `path_watcher.default_path`    | Default path watching at startup | Path to directory or file by string             | Not specified                  |
+| `path_watcher.follow_symlinks` | Only watches symlinks themselves | If true, following the links to bubble events   | false                          |
 
+- If you use `remark-lint` as linter, `linter_options` would accept only `plugins` config as array.
 
 ## Customize Keyboard Shortcuts
 

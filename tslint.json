@@ -1,9 +1,9 @@
+
 {
   "rules": {
     "align": [
       true,
       "parameters",
-      "arguments",
       "statements"
     ],
     "ban": false,
@@ -14,7 +14,7 @@
     ],
     "curly": true,
     "eofline": true,
-    "forin": false,
+    "forin": true,
     "indent": [
       true,
       "spaces"
@@ -22,9 +22,9 @@
     "interface-name": false,
     "jsdoc-format": true,
     "label-position": true,
-    "label-undefined": true,
     "max-line-length": [
-      false
+      true,
+      140
     ],
     "member-access": false,
     "member-ordering": [
@@ -49,25 +49,17 @@
     "no-construct": true,
     "no-constructor-vars": false,
     "no-debugger": true,
-    "no-duplicate-key": true,
-    "no-duplicate-variable": true,
+    "no-duplicate-variable": [true, "check-parameters"],
     "no-empty": true,
     "no-eval": true,
     "no-inferrable-types": false,
-    "no-internal-module": false,
+    "no-internal-module": true,
     "no-require-imports": false,
     "no-shadowed-variable": true,
     "no-string-literal": true,
     "no-switch-case-fall-through": false,
     "no-trailing-whitespace": true,
-    "no-unreachable": true,
     "no-unused-expression": true,
-    "no-unused-variable": [
-      true,
-      {
-        "ignore-pattern": "^(_|unused)$"
-      }
-    ],
     "no-use-before-declare": true,
     "no-var-keyword": true,
     "no-var-requires": false,
@@ -124,9 +116,38 @@
       true,
       "check-branch",
       "check-decl",
-      "check-operator",
       "check-separator",
       "check-type"
-    ]
+    ],
+    "no-unnecessary-type-assertion": true,
+    "no-floating-promises": true,
+    "no-for-in-array": true,
+    "no-void-expression": [
+      true,
+      "ignore-arrow-function-shorthand"
+    ],
+    "use-default-type-parameter": true,
+    "deprecation": true,
+    "no-unnecessary-qualifier": true,
+    "no-return-await": true,
+    "no-duplicate-switch-case": true,
+    "no-implicit-dependencies": true,
+    "ban-comma-operator": true,
+    "no-parameter-reassignment": true,
+    "no-duplicate-imports": true,
+    "no-this-assignment": true,
+    "use-default-type-parameter": true,
+    "no-unbound-method": [true, "ignore-static"],
+    "prefer-object-spread": true,
+    "encoding": true,
+    "prefer-switch": true,
+    "number-literal-format": true,
+    "interface-over-type-literal": true,
+    "callable-types": true,
+    "return-undefined": true,
+    "prefer-const": true,
+    "no-namespace": false,
+    "ordered-imports": false,
+    "arrow-parens": false
   }
 }

@@ -1,7 +1,7 @@
 /// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
 
-import * as path from 'path';
+import {dirname} from 'path';
 import {unescape} from 'querystring';
 import {shell, remote} from 'electron';
 import * as marked from 'marked';
@@ -10,26 +10,21 @@ import {highlight} from 'highlight.js';
 import * as he from 'he';
 
 let element_env: MarkdownPreview = null; // XXX
-const emoji_replacer = new Emoji.Replacer(path.dirname(__dirname) + '/images');
-let loaded_mermaid = false;
+const emoji_replacer = new Emoji.Replacer(dirname(__dirname) + '/images');
+let mermaid: any = undefined;
 
 marked.setOptions({
     langPrefix: 'hljs ',
-    highlight: function(code: string, lang: string): string {
+
+    highlight(code: string, lang: string): string {
         if (lang === undefined) {
             return code;
         }
 
         if (lang === 'mermaid') {
-            if (!loaded_mermaid) {
-                const script = document.createElement('script');
-                script.src = 'file://' + remote.app.getAppPath() + '/bower_components/mermaid/dist/mermaid.min.js';
-                script.onload = () => {
-                    mermaid.init(undefined, 'div.mermaid');
-                };
-                document.head.appendChild(script);
-
-                loaded_mermaid = true;
+            if (mermaid === undefined) {
+                mermaid = require('mermaid');
+                mermaid.init(undefined, 'div.mermaid');
             }
             return '<div class="mermaid">' + he.encode(code) + '</div>';
         }
@@ -44,6 +39,10 @@ marked.setOptions({
             console.log('Error on highlight: ' + e.message);
             return code;
         }
+    },
+
+    emoji(name: string) {
+        return emoji_replacer.replaceOne(name);
     },
 });
 
@@ -62,26 +61,32 @@ class MarkdownRenderer {
         // TODO:
         // 'this' is set to renderer methods automatically so we need to preserve
         // this scope's 'this' as 'self'.
+        /* tslint:disable:no-this-assignment */
         const self = this;
+        /* tslint:enable:no-this-assignment */
 
         this.renderer.listitem = function(text) {
             let matched = text.match(REGEX_CHECKED_LISTITEM);
             if (matched && matched[0]) {
-                return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">'
-                    + text.slice(matched[0].length) + '</li>\n';
+                return `
+                  <li class="task-list-item">
+                    <input type="checkbox" class="task-list-item-checkbox" checked="checked" disabled="disabled">
+                    ${text.slice(matched[0].length)}
+                  </li>
+                `;
             }
 
             matched = text.match(REGEX_UNCHECKED_LISTITEM);
             if (matched && matched[0]) {
-                return '<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled">'
-                    + text.slice(matched[0].length) + '</li>\n';
+                return `
+                  <li class="task-list-item">
+                    <input type="checkbox" class="task-list-item-checkbox" disabled="disabled">
+                    ${text.slice(matched[0].length)}
+                  </li>
+                `;
             }
 
             return marked.Renderer.prototype.listitem.call(this, text);
-        };
-
-        this.renderer.text = function(text) {
-            return emoji_replacer.replaceWithImages(text);
         };
 
         const re_ext = new RegExp(`\\.(:?${this.markdown_exts.join('|')})(:?$|#)`);
@@ -105,7 +110,7 @@ class MarkdownRenderer {
 
             let onclick = 'cancelClick(event)';
             if (href.startsWith('http://') || href.startsWith('https://')) {
-                onclick = 'openLinkWithExternalBrowser(event)';
+                onclick = `openLinkWithExternalBrowser(event, this.id)`;
             } else if (re_ext.test(href)) {
                 onclick = 'openMarkdownLink(event)';
             } else if (href.indexOf('#') !== -1) {
@@ -153,6 +158,7 @@ function openMarkdownLink(event: MouseEvent) {
         }
         target = target.parentElement as HTMLAnchorElement;
     }
+
     if (target === null) {
         console.log('openMarkdownLink(): No target <a> was found', event);
         return;
@@ -166,6 +172,13 @@ function openMarkdownLink(event: MouseEvent) {
     const hash_idx = path.indexOf('#');
     if (hash_idx !== -1) {
         path = path.slice(0, hash_idx);
+    }
+
+    if (process.platform === 'win32' && path[0] === '/') {
+        // Chromium convert relative path of 'href' into absolute path.
+        // But on Windows 'foo/bar' is converted into 'file:///C:/foo/bar'.
+        // C:/foo/bar is correct. So strip first '/' here (#37).
+        path = path.slice(1);
     }
 
     if (element_env.openMarkdownDoc) {
@@ -185,11 +198,11 @@ function openHashLink(event: MouseEvent) {
 }
 
 /* tslint:disable:no-unused-variable */
-function openLinkWithExternalBrowser(event: MouseEvent) {
+function openLinkWithExternalBrowser(event: MouseEvent, id: string) {
 /* tslint:enable:no-unused-variable */
     event.preventDefault();
-    const e = event.target as HTMLElement & {src?: string; href?: string};
-    shell.openExternal(e.href ? e.href : e.src);
+    const e = document.getElementById(id) as HTMLAnchorElement;
+    shell.openExternal(e.href);
 }
 
 /* tslint:disable:no-unused-variable */
@@ -209,12 +222,12 @@ Polymer({
 
         exts: {
             type: Array,
-            value: function(){ return [] as string[]; },
+            value() { return [] as string[]; },
         },
 
         currentOutline: {
             type: Array,
-            value: function(){ return [] as Heading[]; },
+            value() { return [] as Heading[]; },
         },
 
         isGithubStyle: {
@@ -227,11 +240,11 @@ Polymer({
         onDocumentUpdated: Object,
     },
 
-    ready: function() {
+    ready() {
         element_env = this; // XXX
     },
 
-    attached: function() {
+    attached() {
         this.renderer = new MarkdownRenderer(this.exts);
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         if (this.fontSize) {
@@ -242,7 +255,7 @@ Polymer({
         }
     },
 
-    _documentUpdated: function(updated_doc) {
+    _documentUpdated(updated_doc) {
         const body = document.getElementById('shiba-markdown-component') as HTMLDivElement;
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
@@ -255,7 +268,7 @@ Polymer({
         }
     },
 
-    scrollToHeading: function(scroller: Scroller, h: Heading) {
+    scrollToHeading(scroller: Scroller, h: Heading) {
         const elem = document.getElementById(h.hash);
         if (elem) {
             scroller.scrollTop = elem.offsetTop;

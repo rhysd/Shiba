@@ -2,7 +2,7 @@
 
 import {load as loadYAML} from 'js-yaml';
 import {join} from 'path';
-import {readFileSync} from 'fs';
+import {readFile} from 'fs';
 import {app} from 'electron';
 
 export const default_config = {
@@ -29,11 +29,15 @@ export const default_config = {
     hide_menu_bar: true,
     markdown: {
         font_size: '',
-        css_path: '../../bower_components/github-markdown-css/github-markdown.css',
+        css_path: '../../node_modules/github-markdown-css/github-markdown.css',
         code_theme: 'github',
+    },
+    path_watcher: {
+        follow_symlinks: false,
     },
     restore_window_state: true,
     shortcuts: {
+        /* tslint:disable:object-literal-key-quotes */
         'j':        'PageDown',
         'k':        'PageUp',
         'down':     'PageDown',
@@ -53,15 +57,16 @@ export const default_config = {
         'r':        'Reload',
         's':        'Search',
         'o':        'Outline',
+        /* tslint:enable:object-literal-key-quotes */
     },
 } as Config;
 
 function mergeConfig(c1: Config, c2: Config) {
-    for (const k in c2) {
+    for (const k of Object.keys(c2)) {
         const v2 = c2[k];
 
         if (k in c1) {
-            let v1 = c1[k];
+            const v1 = c1[k];
             if (typeof(v1) === 'object' && typeof(v2) === 'object') {
                 mergeConfig(v1, v2);
             }
@@ -72,24 +77,45 @@ function mergeConfig(c1: Config, c2: Config) {
     return c1;
 }
 
+function readConfigYAML(config_dir: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const yml = join(config_dir, 'config.yml');
+        readFile(yml, 'utf8', (yml_err, yml_content) => {
+            if (!yml_err) {
+                resolve(yml_content);
+                return;
+            }
+
+            const yaml = join(config_dir, 'config.yaml');
+            readFile(yaml, 'utf8', (yaml_err, yaml_content) => {
+                if (!yaml_err) {
+                    resolve(yaml_content);
+                    return;
+                }
+
+                reject(new Error(`config.yml nor config.yaml was not found in '${config_dir}'`));
+            });
+        });
+    });
+}
+
+let cache: Config | null = null;
+
 export default function loadConfig(): Promise<Config> {
-    if (this.user_config) {
-        return Promise.resolve(this.user_config);
+    if (cache !== null) {
+        return Promise.resolve(cache);
     }
 
-    return new Promise<Config>((resolve, reject) => {
-        const config_dir = app.getPath('userData');
-        const file = join(config_dir, 'config.yml');
-        try {
-            this.user_config = loadYAML(readFileSync(file, {encoding: 'utf8'})) as Config;
-            mergeConfig(this.user_config, default_config);
-        } catch (e) {
-            console.log('No configuration file was found: ' + file);
-            this.user_config = default_config;
-        }
-
-        this.user_config._config_dir_path = config_dir;
-
-        resolve(this.user_config);
+    const config_dir = app.getPath('userData');
+    return readConfigYAML(config_dir).then(content => {
+        cache = loadYAML(content) as Config;
+        mergeConfig(cache, default_config);
+        cache._config_dir_path = config_dir;
+        return cache;
+    }).catch(err => {
+        console.log(err.message);
+        cache = default_config;
+        cache._config_dir_path = config_dir;
+        return default_config;
     });
 }

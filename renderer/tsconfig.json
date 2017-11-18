@@ -4,6 +4,10 @@
     "preserveConstEnums": true,
     "outDir": "../build/src/renderer",
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noEmitOnError": true,
     "target": "es5",
     "sourceMap": true
   },
@@ -14,6 +18,7 @@
     "index.ts",
     "keyboard.ts",
     "lib.d.ts",
+    "marked.d.ts",
     "lint-message.ts",
     "lint-panel.ts",
     "markdown-preview.ts",

@@ -10,7 +10,7 @@ namespace Keyboard {
             this.callbacks = {};
 
             const key_handler_for = (action: string) => () => this.dispatch_shortcut(action);
-            for (const key in this.shortcuts) {
+            for (const key of Object.keys(this.shortcuts)) {
                 Mousetrap.bind(key, key_handler_for(this.shortcuts[key]));
             }
         }

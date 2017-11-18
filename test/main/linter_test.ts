@@ -9,6 +9,7 @@ import {ipcMain as ipc} from 'electron';
 // Compiled into './test/main/' directory
 const ok_doc = join(__dirname, '..', '..', 'doc', 'ok.md');
 const not_ok_doc = join(__dirname, '..', '..', 'doc', 'notok.md');
+const not_ok_doc_remark = join(__dirname, '..', '..', 'doc', 'notok_remark.md');
 
 context('Linter', () => {
     describe('constructor', () => {
@@ -39,7 +40,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length > 0);
                     done();
-                }
+                },
             );
             linter.lint(not_ok_doc);
         });
@@ -52,14 +53,14 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length === 0);
                     done();
-                }
+                },
             );
             linter.lint(ok_doc);
         });
     });
 
     describe('remark-lint', () => {
-        it('lints markdown source', done => {
+        it('reports some errors', done => {
             const c = new DummyWebContents() as any;
             const linter = new Linter(c, 'remark-lint', {});
             c.once(
@@ -67,12 +68,12 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length > 0);
                     done();
-                }
+                },
             );
-            linter.lint(not_ok_doc);
+            linter.lint(not_ok_doc_remark);
         });
 
-        it('lints markdown source', done => {
+        it('reports no error for good doc', done => {
             const c = new DummyWebContents() as any;
             const linter = new Linter(c, 'remark-lint', {});
             c.once(
@@ -80,9 +81,23 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length === 0);
                     done();
-                }
+                },
             );
             linter.lint(ok_doc);
+        });
+
+        it('refers "plugins" entry of config', done => {
+            const c = new DummyWebContents() as any;
+            const linter = new Linter(c, 'remark-lint', {plugins: []});
+            c.once(
+                'shiba:notify-linter-result',
+                (_: any, msgs: LinterMessage[]) => {
+                    // It should not raise an error because no preset is specified
+                    assert(msgs.length === 0);
+                    done();
+                },
+            );
+            linter.lint(not_ok_doc_remark);
         });
     });
 
@@ -95,7 +110,7 @@ context('Linter', () => {
                 (_: any, msgs: LinterMessage[]) => {
                     assert(msgs.length === 0);
                     done();
-                }
+                },
             );
             linter.lint(ok_doc);
         });
@@ -118,9 +133,9 @@ context('Linter', () => {
 
     it('returns linter\'s rules URL via IPC', done => {
         const c = new DummyWebContents() as any;
-        const unused = new Linter(c, 'remark-lint', {});
+        new Linter(c, 'remark-lint', {});
         c.once('shiba:return-lint-rule-url', (_: any, url: string) => {
-            assert(url.indexOf('http') === 0);
+            assert.equal(url.indexOf('http'), 0);
             done();
         });
         ipc.emit('shiba:request-lint-rule-url', {});

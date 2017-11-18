@@ -64,7 +64,7 @@ This is the simplest use case.  Please see [usage document](docs/usage.md) for m
 - The logo of this app came from [いらすとや](http://www.irasutoya.com/).
 - This app was inspired by [@mattn](https://github.com/mattn)'s [mkup](https://github.com/mattn/mkup).
 - This app referred [vmd](https://github.com/yoshuawuyts/vmd) a lot at first, which was a very simple markdown preview app built on Electron.
-- Emoji pictures were from [arvida/emoji-cheat-sheet.com](https://github.com/arvida/emoji-cheat-sheet.com).
+- Emoji pictures were from [github/gemoji](https://github.com/github/gemoji).
 - The voice resource came from [効果音ラボ](http://soundeffect-lab.info/).
 
 
@@ -94,5 +94,23 @@ MIT License.
 
 In packaged app, Electron part is licensed with below notice:
 
-    Copyright (c) 2014 GitHub Inc.
+> Copyright (c) 2014 GitHub Inc.
+
+Emojis were brought from gemoji project:
+
+> octocat, squirrel, shipit
+> Copyright (c) 2013 GitHub Inc. All rights reserved.
+>
+> bowtie, neckbeard, fu
+> Copyright (c) 2013 37signals, LLC. All rights reserved.
+>
+> feelsgood, finnadie, goberserk, godmode, hurtrealbad, rage 1-4, suspect
+> Copyright (c) 2013 id Software. All rights reserved.
+>
+> trollface
+> Copyright (c) 2013 whynne@deviantart. All rights reserved.
+>
+> Source code:
+>
+> Copyright (c) 2013 GitHub, Inc.
 

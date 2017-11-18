@@ -4,8 +4,15 @@
     "preserveConstEnums": true,
     "outDir": ".",
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmitOnError": true,
     "target": "es5",
-    "sourceMap": true
+    "sourceMap": true,
+    "typeRoots": [
+      "../../node_modules/@types"
+    ]
   },
   "files": [
     "initial_path_test.ts",

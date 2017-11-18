@@ -2,7 +2,9 @@ import {readFile} from 'fs';
 import {ipcMain as ipc} from 'electron';
 import * as markdownlint from 'markdownlint';
 import * as remark from 'remark';
-import * as remarklint from 'remark-lint';
+import remarkLintConsistent = require('remark-preset-lint-consistent');
+import remarkLintMarkdownStyleGuide = require('remark-preset-lint-markdown-style-guide');
+import remarkLintRecommended = require('remark-preset-lint-recommended');
 
 interface RemarkFile {
     messages: {
@@ -16,24 +18,30 @@ export default class Linter {
     lint: (filename: string) => void;
     lint_url: string;
     remark: any;
-    options: Object;
+    options: any;
 
-    constructor(public sender: Electron.WebContents, name: string, options: Object) {
+    constructor(public sender: Electron.WebContents, name: string, options: object) {
         this.options = options || {};
 
-        if (name === 'markdownlint') {
+        switch (name) {
+        case 'markdownlint':
             this.lint = this.markdownlint;
             this.lint_url = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
-        } else if (name === 'remark-lint' || name === 'mdast-lint') {
+            break;
+        case 'remark-lint':
+        case 'mdast-lint':
             this.lint = this.remark_lint;
             this.lint_url = 'https://github.com/wooorm/remark-lint/blob/master/doc/rules.md';
-        } else if (name === 'none') {
-            this.lint = function(f){ /* do nothing */ };
+            break;
+        case 'none':
+            this.lint = function(_) { /* do nothing */ };
             this.lint_url = '';
-        } else {
+            break;
+        default:
             console.log(`linter.js: Invalid linter name '${name}'`);
-            this.lint = function(f){ /* do nothing */ };
+            this.lint = function(_) { /* do nothing */ };
             this.lint_url = '';
+            break;
         }
 
         ipc.on('shiba:request-lint-rule-url', () => {
@@ -83,6 +91,24 @@ export default class Linter {
         });
     }
 
+    createRemarkProcessor() {
+        if (this.options.plugins === undefined) {
+            return remark().use(remarkLintConsistent);
+        }
+
+        let p = remark();
+        if (this.options.plugins.indexOf('preset-lint-consistent') >= 0) {
+            p = p.use(remarkLintConsistent);
+        }
+        if (this.options.plugins.indexOf('preset-lint-recommended') >= 0) {
+            p = p.use(remarkLintRecommended);
+        }
+        if (this.options.plugins.indexOf('preset-lint-markdown-style-guide') >= 0) {
+            p = p.use(remarkLintMarkdownStyleGuide);
+        }
+        return p;
+    }
+
     remark_lint(filename: string) {
         readFile(filename, 'utf8', (read_err: Error, content: string) => {
             if (read_err) {
@@ -90,7 +116,7 @@ export default class Linter {
                 return;
             }
 
-            this.remark = this.remark || remark().use(remarklint, this.options);
+            this.remark = this.remark || this.createRemarkProcessor();
 
             this.remark.process(content, (err: NodeJS.ErrnoException, file: RemarkFile) => {
                 if (err) {
@@ -109,7 +135,7 @@ export default class Linter {
                             line: m.line,
                             column: m.column,
                         };
-                    })
+                    }),
                 );
             });
         });

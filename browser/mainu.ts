@@ -1,33 +1,26 @@
 import * as path from 'path';
 import {app, BrowserWindow, shell, screen} from 'electron';
 import windowState = require('electron-window-state');
-import * as menu from './menu';
 import loadConfig, {default_config} from './config';
+import * as menu from './menu';
 import WatchDog from './watcher';
-
-const loading = loadConfig().then(config => [config, new WatchDog(config)]);
 
 // Show versions {{{
 if (process.argv.indexOf('--version') !== -1) {
     const versions: any = process.versions;
-    console.log(`Shiba v${app.getVersion()}: Rich markdown previewer
-
-Usage:
-  $ shiba [--detach|--version] [{direcotyr/file to watch}]
+    console.log(`Shiba v${app.getVersion()}
 
 Environment:
   OS:       ${process.platform}-${process.arch}
   Electron: ${versions.electron}
-  Chrome:   ${versions.chrome}
+  Chromium: ${versions.chrome}
   Node.js:  ${versions.node}
 `);
-    app.quit();
+    app.exit();
 }
 // }}}
 
 // Main Window {{{
-app.on('window-all-closed', function() { app.quit(); });
-
 type DisplaySize = Electron.Size & {[k: string]: number};
 
 function createWindow(config: Config, icon_path: string) {
@@ -35,7 +28,7 @@ function createWindow(config: Config, icon_path: string) {
 
     function getConfigLength(key: 'width'|'height'): number {
         const len = config[key];
-        const default_len = default_config[key];
+        const default_len = default_config[key] as number;
         switch (typeof len) {
             case 'string': {
                 if (len === 'max') {
@@ -44,7 +37,7 @@ function createWindow(config: Config, icon_path: string) {
                 return default_len;
             }
             case 'number': {
-                return len;
+                return len as number;
             }
             default: {
                 return default_len;
@@ -59,7 +52,7 @@ function createWindow(config: Config, icon_path: string) {
         defaultHeight: config_height,
     });
 
-    let options: Electron.BrowserWindowOptions;
+    let options: Electron.BrowserWindowConstructorOptions;
 
     if (config.restore_window_state) {
         options = {
@@ -77,11 +70,16 @@ function createWindow(config: Config, icon_path: string) {
 
     options.icon = icon_path;
     options.autoHideMenuBar = config.hide_menu_bar;
+    options.show = false;
     if (config.hide_title_bar) {
         options.titleBarStyle = 'hidden-inset';
     }
 
     const win = new BrowserWindow(options);
+
+    win.once('ready-to-show', () => {
+        win.show();
+    });
 
     if (config.restore_window_state) {
         if (win_state.isFullScreen) {
@@ -95,23 +93,25 @@ function createWindow(config: Config, icon_path: string) {
     return win;
 }
 
-app.on('ready', function() {
+const loading = loadConfig().then(config => [config, new WatchDog(config)]);
+app.once('window-all-closed', function() { app.quit(); });
+app.once('ready', () => {
     loading.then((loaded: [Config, WatchDog]) => {
         const [config, dog] = loaded;
         global.config = config;
         const icon_path = path.join(__dirname, '..', '..', 'images', 'shibainu.png');
 
         let win = createWindow(config, icon_path);
+        win.once('closed', function() {
+            win = null;
+        });
+
         const html = 'file://' + path.join(__dirname, '..', '..', 'static', 'index.html');
         win.loadURL(html);
 
         dog.wakeup(win.webContents);
 
-        win.on('closed', function() {
-            win = null;
-        });
-
-        win.on('will-navigate', function(e: Event, url: string){
+        win.webContents.on('will-navigate', function(e: Event, url: string) {
             e.preventDefault();
             shell.openExternal(url);
         });
@@ -125,7 +125,7 @@ app.on('ready', function() {
         }
 
         if (process.env.NODE_ENV === 'development') {
-            win.webContents.on('devtools-opened', () => setImmediate(() => win.focus()));
+            win.webContents.once('devtools-opened', () => setImmediate(() => win.focus()));
             win.webContents.openDevTools({mode: 'detach'});
         }
     }).catch(e => {

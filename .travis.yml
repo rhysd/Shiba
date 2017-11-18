@@ -1,56 +1,24 @@
 language: node_js
 node_js: stable
-sudo: false
 
-env: CC=gcc-4.9 CXX=g++-4.9
+os:
+    - osx
+    - linux
+dist: trusty
+osx_image: xcode9
 
 install:
-    - npm install -g tslint typescript bower
     - gem install slim
-    - tslint --version
-    - tsc --version
     - rake dep
-
-before_script:
-    - export DISPLAY=:99.0
-    - sh -e /etc/init.d/xvfb start
-    - sleep 3
+    - ./node_modules/.bin/tslint --version
+    - ./node_modules/.bin/tsc --version
 
 script:
     - rake lint
     - rake compile
     - rake test
 
-after_sccess:
-    - |
-        if [[ "$TRAVIS_TAG" ]]; then
-            npm install -g electron-packger
-            rake release
-        fi
-
-deploy:
-    provider: releases
-    api_key: $GITHUB_RELEASE_TOKEN
-    file:
-        - packages/Shiba-darwin-x64.zip
-        - packages/Shiba-linux-ia32.zip
-        - packages/Shiba-linux-x64.zip
-        - packages/Shiba-win32-ia32.zip
-        - packages/Shiba-win32-x64.zip
-    skip_cleanup: true
-    on:
-        repo: rhysd/Shiba
-        tags: true
-        all_branches: true
-
-cache:
-    - apt
-
-addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-        packages:
-            - g++-4.9
-            - xvfb
-            - wine
+notifications:
+    email:
+        on_success: change
+        on_failure: change

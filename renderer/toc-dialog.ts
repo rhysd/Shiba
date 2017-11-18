@@ -23,13 +23,13 @@ Polymer({
         scrollCallback: Object,
         reset: {
             type: Object,
-            value: function() { return this._unmount; },
+            value() { return this._unmount; },
         },
         onMount: Object,
         onUnmount: Object,
     },
 
-    open: function(outline: Heading[]) {
+    open(outline: Heading[]) {
         if (!this.innerDialog) {
             return;
         }
@@ -41,6 +41,7 @@ Polymer({
                 header.innerHTML = `${'#'.repeat(h.level)} ${h.html}`;
                 outer.addEventListener('click', () => this.selectItem(i));
                 outer.className = 'toc-section-item';
+                outer.style.cursor = 'pointer'; // XXX: Styles for .toc-section-item does not affect
                 outer.appendChild(header);
                 return outer;
             });
@@ -62,7 +63,7 @@ Polymer({
         }
     },
 
-    selectItem: function(idx: number) {
+    selectItem(idx: number) {
         if (idx !== undefined && 0 <= idx && idx < this.currentItems.length) {
             if (this.scrollCallback) {
                 this.scrollCallback(this.currentOutline[idx]);
@@ -71,7 +72,7 @@ Polymer({
         this.close();
     },
 
-    _unmount: function() {
+    _unmount() {
         this.opened = false;
         this.selectedIdx = undefined;
         this.currentItems = [];
@@ -81,7 +82,7 @@ Polymer({
         }
     },
 
-    close: function() {
+    close() {
         if (!this.innerDialog) {
             return;
         }
@@ -90,7 +91,7 @@ Polymer({
         this._unmount();
     },
 
-    toggle: function(outline: Heading[] = []) {
+    toggle(outline: Heading[] = []) {
         if (this.opened) {
             this.close();
         } else {
@@ -98,7 +99,7 @@ Polymer({
         }
     },
 
-    focusNext: function() {
+    focusNext() {
         if (this.selectedIdx === undefined || this.currentItems.length === 0) {
             return;
         }
@@ -109,7 +110,7 @@ Polymer({
         this.currentItems[this.selectedIdx].focus();
     },
 
-    focusPrevious: function() {
+    focusPrevious() {
         if (this.selectedIdx === undefined || this.currentItems.length === 0) {
             return;
         }
@@ -120,7 +121,7 @@ Polymer({
         this.currentItems[this.selectedIdx].focus();
     },
 
-    copyOutlineToClipboard: function() {
+    copyOutlineToClipboard() {
         if (this.currentItems.length > 0) {
             const headings: string[] = [];
             for (const h of this.currentOutline) {
@@ -131,7 +132,7 @@ Polymer({
         this.close();
     },
 
-    ready: function() {
+    ready() {
         this.innerDialog = (document.getElementById('toc-body') as any) as PaperDialogElement;
         const button = document.getElementById('toc-copy-to-clipboard-button') as HTMLButtonElement;
         button.addEventListener('click', () => this.copyOutlineToClipboard());

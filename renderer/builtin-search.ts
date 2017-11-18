@@ -58,28 +58,28 @@ Polymer({
             }
         });
         this.webview.addEventListener('dom-ready', () => {
-            this.webview.addEventListener('blur', (e: Event) => {
+            this.webview.addEventListener('blur', (_: Event) => {
                 this.focusOnInput();
             });
         });
         document.querySelector('.input-workaround').appendChild(this.webview);
     },
 
-    ready: function() {
-        this.button = document.querySelector('.builtin-search-button') as HTMLButtonElement;
+    ready() {
+        this.button = document.querySelector('.builtin-search-button');
         this.button.addEventListener('click', () => {
             this.search(this.input.value);
         });
 
-        this.body = document.querySelector('.builtin-search-body') as HTMLDivElement;
+        this.body = document.querySelector('.builtin-search-body');
         this.body.classList.add('animated');
         if (this.displayed) {
             this.body.style.display = 'block';
         }
 
-        this.matches = document.querySelector('.builtin-search-matches') as HTMLDivElement;
+        this.matches = document.querySelector('.builtin-search-matches');
 
-        remote.getCurrentWebContents().on('found-in-page', (event: Event, result: FoundInPage) => {
+        remote.getCurrentWebContents().on('found-in-page', (_: Event, result: FoundInPage) => {
             if (this.requestId !== result.requestId) {
                 return;
             }
@@ -91,11 +91,11 @@ Polymer({
             }
         });
 
-        this.up_button = document.querySelector('.builtin-search-up') as HTMLButtonElement;
+        this.up_button = document.querySelector('.builtin-search-up');
         this.up_button.addEventListener('click', () => this.searchNext(this.query, false));
-        this.down_button = document.querySelector('.builtin-search-down') as HTMLButtonElement;
+        this.down_button = document.querySelector('.builtin-search-down');
         this.down_button.addEventListener('click', () => this.searchNext(this.query, true));
-        this.close_button = document.querySelector('.builtin-search-close') as HTMLButtonElement;
+        this.close_button = document.querySelector('.builtin-search-close');
         this.close_button.addEventListener('click', () => this.dismiss());
     },
 
@@ -110,7 +110,7 @@ Polymer({
         }
     },
 
-    show: function() {
+    show() {
         if (this.displayed) {
             return;
         }
@@ -129,7 +129,7 @@ Polymer({
         }
     },
 
-    dismiss: function() {
+    dismiss() {
         if (!this.displayed) {
             return;
         }
@@ -151,14 +151,17 @@ Polymer({
         }
     },
 
-    search: function(word: string) {
+    search(word: string) {
         if (word === '') {
             this.dismiss();
             return;
         }
 
         if (!this.searching || this.query !== word) {
+            // XXX: Bug of Electron type definition
+            /* tslint:disable:no-void-expression */
             this.requestId = remote.getCurrentWebContents().findInPage(word);
+            /* tslint:enable:no-void-expression */
             this.searching = true;
             this.query = word;
             this.focusOnInput();
@@ -177,11 +180,14 @@ Polymer({
             forward,
             findNext: true,
         };
+        // XXX: Bug of Electron type definition
+        /* tslint:disable:no-void-expression */
         this.requestId = remote.getCurrentWebContents().findInPage(text, options);
+        /* tslint:enable:no-void-expression */
         this.focusOnInput();
     },
 
-    stopSearch: function() {
+    stopSearch() {
         if (!this.searching) {
             return;
         }
@@ -193,7 +199,7 @@ Polymer({
         this.activeIdx = 0;
     },
 
-    setResult: function(no: number, all: number) {
+    setResult(no: number, all: number) {
         this.matches.innerText = `${no}/${all}`;
     },
 });

@@ -3,15 +3,21 @@ def which cmd
   File.join(dir, cmd) unless dir.nil?
 end
 
+$has_terminal_notifier = which 'terminal-notifier'
+$has_notify_send = which 'notify-send'
+$has_tmux = which 'tmux'
+
 def notify file
   msg = "'#{file} failed\n#{Time.now.to_s}'"
   case
-  when which('terminal-notifier')
+  when $has_terminal_notifier
     `terminal-notifier -message #{msg}`
-  when which('notify-send')
+  when $has_notify_send
     `notify-send #{msg}`
-  when which('tmux')
-    `tmux display-message #{msg}` if `tmux list-clients 1>/dev/null 2>&1` && $?.success?
+  when $has_tmux
+    `tmux display-message #{msg}` if system('tmux list-clients 1>/dev/null 2>&1')
+  else
+    puts "FAIL: #{msg}"
   end
 end
 
@@ -27,25 +33,29 @@ def execute(f, *args)
   end
 end
 
+def npm_exe(f, cmd, *args)
+  execute(f, "./node_modules/.bin/#{cmd}", *args)
+end
+
 def tsc(f, dir)
-  execute(f, 'tsc', '-p', dir)
+  npm_exe(f, 'tsc', '-p', dir)
 end
 
 def mocha(f, path)
-  execute(f, './node_modules/.bin/mocha', '--require', 'intelli-espower-loader', path)
+  npm_exe(f, 'mocha', '--exit', '--require', 'intelli-espower-loader', path)
 end
 
 def slimrb(input, output)
   execute(input, 'slimrb', input, output)
 end
 
-ignore /^node_modules/, /^build/, /^typings/, /^bower_components/
+ignore /^node_modules/, /^build/, /^bower_components/
 
 guard :shell do
   watch /^.+\.ts/ do |m|
     dir = File.dirname m[0]
     case dir
-    when 'browser', 'renderer', 'tests/browser'
+    when 'browser', 'renderer'
       tsc(m[0], dir)
     when 'test/main'
       tsc(m[0], dir) && mocha(m[0], "#{dir}/test/main/#{File.basename(m[0], '.ts')}.js")
