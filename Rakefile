@@ -157,6 +157,7 @@ end
 task :lint do
   npm_sh 'tslint --project browser/'
   npm_sh 'tslint --project renderer/'
+  npm_sh 'nsp check'
 end
 
 task :clean do
