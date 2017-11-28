@@ -41,9 +41,12 @@ marked.setOptions({
         }
     },
 
+    // @ts-ignore: emoji is a dedicated method added by my fork
     emoji(name: string) {
         return emoji_replacer.replaceOne(name);
     },
+
+    sanitize: 1,
 });
 
 const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
@@ -51,7 +54,7 @@ const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
 
 class MarkdownRenderer {
     public outline: Heading[];
-    private renderer: MarkedRenderer;
+    private renderer: marked.Renderer;
     private link_id: number;
     private tooltips: string;
 

@@ -18,7 +18,6 @@
     "index.ts",
     "keyboard.ts",
     "lib.d.ts",
-    "marked.d.ts",
     "lint-message.ts",
     "lint-panel.ts",
     "markdown-preview.ts",
