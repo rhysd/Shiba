@@ -36,7 +36,7 @@
     "highlight.js": "^9.12.0",
     "js-yaml": "^3.10.0",
     "katex": "^0.8.3",
-    "markdownlint": "^0.6.2",
+    "markdownlint": "^0.6.4",
     "marked": "github:rhysd/marked#emoji",
     "mermaid": "7.0.17",
     "mousetrap": "^1.6.1",
@@ -52,7 +52,7 @@
     "@types/es6-promise": "0.0.33",
     "@types/he": "^0.5.29",
     "@types/highlight.js": "^9.12.2",
-    "@types/js-yaml": "^3.9.1",
+    "@types/js-yaml": "^3.10.1",
     "@types/katex": "0.5.0",
     "@types/marked": "^0.3.0",
     "@types/mocha": "^2.2.44",
@@ -74,7 +74,7 @@
     "spectron": "^3.7.2",
     "touch": "^3.1.0",
     "tslint": "^5.8.0",
-    "typescript": "^2.6.1"
+    "typescript": "^2.6.2"
   },
   "scripts": {
     "dep": "rake dep",
