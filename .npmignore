@@ -1,8 +1,8 @@
 /tslint.json
-/typings.json
 /Guardfile
 /Rakefile
 /archive
 /packages
 /v2
 /scripts
+/test
