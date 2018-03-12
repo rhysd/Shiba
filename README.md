@@ -1,7 +1,7 @@
 ![shibainu](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/title-bar.jpg)
 =====================
 
-[![npm version](https://img.shields.io/npm/v/shiba.svg?style=flat-square)](https://www.npmjs.com/package/shiba)
+[![npm version](https://badge.fury.io/js/shiba.svg)](https://www.npmjs.com/package/shiba)
 [![Build Status](https://travis-ci.org/rhysd/Shiba.svg?branch=master)](https://travis-ci.org/rhysd/Shiba)
 
 Shiba is a rich live markdown preview app with linter.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
