@@ -2,7 +2,7 @@
 
 namespace Keyboard {
     export class Receiver {
-        public readonly enabled: boolean;
+        public enabled: boolean;
         private readonly callbacks: { [action: string]: () => void };
 
         constructor(private readonly shortcuts: { [k: string]: string }) {
