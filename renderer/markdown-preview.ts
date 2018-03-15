@@ -1,12 +1,12 @@
 /// <reference path="./emoji.ts" />
 /// <reference path="lib.d.ts" />
 
-import {dirname} from 'path';
-import {unescape} from 'querystring';
-import {shell, remote} from 'electron';
+import { dirname } from 'path';
+import { unescape } from 'querystring';
+import { shell, remote } from 'electron';
 import * as marked from 'marked';
 import * as katex from 'katex';
-import {highlight} from 'highlight.js';
+import { highlight } from 'highlight.js';
 import * as he from 'he';
 
 let element_env: MarkdownPreview = null; // XXX
@@ -30,7 +30,7 @@ marked.setOptions({
         }
 
         if (lang === 'katex') {
-            return '<div class="katex">' + katex.renderToString(code, {displayMode: true}) + '</div>';
+            return '<div class="katex">' + katex.renderToString(code, { displayMode: true }) + '</div>';
         }
 
         try {
@@ -54,7 +54,7 @@ const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
 
 class MarkdownRenderer {
     public outline: Heading[];
-    private renderer: marked.Renderer;
+    private readonly renderer: marked.Renderer;
     private link_id: number;
     private tooltips: string;
 
@@ -124,9 +124,9 @@ class MarkdownRenderer {
             const id = `md-link-${self.link_id}`;
             self.tooltips += `<paper-tooltip for="${id}" offset="0">${he.encode(href)}</paper-tooltip>`;
 
-            return title !== null ?
-                `<a id="${id}" href="${href}" onclick="${onclick}" title=${title}>${text}</a>` :
-                `<a id="${id}" href="${href}" onclick="${onclick}">${text}</a>`;
+            return title !== null
+                ? `<a id="${id}" href="${href}" onclick="${onclick}" title=${title}>${text}</a>`
+                : `<a id="${id}" href="${href}" onclick="${onclick}">${text}</a>`;
         };
 
         this.renderer.heading = function(text, level, raw) {
@@ -145,13 +145,13 @@ class MarkdownRenderer {
         this.link_id = 0;
         this.tooltips = '';
         this.outline = [];
-        return marked(markdown, {renderer: this.renderer}) + this.tooltips;
+        return marked(markdown, { renderer: this.renderer }) + this.tooltips;
     }
 }
 
 /* tslint:disable:no-unused-variable */
 function openMarkdownLink(event: MouseEvent) {
-/* tslint:enable:no-unused-variable */
+    /* tslint:enable:no-unused-variable */
     event.preventDefault();
 
     let target = event.target as HTMLAnchorElement;
@@ -193,7 +193,7 @@ function openMarkdownLink(event: MouseEvent) {
 
 /* tslint:disable:no-unused-variable */
 function openHashLink(event: MouseEvent) {
-/* tslint:enable:no-unused-variable */
+    /* tslint:enable:no-unused-variable */
     event.preventDefault();
     const target = event.target as HTMLAnchorElement;
     const hash_name: string = target.href.split('#')[1];
@@ -202,7 +202,7 @@ function openHashLink(event: MouseEvent) {
 
 /* tslint:disable:no-unused-variable */
 function openLinkWithExternalBrowser(event: MouseEvent, id: string) {
-/* tslint:enable:no-unused-variable */
+    /* tslint:enable:no-unused-variable */
     event.preventDefault();
     const e = document.getElementById(id) as HTMLAnchorElement;
     shell.openExternal(e.href);
@@ -210,7 +210,7 @@ function openLinkWithExternalBrowser(event: MouseEvent, id: string) {
 
 /* tslint:disable:no-unused-variable */
 function cancelClick(event: MouseEvent) {
-/* tslint:enable:no-unused-variable */
+    /* tslint:enable:no-unused-variable */
     event.preventDefault();
 }
 
@@ -225,12 +225,16 @@ Polymer({
 
         exts: {
             type: Array,
-            value() { return [] as string[]; },
+            value() {
+                return [] as string[];
+            },
         },
 
         currentOutline: {
             type: Array,
-            value() { return [] as Heading[]; },
+            value() {
+                return [] as Heading[];
+            },
         },
 
         isGithubStyle: {
@@ -263,7 +267,7 @@ Polymer({
         body.innerHTML = this.renderer.render(updated_doc);
         this.currentOutline = this.renderer.outline;
         const mermaid_blocks = document.querySelectorAll('div.mermaid');
-        if (mermaid_blocks.length > 0 && typeof(mermaid) !== 'undefined') {
+        if (mermaid_blocks.length > 0 && typeof mermaid !== 'undefined') {
             mermaid.init(undefined, mermaid_blocks);
         }
         if (this.onDocumentUpdated) {

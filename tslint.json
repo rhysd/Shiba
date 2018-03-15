@@ -148,6 +148,10 @@
     "prefer-const": true,
     "no-namespace": false,
     "ordered-imports": false,
-    "arrow-parens": false
+    "arrow-parens": false,
+    "no-unnecessary-class": true,
+    "no-dynamic-delete": false,
+    "prefer-readonly": true,
+    "newline-per-chained-call": false
   }
 }

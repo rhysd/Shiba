@@ -2,10 +2,10 @@
 
 namespace Keyboard {
     export class Receiver {
-        public enabled: boolean;
-        private callbacks: {[action: string]: () => void};
+        public readonly enabled: boolean;
+        private readonly callbacks: { [action: string]: () => void };
 
-        constructor(private shortcuts: {[k: string]: string}) {
+        constructor(private readonly shortcuts: { [k: string]: string }) {
             this.enabled = true;
             this.callbacks = {};
 
