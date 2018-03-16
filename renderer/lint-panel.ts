@@ -1,6 +1,6 @@
 /// <reference path="lib.d.ts" />
 
-import {shell, ipcRenderer as ipc} from 'electron';
+import { shell, ipcRenderer as ipc } from 'electron';
 
 interface LintPanelComponent extends polymer.Base {
     showLintResult(): void;
@@ -37,6 +37,7 @@ Polymer({
             type: Boolean,
             value: false,
         },
+        sanitize_error: Object,
     },
 
     attached() {
@@ -59,6 +60,10 @@ Polymer({
         const content = document.querySelector('.lint-content');
         while (content.firstChild) {
             content.removeChild(content.firstChild);
+        }
+
+        if (this.sanitize_error) {
+            this.messages.unshift(this.sanitize_error);
         }
 
         for (const m of this.messages) {

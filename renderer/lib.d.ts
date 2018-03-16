@@ -38,6 +38,7 @@ interface MarkdownPreview extends HTMLElement {
     isGithubStyle: boolean;
     openMarkdownDoc: (path: string, modifier: boolean) => void;
     onDocumentUpdated: () => void;
+    onSanitizationError: (message: string, reason: string) => void;
     scrollToHeading(e: Scroller, h: Heading): void;
 }
 
@@ -54,6 +55,7 @@ interface LintResultArea extends HTMLElement {
     voice_src: string;
     enable_inset: boolean;
     already_previewed: boolean;
+    sanitize_error: LintMessage;
     showLintResult(): void;
 }
 

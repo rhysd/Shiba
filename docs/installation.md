@@ -6,7 +6,7 @@ You can install Shiba in 3 ways.
 Almost all of you should follow [general way](#general).  If you want to manage Shiba with [npm](https://www.npmjs.com/), please consider to use [npm way](#npm)
 
 
-## <a name="general"> General
+## <a name="general"></a> General
 
 Shiba is released for Linux, OS X and Windows.
 Please download zip file from [release page](https://github.com/rhysd/Shiba/releases) and unzip the archive.
@@ -34,7 +34,7 @@ $ brew cask install shiba
 You can find `shiba.exe` in the directory.  Please simply use it by double click or from command prompt.  You need to install nothing.
 
 
-## <a name="npm"> Via npm
+## <a name="npm"></a> Via npm
 
 I already registered Shiba to [npm](https://www.npmjs.com/).  You can install it via npm as below.
 
