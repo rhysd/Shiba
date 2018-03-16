@@ -36,7 +36,6 @@ interface MarkdownPreview extends HTMLElement {
     fontSize: string;
     currentOutline: Heading[];
     isGithubStyle: boolean;
-    renderer: any;
     openMarkdownDoc: (path: string, modifier: boolean) => void;
     onDocumentUpdated: () => void;
     scrollToHeading(e: Scroller, h: Heading): void;
@@ -56,7 +55,6 @@ interface LintResultArea extends HTMLElement {
     enable_inset: boolean;
     already_previewed: boolean;
     showLintResult(): void;
-    appendLintMessage(header: string, body: string): void;
 }
 
 interface LintMessageElement extends HTMLElement {

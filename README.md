@@ -1,10 +1,6 @@
 ![shibainu](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/title-bar.jpg)
 =====================
 
-<div>
-hey
-</pre>
-
 [![npm version](https://badge.fury.io/js/shiba.svg)](https://www.npmjs.com/package/shiba)
 [![Build Status](https://travis-ci.org/rhysd/Shiba.svg?branch=master)](https://travis-ci.org/rhysd/Shiba)
 

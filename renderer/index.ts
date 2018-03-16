@@ -4,16 +4,14 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { homedir } from 'os';
-import { remote, ipcRenderer as ipc } from 'electron';
+import {homedir} from 'os';
+import {remote, ipcRenderer as ipc} from 'electron';
 import * as encoding from 'encoding-japanese';
 const config = remote.getGlobal('config') as Config;
-const home_dir = config.hide_title_bar ? '' : homedir();
+const home_dir = config.hide_title_bar ?  '' : homedir();
 const on_darwin = process.platform === 'darwin';
 
-function noop() {
-    /* do nothing */
-}
+function noop() { /* do nothing */ }
 let watching_path = remote.require('./initial_path.js')(config.default_watch_path || '');
 let onPathButtonPushed = noop;
 let onSearchButtonPushed = noop;
@@ -106,9 +104,13 @@ function renderMarkdownPreview(file: string) {
         // ASCII, BINARY and UTF32 are detection only, not convertable.
         const enc = encoding.detect(bytes);
         const markdown =
-            !enc || enc === 'UTF8' || enc === 'ASCII' || enc === 'BINARY' || enc === 'UTF32'
-                ? bytes.toString()
-                : new Buffer(encoding.convert(bytes, 'UTF8', enc)).toString();
+                !enc ||
+                enc === 'UTF8' ||
+                enc === 'ASCII' ||
+                enc === 'BINARY' ||
+                enc === 'UTF32' ?
+                    bytes.toString() :
+                    (new Buffer(encoding.convert(bytes, 'UTF8', enc))).toString();
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
@@ -129,10 +131,6 @@ function renderMarkdownPreview(file: string) {
         markdown_preview.openMarkdownDoc = openMarkdownDoc;
         markdown_preview.onDocumentUpdated = () => getLintArea().showLintResult();
         setChildToViewerWrapper(markdown_preview);
-        markdown_preview.renderer.on('error', (message: string, reason: string) => {
-            console.error('ERROR!:', message, reason);
-            getLintArea().appendLintMessage(message, reason);
-        });
 
         markdown_preview.document = markdown;
     });
@@ -183,8 +181,11 @@ function getDialogDefaultPath() {
     }
 }
 
-function prepareMarkdownStyle(markdown_config: { css_path: string; code_theme: string }) {
-    const { css_path, code_theme } = markdown_config;
+function prepareMarkdownStyle(markdown_config: {
+    css_path: string;
+    code_theme: string;
+}) {
+    const {css_path, code_theme} = markdown_config;
 
     const markdown_css_link = document.createElement('link');
     markdown_css_link.rel = 'stylesheet';
@@ -429,25 +430,17 @@ function shouldWatch(file: string) {
     });
     receiver.on('DevTools', function() {
         this.bw = this.bw || remote.BrowserWindow;
-        this.bw.getFocusedWindow().openDevTools({ detach: true });
+        this.bw.getFocusedWindow().openDevTools({detach: true});
     });
     receiver.on('Reload', () => reloadPreview());
     receiver.on('Print', () => remote.getCurrentWindow().webContents.print());
     receiver.on('Search', () => onSearchButtonPushed());
     receiver.on('Outline', () => onTOCButtonPushed());
 
-    searcher.onMount = () => {
-        receiver.enabled = false;
-    };
-    searcher.onUnmount = () => {
-        receiver.enabled = true;
-    };
-    toc.onMount = () => {
-        receiver.enabled = false;
-    };
-    toc.onUnmount = () => {
-        receiver.enabled = true;
-    };
+    searcher.onMount = () => { receiver.enabled = false; };
+    searcher.onUnmount = () => { receiver.enabled = true; };
+    toc.onMount = () => { receiver.enabled = false; };
+    toc.onUnmount = () => { receiver.enabled = true; };
 
     ipc.on('shiba:choose-file', () => onPathButtonPushed());
     ipc.on('shiba:lint', () => getMainDrawerPanel().togglePanel());
@@ -469,3 +462,4 @@ function shouldWatch(file: string) {
         document.head.appendChild(link);
     });
 })();
+
