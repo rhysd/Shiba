@@ -59,8 +59,8 @@ class MarkdownRenderer extends EventEmitter {
     private readonly renderer: marked.Renderer;
     private link_id: number;
     private tooltips: string;
-    private sanitizeState: SanitizeState;
-    private sanitizer: (tag: string) => string;
+    private readonly sanitizeState: SanitizeState;
+    private readonly sanitizer: (tag: string) => string;
 
     constructor(public markdown_exts: string[]) {
         super();
