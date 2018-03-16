@@ -3,6 +3,7 @@
 
 import { dirname } from 'path';
 import { unescape } from 'querystring';
+import { EventEmitter } from 'events';
 import { shell, remote } from 'electron';
 import * as marked from 'marked';
 import * as katex from 'katex';
@@ -53,7 +54,7 @@ marked.setOptions({
 const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
 const REGEX_UNCHECKED_LISTITEM = /^\[ ]\s+/;
 
-class MarkdownRenderer {
+class MarkdownRenderer extends EventEmitter {
     public outline: Heading[];
     private readonly renderer: marked.Renderer;
     private link_id: number;
@@ -62,6 +63,8 @@ class MarkdownRenderer {
     private sanitizer: (tag: string) => string;
 
     constructor(public markdown_exts: string[]) {
+        super();
+
         this.renderer = new marked.Renderer();
 
         // TODO:
@@ -144,7 +147,9 @@ class MarkdownRenderer {
         };
 
         this.sanitizeState = new SanitizeState();
-        // TODO: Handle error
+        this.sanitizeState.onDetectedBroken = (reason, tag) => {
+            this.emit('error', `Broken HTML around '${tag}'`, reason);
+        };
         this.sanitizer = this.sanitizeState.getSanitizer();
     }
 
