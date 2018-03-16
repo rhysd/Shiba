@@ -8,6 +8,7 @@ import * as marked from 'marked';
 import * as katex from 'katex';
 import { highlight } from 'highlight.js';
 import * as he from 'he';
+import SanitizeState from 'marked-sanitizer-github';
 
 let element_env: MarkdownPreview = null; // XXX
 const emoji_replacer = new Emoji.Replacer(dirname(__dirname) + '/images');
@@ -57,6 +58,8 @@ class MarkdownRenderer {
     private readonly renderer: marked.Renderer;
     private link_id: number;
     private tooltips: string;
+    private sanitizeState: SanitizeState;
+    private sanitizer: (tag: string) => string;
 
     constructor(public markdown_exts: string[]) {
         this.renderer = new marked.Renderer();
@@ -139,13 +142,23 @@ class MarkdownRenderer {
             });
             return marked.Renderer.prototype.heading.call(this, text, level, raw);
         };
+
+        this.sanitizeState = new SanitizeState();
+        // TODO: Handle error
+        this.sanitizer = this.sanitizeState.getSanitizer();
     }
 
     render(markdown: string): string {
         this.link_id = 0;
         this.tooltips = '';
         this.outline = [];
-        return marked(markdown, { renderer: this.renderer }) + this.tooltips;
+        this.sanitizeState.reset();
+        return (
+            marked(markdown, {
+                renderer: this.renderer,
+                sanitizer: this.sanitizer,
+            }) + this.tooltips
+        );
     }
 }
 
