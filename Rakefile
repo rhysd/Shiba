@@ -63,7 +63,8 @@ task :prepare_release => [:build] do
   %w(bower.json package.json build).each{|p| cp_r p, 'archive' }
   cd 'archive' do
     sh 'npm install --production'
-    sh 'npm uninstall electron'
+    sh 'npm uninstall --production electron'
+    sh 'npm prune --production electron'
     sh '../node_modules/.bin/bower install --production'
     sh '../node_modules/.bin/electron-rebuild'
   end
