@@ -65,6 +65,7 @@ task :prepare_release => [:build] do
     sh 'npm install --production'
     sh 'npm uninstall --production electron'
     sh 'npm prune --production electron'
+    sh 'npm install --production'
     sh '../node_modules/.bin/bower install --production'
     sh '../node_modules/.bin/electron-rebuild'
   end
@@ -74,7 +75,7 @@ task :package do
   mkdir_p 'packages'
   def release(options)
     cd 'archive' do
-      npm_sh "electron-packager ./ Shiba #{options.join ' '}"
+      npm_sh "electron-packager ./ Shiba #{options.join ' '} --no-prune"
       Dir['Shiba-*'].each do |dst|
         cp_r '../README.md', dst
         cp_r '../docs', dst
