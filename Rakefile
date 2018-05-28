@@ -93,7 +93,7 @@ task :package do
   release %W(
     --platform=darwin
     --arch=x64
-    --version=#{electron_ver}
+    --electron-version=#{electron_ver}
     --asar
     --icon=../resource/image/icon/shibainu.icns
     --app-version='#{ver}'
@@ -102,7 +102,7 @@ task :package do
   release %W(
     --platform=win32
     --arch=ia32
-    --version=#{electron_ver}
+    --electron-version=#{electron_ver}
     --asar
     --icon=../resource/image/icon/shibainu.ico
     --app-version='#{ver}'
@@ -111,7 +111,7 @@ task :package do
   release %W(
     --platform=win32
     --arch=x64
-    --version=#{electron_ver}
+    --electron-version=#{electron_ver}
     --asar
     --icon=../resource/image/icon/shibainu.ico
     --app-version='#{ver}'
@@ -120,7 +120,7 @@ task :package do
   release %W(
     --platform=linux
     --arch=ia32
-    --version=#{electron_ver}
+    --electron-version=#{electron_ver}
     --asar
     --icon=../resource/image/icon/shibainu.ico
     --app-version='#{ver}'
@@ -129,7 +129,7 @@ task :package do
   release %W(
     --platform=linux
     --arch=x64
-    --version=#{electron_ver}
+    --electron-version=#{electron_ver}
     --asar
     --icon=../resource/image/icon/shibainu.ico
     --app-version='#{ver}'
