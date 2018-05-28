@@ -72,7 +72,7 @@ function createWindow(config: Config, icon_path: string) {
     options.autoHideMenuBar = config.hide_menu_bar;
     options.show = false;
     if (config.hide_title_bar) {
-        options.titleBarStyle = 'hidden-inset';
+        options.titleBarStyle = 'hiddenInset';
     }
 
     const win = new BrowserWindow(options);
