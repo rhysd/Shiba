@@ -108,7 +108,7 @@ function renderMarkdownPreview(file: string) {
         const markdown =
             !enc || enc === 'UTF8' || enc === 'ASCII' || enc === 'BINARY' || enc === 'UTF32'
                 ? bytes.toString()
-                : new Buffer(encoding.convert(bytes, 'UTF8', enc)).toString();
+                : Buffer.from(encoding.convert(bytes, 'UTF8', enc)).toString();
 
         let markdown_preview = document.getElementById('current-markdown-preview') as MarkdownPreview;
         if (markdown_preview !== null) {
