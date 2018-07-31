@@ -1,3 +1,4 @@
+/// <reference lib="es2015.promise" />
 /// <reference path="./config.d.ts" />
 
 declare namespace NodeJS {

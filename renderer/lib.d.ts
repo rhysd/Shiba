@@ -1,3 +1,5 @@
+/// <reference lib="es2015.promise" />
+
 interface Set<T> {
     has(value: T): boolean;
 }
