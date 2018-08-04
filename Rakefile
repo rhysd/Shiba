@@ -159,8 +159,6 @@ end
 task :lint do
   npm_sh 'tslint --project browser/'
   npm_sh 'tslint --project renderer/'
-  # Set minimal CVSS score to 4 because of https://github.com/strongloop/fsevents/issues/198
-  npm_sh 'nsp check --cvss-filter 4'
 end
 
 task :clean do

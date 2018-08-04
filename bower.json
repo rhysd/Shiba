@@ -1,5 +1,5 @@
 {
-  "name": "Shiba",
+  "name": "shiba",
   "dependencies": {
     "iron-flex-layout": "polymerelements/iron-flex-layout#^1.0.0",
     "paper-drawer-panel": "PolymerElements/paper-drawer-panel#^1.0.0",
