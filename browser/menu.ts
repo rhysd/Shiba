@@ -51,13 +51,13 @@ export function build(main_window: Electron.BrowserWindow) {
                     type: 'separator',
                 },
                 {
-                    role: 'zoomin'
+                    role: 'zoomin',
                 },
                 {
-                    role: 'zoomout'
+                    role: 'zoomout',
                 },
                 {
-                    role: 'resetzoom'
+                    role: 'resetzoom',
                 },
                 {
                     type: 'separator',
