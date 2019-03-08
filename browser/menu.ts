@@ -51,6 +51,18 @@ export function build(main_window: Electron.BrowserWindow) {
                     type: 'separator',
                 },
                 {
+                    role: 'zoomin'
+                },
+                {
+                    role: 'zoomout'
+                },
+                {
+                    role: 'resetzoom'
+                },
+                {
+                    type: 'separator',
+                },
+                {
                     label: 'Choose File',
                     click: () => main_window.webContents.send('shiba:choose-file'),
                 },

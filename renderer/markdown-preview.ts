@@ -48,7 +48,7 @@ marked.setOptions({
         return emoji_replacer.replaceOne(name);
     },
 
-    sanitize: 1,
+    sanitize: true,
 });
 
 const REGEX_CHECKED_LISTITEM = /^\[x]\s+/;
