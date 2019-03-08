@@ -37,7 +37,7 @@ function createWindow(config: Config, icon_path: string) {
                 return default_len;
             }
             case 'number': {
-                return len as number;
+                return len;
             }
             default: {
                 return default_len;
