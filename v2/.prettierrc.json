@@ -1,0 +1,19 @@
+{
+  "tabWidth": 4,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "printWidth": 120,
+  "arrowParens": "avoid",
+  "overrides": [
+    {
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
+      "options": {
+        "trailingComma": "all"
+      }
+    }
+  ]
+}

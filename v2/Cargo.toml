@@ -1,0 +1,21 @@
+[package]
+name = "shiba-preview"
+version = "0.0.0"
+authors = ["rhysd <lin90162@yahoo.co.jp>"]
+description = "Simple markdown previewer"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/rhysd/Shiba"
+include = ["src", "README.md"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.66"
+env_logger = "0.9.1"
+getopts = "0.2.21"
+log = "0.4.17"
+open = "3.0.3"
+serde = "1.0.147"
+serde_json = "1.0.87"
+wry = "0.21.1"
