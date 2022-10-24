@@ -20,7 +20,6 @@ fn embed(slash_path: &str, src: &str) -> String {
 
 fn main() {
     println!("cargo:rerun-if-changed=dist/template.html");
-    println!("cargo:rerun-if-changed=dist/bundle.js");
 
     let html = fs::read_to_string(from_slash("dist/template.html")).unwrap();
     let html = embed("node_modules/github-markdown-css/github-markdown.css", &html);
