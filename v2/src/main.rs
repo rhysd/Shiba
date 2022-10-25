@@ -1,6 +1,5 @@
 use anyhow::Result;
 use getopts::Options;
-use shiba_preview::run;
 use std::env;
 use std::path::PathBuf;
 
@@ -11,7 +10,7 @@ fn usage(options: Options) {
 }
 
 fn main() -> Result<()> {
-    let debug = env::var("DEBUG").is_ok();
+    let debug = env::var("SHIBA_DEBUG").is_ok();
     let level = if debug { log::LevelFilter::Debug } else { log::LevelFilter::Info };
 
     env_logger::builder().filter_level(level).init();
@@ -23,7 +22,10 @@ fn main() -> Result<()> {
         usage(options);
         return Ok(());
     }
-    let path = matches.free.into_iter().next().map(PathBuf::from);
 
-    run(path, debug)
+    let options = shiba_preview::Options {
+        debug,
+        init_file: matches.free.into_iter().next().map(PathBuf::from),
+    };
+    shiba_preview::run(options)
 }
