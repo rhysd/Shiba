@@ -13,7 +13,7 @@ use wry::webview::WebView;
 
 pub fn run(options: Options) -> Result<()> {
     let event_loop = EventLoop::with_user_event();
-    let app = App::<WebView, SystemOpener>::new(options, &event_loop)?;
+    let mut app = App::<WebView, SystemOpener>::new(options, &event_loop)?;
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
