@@ -2,6 +2,7 @@ mod app;
 mod cli;
 mod opener;
 mod renderer;
+mod webview;
 
 use anyhow::Result;
 use app::{App, AppControl};

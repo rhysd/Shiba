@@ -1,7 +1,7 @@
 use crate::cli::Options;
 use crate::opener::Opener;
 use crate::renderer::{
-    MenuItemKind, MenuItems, MessageFromWebView, MessageToWebView, Renderer, UserEvent,
+    MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
 use anyhow::Result;
 use std::collections::VecDeque;
@@ -91,26 +91,26 @@ impl<R: Renderer, O: Opener> App<R, O> {
     fn preview(&self, path: &Path) -> Result<()> {
         log::debug!("Opening markdown preview for {:?}", path);
         let content = fs::read_to_string(&path)?;
-        let msg = MessageToWebView::Content { content: &content };
+        let msg = MessageToRenderer::Content { content: &content };
         self.renderer.send_message(msg)?;
         Ok(())
     }
 
     pub fn handle_user_event(&mut self, event: UserEvent) -> Result<()> {
         match event {
-            UserEvent::FromWebView(msg) => match msg {
-                MessageFromWebView::Init => {
+            UserEvent::IpcMessage(msg) => match msg {
+                MessageFromRenderer::Init => {
                     if let Some(path) = mem::take(&mut self.options.init_file) {
                         self.preview(&path)?;
                         self.history.push(path);
                     }
                 }
-                MessageFromWebView::Open { link }
+                MessageFromRenderer::Open { link }
                     if link.starts_with("https://") || link.starts_with("http://") =>
                 {
                     self.opener.open(&link)?;
                 }
-                MessageFromWebView::Open { mut link } => {
+                MessageFromRenderer::Open { mut link } => {
                     if link.starts_with("file://") {
                         link.drain(.."file://".len());
                     }
@@ -146,23 +146,23 @@ impl<R: Renderer, O: Opener> App<R, O> {
     }
 
     pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
-        let kind = self.menu.kind(&id);
+        let kind = self.menu.item_from_id(&id);
         log::debug!("Menu item was clicked: {:?}", kind);
         match kind {
-            MenuItemKind::Quit => Ok(AppControl::Exit),
-            MenuItemKind::Forward => {
+            MenuItem::Quit => Ok(AppControl::Exit),
+            MenuItem::Forward => {
                 if let Some(path) = self.history.forward().map(Path::to_path_buf) {
                     self.preview(&path)?;
                 }
                 Ok(AppControl::Continue)
             }
-            MenuItemKind::Back => {
+            MenuItem::Back => {
                 if let Some(path) = self.history.back().map(Path::to_path_buf) {
                     self.preview(&path)?;
                 }
                 Ok(AppControl::Continue)
             }
-            MenuItemKind::Unknown => anyhow::bail!("Menu item {:?} was not handled", id),
+            MenuItem::Unknown => anyhow::bail!("Menu item {:?} was not handled", id),
         }
     }
 }
