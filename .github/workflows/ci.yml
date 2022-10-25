@@ -1,0 +1,35 @@
+name: CI for v2
+on: [push, pull_request]
+env:
+  TERM: xterm
+  CARGO_TERM_COLOR: always
+  CARGO_TARGET_DIR: ./v2/target
+  CARGO_MANIFEST_DIR: ./v2
+  RUSTFLAGS: -D warnings
+  RUST_BACKTRACE: 1
+defaults:
+  run:
+    working-directory: v2
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: v2 -> v2/target
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: sudo apt install -y libwebkit2gtk-4.0-dev
+      - run: make dist/bundle.js
+      - run: npm run ts
+      - run: npm run lint
+      - run: cargo fmt -- --check
+      - run: cargo clippy -- -D warnings
