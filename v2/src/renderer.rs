@@ -1,12 +1,13 @@
 use crate::cli::Options;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
 use wry::application::event_loop::EventLoop;
 use wry::application::keyboard::{KeyCode, ModifiersState};
 use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemAttributes};
-use wry::application::window::WindowBuilder;
+use wry::application::window::{Window, WindowBuilder};
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
 const HTML: &str = include_str!("bundle.html");
@@ -32,20 +33,64 @@ pub enum UserEvent {
     FileDrop(PathBuf),
 }
 
+#[derive(Debug)]
+pub enum MenuItemKind {
+    Unknown,
+    Quit,
+    Forward,
+    Back,
+}
+
 pub trait MenuItems {
-    type ItemId;
-    fn is_quit(&self, id: Self::ItemId) -> bool;
+    type ItemId: fmt::Debug;
+    fn kind(&self, id: &Self::ItemId) -> MenuItemKind;
 }
 
 pub struct WebViewMenuItems {
     quit: MenuId,
+    forward: MenuId,
+    back: MenuId,
+}
+
+impl WebViewMenuItems {
+    fn create(window: &Window) -> Self {
+        let mut menu = MenuBar::new();
+
+        let mut file_menu = MenuBar::new();
+        file_menu.add_native_item(MenuItem::About("Shiba".to_string(), AboutMetadata::default()));
+        let cmd_q = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyQ);
+        let quit_item =
+            file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
+        menu.add_submenu("File", true, file_menu);
+
+        let mut history_menu = MenuBar::new();
+        let cmd_left_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketRight);
+        let forward_item = history_menu
+            .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
+        let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
+        let back_item = history_menu
+            .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
+        menu.add_submenu("History", true, history_menu);
+
+        window.set_menu(Some(menu));
+        log::debug!("Added menubar to window");
+        Self { quit: quit_item.id(), forward: forward_item.id(), back: back_item.id() }
+    }
 }
 
 impl MenuItems for WebViewMenuItems {
     type ItemId = MenuId;
 
-    fn is_quit(&self, id: Self::ItemId) -> bool {
-        id == self.quit
+    fn kind(&self, id: &Self::ItemId) -> MenuItemKind {
+        if id == &self.quit {
+            MenuItemKind::Quit
+        } else if id == &self.forward {
+            MenuItemKind::Forward
+        } else if id == &self.back {
+            MenuItemKind::Back
+        } else {
+            MenuItemKind::Unknown
+        }
     }
 }
 
@@ -97,20 +142,7 @@ impl Renderer for WebView {
     }
 
     fn set_menu(&self) -> Self::Menu {
-        let mut menu = MenuBar::new();
-        let mut sub_menu = MenuBar::new();
-        sub_menu.add_native_item(MenuItem::About(
-            "Markdown Preview".to_string(),
-            AboutMetadata::default(),
-        ));
-        let quit_item = sub_menu.add_item(
-            MenuItemAttributes::new("Quit")
-                .with_accelerators(&Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyQ)),
-        );
-        menu.add_submenu("File", true, sub_menu);
-        self.window().set_menu(Some(menu));
-        log::debug!("Added menubar to window (quit={:?})", quit_item);
-        WebViewMenuItems { quit: quit_item.id() }
+        WebViewMenuItems::create(self.window())
     }
 
     fn send_message(&self, message: MessageToWebView) -> Result<()> {

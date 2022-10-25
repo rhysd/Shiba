@@ -32,11 +32,11 @@ pub fn run(options: Options) -> Result<()> {
                     log::error!("Could not handle user event: {}", err);
                 }
             }
-            Event::MenuEvent { menu_id, .. } => {
-                if let AppControl::Exit = app.handle_menu(menu_id) {
-                    *control_flow = ControlFlow::Exit;
-                }
-            }
+            Event::MenuEvent { menu_id, .. } => match app.handle_menu_event(menu_id) {
+                Ok(AppControl::Exit) => *control_flow = ControlFlow::Exit,
+                Ok(_) => {}
+                Err(err) => log::error!("Could not handle menu event: {}", err),
+            },
             _ => (),
         }
     });

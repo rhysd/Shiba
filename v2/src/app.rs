@@ -1,6 +1,8 @@
 use crate::cli::Options;
 use crate::opener::Opener;
-use crate::renderer::{MenuItems, MessageFromWebView, MessageToWebView, Renderer, UserEvent};
+use crate::renderer::{
+    MenuItemKind, MenuItems, MessageFromWebView, MessageToWebView, Renderer, UserEvent,
+};
 use anyhow::Result;
 use std::collections::VecDeque;
 use std::fs;
@@ -8,12 +10,6 @@ use std::mem;
 use std::path::{Path, PathBuf};
 
 const MARKDOWN_EXTENSIONS: &[&str] = &[".md", ".mkd", ".markdown"];
-
-#[derive(Debug)]
-pub enum AppControl {
-    Continue,
-    Exit,
-}
 
 struct History {
     max_items: usize,
@@ -33,13 +29,18 @@ impl History {
             return;
         }
 
+        if self.items.is_empty() {
+            self.items.push_back(item);
+            return;
+        }
+
         if self.items.len() == self.max_items {
             self.items.pop_front();
             self.index = self.index.saturating_sub(1);
         }
 
-        if self.index < self.items.len() {
-            self.items.truncate(self.index);
+        if self.index + 1 < self.items.len() {
+            self.items.truncate(self.index + 1);
         }
 
         self.index += 1;
@@ -47,23 +48,27 @@ impl History {
     }
 
     fn forward(&mut self) -> Option<&Path> {
-        if self.index == self.items.len() {
+        if self.items.is_empty() || self.index + 1 == self.items.len() {
             return None;
         }
-        let item = &self.items[self.index];
         self.index += 1;
-        Some(item)
+        Some(&self.items[self.index])
     }
 
     fn back(&mut self) -> Option<&Path> {
         self.index = self.index.checked_sub(1)?;
-        let item = &self.items[self.index];
-        Some(item)
+        Some(&self.items[self.index])
     }
 
     fn current(&self) -> Option<&Path> {
         self.items.get(self.index).map(PathBuf::as_path)
     }
+}
+
+#[derive(Debug)]
+pub enum AppControl {
+    Continue,
+    Exit,
 }
 
 pub struct App<R: Renderer, O: Opener> {
@@ -83,12 +88,11 @@ impl<R: Renderer, O: Opener> App<R, O> {
         Ok(Self { options, renderer, menu, opener, history })
     }
 
-    fn preview(&mut self, path: PathBuf) -> Result<()> {
+    fn preview(&self, path: &Path) -> Result<()> {
         log::debug!("Opening markdown preview for {:?}", path);
         let content = fs::read_to_string(&path)?;
         let msg = MessageToWebView::Content { content: &content };
         self.renderer.send_message(msg)?;
-        self.history.push(path);
         Ok(())
     }
 
@@ -97,7 +101,8 @@ impl<R: Renderer, O: Opener> App<R, O> {
             UserEvent::FromWebView(msg) => match msg {
                 MessageFromWebView::Init => {
                     if let Some(path) = mem::take(&mut self.options.init_file) {
-                        self.preview(path)?;
+                        self.preview(&path)?;
+                        self.history.push(path);
                     }
                 }
                 MessageFromWebView::Open { link }
@@ -123,7 +128,8 @@ impl<R: Renderer, O: Opener> App<R, O> {
                             }
                         }
                         log::debug!("Opening markdown link clicked in WebView: {:?}", path);
-                        self.preview(path)?;
+                        self.preview(&path)?;
+                        self.history.push(path);
                     } else {
                         log::debug!("Opening link item clicked in WebView: {:?}", link);
                         self.opener.open(&link)?;
@@ -132,18 +138,31 @@ impl<R: Renderer, O: Opener> App<R, O> {
             },
             UserEvent::FileDrop(path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
-                self.preview(path)?;
+                self.preview(&path)?;
+                self.history.push(path);
             }
         }
         Ok(())
     }
 
-    pub fn handle_menu(&self, id: <R::Menu as MenuItems>::ItemId) -> AppControl {
-        if self.menu.is_quit(id) {
-            log::debug!("'Quit' menu item was clicked");
-            AppControl::Exit
-        } else {
-            AppControl::Continue
+    pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
+        let kind = self.menu.kind(&id);
+        log::debug!("Menu item was clicked: {:?}", kind);
+        match kind {
+            MenuItemKind::Quit => Ok(AppControl::Exit),
+            MenuItemKind::Forward => {
+                if let Some(path) = self.history.forward().map(Path::to_path_buf) {
+                    self.preview(&path)?;
+                }
+                Ok(AppControl::Continue)
+            }
+            MenuItemKind::Back => {
+                if let Some(path) = self.history.back().map(Path::to_path_buf) {
+                    self.preview(&path)?;
+                }
+                Ok(AppControl::Continue)
+            }
+            MenuItemKind::Unknown => anyhow::bail!("Menu item {:?} was not handled", id),
         }
     }
 }
