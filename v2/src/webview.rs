@@ -47,15 +47,15 @@ impl WebViewMenuItems {
 impl MenuItems for WebViewMenuItems {
     type ItemId = MenuId;
 
-    fn item_from_id(&self, id: &Self::ItemId) -> AppMenuItem {
-        if id == &self.quit {
-            AppMenuItem::Quit
-        } else if id == &self.forward {
-            AppMenuItem::Forward
-        } else if id == &self.back {
-            AppMenuItem::Back
+    fn item_from_id(&self, id: Self::ItemId) -> Result<AppMenuItem> {
+        if id == self.quit {
+            Ok(AppMenuItem::Quit)
+        } else if id == self.forward {
+            Ok(AppMenuItem::Forward)
+        } else if id == self.back {
+            Ok(AppMenuItem::Back)
         } else {
-            AppMenuItem::Unknown
+            anyhow::bail!("Unknown item id: {:?}", id)
         }
     }
 }

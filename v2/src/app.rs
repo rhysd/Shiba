@@ -146,7 +146,7 @@ impl<R: Renderer, O: Opener> App<R, O> {
     }
 
     pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
-        let kind = self.menu.item_from_id(&id);
+        let kind = self.menu.item_from_id(id)?;
         log::debug!("Menu item was clicked: {:?}", kind);
         match kind {
             MenuItem::Quit => Ok(AppControl::Exit),
@@ -162,7 +162,6 @@ impl<R: Renderer, O: Opener> App<R, O> {
                 }
                 Ok(AppControl::Continue)
             }
-            MenuItem::Unknown => anyhow::bail!("Menu item {:?} was not handled", id),
         }
     }
 }

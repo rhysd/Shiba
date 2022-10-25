@@ -27,7 +27,6 @@ pub enum UserEvent {
 
 #[derive(Debug)]
 pub enum MenuItem {
-    Unknown,
     Quit,
     Forward,
     Back,
@@ -35,7 +34,7 @@ pub enum MenuItem {
 
 pub trait MenuItems {
     type ItemId: fmt::Debug;
-    fn item_from_id(&self, id: &Self::ItemId) -> MenuItem;
+    fn item_from_id(&self, id: Self::ItemId) -> Result<MenuItem>;
 }
 
 pub trait Renderer: Sized {
