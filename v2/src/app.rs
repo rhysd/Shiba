@@ -3,13 +3,14 @@ use crate::opener::Opener;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
+use crate::watcher::{PathFilter, Watcher};
 use anyhow::Result;
 use std::collections::VecDeque;
 use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf};
 
-const MARKDOWN_EXTENSIONS: &[&str] = &[".md", ".mkd", ".markdown"];
+const MARKDOWN_EXTENSIONS: &[&str] = &["md", "mkd", "markdown"];
 
 struct History {
     max_items: usize,
@@ -29,7 +30,11 @@ impl History {
             return;
         }
 
-        if self.items.is_empty() {
+        if let Some(latest) = self.items.back() {
+            if latest == &item {
+                return; // Do not push the same path repeatedly
+            }
+        } else {
             self.items.push_back(item);
             return;
         }
@@ -71,26 +76,49 @@ pub enum AppControl {
     Exit,
 }
 
-pub struct App<R: Renderer, O: Opener> {
+pub struct App<R: Renderer, O: Opener, W: Watcher> {
     options: Options,
     renderer: R,
     menu: R::Menu,
     opener: O,
     history: History,
+    watcher: W,
 }
 
-impl<R: Renderer, O: Opener> App<R, O> {
+impl<R, O, W> App<R, O, W>
+where
+    R: Renderer,
+    O: Opener,
+    W: Watcher<ChannelCreator = R::EventLoop>,
+{
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let renderer = R::open(&options, event_loop)?;
         let menu = renderer.set_menu();
         let opener = O::new();
         let history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
-        Ok(Self { options, renderer, menu, opener, history })
+        let filter = PathFilter::new(MARKDOWN_EXTENSIONS);
+        let mut watcher = W::new(event_loop, filter)?;
+        if let Some(path) = &options.init_file {
+            watcher.watch(path)?;
+        }
+        for path in &options.watch_dirs {
+            watcher.watch(path)?;
+        }
+        Ok(Self { options, renderer, menu, opener, history, watcher })
     }
 
     fn preview(&self, path: &Path) -> Result<()> {
         log::debug!("Opening markdown preview for {:?}", path);
-        let content = fs::read_to_string(&path)?;
+        let content = match fs::read_to_string(&path) {
+            Ok(content) => content,
+            Err(err) => {
+                // Do not return error because 'no such file' because the file might be renamed and
+                // no longer exists. This can happen when saving files on Vim. In this case, a file
+                // create event will follow so the preview can be updated with the event.
+                log::debug!("Could not open {:?} due to error: {}", path, err);
+                return Ok(());
+            }
+        };
         let msg = MessageToRenderer::Content { content: &content };
         self.renderer.send_message(msg)?;
         Ok(())
@@ -118,8 +146,12 @@ impl<R: Renderer, O: Opener> App<R, O> {
                     {
                         link = link.replace('/', "\\");
                     }
-                    if MARKDOWN_EXTENSIONS.iter().any(|e| link.ends_with(e)) {
-                        let mut path = PathBuf::from(link);
+                    let link = PathBuf::from(link);
+                    let is_markdown = MARKDOWN_EXTENSIONS
+                        .iter()
+                        .any(|e| link.extension().map(|ext| ext == *e).unwrap_or(false));
+                    if is_markdown {
+                        let mut path = link;
                         if path.is_relative() {
                             if let Some(current_file) = self.history.current() {
                                 if let Some(dir) = current_file.parent() {
@@ -129,6 +161,7 @@ impl<R: Renderer, O: Opener> App<R, O> {
                         }
                         log::debug!("Opening markdown link clicked in WebView: {:?}", path);
                         self.preview(&path)?;
+                        self.watcher.watch(&path)?;
                         self.history.push(path);
                     } else {
                         log::debug!("Opening link item clicked in WebView: {:?}", link);
@@ -136,10 +169,22 @@ impl<R: Renderer, O: Opener> App<R, O> {
                     }
                 }
             },
-            UserEvent::FileDrop(path) => {
+            UserEvent::FileDrop(mut path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
+                if !path.is_absolute() {
+                    path = path.canonicalize()?;
+                }
                 self.preview(&path)?;
+                self.watcher.watch(&path)?;
                 self.history.push(path);
+            }
+            UserEvent::WatchedFilesChanged(mut paths) => {
+                log::debug!("Files changed: {:?}", paths);
+                // Currently only the last file is referred for preview. Should we push other paths to the history?
+                if let Some(path) = paths.pop() {
+                    self.preview(&path)?;
+                    self.history.push(path);
+                }
             }
         }
         Ok(())

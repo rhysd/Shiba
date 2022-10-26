@@ -23,6 +23,7 @@ pub enum MessageFromRenderer {
 pub enum UserEvent {
     IpcMessage(MessageFromRenderer),
     FileDrop(PathBuf),
+    WatchedFilesChanged(Vec<PathBuf>),
 }
 
 #[derive(Debug)]
