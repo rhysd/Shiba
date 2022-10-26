@@ -65,8 +65,8 @@ impl History {
         Some(&self.items[self.index])
     }
 
-    fn current(&self) -> Option<&Path> {
-        self.items.get(self.index).map(PathBuf::as_path)
+    fn current(&self) -> Option<&PathBuf> {
+        self.items.get(self.index)
     }
 }
 
@@ -188,7 +188,13 @@ where
             }
             UserEvent::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
-                // Currently only the last file is referred for preview. Should we push other paths to the history?
+                if let Some(current) = self.history.current() {
+                    if paths.contains(current) {
+                        self.preview(current)?;
+                        return Ok(());
+                    }
+                }
+                // Choose the last one to preview if the current file is not included in `paths`
                 if let Some(path) = paths.pop() {
                     if self.preview(&path)? {
                         self.history.push(path);
