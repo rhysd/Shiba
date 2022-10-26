@@ -107,7 +107,7 @@ where
         Ok(Self { options, renderer, menu, opener, history, watcher })
     }
 
-    fn preview(&self, path: &Path) -> Result<()> {
+    fn preview(&self, path: &Path) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
         let content = match fs::read_to_string(&path) {
             Ok(content) => content,
@@ -116,74 +116,83 @@ where
                 // no longer exists. This can happen when saving files on Vim. In this case, a file
                 // create event will follow so the preview can be updated with the event.
                 log::debug!("Could not open {:?} due to error: {}", path, err);
-                return Ok(());
+                return Ok(false);
             }
         };
         let msg = MessageToRenderer::Content { content: &content };
         self.renderer.send_message(msg)?;
+        Ok(true)
+    }
+
+    fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<()> {
+        match message {
+            MessageFromRenderer::Init => {
+                if let Some(path) = mem::take(&mut self.options.init_file) {
+                    if self.preview(&path)? {
+                        self.history.push(path);
+                    }
+                }
+            }
+            MessageFromRenderer::Open { link }
+                if link.starts_with("https://") || link.starts_with("http://") =>
+            {
+                self.opener.open(&link)?;
+            }
+            MessageFromRenderer::Open { mut link } => {
+                if link.starts_with("file://") {
+                    link.drain(.."file://".len());
+                }
+                #[cfg(target_os = "windows")]
+                {
+                    link = link.replace('/', "\\");
+                }
+                let link = PathBuf::from(link);
+                let is_markdown = MARKDOWN_EXTENSIONS
+                    .iter()
+                    .any(|e| link.extension().map(|ext| ext == *e).unwrap_or(false));
+                if is_markdown {
+                    let mut path = link;
+                    if path.is_relative() {
+                        if let Some(current_file) = self.history.current() {
+                            if let Some(dir) = current_file.parent() {
+                                path = dir.join(path);
+                            }
+                        }
+                    }
+                    log::debug!("Opening markdown link clicked in WebView: {:?}", path);
+                    self.watcher.watch(&path)?;
+                    if self.preview(&path)? {
+                        self.history.push(path);
+                    }
+                } else {
+                    log::debug!("Opening link item clicked in WebView: {:?}", link);
+                    self.opener.open(&link)?;
+                }
+            }
+        }
         Ok(())
     }
 
     pub fn handle_user_event(&mut self, event: UserEvent) -> Result<()> {
         match event {
-            UserEvent::IpcMessage(msg) => match msg {
-                MessageFromRenderer::Init => {
-                    if let Some(path) = mem::take(&mut self.options.init_file) {
-                        self.preview(&path)?;
-                        self.history.push(path);
-                    }
-                }
-                MessageFromRenderer::Open { link }
-                    if link.starts_with("https://") || link.starts_with("http://") =>
-                {
-                    self.opener.open(&link)?;
-                }
-                MessageFromRenderer::Open { mut link } => {
-                    if link.starts_with("file://") {
-                        link.drain(.."file://".len());
-                    }
-                    #[cfg(target_os = "windows")]
-                    {
-                        link = link.replace('/', "\\");
-                    }
-                    let link = PathBuf::from(link);
-                    let is_markdown = MARKDOWN_EXTENSIONS
-                        .iter()
-                        .any(|e| link.extension().map(|ext| ext == *e).unwrap_or(false));
-                    if is_markdown {
-                        let mut path = link;
-                        if path.is_relative() {
-                            if let Some(current_file) = self.history.current() {
-                                if let Some(dir) = current_file.parent() {
-                                    path = dir.join(path);
-                                }
-                            }
-                        }
-                        log::debug!("Opening markdown link clicked in WebView: {:?}", path);
-                        self.preview(&path)?;
-                        self.watcher.watch(&path)?;
-                        self.history.push(path);
-                    } else {
-                        log::debug!("Opening link item clicked in WebView: {:?}", link);
-                        self.opener.open(&link)?;
-                    }
-                }
-            },
+            UserEvent::IpcMessage(msg) => self.handle_ipc_message(msg)?,
             UserEvent::FileDrop(mut path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.preview(&path)?;
                 self.watcher.watch(&path)?;
-                self.history.push(path);
+                if self.preview(&path)? {
+                    self.history.push(path);
+                }
             }
             UserEvent::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
                 // Currently only the last file is referred for preview. Should we push other paths to the history?
                 if let Some(path) = paths.pop() {
-                    self.preview(&path)?;
-                    self.history.push(path);
+                    if self.preview(&path)? {
+                        self.history.push(path);
+                    }
                 }
             }
         }
