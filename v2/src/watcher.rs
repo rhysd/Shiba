@@ -5,8 +5,6 @@ use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as 
 use std::path::{Path, PathBuf};
 use wry::application::event_loop::{EventLoop, EventLoopProxy};
 
-// TODO: Change EventLoop<UserEvent> to EventLoop<Result<UserEvent>> to handle errors by the event loop
-
 pub struct PathFilter {
     extensions: Vec<String>,
 }
@@ -29,10 +27,10 @@ impl PathFilter {
 }
 
 pub trait WatchChannelCreator {
-    type Channel;
+    type Channel: 'static + Send;
 
     fn create_channel(&self) -> Self::Channel;
-    fn send_changed_paths(chan: &Self::Channel, paths: Vec<PathBuf>);
+    fn on_files_changed(chan: &Self::Channel, paths: Result<Vec<PathBuf>>);
 }
 
 impl WatchChannelCreator for EventLoop<UserEvent> {
@@ -42,26 +40,26 @@ impl WatchChannelCreator for EventLoop<UserEvent> {
         self.create_proxy()
     }
 
-    fn send_changed_paths(chan: &Self::Channel, paths: Vec<PathBuf>) {
+    fn on_files_changed(chan: &Self::Channel, paths: Result<Vec<PathBuf>>) {
         log::debug!("Files change event from watcher: {:?}", paths);
-        if let Err(err) = chan.send_event(UserEvent::WatchedFilesChanged(paths)) {
+        let event = match paths {
+            Ok(paths) => UserEvent::WatchedFilesChanged(paths),
+            Err(err) => UserEvent::Error(err),
+        };
+        if let Err(err) = chan.send_event(event) {
             log::error!("Could not send the file change event {}", err);
         }
     }
 }
 
 pub trait Watcher: Sized {
-    type ChannelCreator: WatchChannelCreator;
-
-    fn new(creator: &Self::ChannelCreator, filter: PathFilter) -> Result<Self>;
+    fn new<C: WatchChannelCreator>(creator: &C, filter: PathFilter) -> Result<Self>;
     fn watch(&mut self, path: &Path) -> Result<()>;
     fn unwatch(&mut self, path: &Path) -> Result<()>;
 }
 
 impl Watcher for RecommendedWatcher {
-    type ChannelCreator = EventLoop<UserEvent>;
-
-    fn new(creator: &Self::ChannelCreator, filter: PathFilter) -> Result<Self> {
+    fn new<C: WatchChannelCreator>(creator: &C, filter: PathFilter) -> Result<Self> {
         let channel = creator.create_channel();
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) => match event.kind {
@@ -71,12 +69,12 @@ impl Watcher for RecommendedWatcher {
                     let mut paths = event.paths;
                     paths.retain(|p| filter.filters(p));
                     if !paths.is_empty() {
-                        EventLoop::send_changed_paths(&channel, paths);
+                        C::on_files_changed(&channel, Ok(paths));
                     }
                 }
                 _ => {}
             },
-            Err(e) => log::error!("Could not watch filesystem event: {}", e),
+            Err(err) => C::on_files_changed(&channel, Err(err.into())),
         })?;
         Ok(watcher)
     }

@@ -1,5 +1,5 @@
 use crate::cli::Options;
-use anyhow::Result;
+use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::PathBuf;
@@ -24,6 +24,7 @@ pub enum UserEvent {
     IpcMessage(MessageFromRenderer),
     FileDrop(PathBuf),
     WatchedFilesChanged(Vec<PathBuf>),
+    Error(Error),
 }
 
 #[derive(Debug)]

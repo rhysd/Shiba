@@ -3,7 +3,7 @@ use crate::opener::Opener;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
-use crate::watcher::{PathFilter, Watcher};
+use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
 use anyhow::Result;
 use std::collections::VecDeque;
 use std::fs;
@@ -89,19 +89,22 @@ impl<R, O, W> App<R, O, W>
 where
     R: Renderer,
     O: Opener,
-    W: Watcher<ChannelCreator = R::EventLoop>,
+    W: Watcher,
+    R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let renderer = R::open(&options, event_loop)?;
         let menu = renderer.set_menu();
-        let opener = O::new();
+        let opener = O::default();
         let history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
         let filter = PathFilter::new(MARKDOWN_EXTENSIONS);
         let mut watcher = W::new(event_loop, filter)?;
         if let Some(path) = &options.init_file {
+            log::debug!("Watching initial file: {:?}", path);
             watcher.watch(path)?;
         }
         for path in &options.watch_dirs {
+            log::debug!("Watching initial directory: {:?}", path);
             watcher.watch(path)?;
         }
         Ok(Self { options, renderer, menu, opener, history, watcher })
@@ -175,7 +178,7 @@ where
 
     pub fn handle_user_event(&mut self, event: UserEvent) -> Result<()> {
         match event {
-            UserEvent::IpcMessage(msg) => self.handle_ipc_message(msg)?,
+            UserEvent::IpcMessage(msg) => self.handle_ipc_message(msg),
             UserEvent::FileDrop(mut path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
                 if !path.is_absolute() {
@@ -185,6 +188,7 @@ where
                 if self.preview(&path)? {
                     self.history.push(path);
                 }
+                Ok(())
             }
             UserEvent::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
@@ -200,9 +204,10 @@ where
                         self.history.push(path);
                     }
                 }
+                Ok(())
             }
+            UserEvent::Error(err) => Err(err),
         }
-        Ok(())
     }
 
     pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
