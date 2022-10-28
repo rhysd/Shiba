@@ -1,17 +1,20 @@
 {
-  "name": "rust-webview",
+  "name": "shiba-v2",
   "private": true,
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch-bundle": "npm run bundle -- --watch",
-    "watch-ts": "npm run ts -- --watch",
-    "watch-rs": "cargo watch --watch src",
+    "watch": "concurrently -c auto npm:watch:bundle npm:watch:ts npm:watch:rs",
+    "watch:bundle": "npm run bundle -- --watch",
+    "watch:ts": "npm run ts -- --watch --preserveWatchOutput",
+    "watch:rs": "cargo watch --watch src",
     "bundle": "esbuild web/index.ts --bundle --outfile=dist/bundle.js --platform=browser",
     "ts": "tsc --noEmit -p .",
     "rs": "cargo check",
-    "fmt": "cargo fmt && prettier --write 'web/*.ts'",
+    "fmt": "concurrently npm:fmt:cargo npm:fmt:ts",
+    "fmt:cargo": "cargo fmt",
+    "fmt:ts": "prettier --write 'web/*.ts'",
     "lint": "prettier --check 'web/*.ts'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,6 +29,7 @@
   "devDependencies": {
     "@types/marked": "^4.0.7",
     "@types/mousetrap": "^1.6.9",
+    "concurrently": "^7.5.0",
     "esbuild": "^0.15.12",
     "prettier": "^2.7.1",
     "typescript": "^4.8.4"
