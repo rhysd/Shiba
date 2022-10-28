@@ -130,6 +130,7 @@ where
 
     fn forward(&mut self) -> Result<()> {
         if let Some(path) = self.history.forward().map(Path::to_path_buf) {
+            log::debug!("Forward to next preview page: {:?}", path);
             self.preview(&path)?;
         }
         Ok(())
@@ -137,6 +138,15 @@ where
 
     fn back(&mut self) -> Result<()> {
         if let Some(path) = self.history.back().map(Path::to_path_buf) {
+            log::debug!("Back to previous preview page: {:?}", path);
+            self.preview(&path)?;
+        }
+        Ok(())
+    }
+
+    fn reload(&mut self) -> Result<()> {
+        if let Some(path) = self.history.current() {
+            log::debug!("Reload current preview page: {:?}", path);
             self.preview(&path)?;
         }
         Ok(())
@@ -190,6 +200,7 @@ where
             }
             MessageFromRenderer::Forward => self.forward()?,
             MessageFromRenderer::Back => self.back()?,
+            MessageFromRenderer::Reload => self.reload()?,
         }
         Ok(())
     }
@@ -232,15 +243,11 @@ where
         let kind = self.menu.item_from_id(id)?;
         log::debug!("Menu item was clicked: {:?}", kind);
         match kind {
-            MenuItem::Quit => Ok(AppControl::Exit),
-            MenuItem::Forward => {
-                self.forward()?;
-                Ok(AppControl::Continue)
-            }
-            MenuItem::Back => {
-                self.back()?;
-                Ok(AppControl::Continue)
-            }
+            MenuItem::Quit => return Ok(AppControl::Exit),
+            MenuItem::Forward => self.forward()?,
+            MenuItem::Back => self.back()?,
+            MenuItem::Reload => self.reload()?,
         }
+        Ok(AppControl::Continue)
     }
 }

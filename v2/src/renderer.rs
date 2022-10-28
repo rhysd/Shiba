@@ -10,6 +10,7 @@ use std::path::PathBuf;
 pub enum KeyAction {
     Forward,
     Back,
+    Reload,
     ScrollDown,
     ScrollUp,
     ScrollPageDown,
@@ -34,6 +35,7 @@ impl<'a> MessageToRenderer<'a> {
             ("k",      ScrollUp),
             ("h",      Back),
             ("l",      Forward),
+            ("r",      Reload),
             ("ctrl+f", ScrollPageDown),
             ("ctrl+b", ScrollPageUp),
         ];
@@ -53,6 +55,7 @@ impl<'a> MessageToRenderer<'a> {
 pub enum MessageFromRenderer {
     Init,
     Open { link: String },
+    Reload,
     Forward,
     Back,
 }
@@ -70,6 +73,7 @@ pub enum MenuItem {
     Quit,
     Forward,
     Back,
+    Reload,
 }
 
 pub trait MenuItems {

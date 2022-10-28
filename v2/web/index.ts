@@ -35,6 +35,9 @@ type MessageToMain =
       }
     | {
           kind: 'back';
+      }
+    | {
+          kind: 'reload';
       };
 
 function sendMessage(m: MessageToMain): void {
@@ -60,6 +63,9 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     },
     Back(): void {
         sendMessage({ kind: 'back' });
+    },
+    Reload(): void {
+        sendMessage({ kind: 'reload' });
     },
 };
 

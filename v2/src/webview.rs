@@ -14,6 +14,7 @@ pub struct WebViewMenuItems {
     quit: MenuId,
     forward: MenuId,
     back: MenuId,
+    reload: MenuId,
 }
 
 impl WebViewMenuItems {
@@ -36,9 +37,20 @@ impl WebViewMenuItems {
             .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
         menu.add_submenu("History", true, history_menu);
 
+        let mut display_menu = MenuBar::new();
+        let cmd_r = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyR);
+        let reload_item =
+            display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
+        menu.add_submenu("Display", true, display_menu);
+
         window.set_menu(Some(menu));
         log::debug!("Added menubar to window");
-        Self { quit: quit_item.id(), forward: forward_item.id(), back: back_item.id() }
+        Self {
+            quit: quit_item.id(),
+            forward: forward_item.id(),
+            back: back_item.id(),
+            reload: reload_item.id(),
+        }
     }
 }
 
@@ -52,8 +64,10 @@ impl MenuItems for WebViewMenuItems {
             Ok(AppMenuItem::Forward)
         } else if id == self.back {
             Ok(AppMenuItem::Back)
+        } else if id == self.reload {
+            Ok(AppMenuItem::Reload)
         } else {
-            Err(anyhow::anyhow!("Unknown item id: {:?}", id))
+            Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }
     }
 }
