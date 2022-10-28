@@ -40,7 +40,10 @@ type MessageToMain =
           kind: 'reload';
       }
     | {
-          kind: 'dialog';
+          kind: 'file_dialog';
+      }
+    | {
+          kind: 'dir_dialog';
       };
 
 function sendMessage(m: MessageToMain): void {
@@ -70,8 +73,11 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     Reload(): void {
         sendMessage({ kind: 'reload' });
     },
-    OpenDialog(): void {
-        sendMessage({ kind: 'dialog' });
+    OpenFile(): void {
+        sendMessage({ kind: 'file_dialog' });
+    },
+    OpenDir(): void {
+        sendMessage({ kind: 'dir_dialog' });
     },
 };
 

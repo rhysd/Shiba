@@ -11,7 +11,9 @@ pub enum KeyAction {
     Forward,
     Back,
     Reload,
-    OpenDialog,
+    OpenFile,
+    #[allow(unused)]
+    OpenDir,
     ScrollDown,
     ScrollUp,
     ScrollPageDown,
@@ -37,7 +39,7 @@ impl<'a> MessageToRenderer<'a> {
             ("h",      Back),
             ("l",      Forward),
             ("r",      Reload),
-            ("ctrl+o", OpenDialog),
+            ("ctrl+o", OpenFile),
             ("ctrl+f", ScrollPageDown),
             ("ctrl+b", ScrollPageUp),
         ];
@@ -58,7 +60,8 @@ pub enum MessageFromRenderer {
     Init,
     Open { link: String },
     Reload,
-    Dialog,
+    FileDialog,
+    DirDialog,
     Forward,
     Back,
 }
@@ -77,7 +80,8 @@ pub enum MenuItem {
     Forward,
     Back,
     Reload,
-    Open,
+    OpenFile,
+    WatchDir,
 }
 
 pub trait MenuItems {

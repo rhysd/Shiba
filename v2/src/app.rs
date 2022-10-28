@@ -169,15 +169,22 @@ where
         Ok(())
     }
 
-    fn open_with_dialog(&mut self) -> Result<()> {
+    fn open_file(&mut self) -> Result<()> {
         // Should we use directory of the current file?
         let cwd = env::current_dir()?;
-        if let Some(path) = D::new(MARKDOWN_EXTENSIONS).pick_file(&cwd) {
+        if let Some(path) = D::pick_file(&cwd, MARKDOWN_EXTENSIONS) {
             log::debug!("Previewing file chosen by dialog: {:?}", path);
+            self.preview_new(path)?;
+        }
+        Ok(())
+    }
+
+    fn open_dir(&mut self) -> Result<()> {
+        // Should we use directory of the current file?
+        let cwd = env::current_dir()?;
+        if let Some(path) = D::pick_dir(&cwd) {
+            log::debug!("Watching directory chosen by dialog: {:?}", path);
             self.watcher.watch(&path)?;
-            if self.preview(&path)? {
-                self.history.push(path);
-            }
         }
         Ok(())
     }
@@ -226,7 +233,8 @@ where
             MessageFromRenderer::Forward => self.forward()?,
             MessageFromRenderer::Back => self.back()?,
             MessageFromRenderer::Reload => self.reload()?,
-            MessageFromRenderer::Dialog => self.open_with_dialog()?,
+            MessageFromRenderer::FileDialog => self.open_file()?,
+            MessageFromRenderer::DirDialog => self.open_dir()?,
         }
         Ok(())
     }
@@ -270,7 +278,8 @@ where
             MenuItem::Forward => self.forward()?,
             MenuItem::Back => self.back()?,
             MenuItem::Reload => self.reload()?,
-            MenuItem::Open => self.open_with_dialog()?,
+            MenuItem::OpenFile => self.open_file()?,
+            MenuItem::WatchDir => self.open_dir()?,
         }
         Ok(AppControl::Continue)
     }
