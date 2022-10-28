@@ -11,6 +11,7 @@ use wry::application::window::{Window, WindowBuilder};
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
 pub struct WebViewMenuItems {
+    open: MenuId,
     quit: MenuId,
     forward: MenuId,
     back: MenuId,
@@ -22,6 +23,9 @@ impl WebViewMenuItems {
         let mut menu = MenuBar::new();
 
         let mut file_menu = MenuBar::new();
+        let cmd_o = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyO);
+        let open_item =
+            file_menu.add_item(MenuItemAttributes::new("Open").with_accelerators(&cmd_o));
         file_menu.add_native_item(MenuItem::About("Shiba".to_string(), AboutMetadata::default()));
         let cmd_q = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyQ);
         let quit_item =
@@ -46,6 +50,7 @@ impl WebViewMenuItems {
         window.set_menu(Some(menu));
         log::debug!("Added menubar to window");
         Self {
+            open: open_item.id(),
             quit: quit_item.id(),
             forward: forward_item.id(),
             back: back_item.id(),
@@ -58,7 +63,9 @@ impl MenuItems for WebViewMenuItems {
     type ItemId = MenuId;
 
     fn item_from_id(&self, id: Self::ItemId) -> Result<AppMenuItem> {
-        if id == self.quit {
+        if id == self.open {
+            Ok(AppMenuItem::Open)
+        } else if id == self.quit {
             Ok(AppMenuItem::Quit)
         } else if id == self.forward {
             Ok(AppMenuItem::Forward)

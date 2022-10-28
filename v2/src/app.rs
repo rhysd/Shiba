@@ -1,4 +1,5 @@
 use crate::cli::Options;
+use crate::dialog::Dialog;
 use crate::opener::Opener;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
@@ -6,7 +7,9 @@ use crate::renderer::{
 use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
 use anyhow::Result;
 use std::collections::VecDeque;
+use std::env;
 use std::fs;
+use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf};
 
@@ -77,20 +80,22 @@ pub enum AppControl {
     Exit,
 }
 
-pub struct App<R: Renderer, O: Opener, W: Watcher> {
+pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     options: Options,
     renderer: R,
     menu: R::Menu,
     opener: O,
     history: History,
     watcher: W,
+    _dialog: PhantomData<D>,
 }
 
-impl<R, O, W> App<R, O, W>
+impl<R, O, W, D> App<R, O, W, D>
 where
     R: Renderer,
     O: Opener,
     W: Watcher,
+    D: Dialog,
     R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
@@ -108,7 +113,7 @@ where
             log::debug!("Watching initial directory: {:?}", path);
             watcher.watch(path)?;
         }
-        Ok(Self { options, renderer, menu, opener, history, watcher })
+        Ok(Self { options, renderer, menu, opener, history, watcher, _dialog: PhantomData })
     }
 
     fn preview(&self, path: &Path) -> Result<bool> {
@@ -148,6 +153,19 @@ where
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
             self.preview(&path)?;
+        }
+        Ok(())
+    }
+
+    fn open_with_dialog(&mut self) -> Result<()> {
+        // Should we use directory of the current file?
+        let cwd = env::current_dir()?;
+        if let Some(path) = D::new(MARKDOWN_EXTENSIONS).pick_file(&cwd) {
+            log::debug!("Previewing file chosen by dialog: {:?}", path);
+            self.watcher.watch(&path)?;
+            if self.preview(&path)? {
+                self.history.push(path);
+            }
         }
         Ok(())
     }
@@ -201,6 +219,7 @@ where
             MessageFromRenderer::Forward => self.forward()?,
             MessageFromRenderer::Back => self.back()?,
             MessageFromRenderer::Reload => self.reload()?,
+            MessageFromRenderer::Dialog => self.open_with_dialog()?,
         }
         Ok(())
     }
@@ -247,6 +266,7 @@ where
             MenuItem::Forward => self.forward()?,
             MenuItem::Back => self.back()?,
             MenuItem::Reload => self.reload()?,
+            MenuItem::Open => self.open_with_dialog()?,
         }
         Ok(AppControl::Continue)
     }
