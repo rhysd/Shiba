@@ -128,6 +128,20 @@ where
         Ok(true)
     }
 
+    fn forward(&mut self) -> Result<()> {
+        if let Some(path) = self.history.forward().map(Path::to_path_buf) {
+            self.preview(&path)?;
+        }
+        Ok(())
+    }
+
+    fn back(&mut self) -> Result<()> {
+        if let Some(path) = self.history.back().map(Path::to_path_buf) {
+            self.preview(&path)?;
+        }
+        Ok(())
+    }
+
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<()> {
         match message {
             MessageFromRenderer::Init => {
@@ -174,6 +188,8 @@ where
                     self.opener.open(&link)?;
                 }
             }
+            MessageFromRenderer::Forward => self.forward()?,
+            MessageFromRenderer::Back => self.back()?,
         }
         Ok(())
     }
@@ -218,15 +234,11 @@ where
         match kind {
             MenuItem::Quit => Ok(AppControl::Exit),
             MenuItem::Forward => {
-                if let Some(path) = self.history.forward().map(Path::to_path_buf) {
-                    self.preview(&path)?;
-                }
+                self.forward()?;
                 Ok(AppControl::Continue)
             }
             MenuItem::Back => {
-                if let Some(path) = self.history.back().map(Path::to_path_buf) {
-                    self.preview(&path)?;
-                }
+                self.back()?;
                 Ok(AppControl::Continue)
             }
         }

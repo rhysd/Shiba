@@ -6,8 +6,10 @@ use std::fmt;
 use std::path::PathBuf;
 
 #[non_exhaustive]
-#[derive(Serialize)]
+#[derive(Clone, Copy, Serialize)]
 pub enum KeyAction {
+    Forward,
+    Back,
     ScrollDown,
     ScrollUp,
     ScrollPageDown,
@@ -24,11 +26,23 @@ pub enum MessageToRenderer<'a> {
 
 impl<'a> MessageToRenderer<'a> {
     pub fn default_key_mappings() -> Self {
+        use KeyAction::*;
+
+        #[rustfmt::skip]
+        const DEFAULT_MAPPINGS: &[(&str, KeyAction)] = &[
+            ("j",      ScrollDown),
+            ("k",      ScrollUp),
+            ("h",      Back),
+            ("l",      Forward),
+            ("ctrl+f", ScrollPageDown),
+            ("ctrl+b", ScrollPageUp),
+        ];
+
         let mut m = HashMap::new();
-        m.insert("j".to_string(), KeyAction::ScrollDown);
-        m.insert("k".to_string(), KeyAction::ScrollUp);
-        m.insert("ctrl+f".to_string(), KeyAction::ScrollPageDown);
-        m.insert("ctrl+b".to_string(), KeyAction::ScrollPageUp);
+        for (bind, action) in DEFAULT_MAPPINGS {
+            m.insert(bind.to_string(), *action);
+        }
+
         Self::KeyMappings { keymaps: m }
     }
 }
@@ -39,6 +53,8 @@ impl<'a> MessageToRenderer<'a> {
 pub enum MessageFromRenderer {
     Init,
     Open { link: String },
+    Forward,
+    Back,
 }
 
 #[derive(Debug)]

@@ -1,7 +1,6 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import Mousetrap from 'mousetrap';
-import type { ExtendedKeyboardEvent } from 'mousetrap';
 
 interface Ipc {
     postMessage(m: string): void;
@@ -30,26 +29,37 @@ type MessageToMain =
     | {
           kind: 'open';
           link: string;
+      }
+    | {
+          kind: 'forward';
+      }
+    | {
+          kind: 'back';
       };
-type KeyBindCallback = (event: ExtendedKeyboardEvent, combo: string) => void;
 
 function sendMessage(m: MessageToMain): void {
     window.ipc.postMessage(JSON.stringify(m));
 }
 
 const RE_ANCHOR_START = /^<a /;
-const KEYMAP_ACTIONS: { [action: string]: KeyBindCallback } = {
-    ScrollDown() {
+const KEYMAP_ACTIONS: { [action: string]: () => void } = {
+    ScrollDown(): void {
         window.scrollBy(0, window.innerHeight / 2);
     },
-    ScrollUp() {
+    ScrollUp(): void {
         window.scrollBy(0, -window.innerHeight / 2);
     },
-    ScrollPageDown() {
+    ScrollPageDown(): void {
         window.scrollBy(0, window.innerHeight);
     },
-    ScrollPageUp() {
+    ScrollPageUp(): void {
         window.scrollBy(0, -window.innerHeight);
+    },
+    Forward(): void {
+        sendMessage({ kind: 'forward' });
+    },
+    Back(): void {
+        sendMessage({ kind: 'back' });
     },
 };
 
@@ -85,7 +95,11 @@ class Shiba {
                 for (const [keybind, action] of Object.entries(msg.keymaps)) {
                     const callback = KEYMAP_ACTIONS[action];
                     if (callback) {
-                        Mousetrap.bind(keybind, callback);
+                        Mousetrap.bind(keybind, e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            callback();
+                        });
                     } else {
                         console.error('Unknown action:', action);
                     }
