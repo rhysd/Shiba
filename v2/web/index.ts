@@ -1,5 +1,7 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+import Mousetrap from 'mousetrap';
+import type { ExtendedKeyboardEvent } from 'mousetrap';
 
 interface Ipc {
     postMessage(m: string): void;
@@ -7,16 +9,20 @@ interface Ipc {
 
 declare global {
     interface Window {
-        myMarkdownPreview: MyPreviewApp;
+        myMarkdownPreview: Shiba;
         ipc: Ipc;
     }
 }
 
-type MessageFromMain = {
-    kind: 'content';
-    content: string;
-};
-
+type MessageFromMain =
+    | {
+          kind: 'content';
+          content: string;
+      }
+    | {
+          kind: 'key_mappings';
+          keymaps: { [keybind: string]: string };
+      };
 type MessageToMain =
     | {
           kind: 'init';
@@ -25,12 +31,27 @@ type MessageToMain =
           kind: 'open';
           link: string;
       };
+type KeyBindCallback = (event: ExtendedKeyboardEvent, combo: string) => void;
 
 function sendMessage(m: MessageToMain): void {
     window.ipc.postMessage(JSON.stringify(m));
 }
 
 const RE_ANCHOR_START = /^<a /;
+const KEYMAP_ACTIONS: { [action: string]: KeyBindCallback } = {
+    ScrollDown() {
+        window.scrollBy(0, window.innerHeight / 2);
+    },
+    ScrollUp() {
+        window.scrollBy(0, -window.innerHeight / 2);
+    },
+    ScrollPageDown() {
+        window.scrollBy(0, window.innerHeight);
+    },
+    ScrollPageUp() {
+        window.scrollBy(0, -window.innerHeight);
+    },
+};
 
 class MyRenderer extends marked.Renderer {
     override link(href: string, title: string, text: string): string {
@@ -49,7 +70,7 @@ marked.setOptions({
     gfm: true,
 });
 
-class MyPreviewApp {
+class Shiba {
     receive(msg: MessageFromMain): void {
         switch (msg.kind) {
             case 'content':
@@ -59,6 +80,19 @@ class MyPreviewApp {
                     return;
                 }
                 elem.innerHTML = marked.parse(msg.content);
+                break;
+            case 'key_mappings':
+                for (const [keybind, action] of Object.entries(msg.keymaps)) {
+                    const callback = KEYMAP_ACTIONS[action];
+                    if (callback) {
+                        Mousetrap.bind(keybind, callback);
+                    } else {
+                        console.error('Unknown action:', action);
+                    }
+                }
+                console.log('foo', document.getElementById('preview'));
+                document.getElementById('preview')?.focus();
+                document.getElementById('preview')?.click();
                 break;
             default:
                 console.error('Unknown message:', msg);
@@ -83,5 +117,5 @@ class MyPreviewApp {
     }
 }
 
-window.myMarkdownPreview = new MyPreviewApp();
+window.myMarkdownPreview = new Shiba();
 sendMessage({ kind: 'init' });

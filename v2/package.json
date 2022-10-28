@@ -20,10 +20,12 @@
   "dependencies": {
     "github-markdown-css": "^5.1.0",
     "highlight.js": "^11.6.0",
-    "marked": "^4.1.1"
+    "marked": "^4.1.1",
+    "mousetrap": "^1.6.5"
   },
   "devDependencies": {
     "@types/marked": "^4.0.7",
+    "@types/mousetrap": "^1.6.9",
     "esbuild": "^0.15.12",
     "prettier": "^2.7.1",
     "typescript": "^4.8.4"

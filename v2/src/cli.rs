@@ -3,6 +3,7 @@ use getopts::Options as GetOpts;
 use std::env;
 use std::path::PathBuf;
 
+#[non_exhaustive]
 #[derive(Debug, Default)]
 pub struct Options {
     pub debug: bool,

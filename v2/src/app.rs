@@ -10,6 +10,7 @@ use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf};
 
+const HTML: &str = include_str!("bundle.html");
 const MARKDOWN_EXTENSIONS: &[&str] = &["md", "mkd", "markdown"];
 
 struct History {
@@ -93,7 +94,7 @@ where
     R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
-        let renderer = R::open(&options, event_loop)?;
+        let renderer = R::open(&options, event_loop, HTML)?;
         let menu = renderer.set_menu();
         let opener = O::default();
         let history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
@@ -130,6 +131,7 @@ where
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<()> {
         match message {
             MessageFromRenderer::Init => {
+                self.renderer.send_message(MessageToRenderer::default_key_mappings())?;
                 if let Some(path) = mem::take(&mut self.options.init_file) {
                     if self.preview(&path)? {
                         self.history.push(path);

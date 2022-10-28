@@ -10,8 +10,6 @@ use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemA
 use wry::application::window::{Window, WindowBuilder};
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
-const HTML: &str = include_str!("bundle.html");
-
 pub struct WebViewMenuItems {
     quit: MenuId,
     forward: MenuId,
@@ -55,7 +53,7 @@ impl MenuItems for WebViewMenuItems {
         } else if id == self.back {
             Ok(AppMenuItem::Back)
         } else {
-            anyhow::bail!("Unknown item id: {:?}", id)
+            Err(anyhow::anyhow!("Unknown item id: {:?}", id))
         }
     }
 }
@@ -64,7 +62,7 @@ impl Renderer for WebView {
     type EventLoop = EventLoop<UserEvent>;
     type Menu = WebViewMenuItems;
 
-    fn open(options: &Options, event_loop: &Self::EventLoop) -> Result<Self> {
+    fn open(options: &Options, event_loop: &Self::EventLoop, html: &str) -> Result<Self> {
         let ipc_proxy = event_loop.create_proxy();
         let file_drop_proxy = event_loop.create_proxy();
 
@@ -72,7 +70,7 @@ impl Renderer for WebView {
         log::debug!("Event loop and window were created successfully");
 
         let webview = WebViewBuilder::new(window)?
-            .with_html(HTML)?
+            .with_html(html)?
             .with_devtools(options.debug)
             .with_ipc_handler(move |_w, s| {
                 let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
