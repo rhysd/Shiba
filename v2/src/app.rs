@@ -56,17 +56,21 @@ impl History {
         self.items.push_back(item);
     }
 
-    fn forward(&mut self) -> Option<&Path> {
+    fn forward(&mut self) -> bool {
         if self.items.is_empty() || self.index + 1 == self.items.len() {
-            return None;
+            return false;
         }
         self.index += 1;
-        Some(&self.items[self.index])
+        true
     }
 
-    fn back(&mut self) -> Option<&Path> {
-        self.index = self.index.checked_sub(1)?;
-        Some(&self.items[self.index])
+    fn back(&mut self) -> bool {
+        if let Some(i) = self.index.checked_sub(1) {
+            self.index = i;
+            true
+        } else {
+            false
+        }
     }
 
     fn current(&self) -> Option<&PathBuf> {
@@ -105,10 +109,6 @@ where
         let history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
         let filter = PathFilter::new(MARKDOWN_EXTENSIONS);
         let mut watcher = W::new(event_loop, filter)?;
-        if let Some(path) = &options.init_file {
-            log::debug!("Watching initial file: {:?}", path);
-            watcher.watch(path)?;
-        }
         for path in &options.watch_dirs {
             log::debug!("Watching initial directory: {:?}", path);
             watcher.watch(path)?;
@@ -133,18 +133,30 @@ where
         Ok(true)
     }
 
+    fn preview_new(&mut self, path: PathBuf) -> Result<()> {
+        self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
+        if self.preview(&path)? {
+            self.history.push(path);
+        }
+        Ok(())
+    }
+
     fn forward(&mut self) -> Result<()> {
-        if let Some(path) = self.history.forward().map(Path::to_path_buf) {
-            log::debug!("Forward to next preview page: {:?}", path);
-            self.preview(&path)?;
+        if self.history.forward() {
+            if let Some(path) = self.history.current() {
+                log::debug!("Forward to next preview page: {:?}", path);
+                self.preview(path)?;
+            }
         }
         Ok(())
     }
 
     fn back(&mut self) -> Result<()> {
-        if let Some(path) = self.history.back().map(Path::to_path_buf) {
-            log::debug!("Back to previous preview page: {:?}", path);
-            self.preview(&path)?;
+        if self.history.back() {
+            if let Some(path) = self.history.current() {
+                log::debug!("Back to previous preview page: {:?}", path);
+                self.preview(path)?;
+            }
         }
         Ok(())
     }
@@ -152,7 +164,7 @@ where
     fn reload(&mut self) -> Result<()> {
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
-            self.preview(&path)?;
+            self.preview(path)?;
         }
         Ok(())
     }
@@ -175,9 +187,7 @@ where
             MessageFromRenderer::Init => {
                 self.renderer.send_message(MessageToRenderer::default_key_mappings())?;
                 if let Some(path) = mem::take(&mut self.options.init_file) {
-                    if self.preview(&path)? {
-                        self.history.push(path);
-                    }
+                    self.preview_new(path)?;
                 }
             }
             MessageFromRenderer::Open { link }
@@ -207,10 +217,7 @@ where
                         }
                     }
                     log::debug!("Opening markdown link clicked in WebView: {:?}", path);
-                    self.watcher.watch(&path)?;
-                    if self.preview(&path)? {
-                        self.history.push(path);
-                    }
+                    self.preview_new(path)?;
                 } else {
                     log::debug!("Opening link item clicked in WebView: {:?}", link);
                     self.opener.open(&link)?;
@@ -232,10 +239,7 @@ where
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.watcher.watch(&path)?;
-                if self.preview(&path)? {
-                    self.history.push(path);
-                }
+                self.preview_new(path)?;
                 Ok(())
             }
             UserEvent::WatchedFilesChanged(mut paths) => {
