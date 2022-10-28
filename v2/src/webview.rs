@@ -142,4 +142,8 @@ impl Renderer for WebView {
         self.evaluate_script(&String::from_utf8(buf).unwrap())?; // XXX: This UTF-8 validation is redundant
         Ok(())
     }
+
+    fn set_title(&self, title: &str) {
+        self.window().set_title(title);
+    }
 }

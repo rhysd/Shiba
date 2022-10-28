@@ -11,7 +11,7 @@ use std::env;
 use std::fs;
 use std::marker::PhantomData;
 use std::mem;
-use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
 const HTML: &str = include_str!("bundle.html");
 const MARKDOWN_EXTENSIONS: &[&str] = &["md", "mkd", "markdown"];
@@ -91,6 +91,7 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     opener: O,
     history: History,
     watcher: W,
+    home_dir: Option<PathBuf>,
     _dialog: PhantomData<D>,
 }
 
@@ -105,15 +106,34 @@ where
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let renderer = R::open(&options, event_loop, HTML)?;
         let menu = renderer.set_menu();
-        let opener = O::default();
-        let history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
-        let filter = PathFilter::new(MARKDOWN_EXTENSIONS);
-        let mut watcher = W::new(event_loop, filter)?;
+        let mut watcher = W::new(event_loop, PathFilter::new(MARKDOWN_EXTENSIONS))?;
         for path in &options.watch_dirs {
             log::debug!("Watching initial directory: {:?}", path);
             watcher.watch(path)?;
         }
-        Ok(Self { options, renderer, menu, opener, history, watcher, _dialog: PhantomData })
+        Ok(Self {
+            options,
+            renderer,
+            menu,
+            opener: O::default(),
+            history: History::new(History::DEFAULT_MAX_HISTORY_SIZE),
+            watcher,
+            home_dir: dirs::home_dir(),
+            _dialog: PhantomData,
+        })
+    }
+
+    fn title(&self, path: &Path) -> String {
+        if let Some(home_dir) = &self.home_dir {
+            if let Ok(path) = path.strip_prefix(home_dir) {
+                return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
+            }
+        }
+        format!("Shiba: {}", path.display())
+    }
+
+    fn set_title(&self, path: &Path) {
+        self.renderer.set_title(&self.title(path));
     }
 
     fn preview(&self, path: &Path) -> Result<bool> {
@@ -136,6 +156,7 @@ where
     fn preview_new(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         if self.preview(&path)? {
+            self.set_title(&path);
             self.history.push(path);
         }
         Ok(())
@@ -146,6 +167,7 @@ where
             if let Some(path) = self.history.current() {
                 log::debug!("Forward to next preview page: {:?}", path);
                 self.preview(path)?;
+                self.set_title(path);
             }
         }
         Ok(())
@@ -156,6 +178,7 @@ where
             if let Some(path) = self.history.current() {
                 log::debug!("Back to previous preview page: {:?}", path);
                 self.preview(path)?;
+                self.set_title(path);
             }
         }
         Ok(())
@@ -222,7 +245,7 @@ where
                     if path.is_relative() {
                         if let Some(current_file) = self.history.current() {
                             if let Some(dir) = current_file.parent() {
-                                path = dir.join(path);
+                                path = dir.join(path).canonicalize()?;
                             }
                         }
                     }
@@ -262,8 +285,12 @@ where
                     }
                 }
                 // Choose the last one to preview if the current file is not included in `paths`
-                if let Some(path) = paths.pop() {
+                if let Some(mut path) = paths.pop() {
+                    if !path.is_absolute() {
+                        path = path.canonicalize()?;
+                    }
                     if self.preview(&path)? {
+                        self.set_title(&path);
                         self.history.push(path);
                     }
                 }

@@ -16,6 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.66"
+dirs = "4.0.0"
 env_logger = "0.9.1"
 getopts = "0.2.21"
 log = "0.4.17"
