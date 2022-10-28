@@ -26,6 +26,7 @@ pub enum KeyAction {
 pub enum MessageToRenderer<'a> {
     Content { content: &'a str },
     KeyMappings { keymaps: HashMap<String, KeyAction> },
+    Debug,
 }
 
 impl<'a> MessageToRenderer<'a> {

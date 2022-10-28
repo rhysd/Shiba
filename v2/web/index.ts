@@ -8,7 +8,7 @@ interface Ipc {
 
 declare global {
     interface Window {
-        myMarkdownPreview: Shiba;
+        ShibaApp: Shiba;
         ipc: Ipc;
     }
 }
@@ -21,6 +21,9 @@ type MessageFromMain =
     | {
           kind: 'key_mappings';
           keymaps: { [keybind: string]: string };
+      }
+    | {
+          kind: 'debug';
       };
 type MessageToMain =
     | {
@@ -49,6 +52,8 @@ type MessageToMain =
 function sendMessage(m: MessageToMain): void {
     window.ipc.postMessage(JSON.stringify(m));
 }
+
+let debug: (...args: unknown[]) => void = function nop() {};
 
 const RE_ANCHOR_START = /^<a /;
 const KEYMAP_ACTIONS: { [action: string]: () => void } = {
@@ -84,7 +89,7 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
 class MyRenderer extends marked.Renderer {
     override link(href: string, title: string, text: string): string {
         const rendered = super.link(href, title, text);
-        return rendered.replace(RE_ANCHOR_START, '<a onclick="window.myMarkdownPreview.onLinkClicked(event)" ');
+        return rendered.replace(RE_ANCHOR_START, '<a onclick="window.ShibaApp.onLinkClicked(event)" ');
     }
 }
 
@@ -100,6 +105,7 @@ marked.setOptions({
 
 class Shiba {
     receive(msg: MessageFromMain): void {
+        debug('Received IPC message from main:', msg.kind, msg);
         switch (msg.kind) {
             case 'content':
                 const elem = document.getElementById('preview');
@@ -116,15 +122,19 @@ class Shiba {
                         Mousetrap.bind(keybind, e => {
                             e.preventDefault();
                             e.stopPropagation();
+                            debug('Triggered key shortcut:', action);
                             callback();
                         });
                     } else {
                         console.error('Unknown action:', action);
                     }
                 }
-                console.log('foo', document.getElementById('preview'));
                 document.getElementById('preview')?.focus();
                 document.getElementById('preview')?.click();
+                break;
+            case 'debug':
+                debug = console.debug;
+                debug('Debug log is enabled');
                 break;
             default:
                 console.error('Unknown message:', msg);
@@ -149,5 +159,5 @@ class Shiba {
     }
 }
 
-window.myMarkdownPreview = new Shiba();
+window.ShibaApp = new Shiba();
 sendMessage({ kind: 'init' });

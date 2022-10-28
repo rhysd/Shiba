@@ -192,6 +192,9 @@ where
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<()> {
         match message {
             MessageFromRenderer::Init => {
+                if self.options.debug {
+                    self.renderer.send_message(MessageToRenderer::Debug)?;
+                }
                 self.renderer.send_message(MessageToRenderer::default_key_mappings())?;
                 if let Some(path) = mem::take(&mut self.options.init_file) {
                     self.preview_new(path)?;

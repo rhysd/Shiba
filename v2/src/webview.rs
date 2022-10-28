@@ -136,7 +136,7 @@ impl Renderer for WebView {
     }
 
     fn send_message(&self, message: MessageToRenderer) -> Result<()> {
-        let mut buf = b"window.myMarkdownPreview.receive(".to_vec();
+        let mut buf = b"window.ShibaApp.receive(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
         buf.push(b')');
         self.evaluate_script(&String::from_utf8(buf).unwrap())?; // XXX: This UTF-8 validation is redundant
