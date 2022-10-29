@@ -3,6 +3,7 @@ use crate::renderer::{
     MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
 use anyhow::Result;
+use std::cell::RefCell;
 use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
 use wry::application::event_loop::EventLoop;
@@ -107,6 +108,12 @@ impl Renderer for WebView {
         let window = WindowBuilder::new().with_title("Shiba").build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
 
+        // This flag must be wrapped with `RefCell` since the handler callback is defined as `Fn`.
+        // Dynamically borrowing the mutable value is mandatory. The `Fn` boundary is derived from
+        // `webkit2gtk::WebView::connect_decide_policy` so it is difficult to change.
+        // https://github.com/tauri-apps/webkit2gtk-rs/blob/cce947f86f2c0d50710c1ea9ea9f160c8b6cbf4a/src/auto/web_view.rs#L1249
+        let is_first_load = RefCell::new(true);
+
         let webview = WebViewBuilder::new(window)?
             .with_html(html)?
             .with_devtools(options.debug)
@@ -131,8 +138,11 @@ impl Renderer for WebView {
             .with_navigation_handler(move |mut url| {
                 log::debug!("Navigating to {}", url);
                 let event = if let Some(stripped) = url.strip_prefix(LOCAL_HOST) {
-                    if stripped.is_empty() {
-                        return true; // Allow navigating to local host only
+                    if stripped.is_empty() && *is_first_load.borrow() {
+                        *is_first_load.borrow_mut() = false;
+                        return true; // Only allow initial navigation to local host
+                    } else {
+                        url.push('.'); // Open '.' when link to the current directory is clicked
                     }
 
                     url.drain(0..LOCAL_HOST.len()); // "http://localhost/foo/bar" -> "foo/bar"
