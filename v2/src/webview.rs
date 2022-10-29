@@ -174,6 +174,10 @@ impl Renderer for WebView {
 
                 false // Don't allow navigating to any external links
             })
+            .with_new_window_req_handler(|url| {
+                log::debug!("Rejected to open new window for URL: {}", url);
+                false
+            })
             .build()?;
 
         #[cfg(debug_assertions)]
