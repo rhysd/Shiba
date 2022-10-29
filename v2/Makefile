@@ -1,21 +1,30 @@
 TS_SRC := $(wildcard web/*.ts)
 RS_SRC := $(wildcard src/*.rs)
+DEBUG_DIST := dist/bundle.js
+RELEASE_DIST := dist/bundle.min.js dist/github-markdown.min.css dist/hljs-github.min.css
 
 node_modules:
 	npm install
 
-dist/bundle.js: node_modules $(TS_SRC)
-	npm run ts
+$(DEBUG_DIST): node_modules $(TS_SRC)
+	npm run check:ts
 	npm run bundle
 
-target/debug/rust-webview: $(RS_SRC)
+$(RELEASE_DIST): node_modules $(TS_SRC)
+	npm run check:ts
+	npm run release
+
+target/debug/shiba: $(RS_SRC) $(DEBUG_DIST) dist/template.html
 	cargo build
 
-target/release/rust-webview: $(RS_SRC)
+target/release/shiba: $(RS_SRC) $(RELEASE_DIST) dist/template.html
 	cargo build --release
 
-build: dist/bundle.js target/debug/rust-webview
+.PHONY: build release clean
 
-release: dist/bundle.js target/release/rust-webview
+build: target/debug/shiba
+release: target/release/shiba
+clean:
+	rm -rf $(DEBUG_DIST) $(RELEASE_DIST) node_modules target
 
-.PHONY: build release
+.DEFAULT_GOAL := build

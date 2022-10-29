@@ -1,6 +1,8 @@
 /node_modules
 /target
-/dist/github-markdown.css
 /dist/bundle.js
-/dist/hljs-github.css
+/dist/*.min.js
+/dist/*.min.css
 /src/bundle.html
+/src/bundle.min.html
+/web/*.js

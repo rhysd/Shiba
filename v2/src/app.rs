@@ -13,7 +13,10 @@ use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
+#[cfg(debug_assertions)]
 const HTML: &str = include_str!("bundle.html");
+#[cfg(not(debug_assertions))]
+const HTML: &str = include_str!("bundle.min.html");
 const MARKDOWN_EXTENSIONS: &[&str] = &["md", "mkd", "markdown"];
 
 struct History {

@@ -10,6 +10,10 @@
     "watch:ts": "npm run ts -- --watch --preserveWatchOutput",
     "watch:rs": "cargo watch --watch src",
     "bundle": "esbuild web/index.ts --bundle --outfile=dist/bundle.js --platform=browser",
+    "release": "concurrently npm:release:bundle npm:release:css:github-markdown npm:release:css:highlight.js",
+    "release:bundle": "esbuild web/index.ts --bundle --outfile=dist/bundle.min.js --platform=browser --minify",
+    "release:css:github-markdown": "postcss --no-map --output dist/github-markdown.min.css ./node_modules/github-markdown-css/github-markdown.css",
+    "release:css:highlight.js": "postcss --no-map --output dist/hljs-github.min.css ./node_modules/highlight.js/styles/github.css",
     "ts": "tsc --noEmit -p .",
     "rs": "cargo check",
     "fmt": "concurrently npm:fmt:cargo npm:fmt:ts",
@@ -30,7 +34,10 @@
     "@types/marked": "^4.0.7",
     "@types/mousetrap": "^1.6.9",
     "concurrently": "^7.5.0",
+    "cssnano": "^5.1.14",
     "esbuild": "^0.15.12",
+    "postcss": "^8.4.18",
+    "postcss-cli": "^10.0.0",
     "prettier": "^2.7.1",
     "typescript": "^4.8.4"
   }
