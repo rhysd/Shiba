@@ -27,7 +27,10 @@ jobs:
           node-version: 'lts/*'
           cache: npm
           cache-dependency-path: v2/package-lock.json
-      - run: sudo apt install -y libwebkit2gtk-4.0-dev
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
       - run: make dist/bundle.js
       - run: npm run ts
       - run: npm run lint
