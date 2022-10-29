@@ -226,39 +226,6 @@ where
                     self.preview_new(path)?;
                 }
             }
-            MessageFromRenderer::Open { link }
-                if link.starts_with("https://") || link.starts_with("http://") =>
-            {
-                self.opener.open(&link)?;
-            }
-            MessageFromRenderer::Open { mut link } => {
-                if link.starts_with("file://") {
-                    link.drain(.."file://".len());
-                }
-                #[cfg(target_os = "windows")]
-                {
-                    link = link.replace('/', "\\");
-                }
-                let link = PathBuf::from(link);
-                let is_markdown = MARKDOWN_EXTENSIONS
-                    .iter()
-                    .any(|e| link.extension().map(|ext| ext == *e).unwrap_or(false));
-                if is_markdown {
-                    let mut path = link;
-                    if path.is_relative() {
-                        if let Some(current_file) = self.history.current() {
-                            if let Some(dir) = current_file.parent() {
-                                path = dir.join(path).canonicalize()?;
-                            }
-                        }
-                    }
-                    log::debug!("Opening markdown link clicked in WebView: {:?}", path);
-                    self.preview_new(path)?;
-                } else {
-                    log::debug!("Opening link item clicked in WebView: {:?}", link);
-                    self.opener.open(&link)?;
-                }
-            }
             MessageFromRenderer::Forward => self.forward()?,
             MessageFromRenderer::Back => self.back()?,
             MessageFromRenderer::Reload => self.reload()?,
@@ -298,6 +265,30 @@ where
                     }
                 }
                 Ok(())
+            }
+            UserEvent::OpenLocalPath(mut path) => {
+                if path.is_relative() {
+                    if let Some(current_file) = self.history.current() {
+                        if let Some(dir) = current_file.parent() {
+                            path = dir.join(path).canonicalize()?;
+                        }
+                    }
+                }
+                let path = path;
+                let is_markdown = MARKDOWN_EXTENSIONS
+                    .iter()
+                    .any(|e| path.extension().map(|ext| ext == *e).unwrap_or(false));
+                if is_markdown {
+                    log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
+                    self.preview_new(path)
+                } else {
+                    log::debug!("Opening local link item clicked in WebView: {:?}", path);
+                    self.opener.open(&path)
+                }
+            }
+            UserEvent::OpenExternalLink(link) => {
+                log::debug!("Opening external link item clicked in WebView: {:?}", link);
+                self.opener.open(&link)
             }
             UserEvent::Error(err) => Err(err),
         }

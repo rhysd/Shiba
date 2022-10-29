@@ -59,7 +59,6 @@ impl<'a> MessageToRenderer<'a> {
 #[serde(rename_all = "snake_case")]
 pub enum MessageFromRenderer {
     Init,
-    Open { link: String },
     Reload,
     FileDialog,
     DirDialog,
@@ -72,6 +71,8 @@ pub enum UserEvent {
     IpcMessage(MessageFromRenderer),
     FileDrop(PathBuf),
     WatchedFilesChanged(Vec<PathBuf>),
+    OpenLocalPath(PathBuf),
+    OpenExternalLink(String),
     Error(Error),
 }
 

@@ -30,10 +30,6 @@ type MessageToMain =
           kind: 'init';
       }
     | {
-          kind: 'open';
-          link: string;
-      }
-    | {
           kind: 'forward';
       }
     | {
@@ -55,7 +51,6 @@ function sendMessage(m: MessageToMain): void {
 
 let debug: (...args: unknown[]) => void = function nop() {};
 
-const RE_ANCHOR_START = /^<a /;
 const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     ScrollDown(): void {
         window.scrollBy(0, window.innerHeight / 2);
@@ -86,15 +81,7 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     },
 };
 
-class MyRenderer extends marked.Renderer {
-    override link(href: string, title: string, text: string): string {
-        const rendered = super.link(href, title, text);
-        return rendered.replace(RE_ANCHOR_START, '<a onclick="window.ShibaApp.onLinkClicked(event)" ');
-    }
-}
-
 marked.setOptions({
-    renderer: new MyRenderer(),
     highlight: (code, lang) => {
         const language = hljs.getLanguage(lang) ? lang : 'plaintext';
         return hljs.highlight(code, { language }).value;
@@ -140,22 +127,6 @@ class Shiba {
                 console.error('Unknown message:', msg);
                 break;
         }
-    }
-
-    onLinkClicked(event: MouseEvent): void {
-        event.preventDefault();
-        if (event.target === null) {
-            return;
-        }
-        const a = event.target as HTMLAnchorElement;
-        const link = a.getAttribute('href');
-        if (!link) {
-            return;
-        }
-        sendMessage({
-            kind: 'open',
-            link,
-        });
     }
 }
 

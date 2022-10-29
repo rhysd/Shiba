@@ -3,12 +3,20 @@ use crate::renderer::{
     MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
 use anyhow::Result;
+use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
 use wry::application::event_loop::EventLoop;
 use wry::application::keyboard::{KeyCode, ModifiersState};
 use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemAttributes};
 use wry::application::window::{Window, WindowBuilder};
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
+
+// Platform-specific local host URL when loading HTML source directly.
+// https://docs.rs/wry/latest/wry/webview/struct.WebViewBuilder.html#method.with_html
+#[cfg(target_os = "windows")]
+const LOCAL_HOST: &str = "null";
+#[cfg(not(target_os = "windows"))]
+const LOCAL_HOST: &str = "http://localhost/";
 
 pub struct WebViewMenuItems {
     open_file: MenuId,
@@ -94,6 +102,7 @@ impl Renderer for WebView {
     fn open(options: &Options, event_loop: &Self::EventLoop, html: &str) -> Result<Self> {
         let ipc_proxy = event_loop.create_proxy();
         let file_drop_proxy = event_loop.create_proxy();
+        let navigation_proxy = event_loop.create_proxy();
 
         let window = WindowBuilder::new().with_title("Shiba").build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
@@ -118,6 +127,42 @@ impl Renderer for WebView {
                     }
                 }
                 true
+            })
+            .with_navigation_handler(move |mut url| {
+                log::debug!("Navigating to {}", url);
+                let event = if let Some(stripped) = url.strip_prefix(LOCAL_HOST) {
+                    if stripped.is_empty() {
+                        return true; // Allow navigating to local host only
+                    }
+
+                    url.drain(0..LOCAL_HOST.len()); // "http://localhost/foo/bar" -> "foo/bar"
+                    #[cfg(target_os = "windows")]
+                    {
+                        url = url.replace('/', "\\");
+                    }
+
+                    UserEvent::OpenLocalPath(PathBuf::from(url))
+                } else if url.starts_with("file://") {
+                    url.drain(0.."file://".len());
+                    if url.is_empty() {
+                        return false;
+                    }
+
+                    #[cfg(target_os = "windows")]
+                    {
+                        url = url.replace('/', "\\");
+                    }
+
+                    UserEvent::OpenLocalPath(PathBuf::from(url))
+                } else {
+                    UserEvent::OpenExternalLink(url)
+                };
+
+                if let Err(e) = navigation_proxy.send_event(event) {
+                    log::error!("Could not send navigation event: {}", e);
+                }
+
+                false // Don't allow navigating to any external links
             })
             .build()?;
 
