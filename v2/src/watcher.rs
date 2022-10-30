@@ -1,3 +1,4 @@
+use crate::config::{Config, FileExtensions};
 use crate::renderer::UserEvent;
 use anyhow::Result;
 use notify::event::{CreateKind, DataChange, EventKind as WatchEventKind, ModifyKind};
@@ -8,27 +9,16 @@ use std::time::{Duration, Instant};
 use wry::application::event_loop::{EventLoop, EventLoopProxy};
 
 pub struct PathFilter {
-    extensions: Vec<String>,
+    extensions: FileExtensions,
     last_changed: HashMap<PathBuf, Instant>,
     debounce_throttle: Duration,
 }
 
 impl PathFilter {
-    pub fn new<I>(extensions: I, debounce_throttle: Duration) -> Self
-    where
-        I: IntoIterator,
-        I::Item: ToString,
-    {
-        let extensions = extensions.into_iter().map(|x| x.to_string()).collect();
+    pub fn new(config: &Config) -> Self {
+        let extensions = config.file_extensions().clone();
+        let debounce_throttle = config.debounce_throttle();
         Self { extensions, last_changed: HashMap::new(), debounce_throttle }
-    }
-
-    fn filter_by_extension(&self, path: &Path) -> bool {
-        if let Some(ext) = path.extension() {
-            self.extensions.iter().any(|e| ext == e.as_str())
-        } else {
-            false
-        }
     }
 
     fn debounce(&mut self, path: &Path) -> bool {
@@ -46,7 +36,7 @@ impl PathFilter {
     }
 
     fn should_retain(&mut self, path: &Path) -> bool {
-        self.filter_by_extension(path) && self.debounce(path)
+        self.extensions.matches(path) && self.debounce(path)
     }
 
     fn cleanup_debouncer(&mut self) {

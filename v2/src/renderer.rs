@@ -6,13 +6,12 @@ use std::fmt;
 use std::path::PathBuf;
 
 #[non_exhaustive]
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum KeyAction {
     Forward,
     Back,
     Reload,
     OpenFile,
-    #[allow(unused)]
     OpenDir,
     ScrollDown,
     ScrollUp,
@@ -25,33 +24,8 @@ pub enum KeyAction {
 #[serde(rename_all = "snake_case")]
 pub enum MessageToRenderer<'a> {
     Content { content: &'a str },
-    KeyMappings { keymaps: HashMap<String, KeyAction> },
+    KeyMappings { keymaps: &'a HashMap<String, KeyAction> },
     Debug,
-}
-
-impl<'a> MessageToRenderer<'a> {
-    pub fn default_key_mappings() -> Self {
-        use KeyAction::*;
-
-        #[rustfmt::skip]
-        const DEFAULT_MAPPINGS: &[(&str, KeyAction)] = &[
-            ("j",      ScrollDown),
-            ("k",      ScrollUp),
-            ("h",      Back),
-            ("l",      Forward),
-            ("r",      Reload),
-            ("ctrl+o", OpenFile),
-            ("ctrl+f", ScrollPageDown),
-            ("ctrl+b", ScrollPageUp),
-        ];
-
-        let mut m = HashMap::new();
-        for (bind, action) in DEFAULT_MAPPINGS {
-            m.insert(bind.to_string(), *action);
-        }
-
-        Self::KeyMappings { keymaps: m }
-    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -97,6 +71,6 @@ pub trait Renderer: Sized {
 
     fn open(options: &Options, event_loop: &Self::EventLoop, html: &str) -> Result<Self>;
     fn set_menu(&self) -> Self::Menu;
-    fn send_message(&self, message: MessageToRenderer) -> Result<()>;
+    fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn set_title(&self, title: &str);
 }

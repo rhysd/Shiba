@@ -1,5 +1,6 @@
 mod app;
 mod cli;
+mod config;
 mod dialog;
 mod opener;
 mod renderer;

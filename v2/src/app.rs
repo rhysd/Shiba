@@ -1,4 +1,5 @@
 use crate::cli::Options;
+use crate::config::Config;
 use crate::dialog::Dialog;
 use crate::opener::Opener;
 use crate::renderer::{
@@ -12,14 +13,11 @@ use std::fs;
 use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
-use std::time::Duration;
 
 #[cfg(debug_assertions)]
 const HTML: &str = include_str!("bundle.html");
 #[cfg(not(debug_assertions))]
 const HTML: &str = include_str!("bundle.min.html");
-const MARKDOWN_EXTENSIONS: &[&str] = &["md", "mkd", "markdown"];
-const DEBOUNCE_THROTTLE: Duration = Duration::from_millis(50);
 
 struct History {
     max_items: usize,
@@ -97,6 +95,7 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     history: History,
     watcher: W,
     home_dir: Option<PathBuf>,
+    config: Config,
     _dialog: PhantomData<D>,
 }
 
@@ -109,14 +108,19 @@ where
     R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
+        let config = Config::load()?;
+        log::debug!("Application config: {:?}", config);
+
         let renderer = R::open(&options, event_loop, HTML)?;
         let menu = renderer.set_menu();
-        let filter = PathFilter::new(MARKDOWN_EXTENSIONS, DEBOUNCE_THROTTLE);
+
+        let filter = PathFilter::new(&config);
         let mut watcher = W::new(event_loop, filter)?;
         for path in &options.watch_dirs {
             log::debug!("Watching initial directory: {:?}", path);
             watcher.watch(path)?;
         }
+
         Ok(Self {
             options,
             renderer,
@@ -125,6 +129,7 @@ where
             history: History::new(History::DEFAULT_MAX_HISTORY_SIZE),
             watcher,
             home_dir: dirs::home_dir(),
+            config,
             _dialog: PhantomData,
         })
     }
@@ -201,7 +206,7 @@ where
     fn open_file(&mut self) -> Result<()> {
         // Should we use directory of the current file?
         let cwd = env::current_dir()?;
-        if let Some(path) = D::pick_file(&cwd, MARKDOWN_EXTENSIONS) {
+        if let Some(path) = D::pick_file(&cwd, self.config.file_extensions()) {
             log::debug!("Previewing file chosen by dialog: {:?}", path);
             self.preview_new(path)?;
         }
@@ -224,7 +229,11 @@ where
                 if self.options.debug {
                     self.renderer.send_message(MessageToRenderer::Debug)?;
                 }
-                self.renderer.send_message(MessageToRenderer::default_key_mappings())?;
+
+                self.renderer.send_message(MessageToRenderer::KeyMappings {
+                    keymaps: &self.config.keymaps,
+                })?;
+
                 if let Some(path) = mem::take(&mut self.options.init_file) {
                     self.preview_new(path)?;
                 }
@@ -278,9 +287,7 @@ where
                     }
                 }
                 let path = path;
-                let is_markdown = MARKDOWN_EXTENSIONS
-                    .iter()
-                    .any(|e| path.extension().map(|ext| ext == *e).unwrap_or(false));
+                let is_markdown = self.config.file_extensions().matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
                     self.preview_new(path)
