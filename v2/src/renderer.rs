@@ -15,8 +15,12 @@ pub enum KeyAction {
     OpenDir,
     ScrollDown,
     ScrollUp,
+    ScrollLeft,
+    ScrollRight,
     ScrollPageDown,
     ScrollPageUp,
+    ScrollTop,
+    ScrollBottom,
 }
 
 #[derive(Serialize)]

@@ -11,14 +11,26 @@ fn default_keymaps() -> HashMap<String, KeyAction> {
 
     #[rustfmt::skip]
     const DEFAULT_MAPPINGS: &[(&str, KeyAction)] = &[
-        ("j",      ScrollDown),
-        ("k",      ScrollUp),
-        ("h",      Back),
-        ("l",      Forward),
-        ("r",      Reload),
-        ("ctrl+o", OpenFile),
-        ("ctrl+f", ScrollPageDown),
-        ("ctrl+b", ScrollPageUp),
+        ("j",         ScrollDown),
+        ("k",         ScrollUp),
+        ("h",         ScrollLeft),
+        ("l",         ScrollRight),
+        ("ctrl+b",    Back),
+        ("ctrl+f",    Forward),
+        ("r",         Reload),
+        ("g g",       ScrollTop),
+        ("G",         ScrollBottom),
+        ("ctrl+o",    OpenFile),
+        ("ctrl+d",    ScrollPageDown),
+        ("ctrl+u",    ScrollPageUp),
+        ("down",      ScrollDown),
+        ("up",        ScrollUp),
+        ("left",      ScrollLeft),
+        ("right",     ScrollRight),
+        ("pagedown",  ScrollPageDown),
+        ("pageup",    ScrollPageUp),
+        ("ctrl+down", ScrollBottom),
+        ("ctrl+up",   ScrollTop),
     ];
 
     let mut m = HashMap::new();

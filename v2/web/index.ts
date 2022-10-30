@@ -58,6 +58,12 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     ScrollUp(): void {
         window.scrollBy(0, -window.innerHeight / 2);
     },
+    ScrollLeft(): void {
+        window.scrollBy(-window.innerWidth / 2, 0);
+    },
+    ScrollRight(): void {
+        window.scrollBy(window.innerWidth / 2, 0);
+    },
     ScrollPageDown(): void {
         window.scrollBy(0, window.innerHeight);
     },
@@ -78,6 +84,12 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     },
     OpenDir(): void {
         sendMessage({ kind: 'dir_dialog' });
+    },
+    ScrollTop(): void {
+        window.scrollTo(0, 0);
+    },
+    ScrollBottom(): void {
+        window.scrollTo(0, document.body.scrollHeight);
     },
 };
 
