@@ -2,27 +2,62 @@ use crate::renderer::UserEvent;
 use anyhow::Result;
 use notify::event::{CreateKind, DataChange, EventKind as WatchEventKind, ModifyKind};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 use wry::application::event_loop::{EventLoop, EventLoopProxy};
 
 pub struct PathFilter {
     extensions: Vec<String>,
+    last_changed: HashMap<PathBuf, Instant>,
+    debounce_throttle: Duration,
 }
 
 impl PathFilter {
-    pub fn new<I>(extensions: I) -> Self
+    pub fn new<I>(extensions: I, debounce_throttle: Duration) -> Self
     where
         I: IntoIterator,
         I::Item: ToString,
     {
         let extensions = extensions.into_iter().map(|x| x.to_string()).collect();
-        Self { extensions }
+        Self { extensions, last_changed: HashMap::new(), debounce_throttle }
     }
 
-    pub fn filters(&self, path: &Path) -> bool {
-        self.extensions
-            .iter()
-            .any(|e| path.extension().map(|ext| ext == e.as_str()).unwrap_or(false))
+    fn filter_by_extension(&self, path: &Path) -> bool {
+        if let Some(ext) = path.extension() {
+            self.extensions.iter().any(|e| ext == e.as_str())
+        } else {
+            false
+        }
+    }
+
+    fn debounce(&mut self, path: &Path) -> bool {
+        let now = Instant::now();
+        if let Some(last_changed) = self.last_changed.get_mut(path) {
+            if now.duration_since(*last_changed) <= self.debounce_throttle {
+                log::debug!("Debounced file-changed event for {:?}", path);
+                return false;
+            }
+            *last_changed = now;
+        } else {
+            self.last_changed.insert(path.to_path_buf(), now);
+        }
+        true
+    }
+
+    fn should_retain(&mut self, path: &Path) -> bool {
+        self.filter_by_extension(path) && self.debounce(path)
+    }
+
+    fn cleanup_debouncer(&mut self) {
+        let before = self.last_changed.len();
+        let now = Instant::now();
+        self.last_changed
+            .retain(|_, last_changed| now.duration_since(*last_changed) <= self.debounce_throttle);
+        let expired = before - self.last_changed.len();
+        if expired > 0 {
+            log::debug!("Cleanup file-changed event debouncer. {} entries were expired", expired);
+        }
     }
 }
 
@@ -59,18 +94,25 @@ pub trait Watcher: Sized {
 }
 
 impl Watcher for RecommendedWatcher {
-    fn new<C: WatchChannelCreator>(creator: &C, filter: PathFilter) -> Result<Self> {
+    fn new<C: WatchChannelCreator>(creator: &C, mut filter: PathFilter) -> Result<Self> {
         let channel = creator.create_channel();
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) => match event.kind {
                 WatchEventKind::Create(CreateKind::File)
                 | WatchEventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
                     log::debug!("Caught filesystem event: {:?}", event.kind);
+
+                    // XXX: Watcher sends the event at the first file-changed event durating debounce throttle.
+                    // If the content is updated multiple times within the duration, only the first change is
+                    // reflected to the preview.
                     let mut paths = event.paths;
-                    paths.retain(|p| filter.filters(p));
+                    paths.retain(|p| filter.should_retain(p));
+
                     if !paths.is_empty() {
                         C::on_files_changed(&channel, Ok(paths));
                     }
+
+                    filter.cleanup_debouncer();
                 }
                 _ => {}
             },

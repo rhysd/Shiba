@@ -12,12 +12,14 @@ use std::fs;
 use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
+use std::time::Duration;
 
 #[cfg(debug_assertions)]
 const HTML: &str = include_str!("bundle.html");
 #[cfg(not(debug_assertions))]
 const HTML: &str = include_str!("bundle.min.html");
 const MARKDOWN_EXTENSIONS: &[&str] = &["md", "mkd", "markdown"];
+const DEBOUNCE_THROTTLE: Duration = Duration::from_millis(50);
 
 struct History {
     max_items: usize,
@@ -109,7 +111,8 @@ where
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let renderer = R::open(&options, event_loop, HTML)?;
         let menu = renderer.set_menu();
-        let mut watcher = W::new(event_loop, PathFilter::new(MARKDOWN_EXTENSIONS))?;
+        let filter = PathFilter::new(MARKDOWN_EXTENSIONS, DEBOUNCE_THROTTLE);
+        let mut watcher = W::new(event_loop, filter)?;
         for path in &options.watch_dirs {
             log::debug!("Watching initial directory: {:?}", path);
             watcher.watch(path)?;
