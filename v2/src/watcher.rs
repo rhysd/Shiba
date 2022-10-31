@@ -36,7 +36,7 @@ impl PathFilter {
     }
 
     fn should_retain(&mut self, path: &Path) -> bool {
-        self.extensions.matches(path) && self.debounce(path)
+        self.extensions.matches(path) && path.is_file() && self.debounce(path)
     }
 
     fn cleanup_debouncer(&mut self) {
