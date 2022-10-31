@@ -30,6 +30,7 @@
     "github-markdown-css": "^5.1.0",
     "mousetrap": "^1.6.5",
     "rehype-highlight": "^6.0.0",
+    "rehype-sanitize": "^5.0.1",
     "rehype-stringify": "^9.0.3",
     "remark-frontmatter": "^4.0.1",
     "remark-gfm": "^3.0.1",

@@ -1,4 +1,3 @@
-import hljs from 'highlight.js';
 import Mousetrap from 'mousetrap';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
@@ -6,6 +5,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 
 interface Ipc {
@@ -99,12 +99,15 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     },
 };
 
+defaultSchema.attributes!['*']!.push('className'); // Allow `class` attribute in all HTML elements
+
 const remark = unified()
     .use(remarkFrontmatter)
     .use(remarkGfm)
     .use(remarkParse)
     .use(remarkRehype)
     .use(rehypeHighlight, { plainText: ['txt', 'text'] })
+    .use(rehypeSanitize, defaultSchema)
     .use(rehypeStringify);
 
 class Shiba {
