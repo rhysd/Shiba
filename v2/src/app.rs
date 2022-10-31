@@ -37,12 +37,13 @@ impl History {
             return;
         }
 
-        if let Some(latest) = self.items.back() {
-            if latest == &item {
+        if let Some(current) = self.current() {
+            if current == &item {
                 return; // Do not push the same path repeatedly
             }
         } else {
             self.items.push_back(item);
+            log::debug!("Push first history item: {:?}", self.items);
             return;
         }
 
@@ -57,6 +58,7 @@ impl History {
 
         self.index += 1;
         self.items.push_back(item);
+        log::debug!("Push new history item at {}: {:?}", self.index, self.items);
     }
 
     fn forward(&mut self) -> bool {

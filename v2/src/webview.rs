@@ -138,11 +138,13 @@ impl Renderer for WebView {
             .with_navigation_handler(move |mut url| {
                 log::debug!("Navigating to {}", url);
                 let event = if let Some(stripped) = url.strip_prefix(LOCAL_HOST) {
-                    if stripped.is_empty() && *is_first_load.borrow() {
-                        *is_first_load.borrow_mut() = false;
-                        return true; // Only allow initial navigation to local host
-                    } else {
-                        url.push('.'); // Open '.' when link to the current directory is clicked
+                    if stripped.is_empty() {
+                        if *is_first_load.borrow() {
+                            *is_first_load.borrow_mut() = false;
+                            return true; // Only allow initial navigation to local host
+                        } else {
+                            url.push('.'); // Open '.' when link to the current directory is clicked
+                        }
                     }
 
                     url.drain(0..LOCAL_HOST.len()); // "http://localhost/foo/bar" -> "foo/bar"
