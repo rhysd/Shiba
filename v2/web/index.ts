@@ -1,6 +1,12 @@
-import { marked } from 'marked';
 import hljs from 'highlight.js';
 import Mousetrap from 'mousetrap';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeStringify from 'rehype-stringify';
 
 interface Ipc {
     postMessage(m: string): void;
@@ -93,17 +99,16 @@ const KEYMAP_ACTIONS: { [action: string]: () => void } = {
     },
 };
 
-marked.setOptions({
-    highlight: (code, lang) => {
-        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-        return hljs.highlight(code, { language }).value;
-    },
-    langPrefix: 'hljs language-',
-    gfm: true,
-});
+const remark = unified()
+    .use(remarkFrontmatter)
+    .use(remarkGfm)
+    .use(remarkParse)
+    .use(remarkRehype)
+    .use(rehypeHighlight, { plainText: ['txt', 'text'] })
+    .use(rehypeStringify);
 
 class Shiba {
-    receive(msg: MessageFromMain): void {
+    async receive(msg: MessageFromMain): Promise<void> {
         debug('Received IPC message from main:', msg.kind, msg);
         switch (msg.kind) {
             case 'content':
@@ -112,7 +117,10 @@ class Shiba {
                     console.error("'preview' element is not found");
                     return;
                 }
-                elem.innerHTML = marked.parse(msg.content);
+
+                const file = await remark.process(msg.content);
+                elem.innerHTML = String(file);
+
                 break;
             case 'key_mappings':
                 for (const [keybind, action] of Object.entries(msg.keymaps)) {
