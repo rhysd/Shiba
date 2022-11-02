@@ -7,7 +7,6 @@ import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
-import { applyPatch } from 'diff';
 
 interface Ipc {
     postMessage(m: string): void;
@@ -31,16 +30,6 @@ type MessageFromMain =
       }
     | {
           kind: 'debug';
-      }
-    | {
-          kind: 'diff';
-          hunks: Array<{
-              oldStart: number;
-              newStart: number;
-              oldLines: number;
-              newLines: number;
-              lines: string[];
-          }>;
       };
 type MessageToMain =
     | {
@@ -122,16 +111,10 @@ const remark = unified()
     .use(rehypeStringify);
 
 class Shiba {
-    source: string;
-
-    constructor() {
-        this.source = '';
-    }
-
     async receive(msg: MessageFromMain): Promise<void> {
         debug('Received IPC message from main:', msg.kind, msg);
         switch (msg.kind) {
-            case 'content': {
+            case 'content':
                 const elem = document.getElementById('preview');
                 if (elem === null) {
                     console.error("'preview' element is not found");
@@ -141,35 +124,8 @@ class Shiba {
                 const file = await remark.process(msg.content);
                 elem.innerHTML = String(file);
 
-                this.source = msg.content;
                 break;
-            }
-            case 'diff': {
-                const elem = document.getElementById('preview');
-                if (elem === null) {
-                    console.error("'preview' element is not found");
-                    return;
-                }
-
-                for (const hunk of msg.hunks) {
-                    (hunk as any).linedelimiters = new Array(hunk.lines.length).fill('\n');
-                }
-                const patch: any = {
-                    oldFileName: 'doc.md',
-                    newFileName: 'doc.md',
-                    oldHeader: '',
-                    newHeader: '',
-                    hunks: msg.hunks,
-                };
-                const content = applyPatch(this.source, patch);
-
-                const file = await remark.process(content);
-                elem.innerHTML = String(file);
-
-                this.source = content;
-                break;
-            }
-            case 'key_mappings': {
+            case 'key_mappings':
                 for (const [keybind, action] of Object.entries(msg.keymaps)) {
                     const callback = KEYMAP_ACTIONS[action];
                     if (callback) {
@@ -186,7 +142,6 @@ class Shiba {
                 document.getElementById('preview')?.focus();
                 document.getElementById('preview')?.click();
                 break;
-            }
             case 'debug':
                 debug = console.debug;
                 debug('Debug log is enabled');

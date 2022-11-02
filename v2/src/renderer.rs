@@ -1,5 +1,4 @@
 use crate::cli::Options;
-use crate::jsdiff::Hunks;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -30,7 +29,6 @@ pub enum KeyAction {
 pub enum MessageToRenderer<'a> {
     Content { content: &'a str },
     KeyMappings { keymaps: &'a HashMap<String, KeyAction> },
-    Diff { hunks: Hunks<'a, str> },
     Debug,
 }
 
