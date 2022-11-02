@@ -3,6 +3,7 @@
     "target": "es2021",
     "module": "commonjs",
     "esModuleInterop": true,
+    "jsx": "react",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitAny": true,
@@ -23,6 +24,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "web/*.ts"
+    "web/**/*.ts",
+    "web/**/*.tsx"
   ]
 }

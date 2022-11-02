@@ -6,7 +6,9 @@ import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
+import rehypeReact from 'rehype-react';
+import { createElement, Fragment } from 'react';
+import { mount } from './components';
 
 interface Ipc {
     postMessage(m: string): void;
@@ -108,50 +110,64 @@ const remark = unified()
     .use(remarkRehype)
     .use(rehypeHighlight, { plainText: ['txt', 'text'] })
     .use(rehypeSanitize, defaultSchema)
-    .use(rehypeStringify);
+    .use(rehypeReact, { createElement, Fragment });
+
+const nop = () => {};
 
 class Shiba {
+    private onMarkdownContent: (elem: any) => any;
+
+    constructor() {
+        this.onMarkdownContent = nop;
+    }
+
+    registerContentCallback(callback: (elem: any) => void) {
+        if (this.onMarkdownContent === nop) {
+            sendMessage({ kind: 'init' });
+        }
+        this.onMarkdownContent = callback;
+    }
+
     async receive(msg: MessageFromMain): Promise<void> {
         debug('Received IPC message from main:', msg.kind, msg);
-        switch (msg.kind) {
-            case 'content':
-                const elem = document.getElementById('preview');
-                if (elem === null) {
-                    console.error("'preview' element is not found");
-                    return;
-                }
 
-                const file = await remark.process(msg.content);
-                elem.innerHTML = String(file);
-
-                break;
-            case 'key_mappings':
-                for (const [keybind, action] of Object.entries(msg.keymaps)) {
-                    const callback = KEYMAP_ACTIONS[action];
-                    if (callback) {
-                        Mousetrap.bind(keybind, e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            debug('Triggered key shortcut:', action);
-                            callback();
-                        });
-                    } else {
-                        console.error('Unknown action:', action);
+        // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
+        try {
+            switch (msg.kind) {
+                case 'content':
+                    const file = await remark.process(msg.content);
+                    this.onMarkdownContent(file.result);
+                    break;
+                case 'key_mappings':
+                    for (const [keybind, action] of Object.entries(msg.keymaps)) {
+                        const callback = KEYMAP_ACTIONS[action];
+                        if (callback) {
+                            Mousetrap.bind(keybind, e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                debug('Triggered key shortcut:', action);
+                                callback();
+                            });
+                        } else {
+                            console.error('Unknown action:', action);
+                        }
                     }
-                }
-                document.getElementById('preview')?.focus();
-                document.getElementById('preview')?.click();
-                break;
-            case 'debug':
-                debug = console.debug;
-                debug('Debug log is enabled');
-                break;
-            default:
-                console.error('Unknown message:', msg);
-                break;
+                    document.getElementById('preview')?.focus();
+                    document.getElementById('preview')?.click();
+                    break;
+                case 'debug':
+                    debug = console.debug;
+                    debug('Debug log is enabled');
+                    break;
+                default:
+                    console.error('Unknown message:', msg);
+                    break;
+            }
+        } catch (err) {
+            console.error('Error while handling received IPC message', err, msg);
         }
     }
 }
 
-window.ShibaApp = new Shiba();
-sendMessage({ kind: 'init' });
+window.ShibaApp = new Shiba(); // The main process sends events via `window.ShibaApp` global variable
+mount(document.getElementById('shiba-root')!);

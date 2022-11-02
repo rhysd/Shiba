@@ -30,9 +30,11 @@
   "dependencies": {
     "github-markdown-css": "^5.1.0",
     "mousetrap": "^1.6.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "rehype-highlight": "^6.0.0",
+    "rehype-react": "^7.1.1",
     "rehype-sanitize": "^5.0.1",
-    "rehype-stringify": "^9.0.3",
     "remark-frontmatter": "^4.0.1",
     "remark-gfm": "^3.0.1",
     "remark-parse": "^10.0.1",
@@ -42,6 +44,8 @@
   "devDependencies": {
     "@types/marked": "^4.0.7",
     "@types/mousetrap": "^1.6.9",
+    "@types/react": "^18.0.24",
+    "@types/react-dom": "^18.0.8",
     "concurrently": "^7.5.0",
     "cssnano": "^5.1.14",
     "esbuild": "^0.15.12",
