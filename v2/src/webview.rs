@@ -205,6 +205,7 @@ impl Renderer for WebView {
     }
 
     fn set_title(&self, title: &str) {
+        log::debug!("Set window title: {}", title);
         self.window().set_title(title);
     }
 }

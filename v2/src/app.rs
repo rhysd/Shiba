@@ -61,25 +61,36 @@ impl History {
         log::debug!("Push new history item at {}: {:?}", self.index, self.items);
     }
 
-    fn forward(&mut self) -> bool {
-        if self.items.is_empty() || self.index + 1 == self.items.len() {
-            return false;
+    fn forward(&mut self) {
+        if self.index + 1 < self.items.len() {
+            self.index += 1;
         }
-        self.index += 1;
-        true
     }
 
-    fn back(&mut self) -> bool {
+    fn back(&mut self) {
         if let Some(i) = self.index.checked_sub(1) {
             self.index = i;
-            true
-        } else {
-            false
         }
+    }
+
+    fn next(&self) -> Option<&PathBuf> {
+        self.items.get(self.index + 1)
+    }
+
+    fn prev(&self) -> Option<&PathBuf> {
+        self.items.get(self.index.checked_sub(1)?)
     }
 
     fn current(&self) -> Option<&PathBuf> {
         self.items.get(self.index)
+    }
+
+    fn is_current(&self, path: &Path) -> bool {
+        if let Some(current) = self.current() {
+            current.as_path() == path
+        } else {
+            false
+        }
     }
 }
 
@@ -145,10 +156,6 @@ where
         format!("Shiba: {}", path.display())
     }
 
-    fn set_title(&self, path: &Path) {
-        self.renderer.set_title(&self.title(path));
-    }
-
     fn preview(&self, path: &Path) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
         let content = match fs::read_to_string(&path) {
@@ -161,38 +168,39 @@ where
                 return Ok(false);
             }
         };
+
         let msg = MessageToRenderer::Content { content: &content };
         self.renderer.send_message(msg)?;
+
+        if !self.history.is_current(path) {
+            self.renderer.set_title(&self.title(path));
+        }
+
         Ok(true)
     }
 
     fn preview_new(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         if self.preview(&path)? {
-            self.set_title(&path);
             self.history.push(path);
         }
         Ok(())
     }
 
     fn forward(&mut self) -> Result<()> {
-        if self.history.forward() {
-            if let Some(path) = self.history.current() {
-                log::debug!("Forward to next preview page: {:?}", path);
-                self.preview(path)?;
-                self.set_title(path);
-            }
+        if let Some(path) = self.history.next() {
+            log::debug!("Forward to next preview page: {:?}", path);
+            self.preview(path)?;
+            self.history.forward();
         }
         Ok(())
     }
 
     fn back(&mut self) -> Result<()> {
-        if self.history.back() {
-            if let Some(path) = self.history.current() {
-                log::debug!("Back to previous preview page: {:?}", path);
-                self.preview(path)?;
-                self.set_title(path);
-            }
+        if let Some(path) = self.history.prev() {
+            log::debug!("Back to previous preview page: {:?}", path);
+            self.preview(path)?;
+            self.history.back();
         }
         Ok(())
     }
@@ -274,7 +282,6 @@ where
                         path = path.canonicalize()?;
                     }
                     if self.preview(&path)? {
-                        self.set_title(&path);
                         self.history.push(path);
                     }
                 }
