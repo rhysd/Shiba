@@ -27,6 +27,7 @@
   "author": "rhysd <lin90162@yahoo.co.jp> (https://rhysd.github.io/)",
   "license": "MIT",
   "dependencies": {
+    "diff": "^5.1.0",
     "github-markdown-css": "^5.1.0",
     "mousetrap": "^1.6.5",
     "rehype-highlight": "^6.0.0",
@@ -39,6 +40,7 @@
     "unified": "^10.1.2"
   },
   "devDependencies": {
+    "@types/diff": "^5.0.2",
     "@types/marked": "^4.0.7",
     "@types/mousetrap": "^1.6.9",
     "concurrently": "^7.5.0",

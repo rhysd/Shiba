@@ -196,7 +196,7 @@ impl Renderer for WebView {
         WebViewMenuItems::create(self.window())
     }
 
-    fn send_message(&self, message: MessageToRenderer) -> Result<()> {
+    fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()> {
         let mut buf = b"window.ShibaApp.receive(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
         buf.push(b')');

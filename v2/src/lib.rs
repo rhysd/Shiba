@@ -2,6 +2,7 @@ mod app;
 mod cli;
 mod config;
 mod dialog;
+mod jsdiff;
 mod opener;
 mod renderer;
 mod watcher;

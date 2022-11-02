@@ -1,12 +1,14 @@
 use crate::cli::Options;
 use crate::config::Config;
 use crate::dialog::Dialog;
+use crate::jsdiff::Hunks;
 use crate::opener::Opener;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
 use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
 use anyhow::Result;
+use similar::TextDiff;
 use std::collections::VecDeque;
 use std::env;
 use std::fs;
@@ -61,25 +63,36 @@ impl History {
         log::debug!("Push new history item at {}: {:?}", self.index, self.items);
     }
 
-    fn forward(&mut self) -> bool {
-        if self.items.is_empty() || self.index + 1 == self.items.len() {
-            return false;
-        }
-        self.index += 1;
-        true
+    fn next(&self) -> Option<&PathBuf> {
+        self.items.get(self.index + 1)
     }
 
-    fn back(&mut self) -> bool {
+    fn forward(&mut self) {
+        if self.index + 1 < self.items.len() {
+            self.index += 1;
+        }
+    }
+
+    fn back(&mut self) {
         if let Some(i) = self.index.checked_sub(1) {
             self.index = i;
-            true
-        } else {
-            false
         }
+    }
+
+    fn prev(&self) -> Option<&PathBuf> {
+        self.items.get(self.index.checked_sub(1)?)
     }
 
     fn current(&self) -> Option<&PathBuf> {
         self.items.get(self.index)
+    }
+
+    fn is_current(&self, path: &Path) -> bool {
+        if let Some(current) = self.current() {
+            current.as_path() == path
+        } else {
+            false
+        }
     }
 }
 
@@ -89,9 +102,70 @@ pub enum AppControl {
     Exit,
 }
 
+#[derive(Default)]
+struct Preview {
+    cache: String,
+}
+
+impl Preview {
+    fn send_content<R: Renderer>(&mut self, content: String, renderer: &R) -> Result<()> {
+        let msg = MessageToRenderer::Content { content: &content };
+        renderer.send_message(msg)?;
+        self.cache = content;
+        Ok(())
+    }
+
+    fn open<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
+        log::debug!("Opening markdown preview for {:?}", path);
+        let content = match fs::read_to_string(&path) {
+            Ok(content) => content,
+            Err(err) => {
+                // Do not return error because 'no such file' because the file might be renamed and
+                // no longer exists. This can happen when saving files on Vim. In this case, a file
+                // create event will follow so the preview can be updated with the event.
+                log::debug!("Could not open {:?} due to error: {}", path, err);
+                return Ok(false);
+            }
+        };
+        self.send_content(content, renderer)?;
+        Ok(true)
+    }
+
+    fn diff<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
+        log::debug!("Diffing markdown preview for {:?}", path);
+        let content = match fs::read_to_string(&path) {
+            Ok(content) => content,
+            Err(err) => {
+                log::debug!("Could not open {:?} due to error: {}", path, err);
+                return Ok(false);
+            }
+        };
+
+        if self.cache.is_empty() {
+            log::debug!("No cache. Send entire text for {:?}", path);
+            self.send_content(content, renderer)?;
+            return Ok(true);
+        }
+
+        let diff = TextDiff::configure().diff_lines(&self.cache, &content); // TODO: Use configure, set timeout and check timeout expired
+        if diff.ops().is_empty() {
+            return Ok(false);
+        }
+
+        let mut udiff = diff.unified_diff();
+        udiff.context_radius(0);
+        let msg = MessageToRenderer::Diff { hunks: Hunks(udiff) };
+        renderer.send_message(msg)?;
+
+        self.cache = content;
+        Ok(true)
+    }
+}
+
 pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     options: Options,
     renderer: R,
+    preview: Preview,
     menu: R::Menu,
     opener: O,
     history: History,
@@ -126,6 +200,7 @@ where
         Ok(Self {
             options,
             renderer,
+            preview: Preview::default(),
             menu,
             opener: O::default(),
             history: History::new(History::DEFAULT_MAX_HISTORY_SIZE),
@@ -146,29 +221,14 @@ where
     }
 
     fn set_title(&self, path: &Path) {
-        self.renderer.set_title(&self.title(path));
-    }
-
-    fn preview(&self, path: &Path) -> Result<bool> {
-        log::debug!("Opening markdown preview for {:?}", path);
-        let content = match fs::read_to_string(&path) {
-            Ok(content) => content,
-            Err(err) => {
-                // Do not return error because 'no such file' because the file might be renamed and
-                // no longer exists. This can happen when saving files on Vim. In this case, a file
-                // create event will follow so the preview can be updated with the event.
-                log::debug!("Could not open {:?} due to error: {}", path, err);
-                return Ok(false);
-            }
-        };
-        let msg = MessageToRenderer::Content { content: &content };
-        self.renderer.send_message(msg)?;
-        Ok(true)
+        if !self.history.is_current(path) {
+            self.renderer.set_title(&self.title(path));
+        }
     }
 
     fn preview_new(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
-        if self.preview(&path)? {
+        if self.preview.open(&path, &self.renderer)? {
             self.set_title(&path);
             self.history.push(path);
         }
@@ -176,22 +236,22 @@ where
     }
 
     fn forward(&mut self) -> Result<()> {
-        if self.history.forward() {
-            if let Some(path) = self.history.current() {
-                log::debug!("Forward to next preview page: {:?}", path);
-                self.preview(path)?;
+        if let Some(path) = self.history.next() {
+            log::debug!("Forward to next preview page: {:?}", path);
+            if self.preview.open(path, &self.renderer)? {
                 self.set_title(path);
+                self.history.forward();
             }
         }
         Ok(())
     }
 
     fn back(&mut self) -> Result<()> {
-        if self.history.back() {
-            if let Some(path) = self.history.current() {
-                log::debug!("Back to previous preview page: {:?}", path);
-                self.preview(path)?;
+        if let Some(path) = self.history.prev() {
+            log::debug!("Back to previous preview page: {:?}", path);
+            if self.preview.open(path, &self.renderer)? {
                 self.set_title(path);
+                self.history.back();
             }
         }
         Ok(())
@@ -200,7 +260,7 @@ where
     fn reload(&mut self) -> Result<()> {
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
-            self.preview(path)?;
+            self.preview.open(path, &self.renderer)?;
         }
         Ok(())
     }
@@ -264,7 +324,7 @@ where
                 log::debug!("Files changed: {:?}", paths);
                 if let Some(current) = self.history.current() {
                     if paths.contains(current) {
-                        self.preview(current)?;
+                        self.preview.diff(current, &self.renderer)?;
                         return Ok(());
                     }
                 }
@@ -273,7 +333,7 @@ where
                     if !path.is_absolute() {
                         path = path.canonicalize()?;
                     }
-                    if self.preview(&path)? {
+                    if self.preview.open(&path, &self.renderer)? {
                         self.set_title(&path);
                         self.history.push(path);
                     }
