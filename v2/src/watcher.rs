@@ -89,7 +89,8 @@ impl Watcher for RecommendedWatcher {
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) => match event.kind {
                 WatchEventKind::Create(CreateKind::File)
-                | WatchEventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
+                | WatchEventKind::Modify(ModifyKind::Data(DataChange::Content | DataChange::Any)) =>
+                {
                     log::debug!("Caught filesystem event: {:?}", event.kind);
 
                     // XXX: Watcher sends the event at the first file-changed event durating debounce throttle.

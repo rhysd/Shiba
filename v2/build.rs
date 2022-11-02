@@ -54,6 +54,7 @@ fn main() {
             "dist/hljs-github.min.css",
             "hljs-github.css",
         )
+        .embed("dist/style.css", "dist/style.min.css", "style.css")
         .embed("dist/bundle.js", "dist/bundle.min.js", "bundle.js")
         .bundle("src/bundle.html", "src/bundle.min.html");
 }
