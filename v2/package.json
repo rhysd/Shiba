@@ -17,11 +17,11 @@
     "release:css:highlight.js": "postcss --no-map --output dist/hljs-github.min.css ./node_modules/highlight.js/styles/github.css",
     "fmt": "concurrently -c auto npm:fmt:cargo npm:fmt:ts",
     "fmt:cargo": "cargo fmt",
-    "fmt:ts": "prettier --write 'web/*.ts'",
+    "fmt:ts": "prettier --write 'web/**/*.ts' 'web/**/*.tsx'",
     "check": "concurrently -c auto npm:check:ts npm:check:rs npm:check:prettier npm:check:rustfmt",
     "check:ts": "tsc --noEmit -p .",
     "check:rs": "cargo clippy -- -D warnings",
-    "check:prettier": "prettier --check 'web/*.ts'",
+    "check:prettier": "prettier --check 'web/**/*.ts' 'web/**/*.tsx'",
     "check:rustfmt": "cargo fmt --check",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
