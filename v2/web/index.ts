@@ -1,170 +1,58 @@
-import Mousetrap from 'mousetrap';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkFrontmatter from 'remark-frontmatter';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import rehypeReact from 'rehype-react';
-import { createElement, Fragment } from 'react';
 import { mount } from './components';
-
-interface Ipc {
-    postMessage(m: string): void;
-}
+import * as log from './log';
+import { sendMessage, MessageFromMain } from './ipc';
+import { registerKeymaps } from './keymaps';
+import { parseMarkdown } from './markdown';
 
 declare global {
     interface Window {
         ShibaApp: Shiba;
-        ipc: Ipc;
     }
 }
 
-type MessageFromMain =
-    | {
-          kind: 'content';
-          content: string;
-      }
-    | {
-          kind: 'key_mappings';
-          keymaps: { [keybind: string]: string };
-      }
-    | {
-          kind: 'debug';
-      };
-type MessageToMain =
-    | {
-          kind: 'init';
-      }
-    | {
-          kind: 'forward';
-      }
-    | {
-          kind: 'back';
-      }
-    | {
-          kind: 'reload';
-      }
-    | {
-          kind: 'file_dialog';
-      }
-    | {
-          kind: 'dir_dialog';
-      };
-
-function sendMessage(m: MessageToMain): void {
-    window.ipc.postMessage(JSON.stringify(m));
-}
-
-let debug: (...args: unknown[]) => void = function nop() {};
-
-const KEYMAP_ACTIONS: { [action: string]: () => void } = {
-    ScrollDown(): void {
-        window.scrollBy(0, window.innerHeight / 2);
-    },
-    ScrollUp(): void {
-        window.scrollBy(0, -window.innerHeight / 2);
-    },
-    ScrollLeft(): void {
-        window.scrollBy(-window.innerWidth / 2, 0);
-    },
-    ScrollRight(): void {
-        window.scrollBy(window.innerWidth / 2, 0);
-    },
-    ScrollPageDown(): void {
-        window.scrollBy(0, window.innerHeight);
-    },
-    ScrollPageUp(): void {
-        window.scrollBy(0, -window.innerHeight);
-    },
-    Forward(): void {
-        sendMessage({ kind: 'forward' });
-    },
-    Back(): void {
-        sendMessage({ kind: 'back' });
-    },
-    Reload(): void {
-        sendMessage({ kind: 'reload' });
-    },
-    OpenFile(): void {
-        sendMessage({ kind: 'file_dialog' });
-    },
-    OpenDir(): void {
-        sendMessage({ kind: 'dir_dialog' });
-    },
-    ScrollTop(): void {
-        window.scrollTo(0, 0);
-    },
-    ScrollBottom(): void {
-        window.scrollTo(0, document.body.scrollHeight);
-    },
-};
-
-defaultSchema.attributes!['*']!.push('className'); // Allow `class` attribute in all HTML elements
-
-const remark = unified()
-    .use(remarkFrontmatter)
-    .use(remarkGfm)
-    .use(remarkParse)
-    .use(remarkRehype)
-    .use(rehypeHighlight, { plainText: ['txt', 'text'] })
-    .use(rehypeSanitize, defaultSchema)
-    .use(rehypeReact, { createElement, Fragment });
-
-const nop = () => {};
+type ContentCallback = (elem: React.ReactNode) => void;
 
 class Shiba {
-    private onMarkdownContent: (elem: any) => any;
+    private onMarkdownContent: ContentCallback;
+    private init: boolean;
 
     constructor() {
-        this.onMarkdownContent = nop;
+        this.onMarkdownContent = () => {};
+        this.init = false;
     }
 
-    registerContentCallback(callback: (elem: any) => void) {
-        if (this.onMarkdownContent === nop) {
-            sendMessage({ kind: 'init' });
-        }
+    registerContentCallback(callback: ContentCallback): void {
         this.onMarkdownContent = callback;
+        if (!this.init) {
+            sendMessage({ kind: 'init' });
+            this.init = true;
+            log.debug('Notify initialization finished to the main');
+        }
+        log.debug('Registered new content callback');
     }
 
     async receive(msg: MessageFromMain): Promise<void> {
-        debug('Received IPC message from main:', msg.kind, msg);
+        log.debug('Received IPC message from main:', msg.kind, msg);
 
         // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
         try {
             switch (msg.kind) {
                 case 'content':
-                    const file = await remark.process(msg.content);
-                    this.onMarkdownContent(file.result);
+                    this.onMarkdownContent(await parseMarkdown(msg.content));
                     break;
                 case 'key_mappings':
-                    for (const [keybind, action] of Object.entries(msg.keymaps)) {
-                        const callback = KEYMAP_ACTIONS[action];
-                        if (callback) {
-                            Mousetrap.bind(keybind, e => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                debug('Triggered key shortcut:', action);
-                                callback();
-                            });
-                        } else {
-                            console.error('Unknown action:', action);
-                        }
-                    }
-                    document.getElementById('preview')?.focus();
-                    document.getElementById('preview')?.click();
+                    registerKeymaps(msg.keymaps);
                     break;
                 case 'debug':
-                    debug = console.debug;
-                    debug('Debug log is enabled');
+                    log.enableDebug();
+                    log.debug('Debug log is enabled');
                     break;
                 default:
-                    console.error('Unknown message:', msg);
+                    log.error('Unknown message:', msg);
                     break;
             }
         } catch (err) {
-            console.error('Error while handling received IPC message', err, msg);
+            log.error('Error while handling received IPC message', err, msg);
         }
     }
 }
