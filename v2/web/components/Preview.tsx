@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useShiba } from './context';
+import type { Shiba } from '../shiba';
 
-export const Preview: React.FC = () => {
+interface Props {
+    app: Shiba;
+}
+
+export const Preview: React.FC<Props> = props => {
     const [elem, setElem] = useState<React.ReactNode | null>(null);
-    const app = useShiba();
+    const app = props.app;
 
     useEffect(() => {
         app.registerPreviewCallback(setElem);
