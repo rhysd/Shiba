@@ -44,6 +44,9 @@ export function reducer(state: State, action: Action): State {
     log.debug('Dispatched new action', action.kind, action);
     switch (action.kind) {
         case 'open_search':
+            if (state.search !== null) {
+                return state; // When search is ongoing, do not update the state
+            }
             return { ...state, search: { text: '', index: 0 } };
         case 'close_search':
             return { ...state, search: null, preview: action.content };
