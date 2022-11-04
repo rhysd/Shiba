@@ -42,30 +42,49 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
         }
     }, [state, previewContent]);
 
-    const prev = async () => {
+    const handlePrev = async () => {
         dispatch(await searchPrevious(index, previewContent, text));
     };
-    const next = async () => {
+    const handleNext = async () => {
         dispatch(await searchNext(index, previewContent, text));
     };
-    const close = async () => {
+    const handleClose = async () => {
         dispatch(await closeSearch(previewContent));
     };
-    const onChange = async (e: React.FormEvent<HTMLInputElement>) => {
+    const handleChange = async (e: React.FormEvent<HTMLInputElement>) => {
         dispatch(await searchText(previewContent, e.currentTarget.value, index));
+    };
+    const handleKeydown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            await handleNext();
+        } else if (e.key === 'Enter' && e.shiftKey) {
+            await handlePrev();
+        } else if (e.key === 'Escape') {
+            await handleClose();
+        } else {
+            return;
+        }
+        e.preventDefault();
     };
     return (
         <div className="search-text-box">
             <span className="search-text-icon">🔍</span>
-            <input className="search-text-input" onChange={onChange} type="search" placeholder="Search…" autoFocus />
+            <input
+                className="search-text-input"
+                onChange={handleChange}
+                onKeyDown={handleKeydown}
+                type="search"
+                placeholder="Search…"
+                autoFocus
+            />
             <span className="search-text-counter" ref={counterElem}></span>
-            <span className="search-text-button" onClick={prev}>
+            <span className="search-text-button" onClick={handlePrev}>
                 &lt;
             </span>
-            <span className="search-text-button" onClick={next}>
+            <span className="search-text-button" onClick={handleNext}>
                 &gt;
             </span>
-            <span className="search-text-button" onClick={close}>
+            <span className="search-text-button" onClick={handleClose}>
                 ×
             </span>
         </div>
