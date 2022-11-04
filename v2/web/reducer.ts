@@ -6,7 +6,7 @@ import { parseMarkdown, searchHast, PreviewContent } from './preview';
 
 export interface SearchState {
     text: string;
-    index: number;
+    index: number | null;
 }
 
 export interface State {
@@ -31,7 +31,7 @@ type Action =
           kind: 'search_text';
           text: string;
           content: PreviewContent;
-          index: number;
+          index: number | null;
       }
     | {
           kind: 'preview_content';
@@ -47,7 +47,7 @@ export function reducer(state: State, action: Action): State {
             if (state.search !== null) {
                 return state; // When search is ongoing, do not update the state
             }
-            return { ...state, search: { text: '', index: 0 } };
+            return { ...state, search: { text: '', index: null } };
         case 'close_search':
             return { ...state, search: null, preview: action.content };
         case 'search_text':
@@ -64,7 +64,7 @@ export function reducer(state: State, action: Action): State {
             if (state.search) {
                 search = {
                     text: action.searchText,
-                    index: 0,
+                    index: null,
                 };
             }
             return {
@@ -85,7 +85,7 @@ export async function closeSearch(hast: Hast): Promise<Action> {
     const content = { react, hast };
     return { kind: 'close_search', content };
 }
-export async function searchText(hast: Hast, text: string, index: number): Promise<Action> {
+export async function searchText(hast: Hast, text: string, index: number | null): Promise<Action> {
     const react = await searchHast(hast, text, index);
     const content = { react, hast };
     return { kind: 'search_text', text, content, index };

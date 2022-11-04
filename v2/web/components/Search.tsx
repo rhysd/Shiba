@@ -9,11 +9,8 @@ function isInViewport(elem: Element): boolean {
     return 0 <= rect.top && 0 <= rect.left && rect.bottom <= height && rect.right <= width;
 }
 
-function countMatches(): number | null {
-    if (!document.querySelector('.search-text-current')) {
-        return null;
-    }
-    return document.querySelectorAll('.search-text').length + 1;
+function countMatches(): number {
+    return document.querySelectorAll('.search-text,.search-text-current').length;
 }
 
 interface Props {
@@ -27,38 +24,35 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
     const counterElem = useRef<HTMLElement>(null);
 
     useEffect(() => {
-        const elem = document.querySelector('.search-text-current');
-        if (!elem) {
-            if (counterElem.current !== null) {
-                counterElem.current.textContent = '0 / 0';
-            }
-            return;
-        }
-        if (!isInViewport(elem)) {
-            elem.scrollIntoView({
-                block: 'nearest',
-                inline: 'nearest',
+        const current = document.querySelector('.search-text-current');
+        if (current && !isInViewport(current)) {
+            current.scrollIntoView({
+                block: 'center',
+                inline: 'center',
             });
         }
-        const total = document.querySelectorAll('.search-text').length + 1;
         if (counterElem.current !== null) {
-            counterElem.current.textContent = `${index + 1} / ${total}`;
+            const nth = index !== null ? index + 1 : 0;
+            const total = countMatches();
+            counterElem.current.textContent = `${nth} / ${total}`;
         }
     }, [state, previewContent]);
 
     const prev = async () => {
         const count = countMatches();
-        if (count !== null) {
-            const next = index > 0 ? index - 1 : count - 1;
-            dispatch(await searchText(previewContent, text, next));
+        let next = 0;
+        if (index !== null && count > 0) {
+            next = index > 0 ? index - 1 : count - 1;
         }
+        dispatch(await searchText(previewContent, text, next));
     };
     const next = async () => {
         const count = countMatches();
-        if (count !== null) {
-            const next = index + 1 >= count ? 0 : index + 1;
-            dispatch(await searchText(previewContent, text, next));
+        let next = 0;
+        if (index !== null && count > 0) {
+            next = index + 1 >= count ? 0 : index + 1;
         }
+        dispatch(await searchText(previewContent, text, next));
     };
     const close = async () => {
         dispatch(await closeSearch(previewContent));

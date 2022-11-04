@@ -51,12 +51,15 @@ body {
 
 .search-text-icon {
   cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .search-text-counter {
   cursor: default;
   color: #aaa;
   max-width: 200px;
+  margin-right: 4px;
 }
 
 .search-text-button {
@@ -65,4 +68,6 @@ body {
   margin: 6px;
   cursor: pointer;
   color: #555;
+  user-select: none;
+  -webkit-user-select: none;
 }

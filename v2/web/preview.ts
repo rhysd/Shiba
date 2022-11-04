@@ -28,7 +28,7 @@ export interface PreviewContent {
     hast: Hast;
 }
 
-function highlight(searchText: string, index: number, tree: Hast): void {
+function highlight(searchText: string, index: number | null, tree: Hast): void {
     if (searchText.length === 0) {
         return;
     }
@@ -78,7 +78,7 @@ function highlight(searchText: string, index: number, tree: Hast): void {
         }
 
         for (const s of split.slice(1)) {
-            children.push(span(searchText, count === index, pos));
+            children.push(span(searchText, index !== null && count === index, pos));
             count++;
             if (s.length > 0) {
                 children.push(text(s, pos));
@@ -94,7 +94,7 @@ function highlight(searchText: string, index: number, tree: Hast): void {
 
 interface HighlightOptions {
     searchText: string;
-    index: number;
+    index: number | null;
 }
 
 const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ searchText, index }) =>
@@ -107,7 +107,7 @@ export async function parseMarkdown(content: string, searchText: string): Promis
     const plugin: Plugin<[], Hast, Hast> = () => tree => {
         if (searchText) {
             hast = structuredClone(tree);
-            highlight(searchText, 0, tree);
+            highlight(searchText, null, tree);
         } else {
             hast = tree;
         }
@@ -131,7 +131,7 @@ export async function parseMarkdown(content: string, searchText: string): Promis
     return { react: file.result, hast };
 }
 
-export async function searchHast(tree: Hast, searchText: string, index: number): Promise<ReactElement> {
+export async function searchHast(tree: Hast, searchText: string, index: number | null): Promise<ReactElement> {
     if (searchText) {
         const options = { searchText, index };
         const transformer = unified().use(highlightPlugin, options).use(rehypeReact, RehypeReactConfig);
