@@ -1,13 +1,14 @@
 import React from 'react';
-import type { Shiba } from '../shiba';
 import * as log from '../log';
+import { Dispatch, searchText, closeSearch } from '../reducer';
+import type { Root as Hast } from 'hast';
 
 interface Props {
-    app: Shiba;
-    onClose: () => void;
+    previewContent: Hast,
+    dispatch: Dispatch;
 }
 
-export const Search: React.FC<Props> = ({app, onClose}) => {
+export const Search: React.FC<Props> = ({previewContent, dispatch}) => {
     const prev = (e: React.MouseEvent) => {
         e.preventDefault();
         log.debug('TODO: Search previous');
@@ -16,13 +17,12 @@ export const Search: React.FC<Props> = ({app, onClose}) => {
         e.preventDefault();
         log.debug('TODO: Search next');
     };
-    const close = async (e: React.MouseEvent) => {
+    const close = (e: React.MouseEvent) => {
         e.preventDefault();
-        await app.search('');
-        onClose();
+        dispatch(closeSearch());
     };
     const onChange = async (e: React.FormEvent<HTMLInputElement>) => {
-        await app.search(e.currentTarget.value);
+        dispatch(await searchText(previewContent, e.currentTarget.value));
     };
     return <div className="search-text-box">
         <span className="search-text-icon">🔍</span>

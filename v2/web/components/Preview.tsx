@@ -1,23 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Search } from './Search';
-import type { Shiba } from '../shiba';
+import type { Dispatch, State } from '../reducer';
 
 interface Props {
-    app: Shiba;
+    dispatch: Dispatch;
+    state: State;
 }
 
-export const Preview: React.FC<Props> = ({app}) => {
-    const [elem, setElem] = useState<React.ReactNode | null>(null);
-    const [searchOpen, setSearchOpen] = useState(false);
-
-    useEffect(() => {
-        app.registerPreviewCallback(setElem);
-        app.registerStartSearch(() => setSearchOpen(true));
-        // Unregistering the callback may be better on unmount
-    });
-
+export const Preview: React.FC<Props> = ({state, dispatch}) => {
+    const { preview } = state;
     return <>
-        {searchOpen ? <Search app={app} onClose={() => setSearchOpen(false)}/> : undefined}
-        <article className="markdown-body">{elem}</article>
+        {state.search && preview ? <Search previewContent={preview.hast} dispatch={dispatch}/> : undefined}
+        <article className="markdown-body">{preview?.react}</article>
     </>;
 };
