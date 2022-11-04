@@ -6,10 +6,12 @@ import { Markdown, ContentCallback } from './markdown';
 export class Shiba {
     private init: boolean;
     private markdown: Markdown;
+    private startSearchFn: () => void;
 
     constructor() {
         this.init = false;
         this.markdown = new Markdown();
+        this.startSearchFn = () => {};
     }
 
     registerPreviewCallback(callback: ContentCallback): void {
@@ -20,6 +22,19 @@ export class Shiba {
             log.debug('Notify initialization finished to the main');
         }
         log.debug('Registered new content callback');
+    }
+
+    registerStartSearch(fn: () => void): void {
+        this.startSearchFn = fn;
+    }
+
+    startSearch(): void {
+        log.debug('Start search');
+        this.startSearchFn();
+    }
+
+    async search(text: string): Promise<void> {
+        await this.markdown.search(text);
     }
 
     async receive(msg: MessageFromMain): Promise<void> {
@@ -33,6 +48,9 @@ export class Shiba {
                     break;
                 case 'key_mappings':
                     registerKeymaps(msg.keymaps);
+                    break;
+                case 'search':
+                    this.startSearch();
                     break;
                 case 'debug':
                     log.enableDebug();

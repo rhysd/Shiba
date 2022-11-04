@@ -20,6 +20,9 @@ export type MessageFromMain =
           keymaps: KeyMaps;
       }
     | {
+          kind: 'search';
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =

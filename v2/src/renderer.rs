@@ -29,6 +29,7 @@ pub enum KeyAction {
 pub enum MessageToRenderer<'a> {
     Content { content: &'a str },
     KeyMappings { keymaps: &'a HashMap<String, KeyAction> },
+    Search,
     Debug,
 }
 
@@ -62,6 +63,7 @@ pub enum MenuItem {
     Reload,
     OpenFile,
     WatchDir,
+    Search,
 }
 
 pub trait MenuItems {

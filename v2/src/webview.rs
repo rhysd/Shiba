@@ -26,6 +26,7 @@ pub struct WebViewMenuItems {
     forward: MenuId,
     back: MenuId,
     reload: MenuId,
+    search: MenuId,
 }
 
 impl WebViewMenuItems {
@@ -46,14 +47,17 @@ impl WebViewMenuItems {
             file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
         menu.add_submenu("File", true, file_menu);
 
-        let mut history_menu = MenuBar::new();
+        let mut edit_menu = MenuBar::new();
         let cmd_left_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketRight);
-        let forward_item = history_menu
+        let forward_item = edit_menu
             .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
         let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
-        let back_item = history_menu
+        let back_item = edit_menu
             .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
-        menu.add_submenu("History", true, history_menu);
+        let cmd_f = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyF);
+        let search_item =
+            edit_menu.add_item(MenuItemAttributes::new("Search").with_accelerators(&cmd_f));
+        menu.add_submenu("Edit", true, edit_menu);
 
         let mut display_menu = MenuBar::new();
         let cmd_r = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyR);
@@ -70,6 +74,7 @@ impl WebViewMenuItems {
             forward: forward_item.id(),
             back: back_item.id(),
             reload: reload_item.id(),
+            search: search_item.id(),
         }
     }
 }
@@ -90,6 +95,8 @@ impl MenuItems for WebViewMenuItems {
             Ok(AppMenuItem::Back)
         } else if id == self.reload {
             Ok(AppMenuItem::Reload)
+        } else if id == self.search {
+            Ok(AppMenuItem::Search)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }

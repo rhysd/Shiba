@@ -1,3 +1,62 @@
 html {
   background-color: white;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  font-size: 14px;
+}
+
+.markdown-body {
+  padding: 8px;
+}
+
+.search-text {
+  background-color: #fffe54;
+}
+
+.search-text-current {
+  background-color: #ef9a4a;
+}
+
+.search-text-box {
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  width: 350px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: white;
+  padding: 8px;
+  margin: 8px;
+  border: 1px #ddd solid;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px 1px rgb(64 60 67 / 16%);
+}
+
+.search-text-input {
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  box-shadow: none;
+  flex: auto;
+}
+.search-text-input:focus {
+  outline: none;
+}
+
+.search-text-icon {
+  cursor: pointer;
+}
+
+.search-text-button {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 6px;
+  cursor: pointer;
+  color: #555;
 }

@@ -323,6 +323,7 @@ where
             MenuItem::Reload => self.reload()?,
             MenuItem::OpenFile => self.open_file()?,
             MenuItem::WatchDir => self.open_dir()?,
+            MenuItem::Search => self.renderer.send_message(MessageToRenderer::Search)?,
         }
         Ok(AppControl::Continue)
     }

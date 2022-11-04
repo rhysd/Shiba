@@ -5,7 +5,5 @@ import type { Shiba } from '../shiba';
 
 export function render(rootElem: HTMLElement, app: Shiba) {
     const root = createRoot(rootElem);
-    root.render(
-        <Preview app={app}/>
-    );
+    root.render(<Preview app={app} />);
 }
