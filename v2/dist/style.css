@@ -25,7 +25,7 @@ body {
   position: fixed;
   top: 0px;
   right: 0px;
-  width: 350px;
+  width: 400px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -50,7 +50,13 @@ body {
 }
 
 .search-text-icon {
-  cursor: pointer;
+  cursor: default;
+}
+
+.search-text-counter {
+  cursor: default;
+  color: #aaa;
+  max-width: 200px;
 }
 
 .search-text-button {

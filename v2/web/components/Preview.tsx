@@ -7,10 +7,18 @@ interface Props {
     state: State;
 }
 
-export const Preview: React.FC<Props> = ({state, dispatch}) => {
-    const { preview } = state;
-    return <>
-        {state.search && preview ? <Search previewContent={preview.hast} dispatch={dispatch}/> : undefined}
-        <article className="markdown-body">{preview?.react}</article>
-    </>;
+export const Preview: React.FC<Props> = ({ state, dispatch }) => {
+    const { preview, search } = state;
+
+    let searchInput;
+    if (search && preview) {
+        searchInput = <Search previewContent={preview.hast} state={search} dispatch={dispatch} />;
+    }
+
+    return (
+        <>
+            {searchInput}
+            <article className="markdown-body">{preview?.react}</article>
+        </>
+    );
 };

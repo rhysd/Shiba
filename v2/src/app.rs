@@ -158,7 +158,7 @@ where
 
     fn preview(&self, path: &Path) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
-        let content = match fs::read_to_string(&path) {
+        let content = match fs::read_to_string(path) {
             Ok(content) => content,
             Err(err) => {
                 // Do not return error because 'no such file' because the file might be renamed and

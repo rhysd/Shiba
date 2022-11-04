@@ -7,12 +7,13 @@ interface Props {
     dispatcher: Dispatcher;
 }
 
-export const App: React.FC<Props> = ({dispatcher}) => {
-
+export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
     useEffect(() => dispatcher.setDispatch(dispatch));
-    useEffect(() => { sendMessage({ kind: 'init' }); }, []); // Run only when component was mounted
+    useEffect(() => {
+        sendMessage({ kind: 'init' });
+    }, []); // Run only when component was mounted
 
-    return <Preview state={state} dispatch={dispatch}/>;
-}
+    return <Preview state={state} dispatch={dispatch} />;
+};
