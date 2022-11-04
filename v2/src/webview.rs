@@ -27,6 +27,8 @@ pub struct WebViewMenuItems {
     back: MenuId,
     reload: MenuId,
     search: MenuId,
+    search_next: MenuId,
+    search_prev: MenuId,
 }
 
 impl WebViewMenuItems {
@@ -57,6 +59,13 @@ impl WebViewMenuItems {
         let cmd_f = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyF);
         let search_item =
             edit_menu.add_item(MenuItemAttributes::new("Search").with_accelerators(&cmd_f));
+        let cmd_g = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyG);
+        let search_next_item =
+            edit_menu.add_item(MenuItemAttributes::new("Search Next").with_accelerators(&cmd_g));
+        let cmd_shift_g =
+            Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::SHIFT), KeyCode::KeyG);
+        let search_prev_item = edit_menu
+            .add_item(MenuItemAttributes::new("Search Previous").with_accelerators(&cmd_shift_g));
         menu.add_submenu("Edit", true, edit_menu);
 
         let mut display_menu = MenuBar::new();
@@ -75,6 +84,8 @@ impl WebViewMenuItems {
             back: back_item.id(),
             reload: reload_item.id(),
             search: search_item.id(),
+            search_next: search_next_item.id(),
+            search_prev: search_prev_item.id(),
         }
     }
 }
@@ -97,6 +108,10 @@ impl MenuItems for WebViewMenuItems {
             Ok(AppMenuItem::Reload)
         } else if id == self.search {
             Ok(AppMenuItem::Search)
+        } else if id == self.search_next {
+            Ok(AppMenuItem::SearchNext)
+        } else if id == self.search_prev {
+            Ok(AppMenuItem::SearchPrevious)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }

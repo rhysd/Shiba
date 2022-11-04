@@ -4,6 +4,10 @@ import { MessageFromMain } from './ipc';
 import { registerKeymaps } from './keymaps';
 import { parseMarkdown, searchHast, PreviewContent } from './preview';
 
+export function countSearchMatches(): number {
+    return document.querySelectorAll('.search-text,.search-text-current').length;
+}
+
 export interface SearchState {
     text: string;
     index: number | null;
@@ -90,6 +94,22 @@ export async function searchText(hast: Hast, text: string, index: number | null)
     const content = { react, hast };
     return { kind: 'search_text', text, content, index };
 }
+export async function searchNext(index: number | null, hast: Hast, text: string): Promise<Action> {
+    const count = countSearchMatches();
+    let next = 0;
+    if (index !== null && count > 0) {
+        next = index + 1 >= count ? 0 : index + 1;
+    }
+    return searchText(hast, text, next);
+}
+export async function searchPrevious(index: number | null, hast: Hast, text: string): Promise<Action> {
+    const count = countSearchMatches();
+    let next = 0;
+    if (index !== null && count > 0) {
+        next = index > 0 ? index - 1 : count - 1;
+    }
+    return searchText(hast, text, next);
+}
 export async function previewContent(markdown: string, searchText: string): Promise<Action> {
     const content = await parseMarkdown(markdown, searchText);
     return { kind: 'preview_content', content, searchText };
@@ -97,13 +117,16 @@ export async function previewContent(markdown: string, searchText: string): Prom
 
 export class Dispatcher {
     public dispatch: Dispatch;
+    public state: State;
 
     constructor() {
         this.dispatch = () => {};
+        this.state = INITIAL_STATE;
     }
 
-    setDispatch(dispatch: Dispatch): void {
+    setDispatch(dispatch: Dispatch, state: State): void {
         this.dispatch = dispatch;
+        this.state = state;
     }
 
     async dispatchIpcMessage(msg: MessageFromMain): Promise<void> {
@@ -120,6 +143,22 @@ export class Dispatcher {
                 case 'search':
                     this.dispatch(openSearch());
                     break;
+                case 'search_next': {
+                    const { search, preview } = this.state;
+                    if (search === null || preview === null) {
+                        break;
+                    }
+                    this.dispatch(await searchNext(search.index, preview.hast, search.text));
+                    break;
+                }
+                case 'search_previous': {
+                    const { search, preview } = this.state;
+                    if (search === null || preview === null) {
+                        break;
+                    }
+                    this.dispatch(await searchPrevious(search.index, preview.hast, search.text));
+                    break;
+                }
                 case 'debug':
                     log.enableDebug();
                     log.debug('Debug log is enabled');

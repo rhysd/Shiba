@@ -23,6 +23,12 @@ export type MessageFromMain =
           kind: 'search';
       }
     | {
+          kind: 'search_next';
+      }
+    | {
+          kind: 'search_previous';
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =

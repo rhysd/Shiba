@@ -10,7 +10,7 @@ interface Props {
 export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
-    useEffect(() => dispatcher.setDispatch(dispatch));
+    useEffect(() => dispatcher.setDispatch(dispatch, state));
     useEffect(() => {
         sendMessage({ kind: 'init' });
     }, []); // Run only when component was mounted

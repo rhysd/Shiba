@@ -324,6 +324,10 @@ where
             MenuItem::OpenFile => self.open_file()?,
             MenuItem::WatchDir => self.open_dir()?,
             MenuItem::Search => self.renderer.send_message(MessageToRenderer::Search)?,
+            MenuItem::SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
+            MenuItem::SearchPrevious => {
+                self.renderer.send_message(MessageToRenderer::SearchPrevious)?
+            }
         }
         Ok(AppControl::Continue)
     }

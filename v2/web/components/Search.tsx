@@ -1,16 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import type { Root as Hast } from 'hast';
-import { Dispatch, SearchState, searchText, closeSearch } from '../reducer';
+import {
+    Dispatch,
+    SearchState,
+    searchText,
+    searchNext,
+    searchPrevious,
+    closeSearch,
+    countSearchMatches,
+} from '../reducer';
 
 function isInViewport(elem: Element): boolean {
     const rect = elem.getBoundingClientRect();
     const height = window.innerHeight ?? document.documentElement.clientHeight;
     const width = window.innerWidth ?? document.documentElement.clientWidth;
     return 0 <= rect.top && 0 <= rect.left && rect.bottom <= height && rect.right <= width;
-}
-
-function countMatches(): number {
-    return document.querySelectorAll('.search-text,.search-text-current').length;
 }
 
 interface Props {
@@ -33,26 +37,16 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
         }
         if (counterElem.current !== null) {
             const nth = index !== null ? index + 1 : 0;
-            const total = countMatches();
+            const total = countSearchMatches();
             counterElem.current.textContent = `${nth} / ${total}`;
         }
     }, [state, previewContent]);
 
     const prev = async () => {
-        const count = countMatches();
-        let next = 0;
-        if (index !== null && count > 0) {
-            next = index > 0 ? index - 1 : count - 1;
-        }
-        dispatch(await searchText(previewContent, text, next));
+        dispatch(await searchPrevious(index, previewContent, text));
     };
     const next = async () => {
-        const count = countMatches();
-        let next = 0;
-        if (index !== null && count > 0) {
-            next = index + 1 >= count ? 0 : index + 1;
-        }
-        dispatch(await searchText(previewContent, text, next));
+        dispatch(await searchNext(index, previewContent, text));
     };
     const close = async () => {
         dispatch(await closeSearch(previewContent));
