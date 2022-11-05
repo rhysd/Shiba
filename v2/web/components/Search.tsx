@@ -3,7 +3,7 @@ import type { Root as Hast } from 'hast';
 import {
     Dispatch,
     SearchState,
-    searchText,
+    searchQuery,
     searchNext,
     searchPrevious,
     closeSearch,
@@ -24,7 +24,7 @@ interface Props {
 }
 
 export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => {
-    const { text, index } = state;
+    const { query, index } = state;
     const counterElem = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -43,16 +43,16 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
     }, [state, previewContent]);
 
     const handlePrev = async () => {
-        dispatch(await searchPrevious(index, previewContent, text));
+        dispatch(await searchPrevious(index, previewContent, query));
     };
     const handleNext = async () => {
-        dispatch(await searchNext(index, previewContent, text));
+        dispatch(await searchNext(index, previewContent, query));
     };
     const handleClose = async () => {
         dispatch(await closeSearch(previewContent));
     };
     const handleChange = async (e: React.FormEvent<HTMLInputElement>) => {
-        dispatch(await searchText(previewContent, e.currentTarget.value, index));
+        dispatch(await searchQuery(previewContent, e.currentTarget.value, index));
     };
     const handleKeydown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -66,6 +66,7 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
         }
         e.preventDefault();
     };
+
     return (
         <div className="search-text-box">
             <span className="search-text-icon">🔍</span>

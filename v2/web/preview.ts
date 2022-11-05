@@ -28,8 +28,8 @@ export interface PreviewContent {
     hast: Hast;
 }
 
-function highlight(searchText: string, index: number | null, tree: Hast): void {
-    if (searchText.length === 0) {
+function highlight(query: string, index: number | null, tree: Hast): void {
+    if (query.length === 0) {
         return;
     }
 
@@ -66,7 +66,7 @@ function highlight(searchText: string, index: number | null, tree: Hast): void {
             return;
         }
 
-        const split = node.value.split(searchText);
+        const split = node.value.split(query);
         if (split.length <= 1) {
             return;
         }
@@ -78,7 +78,7 @@ function highlight(searchText: string, index: number | null, tree: Hast): void {
         }
 
         for (const s of split.slice(1)) {
-            children.push(span(searchText, index !== null && count === index, pos));
+            children.push(span(query, index !== null && count === index, pos));
             count++;
             if (s.length > 0) {
                 children.push(text(s, pos));
@@ -93,21 +93,21 @@ function highlight(searchText: string, index: number | null, tree: Hast): void {
 }
 
 interface HighlightOptions {
-    searchText: string;
+    query: string;
     index: number | null;
 }
 
-const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ searchText, index }) =>
-    highlight.bind(this, searchText, index);
+const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ query, index }) =>
+    highlight.bind(this, query, index);
 
 const RehypeReactConfig = { createElement, Fragment };
 
-export async function parseMarkdown(content: string, searchText: string): Promise<PreviewContent> {
+export async function parseMarkdown(content: string, query: string): Promise<PreviewContent> {
     let hast: Hast | null = null;
     const plugin: Plugin<[], Hast, Hast> = () => tree => {
-        if (searchText) {
+        if (query) {
             hast = structuredClone(tree);
-            highlight(searchText, null, tree);
+            highlight(query, null, tree);
         } else {
             hast = tree;
         }
@@ -131,9 +131,9 @@ export async function parseMarkdown(content: string, searchText: string): Promis
     return { react: file.result, hast };
 }
 
-export async function searchHast(tree: Hast, searchText: string, index: number | null): Promise<ReactElement> {
-    if (searchText) {
-        const options = { searchText, index };
+export async function searchHast(tree: Hast, query: string, index: number | null): Promise<ReactElement> {
+    if (query) {
+        const options = { query, index };
         const transformer = unified().use(highlightPlugin, options).use(rehypeReact, RehypeReactConfig);
         const cloned = structuredClone(tree); // Compiler modifies the tree directly
         const transformed = await transformer.run(cloned);

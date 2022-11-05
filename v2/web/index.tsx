@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './components/App';
-import { Dispatcher } from './reducer';
+import { Dispatcher } from './dispatcher';
 import type { MessageFromMain } from './ipc';
 
 declare global {

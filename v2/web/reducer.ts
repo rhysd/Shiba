@@ -1,7 +1,5 @@
 import type { Root as Hast } from 'hast';
 import * as log from './log';
-import { MessageFromMain } from './ipc';
-import { registerKeymaps } from './keymaps';
 import { parseMarkdown, searchHast, PreviewContent } from './preview';
 
 export function countSearchMatches(): number {
@@ -9,7 +7,7 @@ export function countSearchMatches(): number {
 }
 
 export interface SearchState {
-    text: string;
+    query: string;
     index: number | null;
 }
 
@@ -32,15 +30,15 @@ type Action =
           content: PreviewContent;
       }
     | {
-          kind: 'search_text';
-          text: string;
+          kind: 'search_query';
+          query: string;
           content: PreviewContent;
           index: number | null;
       }
     | {
           kind: 'preview_content';
           content: PreviewContent;
-          searchText: string;
+          query: string;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -51,14 +49,14 @@ export function reducer(state: State, action: Action): State {
             if (state.search !== null) {
                 return state; // When search is ongoing, do not update the state
             }
-            return { ...state, search: { text: '', index: null } };
+            return { ...state, search: { query: '', index: null } };
         case 'close_search':
             return { ...state, search: null, preview: action.content };
-        case 'search_text':
+        case 'search_query':
             return {
                 ...state,
                 search: {
-                    text: action.text,
+                    query: action.query,
                     index: action.index,
                 },
                 preview: action.content,
@@ -67,7 +65,7 @@ export function reducer(state: State, action: Action): State {
             let search = null;
             if (state.search) {
                 search = {
-                    text: action.searchText,
+                    query: action.query,
                     index: null,
                 };
             }
@@ -81,6 +79,8 @@ export function reducer(state: State, action: Action): State {
     }
 }
 
+// Action creators
+
 export function openSearch(): Action {
     return { kind: 'open_search' };
 }
@@ -89,86 +89,28 @@ export async function closeSearch(hast: Hast): Promise<Action> {
     const content = { react, hast };
     return { kind: 'close_search', content };
 }
-export async function searchText(hast: Hast, text: string, index: number | null): Promise<Action> {
-    const react = await searchHast(hast, text, index);
+export async function searchQuery(hast: Hast, query: string, index: number | null): Promise<Action> {
+    const react = await searchHast(hast, query, index);
     const content = { react, hast };
-    return { kind: 'search_text', text, content, index };
+    return { kind: 'search_query', query, content, index };
 }
-export async function searchNext(index: number | null, hast: Hast, text: string): Promise<Action> {
+export async function searchNext(index: number | null, hast: Hast, query: string): Promise<Action> {
     const count = countSearchMatches();
     let next = 0;
     if (index !== null && count > 0) {
         next = index + 1 >= count ? 0 : index + 1;
     }
-    return searchText(hast, text, next);
+    return searchQuery(hast, query, next);
 }
-export async function searchPrevious(index: number | null, hast: Hast, text: string): Promise<Action> {
+export async function searchPrevious(index: number | null, hast: Hast, query: string): Promise<Action> {
     const count = countSearchMatches();
     let next = 0;
     if (index !== null && count > 0) {
         next = index > 0 ? index - 1 : count - 1;
     }
-    return searchText(hast, text, next);
+    return searchQuery(hast, query, next);
 }
-export async function previewContent(markdown: string, searchText: string): Promise<Action> {
-    const content = await parseMarkdown(markdown, searchText);
-    return { kind: 'preview_content', content, searchText };
-}
-
-export class Dispatcher {
-    public dispatch: Dispatch;
-    public state: State;
-
-    constructor() {
-        this.dispatch = () => {};
-        this.state = INITIAL_STATE;
-    }
-
-    setDispatch(dispatch: Dispatch, state: State): void {
-        this.dispatch = dispatch;
-        this.state = state;
-    }
-
-    async dispatchIpcMessage(msg: MessageFromMain): Promise<void> {
-        log.debug('Received IPC message from main:', msg.kind, msg);
-        // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
-        try {
-            switch (msg.kind) {
-                case 'content':
-                    this.dispatch(await previewContent(msg.content, ''));
-                    break;
-                case 'key_mappings':
-                    registerKeymaps(msg.keymaps);
-                    break;
-                case 'search':
-                    this.dispatch(openSearch());
-                    break;
-                case 'search_next': {
-                    const { search, preview } = this.state;
-                    if (search === null || preview === null) {
-                        break;
-                    }
-                    this.dispatch(await searchNext(search.index, preview.hast, search.text));
-                    break;
-                }
-                case 'search_previous': {
-                    const { search, preview } = this.state;
-                    if (search === null || preview === null) {
-                        break;
-                    }
-                    this.dispatch(await searchPrevious(search.index, preview.hast, search.text));
-                    break;
-                }
-                case 'debug':
-                    log.enableDebug();
-                    log.debug('Debug log is enabled');
-                    break;
-                default:
-                    log.error('Unknown message:', msg);
-                    break;
-            }
-        } catch (err) {
-            log.error('Error while handling received IPC message', err, msg);
-        }
-    }
+export async function previewContent(markdown: string, query: string): Promise<Action> {
+    const content = await parseMarkdown(markdown, query);
+    return { kind: 'preview_content', content, query };
 }

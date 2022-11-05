@@ -1,7 +1,8 @@
-import { Preview } from './Preview';
 import React, { useReducer, useEffect } from 'react';
+import { Preview } from './Preview';
 import { sendMessage } from '../ipc';
-import { INITIAL_STATE, Dispatcher, reducer } from '../reducer';
+import { INITIAL_STATE, reducer } from '../reducer';
+import type { Dispatcher } from '../dispatcher';
 
 interface Props {
     dispatcher: Dispatcher;
