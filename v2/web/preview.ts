@@ -11,13 +11,10 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeReact from 'rehype-react';
 import { visit, SKIP } from 'unist-util-visit';
 import { createElement, Fragment } from 'react';
+import rfdc from 'rfdc';
 
-// WKWebView does not have `structuredClone` though Safari has: https://caniuse.com/mdn-api_structuredclone
-if (typeof structuredClone === 'undefined') {
-    // Using `JSON.parse` and `JSON.stringify` is about 3.8x faster than @ungap/structured-clone though
-    // the parameter is limited to JSON-compatible value.
-    (window as any).structuredClone = (x: unknown) => JSON.parse(JSON.stringify(x));
-}
+// Note: WKWebView does not have `structuredClone` though Safari has: https://caniuse.com/mdn-api_structuredclone
+const clone = rfdc({ proto: true });
 
 // Allow `class` attribute in all HTML elements for highlight.js
 defaultSchema.attributes!['*']!.push('className');
@@ -109,7 +106,7 @@ export async function parseMarkdown(content: string, query: string): Promise<Pre
     let hast: Hast | null = null;
     const plugin: Plugin<[], Hast, Hast> = () => tree => {
         if (query) {
-            hast = structuredClone(tree);
+            hast = clone(tree);
             highlight(query, null, tree);
         } else {
             hast = tree;
@@ -138,7 +135,7 @@ export async function searchHast(tree: Hast, query: string, index: number | null
     if (query) {
         const options = { query, index };
         const transformer = unified().use(highlightPlugin, options).use(rehypeReact, RehypeReactConfig);
-        const cloned = structuredClone(tree); // Compiler modifies the tree directly
+        const cloned = clone(tree); // Compiler modifies the tree directly
         const transformed = await transformer.run(cloned);
         return transformer.stringify(transformed);
     } else {
