@@ -28,6 +28,9 @@ export interface PreviewContent {
     hast: Hast;
 }
 
+// TODO: Current implementation cannot search accross multiple Markdown elements.
+// For example, document 'foo `bar`' is not hit when searching 'foo bar' since 'foo ' is a text and 'bar' is a inline code.
+
 function highlight(query: string, index: number | null, tree: Hast): void {
     if (query.length === 0) {
         return;

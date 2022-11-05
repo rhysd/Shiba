@@ -7,7 +7,7 @@ import {
     searchNext,
     searchPrevious,
     closeSearch,
-    countSearchMatches,
+    findSearchMatchElems,
 } from '../reducer';
 
 function isInViewport(elem: Element): boolean {
@@ -37,7 +37,7 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
         }
         if (counterElem.current !== null) {
             const nth = index !== null ? index + 1 : 0;
-            const total = countSearchMatches();
+            const total = findSearchMatchElems().length;
             counterElem.current.textContent = `${nth} / ${total}`;
         }
     }, [state, previewContent]);
