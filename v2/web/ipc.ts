@@ -49,6 +49,10 @@ export type MessageToMain =
       }
     | {
           kind: 'dir_dialog';
+      }
+    | {
+          kind: 'error';
+          message: string;
       };
 
 export function sendMessage(m: MessageToMain): void {

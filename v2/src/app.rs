@@ -253,6 +253,9 @@ where
             MessageFromRenderer::Reload => self.reload()?,
             MessageFromRenderer::FileDialog => self.open_file()?,
             MessageFromRenderer::DirDialog => self.open_dir()?,
+            MessageFromRenderer::Error(message) => {
+                anyhow::bail!("Error reported from renderer: {}", message)
+            }
         }
         Ok(())
     }

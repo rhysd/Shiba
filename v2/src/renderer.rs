@@ -45,6 +45,7 @@ pub enum MessageFromRenderer {
     DirDialog,
     Forward,
     Back,
+    Error(String),
 }
 
 #[derive(Debug)]
