@@ -27,6 +27,7 @@ export type KeyAction =
     | 'SearchPrev';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
+export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive';
 
 export type MessageFromMain =
     | {
@@ -34,8 +35,11 @@ export type MessageFromMain =
           content: string;
       }
     | {
-          kind: 'key_mappings';
+          kind: 'config';
           keymaps: KeyMaps;
+          search: {
+              matcher: SearchMatcher;
+          };
       }
     | {
           kind: 'search';

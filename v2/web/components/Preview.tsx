@@ -8,11 +8,11 @@ interface Props {
 }
 
 export const Preview: React.FC<Props> = ({ state, dispatch }) => {
-    const { preview, search } = state;
+    const { preview, search, matcher } = state;
 
     let searchInput;
     if (search && preview) {
-        searchInput = <Search previewContent={preview.hast} state={search} dispatch={dispatch} />;
+        searchInput = <Search previewContent={preview.hast} state={search} matcher={matcher} dispatch={dispatch} />;
     }
 
     return (

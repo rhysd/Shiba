@@ -1,5 +1,6 @@
 import type { Root as Hast } from 'hast';
 import * as log from './log';
+import type { SearchMatcher } from './ipc';
 import { parseMarkdown, searchHast, PreviewContent } from './preview';
 
 export function findSearchMatchElems(): NodeListOf<HTMLElement> {
@@ -14,11 +15,13 @@ export interface SearchState {
 export interface State {
     search: SearchState | null;
     preview: PreviewContent | null;
+    matcher: SearchMatcher;
 }
 
 export const INITIAL_STATE: State = {
     search: null,
     preview: null,
+    matcher: 'SmartCase',
 };
 
 type Action =
@@ -34,6 +37,10 @@ type Action =
           query: string;
           content: PreviewContent;
           index: number | null;
+      }
+    | {
+          kind: 'search_matcher';
+          matcher: SearchMatcher;
       }
     | {
           kind: 'preview_content';
@@ -72,6 +79,11 @@ export function reducer(state: State, action: Action): State {
                       }
                     : null,
             };
+        case 'search_matcher':
+            if (state.matcher === action.matcher) {
+                return state;
+            }
+            return { ...state, matcher: action.matcher };
         default:
             throw new Error(`Unknown action: ${action}`);
     }
@@ -87,16 +99,21 @@ export function openSearch(): Action {
     return { kind: 'open_search' };
 }
 export async function closeSearch(hast: Hast): Promise<Action> {
-    const react = await searchHast(hast, '', null);
+    const react = await searchHast(hast, '', null, 'SmartCase');
     const content = { react, hast };
     return { kind: 'close_search', content };
 }
-export async function searchQuery(hast: Hast, query: string, index: number | null): Promise<Action> {
-    const react = await searchHast(hast, query, index);
+export async function searchQuery(
+    hast: Hast,
+    query: string,
+    index: number | null,
+    matcher: SearchMatcher,
+): Promise<Action> {
+    const react = await searchHast(hast, query, index, matcher);
     const content = { react, hast };
     return { kind: 'search_query', query, content, index };
 }
-export function searchNext(index: number | null, hast: Hast, query: string): Promise<Action> {
+export function searchNext(index: number | null, hast: Hast, query: string, matcher: SearchMatcher): Promise<Action> {
     const elems = findSearchMatchElems();
     let next;
     if (elems.length === 0) {
@@ -114,9 +131,14 @@ export function searchNext(index: number | null, hast: Hast, query: string): Pro
         }
         next ??= 0;
     }
-    return searchQuery(hast, query, next);
+    return searchQuery(hast, query, next, matcher);
 }
-export function searchPrevious(index: number | null, hast: Hast, query: string): Promise<Action> {
+export function searchPrevious(
+    index: number | null,
+    hast: Hast,
+    query: string,
+    matcher: SearchMatcher,
+): Promise<Action> {
     const elems = findSearchMatchElems();
     let next;
     if (elems.length === 0) {
@@ -136,9 +158,12 @@ export function searchPrevious(index: number | null, hast: Hast, query: string):
         }
         next = next !== undefined && next >= 0 ? next : elems.length - 1;
     }
-    return searchQuery(hast, query, next);
+    return searchQuery(hast, query, next, matcher);
 }
-export async function previewContent(markdown: string, query: string): Promise<Action> {
-    const content = await parseMarkdown(markdown, query);
+export function setSearchMatcher(matcher: SearchMatcher): Action {
+    return { kind: 'search_matcher', matcher };
+}
+export async function previewContent(markdown: string, query: string, matcher: SearchMatcher): Promise<Action> {
+    const content = await parseMarkdown(markdown, query, matcher);
     return { kind: 'preview_content', content, query };
 }

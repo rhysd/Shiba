@@ -240,8 +240,9 @@ where
                     self.renderer.send_message(MessageToRenderer::Debug)?;
                 }
 
-                self.renderer.send_message(MessageToRenderer::KeyMappings {
-                    keymaps: &self.config.keymaps,
+                self.renderer.send_message(MessageToRenderer::Config {
+                    keymaps: self.config.keymaps(),
+                    search: self.config.search(),
                 })?;
 
                 if let Some(path) = mem::take(&mut self.options.init_file) {

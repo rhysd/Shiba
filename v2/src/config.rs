@@ -1,6 +1,6 @@
 use crate::renderer::KeyAction;
 use anyhow::{Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
@@ -69,6 +69,25 @@ impl FileExtensions {
 }
 
 #[non_exhaustive]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
+pub enum SearchMatcher {
+    SmartCase,
+    CaseSensitive,
+    CaseInsensitive,
+}
+
+impl Default for SearchMatcher {
+    fn default() -> Self {
+        Self::SmartCase
+    }
+}
+
+#[derive(Default, Deserialize, Serialize, Debug)]
+pub struct Search {
+    matcher: SearchMatcher,
+}
+
+#[non_exhaustive]
 #[derive(Deserialize, Debug)]
 pub struct Config {
     #[serde(default)]
@@ -76,7 +95,9 @@ pub struct Config {
     #[serde(default = "default_throttle")]
     debounce_throttle: u32,
     #[serde(default = "default_keymaps")]
-    pub keymaps: HashMap<String, KeyAction>,
+    keymaps: HashMap<String, KeyAction>,
+    #[serde(default)]
+    search: Search,
 }
 
 impl Default for Config {
@@ -85,6 +106,7 @@ impl Default for Config {
             file_extensions: FileExtensions::default(),
             debounce_throttle: default_throttle(),
             keymaps: default_keymaps(),
+            search: Search::default(),
         }
     }
 }
@@ -125,5 +147,13 @@ impl Config {
 
     pub fn file_extensions(&self) -> &FileExtensions {
         &self.file_extensions
+    }
+
+    pub fn keymaps(&self) -> &HashMap<String, KeyAction> {
+        &self.keymaps
+    }
+
+    pub fn search(&self) -> &Search {
+        &self.search
     }
 }

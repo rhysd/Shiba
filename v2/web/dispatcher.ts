@@ -8,6 +8,7 @@ import {
     searchNext,
     searchPrevious,
     closeSearch,
+    setSearchMatcher,
 } from './reducer';
 import { sendMessage, MessageFromMain, KeyAction } from './ipc';
 import * as log from './log';
@@ -42,16 +43,16 @@ export class Dispatcher {
     }
 
     async searchNext(): Promise<void> {
-        const { search, preview } = this.state;
+        const { search, preview, matcher } = this.state;
         if (search !== null && preview !== null) {
-            this.dispatch(await searchNext(search.index, preview.hast, search.query));
+            this.dispatch(await searchNext(search.index, preview.hast, search.query, matcher));
         }
     }
 
     async searchPrev(): Promise<void> {
-        const { search, preview } = this.state;
+        const { search, preview, matcher } = this.state;
         if (search !== null && preview !== null) {
-            this.dispatch(await searchPrevious(search.index, preview.hast, search.query));
+            this.dispatch(await searchPrevious(search.index, preview.hast, search.query, matcher));
         }
     }
 
@@ -60,10 +61,12 @@ export class Dispatcher {
         // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
         try {
             switch (msg.kind) {
-                case 'content':
-                    this.dispatch(await previewContent(msg.content, ''));
+                case 'content': {
+                    const query = this.state.search?.query ?? '';
+                    this.dispatch(await previewContent(msg.content, query, this.state.matcher));
                     break;
-                case 'key_mappings':
+                }
+                case 'config':
                     for (const keybind of Object.keys(msg.keymaps)) {
                         const action = msg.keymaps[keybind];
                         Mousetrap.bind(keybind, async e => {
@@ -73,6 +76,7 @@ export class Dispatcher {
                             await this.handleKeyAction(action);
                         });
                     }
+                    this.dispatch(setSearchMatcher(msg.search.matcher));
                     break;
                 case 'search':
                     this.openSearch();

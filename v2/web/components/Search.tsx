@@ -9,6 +9,7 @@ import {
     closeSearch,
     findSearchMatchElems,
 } from '../reducer';
+import type { SearchMatcher } from '../ipc';
 import * as log from '../log';
 
 function isInViewport(elem: Element): boolean {
@@ -21,10 +22,11 @@ function isInViewport(elem: Element): boolean {
 interface Props {
     previewContent: Hast;
     state: SearchState;
+    matcher: SearchMatcher;
     dispatch: Dispatch;
 }
 
-export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => {
+export const Search: React.FC<Props> = ({ previewContent, state, matcher, dispatch }) => {
     const { query, index } = state;
     const counterElem = useRef<HTMLElement>(null);
 
@@ -44,16 +46,16 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
     }, [state, previewContent]);
 
     const handlePrev = (): void => {
-        searchPrevious(index, previewContent, query).then(dispatch).catch(log.error);
+        searchPrevious(index, previewContent, query, matcher).then(dispatch).catch(log.error);
     };
     const handleNext = (): void => {
-        searchNext(index, previewContent, query).then(dispatch).catch(log.error);
+        searchNext(index, previewContent, query, matcher).then(dispatch).catch(log.error);
     };
     const handleClose = (): void => {
         closeSearch(previewContent).then(dispatch).catch(log.error);
     };
     const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
-        searchQuery(previewContent, e.currentTarget.value, index).then(dispatch).catch(log.error);
+        searchQuery(previewContent, e.currentTarget.value, index, matcher).then(dispatch).catch(log.error);
     };
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
         if (e.key === 'Enter' && !e.shiftKey) {

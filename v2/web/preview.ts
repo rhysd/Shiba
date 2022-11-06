@@ -11,17 +11,19 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeReact from 'rehype-react';
 import { visit, SKIP } from 'unist-util-visit';
 import { createElement, Fragment } from 'react';
+import type { SearchMatcher } from './ipc';
+import * as log from './log';
 
-// Note: WKWebView does not have `structuredClone` though Safari has: https://caniuse.com/mdn-api_structuredclone
-function cloneJson(o: any): any {
-    if (typeof o !== 'object' || o === null) {
-        return o;
-    } else if (Array.isArray(o)) {
-        return o.map(x => (typeof x !== 'object' || x === null ? x : cloneJson(x)));
+// From https://github.com/rhysd/fast-json-clone
+function cloneJson(x: any): any {
+    if (typeof x !== 'object' || x === null) {
+        return x;
+    } else if (Array.isArray(x)) {
+        return x.map(e => (typeof e !== 'object' || e === null ? e : cloneJson(e)));
     } else {
         const ret: { [k: string]: any } = {};
-        for (const k in o) {
-            const v = o[k];
+        for (const k in x) {
+            const v = x[k];
             ret[k] = typeof v !== 'object' || v === null ? v : cloneJson(v);
         }
         return ret;
@@ -84,11 +86,21 @@ class CaseInsensitiveMatcher extends CaseSensitiveMatcher implements Matcher {
 }
 
 const RE_UPPER_CASE = /[A-Z]/;
-function smartCaseMatcher(query: string): Matcher {
-    if (RE_UPPER_CASE.test(query)) {
-        return new CaseSensitiveMatcher(query);
-    } else {
-        return new CaseInsensitiveMatcher(query);
+function selectMatcher(query: string, matcher: SearchMatcher): Matcher {
+    switch (matcher) {
+        case 'SmartCase':
+            if (RE_UPPER_CASE.test(query)) {
+                return new CaseSensitiveMatcher(query);
+            } else {
+                return new CaseInsensitiveMatcher(query);
+            }
+        case 'CaseSensitive':
+            return new CaseSensitiveMatcher(query);
+        case 'CaseInsensitive':
+            return new CaseInsensitiveMatcher(query);
+        default:
+            log.error('Unknown search matcher:', matcher);
+            return new CaseSensitiveMatcher(query); // fallback
     }
 }
 
@@ -173,12 +185,12 @@ const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ matcher, inde
 
 const RehypeReactConfig = { createElement, Fragment };
 
-export async function parseMarkdown(content: string, query: string): Promise<PreviewContent> {
+export async function parseMarkdown(content: string, query: string, config: SearchMatcher): Promise<PreviewContent> {
     let hast: Hast | null = null;
     const plugin: Plugin<[], Hast, Hast> = () => tree => {
         if (query) {
             hast = cloneJson(tree);
-            highlight(smartCaseMatcher(query), null, tree);
+            highlight(selectMatcher(query, config), null, tree);
         } else {
             hast = tree;
         }
@@ -202,9 +214,14 @@ export async function parseMarkdown(content: string, query: string): Promise<Pre
     return { react: file.result, hast };
 }
 
-export async function searchHast(tree: Hast, query: string, index: number | null): Promise<ReactElement> {
+export async function searchHast(
+    tree: Hast,
+    query: string,
+    index: number | null,
+    config: SearchMatcher,
+): Promise<ReactElement> {
     if (query) {
-        const matcher = smartCaseMatcher(query);
+        const matcher = selectMatcher(query, config);
         const options = { matcher, index };
         const transformer = unified().use(highlightPlugin, options).use(rehypeReact, RehypeReactConfig);
         const cloned = cloneJson(tree); // Compiler modifies the tree directly

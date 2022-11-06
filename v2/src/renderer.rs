@@ -1,4 +1,5 @@
 use crate::cli::Options;
+use crate::config::Search as SearchConfig;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -31,7 +32,7 @@ pub enum KeyAction {
 #[serde(rename_all = "snake_case")]
 pub enum MessageToRenderer<'a> {
     Content { content: &'a str },
-    KeyMappings { keymaps: &'a HashMap<String, KeyAction> },
+    Config { keymaps: &'a HashMap<String, KeyAction>, search: &'a SearchConfig },
     Search,
     SearchNext,
     SearchPrevious,
