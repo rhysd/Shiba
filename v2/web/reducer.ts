@@ -30,7 +30,6 @@ type Action =
       }
     | {
           kind: 'close_search';
-          content: PreviewContent;
       }
     | {
           kind: 'search_query';
@@ -62,7 +61,7 @@ export function reducer(state: State, action: Action): State {
             }
             return { ...state, search: { query: '', index: null } };
         case 'close_search':
-            return { ...state, search: null, preview: action.content };
+            return { ...state, search: null };
         case 'search_query':
             return {
                 ...state,
@@ -110,10 +109,12 @@ export function openSearch(): Action {
     return { kind: 'open_search' };
 }
 
-export async function closeSearch(hast: Hast): Promise<Action> {
-    const react = await searchHast(hast, '', null, 'SmartCase');
-    const content = { react, hast };
-    return { kind: 'close_search', content };
+export function closeSearch(): Action {
+    const elems = findSearchMatchElems();
+    for (const elem of elems) {
+        elem.className = '';
+    }
+    return { kind: 'close_search' };
 }
 
 export async function searchQuery(

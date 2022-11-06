@@ -43,7 +43,7 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         dispatch(searchNext(index));
     };
     const handleClose = (): void => {
-        closeSearch(previewContent).then(dispatch).catch(log.error);
+        dispatch(closeSearch());
     };
     const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
         searchQuery(previewContent, e.currentTarget.value, index, matcher).then(dispatch).catch(log.error);

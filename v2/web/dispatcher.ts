@@ -7,7 +7,6 @@ import {
     openSearch,
     searchNext,
     searchPrevious,
-    closeSearch,
     setSearchMatcher,
 } from './reducer';
 import { sendMessage, MessageFromMain, KeyAction } from './ipc';
@@ -33,13 +32,6 @@ export class Dispatcher {
 
     openSearch(): void {
         this.dispatch(openSearch());
-    }
-
-    async closeSearch(): Promise<void> {
-        const { search, preview } = this.state;
-        if (search !== null && preview !== null) {
-            this.dispatch(await closeSearch(preview.hast));
-        }
     }
 
     searchNext(): void {
