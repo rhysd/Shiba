@@ -21,6 +21,9 @@ pub enum KeyAction {
     ScrollPageUp,
     ScrollTop,
     ScrollBottom,
+    Search,
+    NextSearch,
+    PrevSearch,
 }
 
 #[derive(Serialize)]
