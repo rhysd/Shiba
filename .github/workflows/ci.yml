@@ -35,5 +35,6 @@ jobs:
       - run: npm run lint:ts
       - run: npm run lint:prettier
       - run: npm run lint:eslint
+      - run: npm run lint:stylelint
       - run: cargo fmt -- --check
       - run: cargo clippy -- -D warnings

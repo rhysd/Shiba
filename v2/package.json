@@ -18,12 +18,13 @@
     "fmt": "concurrently -c auto npm:fmt:cargo npm:fmt:ts",
     "fmt:cargo": "cargo fmt",
     "fmt:ts": "prettier --write 'web/**/*.ts' 'web/**/*.tsx'",
-    "lint": "concurrently -c auto npm:lint:ts npm:lint:rs npm:lint:prettier npm:lint:rustfmt npm:lint:eslint",
+    "lint": "concurrently -c auto npm:lint:ts npm:lint:rs npm:lint:prettier npm:lint:rustfmt npm:lint:eslint npm:lint:stylelint",
     "lint:ts": "tsc --noEmit -p .",
     "lint:rs": "cargo clippy --color always -- -D warnings",
     "lint:prettier": "prettier --check 'web/**/*.ts' 'web/**/*.tsx'",
     "lint:rustfmt": "cargo fmt --check -- --color always",
     "lint:eslint": "eslint 'web/**/*.ts' 'web/**/*.tsx'",
+    "lint:stylelint": "stylelint dist/style.css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "rhysd <lin90162@yahoo.co.jp> (https://rhysd.github.io/)",
@@ -61,6 +62,8 @@
     "postcss": "^8.4.18",
     "postcss-cli": "^10.0.0",
     "prettier": "^2.7.1",
+    "stylelint": "^14.14.1",
+    "stylelint-config-standard": "^29.0.0",
     "typescript": "^4.8.4"
   }
 }

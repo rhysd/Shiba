@@ -5,7 +5,7 @@ html {
 
 body {
   margin: 0;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   font-size: 14px;
 }
 
@@ -23,8 +23,8 @@ body {
 
 .search-text-box {
   position: fixed;
-  top: 0px;
-  right: 0px;
+  top: 0;
+  right: 0;
   width: 400px;
   display: flex;
   flex-direction: row;
@@ -45,6 +45,7 @@ body {
   box-shadow: none;
   flex: auto;
 }
+
 .search-text-input:focus {
   outline: none;
 }
