@@ -37,14 +37,65 @@ export interface PreviewContent {
     hast: Hast;
 }
 
+interface Matcher {
+    findNextMatch(): [number, number] | null;
+    setInput(input: string): void;
+}
+
+class CaseSensitiveMatcher implements Matcher {
+    private readonly sep: string;
+    private input = '';
+    private index = 0;
+
+    constructor(sep: string) {
+        this.sep = sep;
+    }
+
+    setInput(input: string): void {
+        this.input = input;
+        this.index = 0;
+    }
+
+    findNextMatch(): [number, number] | null {
+        const idx = this.input.indexOf(this.sep);
+
+        if (idx < 0) {
+            this.index += this.input.length;
+            this.input = '';
+            return null;
+        }
+
+        const start = this.index + idx;
+        const end = start + this.sep.length;
+        this.input = this.input.slice(end);
+        this.index = end;
+        return [start, end];
+    }
+}
+
+class CaseInsensitiveMatcher extends CaseSensitiveMatcher implements Matcher {
+    constructor(sep: string) {
+        super(sep.toLowerCase());
+    }
+
+    override setInput(input: string): void {
+        super.setInput(input.toLowerCase());
+    }
+}
+
+const RE_UPPER_CASE = /[A-Z]/;
+function smartCaseMatcher(query: string): Matcher {
+    if (RE_UPPER_CASE.test(query)) {
+        return new CaseSensitiveMatcher(query);
+    } else {
+        return new CaseInsensitiveMatcher(query);
+    }
+}
+
 // TODO: Current implementation cannot search accross multiple Markdown elements.
 // For example, document 'foo `bar`' is not hit when searching 'foo bar' since 'foo ' is a text and 'bar' is a inline code.
 
-function highlight(query: string, index: number | null, tree: Hast): void {
-    if (query.length === 0) {
-        return;
-    }
-
+function highlight(matcher: Matcher, index: number | null, tree: Hast): void {
     function text(value: string, position?: Position): HastText {
         return {
             type: 'text',
@@ -78,23 +129,31 @@ function highlight(query: string, index: number | null, tree: Hast): void {
             return;
         }
 
-        const split = node.value.split(query);
-        if (split.length <= 1) {
-            return;
-        }
         const pos = node.position;
-
         const children: Array<HastText | HastElement> = [];
-        if (split[0].length > 0) {
-            children.push(text(split[0], pos));
-        }
+        const input = node.value;
+        let lastEnd = 0;
 
-        for (const s of split.slice(1)) {
-            children.push(span(query, index !== null && count === index, pos));
-            count++;
-            if (s.length > 0) {
-                children.push(text(s, pos));
+        matcher.setInput(input);
+        for (;;) {
+            const range = matcher.findNextMatch();
+            if (range === null) {
+                if (children.length === 0) {
+                    // No match was found. Skip this node
+                    return SKIP;
+                }
+                if (input.length > 0) {
+                    children.push(text(input.slice(lastEnd), pos));
+                }
+                break;
             }
+            const [start, end] = range;
+            if (start !== lastEnd) {
+                children.push(text(input.slice(lastEnd, start), pos));
+            }
+            children.push(span(input.slice(start, end), index !== null && count === index, pos));
+            lastEnd = end;
+            count++;
         }
 
         textToElem(node, children);
@@ -105,12 +164,12 @@ function highlight(query: string, index: number | null, tree: Hast): void {
 }
 
 interface HighlightOptions {
-    query: string;
+    matcher: Matcher;
     index: number | null;
 }
 
-const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ query, index }) =>
-    highlight.bind(this, query, index);
+const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ matcher, index }) =>
+    highlight.bind(this, matcher, index);
 
 const RehypeReactConfig = { createElement, Fragment };
 
@@ -119,7 +178,7 @@ export async function parseMarkdown(content: string, query: string): Promise<Pre
     const plugin: Plugin<[], Hast, Hast> = () => tree => {
         if (query) {
             hast = cloneJson(tree);
-            highlight(query, null, tree);
+            highlight(smartCaseMatcher(query), null, tree);
         } else {
             hast = tree;
         }
@@ -145,7 +204,8 @@ export async function parseMarkdown(content: string, query: string): Promise<Pre
 
 export async function searchHast(tree: Hast, query: string, index: number | null): Promise<ReactElement> {
     if (query) {
-        const options = { query, index };
+        const matcher = smartCaseMatcher(query);
+        const options = { matcher, index };
         const transformer = unified().use(highlightPlugin, options).use(rehypeReact, RehypeReactConfig);
         const cloned = cloneJson(tree); // Compiler modifies the tree directly
         const transformed = await transformer.run(cloned);
