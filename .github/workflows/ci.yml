@@ -32,7 +32,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
       - run: make dist/bundle.js
-      - run: npm run check:ts
-      - run: npm run check:prettier
+      - run: npm run lint:ts
+      - run: npm run lint:prettier
+      - run: npm run lint:eslint
       - run: cargo fmt -- --check
       - run: cargo clippy -- -D warnings
