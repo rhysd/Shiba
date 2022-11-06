@@ -39,6 +39,10 @@ type Action =
           index: number | null;
       }
     | {
+          kind: 'search_index';
+          index: number | null;
+      }
+    | {
           kind: 'search_matcher';
           matcher: SearchMatcher;
       }
@@ -68,6 +72,17 @@ export function reducer(state: State, action: Action): State {
                 },
                 preview: action.content,
             };
+        case 'search_index':
+            if (state.search === null) {
+                return state;
+            }
+            return {
+                ...state,
+                search: {
+                    ...state.search,
+                    index: action.index,
+                },
+            };
         case 'preview_content':
             return {
                 ...state,
@@ -91,18 +106,16 @@ export function reducer(state: State, action: Action): State {
 
 // Action creators
 
-// TODO: Do not re-render the content by searchHast on searchNext/searchPrevious/closeSearch.
-// These actions can be implemented by directly modifying DOM tree (modifying/removing class names). They are much faster
-// than re-rendering content especially when the content is quite big.
-
 export function openSearch(): Action {
     return { kind: 'open_search' };
 }
+
 export async function closeSearch(hast: Hast): Promise<Action> {
     const react = await searchHast(hast, '', null, 'SmartCase');
     const content = { react, hast };
     return { kind: 'close_search', content };
 }
+
 export async function searchQuery(
     hast: Hast,
     query: string,
@@ -113,11 +126,17 @@ export async function searchQuery(
     const content = { react, hast };
     return { kind: 'search_query', query, content, index };
 }
-export function searchNext(index: number | null, hast: Hast, query: string, matcher: SearchMatcher): Promise<Action> {
+
+export function searchIndex(index: number | null): Action {
+    return { kind: 'search_index', index };
+}
+
+export function searchNext(index: number | null): Action {
     const elems = findSearchMatchElems();
+
     let next;
     if (elems.length === 0) {
-        next = 0;
+        next = null;
     } else if (index !== null) {
         next = index + 1 >= elems.length ? 0 : index + 1;
     } else {
@@ -131,18 +150,25 @@ export function searchNext(index: number | null, hast: Hast, query: string, matc
         }
         next ??= 0;
     }
-    return searchQuery(hast, query, next, matcher);
+
+    if (index !== next) {
+        if (index !== null) {
+            elems[index].className = 'search-text';
+        }
+        if (next !== null) {
+            elems[next].className = 'search-text-current';
+        }
+    }
+
+    return searchIndex(next);
 }
-export function searchPrevious(
-    index: number | null,
-    hast: Hast,
-    query: string,
-    matcher: SearchMatcher,
-): Promise<Action> {
+
+export function searchPrevious(index: number | null): Action {
     const elems = findSearchMatchElems();
+
     let next;
     if (elems.length === 0) {
-        next = 0;
+        next = null;
     } else if (index !== null) {
         next = index > 0 ? index - 1 : elems.length - 1;
     } else {
@@ -158,11 +184,23 @@ export function searchPrevious(
         }
         next = next !== undefined && next >= 0 ? next : elems.length - 1;
     }
-    return searchQuery(hast, query, next, matcher);
+
+    if (index !== next) {
+        if (index !== null) {
+            elems[index].className = 'search-text';
+        }
+        if (next !== null) {
+            elems[next].className = 'search-text-current';
+        }
+    }
+
+    return searchIndex(next);
 }
+
 export function setSearchMatcher(matcher: SearchMatcher): Action {
     return { kind: 'search_matcher', matcher };
 }
+
 export async function previewContent(markdown: string, query: string, matcher: SearchMatcher): Promise<Action> {
     const content = await parseMarkdown(markdown, query, matcher);
     return { kind: 'preview_content', content, query };

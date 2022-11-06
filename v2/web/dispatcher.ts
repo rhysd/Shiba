@@ -42,17 +42,17 @@ export class Dispatcher {
         }
     }
 
-    async searchNext(): Promise<void> {
-        const { search, preview, matcher } = this.state;
-        if (search !== null && preview !== null) {
-            this.dispatch(await searchNext(search.index, preview.hast, search.query, matcher));
+    searchNext(): void {
+        const { search } = this.state;
+        if (search !== null) {
+            this.dispatch(searchNext(search.index));
         }
     }
 
-    async searchPrev(): Promise<void> {
-        const { search, preview, matcher } = this.state;
-        if (search !== null && preview !== null) {
-            this.dispatch(await searchPrevious(search.index, preview.hast, search.query, matcher));
+    searchPrev(): void {
+        const { search } = this.state;
+        if (search !== null) {
+            this.dispatch(searchPrevious(search.index));
         }
     }
 
@@ -69,11 +69,11 @@ export class Dispatcher {
                 case 'config':
                     for (const keybind of Object.keys(msg.keymaps)) {
                         const action = msg.keymaps[keybind];
-                        Mousetrap.bind(keybind, async e => {
+                        Mousetrap.bind(keybind, e => {
                             e.preventDefault();
                             e.stopPropagation();
                             log.debug('Triggered key shortcut:', action, 'by', keybind);
-                            await this.handleKeyAction(action);
+                            this.handleKeyAction(action);
                         });
                     }
                     this.dispatch(setSearchMatcher(msg.search.matcher));
@@ -82,10 +82,10 @@ export class Dispatcher {
                     this.openSearch();
                     break;
                 case 'search_next':
-                    await this.searchNext();
+                    this.searchNext();
                     break;
                 case 'search_previous':
-                    await this.searchPrev();
+                    this.searchPrev();
                     break;
                 case 'debug':
                     log.enableDebug();
@@ -100,7 +100,7 @@ export class Dispatcher {
         }
     }
 
-    async handleKeyAction(action: KeyAction): Promise<void> {
+    handleKeyAction(action: KeyAction): void {
         try {
             switch (action) {
                 case 'ScrollDown':
@@ -146,10 +146,10 @@ export class Dispatcher {
                     this.openSearch();
                     break;
                 case 'SearchNext':
-                    await this.searchNext();
+                    this.searchNext();
                     break;
                 case 'SearchPrev':
-                    await this.searchPrev();
+                    this.searchPrev();
                     break;
                 default:
                     log.error('Unknown key action:', action);

@@ -12,7 +12,9 @@ export const Preview: React.FC<Props> = ({ state, dispatch }) => {
 
     let searchInput;
     if (search && preview) {
-        searchInput = <Search previewContent={preview.hast} state={search} matcher={matcher} dispatch={dispatch} />;
+        searchInput = (
+            <Search previewContent={preview.hast} index={search.index} matcher={matcher} dispatch={dispatch} />
+        );
     }
 
     return (

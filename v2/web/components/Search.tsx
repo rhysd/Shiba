@@ -1,14 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import type { Root as Hast } from 'hast';
-import {
-    Dispatch,
-    SearchState,
-    searchQuery,
-    searchNext,
-    searchPrevious,
-    closeSearch,
-    findSearchMatchElems,
-} from '../reducer';
+import { Dispatch, searchQuery, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
 import type { SearchMatcher } from '../ipc';
 import * as log from '../log';
 
@@ -21,13 +13,12 @@ function isInViewport(elem: Element): boolean {
 
 interface Props {
     previewContent: Hast;
-    state: SearchState;
+    index: number | null;
     matcher: SearchMatcher;
     dispatch: Dispatch;
 }
 
-export const Search: React.FC<Props> = ({ previewContent, state, matcher, dispatch }) => {
-    const { query, index } = state;
+export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispatch }) => {
     const counterElem = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -43,13 +34,13 @@ export const Search: React.FC<Props> = ({ previewContent, state, matcher, dispat
             const total = findSearchMatchElems().length;
             counterElem.current.textContent = `${nth} / ${total}`;
         }
-    }, [state, previewContent]);
+    }, [index, previewContent]);
 
     const handlePrev = (): void => {
-        searchPrevious(index, previewContent, query, matcher).then(dispatch).catch(log.error);
+        dispatch(searchPrevious(index));
     };
     const handleNext = (): void => {
-        searchNext(index, previewContent, query, matcher).then(dispatch).catch(log.error);
+        dispatch(searchNext(index));
     };
     const handleClose = (): void => {
         closeSearch(previewContent).then(dispatch).catch(log.error);
