@@ -7,11 +7,11 @@ node_modules:
 	npm install
 
 $(DEBUG_DIST): node_modules $(TS_SRC)
-	npm run check:ts
+	npm run lint:ts
 	npm run bundle
 
 $(RELEASE_DIST): node_modules $(TS_SRC)
-	npm run check:ts
+	npm run lint:ts
 	npm run release
 
 target/debug/shiba: $(RS_SRC) $(DEBUG_DIST) dist/template.html

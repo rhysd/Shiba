@@ -62,17 +62,15 @@ export function reducer(state: State, action: Action): State {
                 preview: action.content,
             };
         case 'preview_content':
-            let search = null;
-            if (state.search) {
-                search = {
-                    query: action.query,
-                    index: null,
-                };
-            }
             return {
                 ...state,
                 preview: action.content,
-                search,
+                search: state.search
+                    ? {
+                          query: action.query,
+                          index: null,
+                      }
+                    : null,
             };
         default:
             throw new Error(`Unknown action: ${action}`);
@@ -98,7 +96,7 @@ export async function searchQuery(hast: Hast, query: string, index: number | nul
     const content = { react, hast };
     return { kind: 'search_query', query, content, index };
 }
-export async function searchNext(index: number | null, hast: Hast, query: string): Promise<Action> {
+export function searchNext(index: number | null, hast: Hast, query: string): Promise<Action> {
     const elems = findSearchMatchElems();
     let next;
     if (elems.length === 0) {
@@ -118,7 +116,7 @@ export async function searchNext(index: number | null, hast: Hast, query: string
     }
     return searchQuery(hast, query, next);
 }
-export async function searchPrevious(index: number | null, hast: Hast, query: string): Promise<Action> {
+export function searchPrevious(index: number | null, hast: Hast, query: string): Promise<Action> {
     const elems = findSearchMatchElems();
     let next;
     if (elems.length === 0) {

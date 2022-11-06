@@ -65,7 +65,7 @@ function highlight(query: string, index: number | null, tree: Hast): void {
         };
     }
 
-    function textToElem(node: any, children: Array<HastText | HastElement>) {
+    function textToElem(node: any, children: Array<HastText | HastElement>): void {
         node.type = 'element';
         node.tagName = 'span';
         node.properties = {};

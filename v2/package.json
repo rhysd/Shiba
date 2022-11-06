@@ -7,7 +7,7 @@
   "scripts": {
     "watch": "concurrently -c auto npm:watch:bundle npm:watch:ts npm:watch:rs",
     "watch:bundle": "npm run bundle -- --watch",
-    "watch:ts": "npm run check:ts -- --watch --preserveWatchOutput --pretty",
+    "watch:ts": "npm run lint:ts -- --watch --preserveWatchOutput --pretty",
     "watch:rs": "cargo watch --watch src -- cargo check --color always",
     "bundle": "esbuild web/index.tsx --bundle --outfile=dist/bundle.js --platform=browser",
     "release": "concurrently -c auto npm:release:bundle npm:release:css:github-markdown npm:release:css:highlight.js npm:release:css:style",

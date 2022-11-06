@@ -1,6 +1,8 @@
 import { sendMessage } from './ipc';
 
-export let debug: (...args: unknown[]) => void = function nop() {};
+export let debug: (...args: unknown[]) => void = function nop() {
+    // Do not show debug logs by default
+};
 export function error(...args: any[]): void {
     console.error(...args);
     const message = args
@@ -15,6 +17,6 @@ export function error(...args: any[]): void {
     sendMessage({ kind: 'error', message });
 }
 
-export function enableDebug() {
+export function enableDebug(): void {
     debug = console.debug;
 }

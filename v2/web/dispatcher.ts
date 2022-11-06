@@ -19,7 +19,9 @@ export class Dispatcher {
     public state: State;
 
     constructor() {
-        this.dispatch = () => {};
+        this.dispatch = () => {
+            // do nothing by default
+        };
         this.state = INITIAL_STATE;
     }
 

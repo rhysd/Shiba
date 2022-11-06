@@ -9,6 +9,7 @@ import {
     closeSearch,
     findSearchMatchElems,
 } from '../reducer';
+import * as log from '../log';
 
 function isInViewport(elem: Element): boolean {
     const rect = elem.getBoundingClientRect();
@@ -42,25 +43,25 @@ export const Search: React.FC<Props> = ({ previewContent, state, dispatch }) => 
         }
     }, [state, previewContent]);
 
-    const handlePrev = async () => {
-        dispatch(await searchPrevious(index, previewContent, query));
+    const handlePrev = (): void => {
+        searchPrevious(index, previewContent, query).then(dispatch).catch(log.error);
     };
-    const handleNext = async () => {
-        dispatch(await searchNext(index, previewContent, query));
+    const handleNext = (): void => {
+        searchNext(index, previewContent, query).then(dispatch).catch(log.error);
     };
-    const handleClose = async () => {
-        dispatch(await closeSearch(previewContent));
+    const handleClose = (): void => {
+        closeSearch(previewContent).then(dispatch).catch(log.error);
     };
-    const handleChange = async (e: React.FormEvent<HTMLInputElement>) => {
-        dispatch(await searchQuery(previewContent, e.currentTarget.value, index));
+    const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
+        searchQuery(previewContent, e.currentTarget.value, index).then(dispatch).catch(log.error);
     };
-    const handleKeydown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
         if (e.key === 'Enter' && !e.shiftKey) {
-            await handleNext();
+            handleNext();
         } else if (e.key === 'Enter' && e.shiftKey) {
-            await handlePrev();
+            handlePrev();
         } else if (e.key === 'Escape') {
-            await handleClose();
+            handleClose();
         } else {
             return;
         }
