@@ -27,7 +27,7 @@ export type KeyAction =
     | 'SearchPrev';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
-export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive';
+export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
 
 export type MessageFromMain =
     | {

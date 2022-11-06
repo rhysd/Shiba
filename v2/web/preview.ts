@@ -44,6 +44,17 @@ interface Matcher {
     setInput(input: string): void;
 }
 
+class NullMatcher implements Matcher {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setInput(_: string): void {
+        // Do nothing
+    }
+
+    findNextMatch(): [number, number] | null {
+        return null;
+    }
+}
+
 class CaseSensitiveMatcher implements Matcher {
     private readonly sep: string;
     private input = '';
@@ -85,6 +96,36 @@ class CaseInsensitiveMatcher extends CaseSensitiveMatcher implements Matcher {
     }
 }
 
+class CaseSensitiveRegexMatcher implements Matcher {
+    private readonly sep: RegExp;
+    private input = '';
+    private index = 0;
+
+    constructor(sep: string) {
+        this.sep = new RegExp(sep);
+    }
+
+    setInput(input: string): void {
+        this.input = input;
+        this.index = 0;
+    }
+
+    findNextMatch(): [number, number] | null {
+        const m = this.input.match(this.sep);
+        if (m === null) {
+            this.index += this.input.length;
+            this.input = '';
+            return null;
+        }
+
+        const start = this.index + m.index!;
+        const end = start + m[0].length;
+        this.input = this.input.slice(end);
+        this.index = end;
+        return [start, end];
+    }
+}
+
 const RE_UPPER_CASE = /[A-Z]/;
 function selectMatcher(query: string, matcher: SearchMatcher): Matcher {
     switch (matcher) {
@@ -98,6 +139,13 @@ function selectMatcher(query: string, matcher: SearchMatcher): Matcher {
             return new CaseSensitiveMatcher(query);
         case 'CaseInsensitive':
             return new CaseInsensitiveMatcher(query);
+        case 'CaseSensitiveRegex':
+            try {
+                return new CaseSensitiveRegexMatcher(query);
+            } catch (err) {
+                log.debug('Could not create regex matcher:', err);
+                return new NullMatcher();
+            }
         default:
             log.error('Unknown search matcher:', matcher);
             return new CaseSensitiveMatcher(query); // fallback

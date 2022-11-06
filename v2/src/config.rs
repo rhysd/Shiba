@@ -74,6 +74,7 @@ pub enum SearchMatcher {
     SmartCase,
     CaseSensitive,
     CaseInsensitive,
+    CaseSensitiveRegex,
 }
 
 impl Default for SearchMatcher {
