@@ -46,6 +46,8 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         dispatch(closeSearch());
     };
     const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
+        // TODO: Consider to debounce this event. Updating highlighted matches require re-rendering the content.
+        // And re-rendering the content takes a few seconds on large content.
         searchQuery(previewContent, e.currentTarget.value, index, matcher).then(dispatch).catch(log.error);
     };
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {

@@ -12,13 +12,6 @@ use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemA
 use wry::application::window::{Window, WindowBuilder};
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
-// Platform-specific local host URL when loading HTML source directly.
-// https://docs.rs/wry/latest/wry/webview/struct.WebViewBuilder.html#method.with_html
-#[cfg(target_os = "windows")]
-const LOCAL_HOST: &str = "null";
-#[cfg(not(target_os = "windows"))]
-const LOCAL_HOST: &str = "http://localhost/";
-
 pub struct WebViewMenuItems {
     open_file: MenuId,
     watch_dir: MenuId,
@@ -158,8 +151,11 @@ impl Renderer for WebView {
                 true
             })
             .with_navigation_handler(move |mut url| {
-                log::debug!("Navigating to {}", url);
-                let event = if let Some(stripped) = url.strip_prefix(LOCAL_HOST) {
+                let event = if let Some(stripped) = url.strip_prefix("http://localhost/") {
+                    log::debug!("Navigating to localhost {}", url);
+
+                    // WKWebView and webkit2gtk use http://localhost URL for `WebViewBuilder::with_html`
+                    #[cfg(not(target_os = "windows"))]
                     if stripped.is_empty() {
                         if *is_first_load.borrow() {
                             *is_first_load.borrow_mut() = false;
@@ -168,15 +164,30 @@ impl Renderer for WebView {
                             url.push('.'); // Open '.' when link to the current directory is clicked
                         }
                     }
+                    #[cfg(target_os = "windows")]
+                    let _ = stripped;
 
-                    url.drain(0..LOCAL_HOST.len()); // "http://localhost/foo/bar" -> "foo/bar"
+                    url.drain(0.."http://localhost/".len()); // "http://localhost/foo/bar" -> "foo/bar"
                     #[cfg(target_os = "windows")]
                     {
                         url = url.replace('/', "\\");
                     }
 
                     UserEvent::OpenLocalPath(PathBuf::from(url))
+                } else if url.starts_with("data:text/html;charset=utf-8;base64,") {
+                    log::debug!("Navigating to data URL");
+
+                    // WebView2 uses data:text/html URL for `WebViewBuilder::with_html`
+                    #[cfg(target_os = "windows")]
+                    if *is_first_load.borrow() {
+                        *is_first_load.borrow_mut() = false;
+                        return true; // Only allow initial navigation to local host
+                    }
+
+                    log::error!("Rejected navigating to data URL");
+                    return false;
                 } else if url.starts_with("file://") {
+                    log::debug!("Navigating to file URL {}", url);
                     url.drain(0.."file://".len());
                     if url.is_empty() {
                         return false;
@@ -189,6 +200,7 @@ impl Renderer for WebView {
 
                     UserEvent::OpenLocalPath(PathBuf::from(url))
                 } else {
+                    log::debug!("Navigating to URL {}", url);
                     UserEvent::OpenExternalLink(url)
                 };
 
