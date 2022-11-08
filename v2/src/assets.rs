@@ -1,3 +1,5 @@
+use std::mem;
+
 #[cfg(debug_assertions)]
 pub const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
 #[cfg(not(debug_assertions))]
@@ -11,7 +13,7 @@ pub const HLJS_GITHUB_CSS: &[u8] = include_bytes!("assets/github.css");
 // TODO: user css can be applied by user configuration file
 
 pub fn assets(path: &str) -> (Vec<u8>, &'static str) {
-    let mime = if path.ends_with("/") || path.ends_with(".html") {
+    let mime = if path.ends_with('/') || path.ends_with(".html") {
         "text/html;charset=UTF-8"
     } else if path.ends_with(".js") {
         "text/javascript;charset=UTF-8"
@@ -35,9 +37,19 @@ pub fn assets(path: &str) -> (Vec<u8>, &'static str) {
     (body.to_vec(), mime)
 }
 
-pub fn is_asset_path(path: &str) -> bool {
-    match path {
-        "/" | "/bundle.js" | "/style.css" | "/github-markdown.css" | "/hljs-theme.css" => true,
-        _ => false,
+const ASSET_PATHS: &[&str] =
+    &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css"];
+
+#[derive(Default)]
+pub struct AssetsLoaded([bool; ASSET_PATHS.len()]);
+
+impl AssetsLoaded {
+    pub fn is_loaded(&mut self, path: &str) -> bool {
+        let Some(idx) = ASSET_PATHS.iter().position(|&p| p == path) else { return false; };
+        mem::replace(&mut self.0[idx], true)
     }
+}
+
+pub fn is_asset_path(path: &str) -> bool {
+    ASSET_PATHS.contains(&path)
 }

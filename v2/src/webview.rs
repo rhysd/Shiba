@@ -1,9 +1,10 @@
-use crate::assets::{assets, is_asset_path};
+use crate::assets::{assets, is_asset_path, AssetsLoaded};
 use crate::cli::Options;
 use crate::renderer::{
     MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
 use anyhow::Result;
+use std::cell::RefCell;
 use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
 use wry::application::event_loop::EventLoop;
@@ -115,6 +116,12 @@ fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<W
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
 
+    // These flags must be wrapped with `RefCell` since the handler callback is defined as `Fn`.
+    // Dynamically borrowing the mutable value is mandatory. The `Fn` boundary is derived from
+    // `webkit2gtk::WebView::connect_decide_policy` so it is difficult to change.
+    // https://github.com/tauri-apps/webkit2gtk-rs/blob/cce947f86f2c0d50710c1ea9ea9f160c8b6cbf4a/src/auto/web_view.rs#L1249
+    let assets_loaded = RefCell::new(AssetsLoaded::default());
+
     WebViewBuilder::new(window)?
         .with_url("shiba://localhost/")?
         .with_ipc_handler(move |_w, s| {
@@ -147,21 +154,14 @@ fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<W
             let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
                 log::debug!("Navigating to custom protocol URL {}", url);
                 let path = &url[CUSTOM_PROTOCOL_URL.len() - 1..]; // `- 1` for first '/'
-                if is_asset_path(path) {
+
+                if is_asset_path(path) && !assets_loaded.borrow_mut().is_loaded(path) {
                     return true;
                 }
-                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shba://localhost/foo/bar -> foo/bar
-                UserEvent::OpenLocalPath(PathBuf::from(url))
-            } else if url.starts_with("file://") {
-                log::debug!("Navigating to file URL {}", url);
-                url.drain(0.."file://".len());
-                if url.is_empty() {
-                    return false;
-                }
 
-                #[cfg(target_os = "windows")]
-                {
-                    url = url.replace('/', "\\");
+                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shiba://localhost/foo/bar -> foo/bar
+                if url.is_empty() {
+                    url.push('.');
                 }
 
                 UserEvent::OpenLocalPath(PathBuf::from(url))
