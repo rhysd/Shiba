@@ -35,10 +35,14 @@ pub fn run(options: Options) -> Result<()> {
             }
             Event::UserEvent(event) => {
                 log::debug!("Handling user event {:?}", event);
-                if let Err(err) = app.handle_user_event(event) {
-                    log::error!("Could not handle user event");
-                    for err in err.chain() {
-                        log::error!("  Caused by: {}", err);
+                match app.handle_user_event(event) {
+                    Ok(AppControl::Exit) => *control_flow = ControlFlow::Exit,
+                    Ok(_) => {}
+                    Err(err) => {
+                        log::error!("Could not handle user event");
+                        for err in err.chain() {
+                            log::error!("  Caused by: {}", err);
+                        }
                     }
                 }
             }

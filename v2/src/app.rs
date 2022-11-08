@@ -230,7 +230,7 @@ where
         Ok(())
     }
 
-    fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<()> {
+    fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<AppControl> {
         match message {
             MessageFromRenderer::Init => {
                 if self.options.debug {
@@ -251,30 +251,30 @@ where
             MessageFromRenderer::Reload => self.reload()?,
             MessageFromRenderer::FileDialog => self.open_file()?,
             MessageFromRenderer::DirDialog => self.open_dir()?,
+            MessageFromRenderer::Quit => return Ok(AppControl::Exit),
             MessageFromRenderer::Error { message } => {
                 anyhow::bail!("Error reported from renderer: {}", message)
             }
         }
-        Ok(())
+        Ok(AppControl::Continue)
     }
 
-    pub fn handle_user_event(&mut self, event: UserEvent) -> Result<()> {
+    pub fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl> {
         match event {
-            UserEvent::IpcMessage(msg) => self.handle_ipc_message(msg),
+            UserEvent::IpcMessage(msg) => return self.handle_ipc_message(msg),
             UserEvent::FileDrop(mut path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
                 self.preview_new(path)?;
-                Ok(())
             }
             UserEvent::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
                 if let Some(current) = self.history.current() {
                     if paths.contains(current) {
                         self.preview(current)?;
-                        return Ok(());
+                        return Ok(AppControl::Continue);
                     }
                 }
                 // Choose the last one to preview if the current file is not included in `paths`
@@ -286,7 +286,6 @@ where
                         self.history.push(path);
                     }
                 }
-                Ok(())
             }
             UserEvent::OpenLocalPath(mut path) => {
                 if path.is_relative() {
@@ -300,18 +299,19 @@ where
                 let is_markdown = self.config.file_extensions().matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.preview_new(path)
+                    self.preview_new(path)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))
+                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
                 }
             }
             UserEvent::OpenExternalLink(link) => {
                 log::debug!("Opening external link item clicked in WebView: {:?}", link);
-                self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))
+                self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
-            UserEvent::Error(err) => Err(err),
+            UserEvent::Error(err) => return Err(err),
         }
+        Ok(AppControl::Continue)
     }
 
     pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {

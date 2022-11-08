@@ -24,7 +24,8 @@ export type KeyAction =
     | 'ScrollBottom'
     | 'Search'
     | 'SearchNext'
-    | 'SearchPrev';
+    | 'SearchPrev'
+    | 'Quit';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
@@ -56,6 +57,9 @@ export type MessageFromMain =
 export type MessageToMain =
     | {
           kind: 'init';
+      }
+    | {
+          kind: 'quit';
       }
     | {
           kind: 'forward';

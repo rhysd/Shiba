@@ -143,6 +143,9 @@ export class Dispatcher {
                 case 'SearchPrev':
                     this.searchPrev();
                     break;
+                case 'Quit':
+                    sendMessage({ kind: 'quit' });
+                    break;
                 default:
                     log.error('Unknown key action:', action);
                     break;

@@ -25,6 +25,7 @@ pub enum KeyAction {
     Search,
     NextSearch,
     PrevSearch,
+    Quit,
 }
 
 #[derive(Serialize)]
@@ -49,6 +50,7 @@ pub enum MessageFromRenderer {
     DirDialog,
     Forward,
     Back,
+    Quit,
     Error { message: String },
 }
 
