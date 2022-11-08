@@ -28,6 +28,7 @@
         "no-return-await": "off",
         "eqeqeq": "error",
         "require-await": "error",
+        "no-console": "error",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",

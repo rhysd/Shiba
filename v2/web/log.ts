@@ -4,7 +4,7 @@ export let debug: (...args: unknown[]) => void = function nop() {
     // Do not show debug logs by default
 };
 export function error(...args: any[]): void {
-    console.error(...args);
+    console.error(...args); // eslint-disable-line no-console
     const message = args
         .map(x => {
             if (x?.constructor === Object) {
@@ -18,5 +18,5 @@ export function error(...args: any[]): void {
 }
 
 export function enableDebug(): void {
-    debug = console.debug;
+    debug = console.debug; // eslint-disable-line no-console
 }

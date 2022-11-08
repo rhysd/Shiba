@@ -83,6 +83,6 @@ export function sendMessage(m: MessageToMain): void {
     } catch (err) {
         // Do not raise an error on sending IPC messages. Otherwise the renderer tries to send error message
         // to the main and it causes the same error again.
-        console.error('Could not send message to the main:', err);
+        console.error('Could not send message to the main:', err); // eslint-disable-line no-console
     }
 }
