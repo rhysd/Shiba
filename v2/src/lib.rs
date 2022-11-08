@@ -7,6 +7,7 @@ mod renderer;
 mod watcher;
 mod webview;
 
+use crate::webview::Wry;
 use anyhow::Result;
 use app::{App, AppControl};
 pub use cli::Options;
@@ -15,12 +16,11 @@ use opener::SystemOpener;
 use rfd::FileDialog;
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoop};
-use wry::webview::WebView;
 
 pub fn run(options: Options) -> Result<()> {
     let event_loop = EventLoop::with_user_event();
     let mut app =
-        App::<WebView, SystemOpener, RecommendedWatcher, FileDialog>::new(options, &event_loop)?;
+        App::<Wry, SystemOpener, RecommendedWatcher, FileDialog>::new(options, &event_loop)?;
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;

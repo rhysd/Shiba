@@ -85,7 +85,7 @@ pub trait Renderer: Sized {
     type Menu: MenuItems;
 
     fn open(options: &Options, event_loop: &Self::EventLoop, html: &str) -> Result<Self>;
-    fn set_menu(&self) -> Self::Menu;
+    fn menu(&self) -> &Self::Menu;
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn set_title(&self, title: &str);
 }

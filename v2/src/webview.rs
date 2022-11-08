@@ -12,7 +12,7 @@ use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemA
 use wry::application::window::{Window, WindowBuilder};
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
-pub struct WebViewMenuItems {
+pub struct WryMenuIds {
     open_file: MenuId,
     watch_dir: MenuId,
     quit: MenuId,
@@ -24,10 +24,8 @@ pub struct WebViewMenuItems {
     search_prev: MenuId,
 }
 
-impl WebViewMenuItems {
-    fn create(window: &Window) -> Self {
-        let mut menu = MenuBar::new();
-
+impl WryMenuIds {
+    fn setup(menu: &mut MenuBar) -> Self {
         let mut file_menu = MenuBar::new();
         let cmd_o = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyO);
         let open_file_item =
@@ -67,7 +65,6 @@ impl WebViewMenuItems {
             display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
         menu.add_submenu("Display", true, display_menu);
 
-        window.set_menu(Some(menu));
         log::debug!("Added menubar to window");
         Self {
             open_file: open_file_item.id(),
@@ -83,7 +80,7 @@ impl WebViewMenuItems {
     }
 }
 
-impl MenuItems for WebViewMenuItems {
+impl MenuItems for WryMenuIds {
     type ItemId = MenuId;
 
     fn item_from_id(&self, id: Self::ItemId) -> Result<AppMenuItem> {
@@ -111,110 +108,130 @@ impl MenuItems for WebViewMenuItems {
     }
 }
 
-impl Renderer for WebView {
-    type EventLoop = EventLoop<UserEvent>;
-    type Menu = WebViewMenuItems;
+fn create_webview(
+    window: Window,
+    event_loop: &EventLoop<UserEvent>,
+    html: &str,
+    debug: bool,
+) -> Result<WebView> {
+    let ipc_proxy = event_loop.create_proxy();
+    let file_drop_proxy = event_loop.create_proxy();
+    let navigation_proxy = event_loop.create_proxy();
 
-    fn open(options: &Options, event_loop: &Self::EventLoop, html: &str) -> Result<Self> {
-        let ipc_proxy = event_loop.create_proxy();
-        let file_drop_proxy = event_loop.create_proxy();
-        let navigation_proxy = event_loop.create_proxy();
+    // This flag must be wrapped with `RefCell` since the handler callback is defined as `Fn`.
+    // Dynamically borrowing the mutable value is mandatory. The `Fn` boundary is derived from
+    // `webkit2gtk::WebView::connect_decide_policy` so it is difficult to change.
+    // https://github.com/tauri-apps/webkit2gtk-rs/blob/cce947f86f2c0d50710c1ea9ea9f160c8b6cbf4a/src/auto/web_view.rs#L1249
+    let is_first_load = RefCell::new(true);
 
-        let window = WindowBuilder::new().with_title("Shiba").build(event_loop)?;
-        log::debug!("Event loop and window were created successfully");
-
-        // This flag must be wrapped with `RefCell` since the handler callback is defined as `Fn`.
-        // Dynamically borrowing the mutable value is mandatory. The `Fn` boundary is derived from
-        // `webkit2gtk::WebView::connect_decide_policy` so it is difficult to change.
-        // https://github.com/tauri-apps/webkit2gtk-rs/blob/cce947f86f2c0d50710c1ea9ea9f160c8b6cbf4a/src/auto/web_view.rs#L1249
-        let is_first_load = RefCell::new(true);
-
-        let webview = WebViewBuilder::new(window)?
-            .with_html(html)?
-            .with_devtools(options.debug)
-            .with_ipc_handler(move |_w, s| {
-                let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
-                log::debug!("Message from WebView: {:?}", m);
-                if let Err(e) = ipc_proxy.send_event(UserEvent::IpcMessage(m)) {
-                    log::error!("Could not send user event for message from WebView: {}", e);
-                }
-            })
-            .with_file_drop_handler(move |_w, e| {
-                if let FileDropEvent::Dropped(paths) = e {
-                    log::debug!("Files were dropped (the first one will be opened): {:?}", paths);
-                    if let Some(path) = paths.into_iter().next() {
-                        if let Err(e) = file_drop_proxy.send_event(UserEvent::FileDrop(path)) {
-                            log::error!("Could not send user event for file drop: {}", e);
-                        }
+    let webview = WebViewBuilder::new(window)?
+        .with_html(html)?
+        .with_devtools(debug)
+        .with_ipc_handler(move |_w, s| {
+            let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
+            log::debug!("Message from WebView: {:?}", m);
+            if let Err(e) = ipc_proxy.send_event(UserEvent::IpcMessage(m)) {
+                log::error!("Could not send user event for message from WebView: {}", e);
+            }
+        })
+        .with_file_drop_handler(move |_w, e| {
+            if let FileDropEvent::Dropped(paths) = e {
+                log::debug!("Files were dropped (the first one will be opened): {:?}", paths);
+                if let Some(path) = paths.into_iter().next() {
+                    if let Err(e) = file_drop_proxy.send_event(UserEvent::FileDrop(path)) {
+                        log::error!("Could not send user event for file drop: {}", e);
                     }
                 }
-                true
-            })
-            .with_navigation_handler(move |mut url| {
-                let event = if let Some(stripped) = url.strip_prefix("http://localhost/") {
-                    log::debug!("Navigating to localhost {}", url);
+            }
+            true
+        })
+        .with_navigation_handler(move |mut url| {
+            let event = if let Some(stripped) = url.strip_prefix("http://localhost/") {
+                log::debug!("Navigating to localhost {}", url);
 
-                    // WKWebView and webkit2gtk use http://localhost URL for `WebViewBuilder::with_html`
-                    #[cfg(not(target_os = "windows"))]
-                    if stripped.is_empty() {
-                        if *is_first_load.borrow() {
-                            *is_first_load.borrow_mut() = false;
-                            return true; // Only allow initial navigation to local host
-                        } else {
-                            url.push('.'); // Open '.' when link to the current directory is clicked
-                        }
-                    }
-                    #[cfg(target_os = "windows")]
-                    let _ = stripped;
-
-                    url.drain(0.."http://localhost/".len()); // "http://localhost/foo/bar" -> "foo/bar"
-                    #[cfg(target_os = "windows")]
-                    {
-                        url = url.replace('/', "\\");
-                    }
-
-                    UserEvent::OpenLocalPath(PathBuf::from(url))
-                } else if url.starts_with("data:text/html;charset=utf-8;base64,") {
-                    log::debug!("Navigating to data URL");
-
-                    // WebView2 uses data:text/html URL for `WebViewBuilder::with_html`
-                    #[cfg(target_os = "windows")]
+                // WKWebView and webkit2gtk use http://localhost URL for `WebViewBuilder::with_html`
+                #[cfg(not(target_os = "windows"))]
+                if stripped.is_empty() {
                     if *is_first_load.borrow() {
                         *is_first_load.borrow_mut() = false;
                         return true; // Only allow initial navigation to local host
+                    } else {
+                        url.push('.'); // Open '.' when link to the current directory is clicked
                     }
+                }
+                #[cfg(target_os = "windows")]
+                let _ = stripped;
 
-                    log::error!("Rejected navigating to data URL");
-                    return false;
-                } else if url.starts_with("file://") {
-                    log::debug!("Navigating to file URL {}", url);
-                    url.drain(0.."file://".len());
-                    if url.is_empty() {
-                        return false;
-                    }
-
-                    #[cfg(target_os = "windows")]
-                    {
-                        url = url.replace('/', "\\");
-                    }
-
-                    UserEvent::OpenLocalPath(PathBuf::from(url))
-                } else {
-                    log::debug!("Navigating to URL {}", url);
-                    UserEvent::OpenExternalLink(url)
-                };
-
-                if let Err(e) = navigation_proxy.send_event(event) {
-                    log::error!("Could not send navigation event: {}", e);
+                url.drain(0.."http://localhost/".len()); // "http://localhost/foo/bar" -> "foo/bar"
+                #[cfg(target_os = "windows")]
+                {
+                    url = url.replace('/', "\\");
                 }
 
-                false // Don't allow navigating to any external links
-            })
-            .with_new_window_req_handler(|url| {
-                log::debug!("Rejected to open new window for URL: {}", url);
-                false
-            })
-            .build()?;
+                UserEvent::OpenLocalPath(PathBuf::from(url))
+            } else if url.starts_with("data:text/html;charset=utf-8;base64,") {
+                log::debug!("Navigating to data URL");
+
+                // WebView2 uses data:text/html URL for `WebViewBuilder::with_html`
+                #[cfg(target_os = "windows")]
+                if *is_first_load.borrow() {
+                    *is_first_load.borrow_mut() = false;
+                    return true; // Only allow initial navigation to local host
+                }
+
+                log::error!("Rejected navigating to data URL");
+                return false;
+            } else if url.starts_with("file://") {
+                log::debug!("Navigating to file URL {}", url);
+                url.drain(0.."file://".len());
+                if url.is_empty() {
+                    return false;
+                }
+
+                #[cfg(target_os = "windows")]
+                {
+                    url = url.replace('/', "\\");
+                }
+
+                UserEvent::OpenLocalPath(PathBuf::from(url))
+            } else {
+                log::debug!("Navigating to URL {}", url);
+                UserEvent::OpenExternalLink(url)
+            };
+
+            if let Err(e) = navigation_proxy.send_event(event) {
+                log::error!("Could not send navigation event: {}", e);
+            }
+
+            false // Don't allow navigating to any external links
+        })
+        .with_new_window_req_handler(|url| {
+            log::debug!("Rejected to open new window for URL: {}", url);
+            false
+        })
+        .build()?;
+
+    Ok(webview)
+}
+
+pub struct Wry {
+    webview: WebView,
+    menu_ids: WryMenuIds,
+}
+
+impl Renderer for Wry {
+    type EventLoop = EventLoop<UserEvent>;
+    type Menu = WryMenuIds;
+
+    fn open(options: &Options, event_loop: &Self::EventLoop, html: &str) -> Result<Self> {
+        let mut menu = MenuBar::new();
+        let menu_ids = WryMenuIds::setup(&mut menu);
+
+        let window = WindowBuilder::new().with_title("Shiba").with_menu(menu).build(event_loop)?;
+        log::debug!("Event loop and window were created successfully");
+
+        let webview = create_webview(window, event_loop, html, options.debug)?;
+        log::debug!("Webview was created successfully");
 
         #[cfg(debug_assertions)]
         if options.debug {
@@ -223,23 +240,23 @@ impl Renderer for WebView {
         }
 
         log::debug!("Created WebView successfully");
-        Ok(webview)
+        Ok(Wry { webview, menu_ids })
     }
 
-    fn set_menu(&self) -> Self::Menu {
-        WebViewMenuItems::create(self.window())
+    fn menu(&self) -> &Self::Menu {
+        &self.menu_ids
     }
 
     fn send_message(&self, message: MessageToRenderer) -> Result<()> {
         let mut buf = b"window.postShibaMessageFromMain(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
         buf.push(b')');
-        self.evaluate_script(&String::from_utf8(buf).unwrap())?; // XXX: This UTF-8 validation is redundant
+        self.webview.evaluate_script(&String::from_utf8(buf).unwrap())?; // XXX: This UTF-8 validation is redundant
         Ok(())
     }
 
     fn set_title(&self, title: &str) {
         log::debug!("Set window title: {}", title);
-        self.window().set_title(title);
+        self.webview.window().set_title(title);
     }
 }

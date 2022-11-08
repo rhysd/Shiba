@@ -103,7 +103,6 @@ pub enum AppControl {
 pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     options: Options,
     renderer: R,
-    menu: R::Menu,
     opener: O,
     history: History,
     watcher: W,
@@ -125,7 +124,6 @@ where
         log::debug!("Application config: {:?}", config);
 
         let renderer = R::open(&options, event_loop, HTML)?;
-        let menu = renderer.set_menu();
 
         let filter = PathFilter::new(&config);
         let mut watcher = W::new(event_loop, filter)?;
@@ -137,7 +135,6 @@ where
         Ok(Self {
             options,
             renderer,
-            menu,
             opener: O::default(),
             history: History::new(History::DEFAULT_MAX_HISTORY_SIZE),
             watcher,
@@ -318,7 +315,7 @@ where
     }
 
     pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
-        let kind = self.menu.item_from_id(id)?;
+        let kind = self.renderer.menu().item_from_id(id)?;
         log::debug!("Menu item was clicked: {:?}", kind);
         match kind {
             MenuItem::Quit => return Ok(AppControl::Exit),
