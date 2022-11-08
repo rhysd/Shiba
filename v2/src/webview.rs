@@ -112,7 +112,6 @@ fn create_webview(
     window: Window,
     event_loop: &EventLoop<UserEvent>,
     html: &str,
-    debug: bool,
 ) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
@@ -126,7 +125,6 @@ fn create_webview(
 
     let webview = WebViewBuilder::new(window)?
         .with_html(html)?
-        .with_devtools(debug)
         .with_ipc_handler(move |_w, s| {
             let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
             log::debug!("Message from WebView: {:?}", m);
@@ -230,7 +228,7 @@ impl Renderer for Wry {
         let window = WindowBuilder::new().with_title("Shiba").with_menu(menu).build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
 
-        let webview = create_webview(window, event_loop, html, options.debug)?;
+        let webview = create_webview(window, event_loop, html)?;
         log::debug!("Webview was created successfully");
 
         #[cfg(debug_assertions)]

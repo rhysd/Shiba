@@ -6,7 +6,7 @@ use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
 use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use std::collections::VecDeque;
 use std::env;
 use std::fs;
@@ -303,12 +303,12 @@ where
                     self.preview_new(path)
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                    self.opener.open(&path)
+                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))
                 }
             }
             UserEvent::OpenExternalLink(link) => {
                 log::debug!("Opening external link item clicked in WebView: {:?}", link);
-                self.opener.open(&link)
+                self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))
             }
             UserEvent::Error(err) => Err(err),
         }
