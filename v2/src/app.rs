@@ -14,11 +14,6 @@ use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
-#[cfg(debug_assertions)]
-const HTML: &str = include_str!("bundle.html");
-#[cfg(not(debug_assertions))]
-const HTML: &str = include_str!("bundle.min.html");
-
 struct History {
     max_items: usize,
     index: usize,
@@ -121,9 +116,9 @@ where
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let config = Config::load()?;
-        log::debug!("Application config: {:?}", config);
+        log::debug!("Application config: {:?}, options: {:?}", config, options);
 
-        let renderer = R::open(&options, event_loop, HTML)?;
+        let renderer = R::open(&options, event_loop)?;
 
         let filter = PathFilter::new(&config);
         let mut watcher = W::new(event_loop, filter)?;

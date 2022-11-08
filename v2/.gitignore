@@ -5,5 +5,7 @@
 /dist/*.min.css
 /src/bundle.html
 /src/bundle.min.html
+/src/assets/*.js
+/src/assets/*.css
 /web/*.js
 /TODO.md

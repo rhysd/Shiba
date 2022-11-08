@@ -1,4 +1,5 @@
 mod app;
+mod assets;
 mod cli;
 mod config;
 mod dialog;

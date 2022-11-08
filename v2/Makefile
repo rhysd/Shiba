@@ -1,23 +1,25 @@
 TS_SRC := $(wildcard web/*.ts)
 RS_SRC := $(wildcard src/*.rs)
-DEBUG_DIST := dist/bundle.js
-RELEASE_DIST := dist/bundle.min.js dist/github-markdown.min.css dist/hljs-github.min.css
+CSS := src/assets/github-markdown.css src/assets/github.css src/assets/style.css
 
 node_modules:
 	npm install
 
-$(DEBUG_DIST): node_modules $(TS_SRC)
-	npm run lint:ts
-	npm run bundle
+$(CSS): node_modules
+	npm run bundle:css
 
-$(RELEASE_DIST): node_modules $(TS_SRC)
+src/assets/bundle.js: node_modules $(TS_SRC)
 	npm run lint:ts
-	npm run release
+	npm run bundle:js
 
-target/debug/shiba: $(RS_SRC) $(DEBUG_DIST) dist/template.html
+src/assets/bundle.min.js: node_modules $(TS_SRC)
+	npm run lint:ts
+	npm run release:js
+
+target/debug/shiba: $(RS_SRC) $(CSS) src/assets/bundle.js src/assets/index.html
 	cargo build
 
-target/release/shiba: $(RS_SRC) $(RELEASE_DIST) dist/template.html
+target/release/shiba: $(RS_SRC) $(CSS) src/assets/bundle.min.js src/assets/index.html
 	cargo build --release
 
 .PHONY: build release clean
@@ -25,6 +27,6 @@ target/release/shiba: $(RS_SRC) $(RELEASE_DIST) dist/template.html
 build: target/debug/shiba
 release: target/release/shiba
 clean:
-	rm -rf $(DEBUG_DIST) $(RELEASE_DIST) node_modules target
+	rm -rf src/assets/*.css src/assets/*.js node_modules target
 
 .DEFAULT_GOAL := build
