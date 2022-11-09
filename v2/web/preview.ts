@@ -5,6 +5,7 @@ import type { Position } from 'unist';
 import remarkParse from 'remark-parse';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
+import remarkGemoji from 'remark-gemoji';
 import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -249,6 +250,7 @@ export async function parseMarkdown(content: string, query: string, config: Sear
         .use(remarkParse)
         .use(remarkFrontmatter)
         .use(remarkGfm)
+        .use(remarkGemoji)
         .use(remarkRehype, { allowDangerousHtml: true })
         .use(rehypeRaw)
         .use(rehypeHighlight, { plainText: ['txt', 'text'] })
