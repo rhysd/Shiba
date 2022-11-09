@@ -15,6 +15,7 @@ import { visit, SKIP } from 'unist-util-visit';
 import { createElement, Fragment } from 'react';
 import type { SearchMatcher } from './ipc';
 import * as log from './log';
+import { Link } from './components/Link';
 
 // From https://github.com/rhysd/fast-json-clone
 function cloneJson(x: any): any {
@@ -233,7 +234,13 @@ interface HighlightOptions {
 const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ matcher, index }) =>
     highlight.bind(this, matcher, index);
 
-const RehypeReactConfig = { createElement, Fragment };
+const RehypeReactConfig = {
+    createElement,
+    Fragment,
+    components: {
+        a: Link,
+    },
+};
 
 export async function parseMarkdown(content: string, query: string, config: SearchMatcher): Promise<PreviewContent> {
     let hast: Hast | null = null;
