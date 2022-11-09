@@ -68,7 +68,11 @@
                     "PascalCase",
                     "UPPER_CASE"
                 ],
-                "leadingUnderscore": "allow"
+                "leadingUnderscore": "allow",
+                "filter": {
+                    "regex": "^aria-label$",
+                    "match": false
+                }
             }
         ],
         "@typescript-eslint/no-duplicate-imports": "error",

@@ -19,9 +19,7 @@ export const Link: React.FC<Props> = ({ href, title, children }) => {
     );
     return (
         <Tooltip title={tipTitle} arrow disableInteractive>
-            <a href={href} title={title}>
-                {children}
-            </a>
+            <a href={href}>{children}</a>
         </Tooltip>
     );
 };
