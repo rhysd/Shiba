@@ -1,13 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Root as Hast } from 'hast';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Divider from '@mui/material/Divider';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
-import { Dispatch, searchQuery, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import {
+    Dispatch,
+    searchQuery,
+    searchNext,
+    searchPrevious,
+    closeSearch,
+    setSearchMatcher,
+    findSearchMatchElems,
+} from '../reducer';
 import type { SearchMatcher } from '../ipc';
 import * as log from '../log';
 
@@ -15,7 +26,7 @@ const PAPER_STYLE: React.CSSProperties = {
     position: 'fixed',
     top: 0,
     right: 0,
-    width: '400px',
+    width: '420px',
     margin: '8px',
     padding: '8px',
     display: 'flex',
@@ -29,11 +40,22 @@ const COUNTER_STYLE: React.CSSProperties = {
 const INPUT_STYLE: React.CSSProperties = {
     flex: 'auto',
     marginLeft: '4px',
+    fontFamily: 'inherit',
 };
 const DIVIDER_STYLE: React.CSSProperties = {
     marginLeft: '0.5rem',
     height: '1.5rem',
 };
+const MENU_ITEM_STYLE: React.CSSProperties = {
+    fontFamily: 'inherit',
+    fontSize: '0.8rem',
+};
+const ALL_MATCHERS: [SearchMatcher, string][] = [
+    ['SmartCase', 'smart case'],
+    ['CaseSensitive', 'case sensitive'],
+    ['CaseInsensitive', 'case insensitive'],
+    ['CaseSensitiveRegex', 'regular expression'],
+];
 
 function isInViewport(elem: Element): boolean {
     const rect = elem.getBoundingClientRect();
@@ -51,6 +73,7 @@ interface Props {
 
 export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispatch }) => {
     const counterElem = useRef<HTMLDivElement>(null);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
         const current = document.querySelector('.search-text-current');
@@ -93,15 +116,51 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         }
         e.preventDefault();
     };
+    const handleMenuOpen = (e: React.MouseEvent<HTMLElement>): void => {
+        setMenuAnchor(e.currentTarget);
+    };
+    const handleMenuClose = (): void => {
+        setMenuAnchor(null);
+    };
+    const handleMenuItemClick = (selected: SearchMatcher): void => {
+        log.debug('Search matcher selected', selected);
+        if (selected !== matcher) {
+            dispatch(setSearchMatcher(selected));
+        }
+        setMenuAnchor(null);
+    };
 
     return (
         <Paper elevation={4} style={PAPER_STYLE}>
+            <IconButton
+                size="small"
+                title="Select search matcher"
+                aria-label="select search matcher"
+                onClick={handleMenuOpen}
+            >
+                <ManageSearchIcon />
+            </IconButton>
+            <Menu anchorEl={menuAnchor} open={menuAnchor !== null} onClose={handleMenuClose}>
+                {ALL_MATCHERS.map(([m, desc]) => (
+                    <MenuItem
+                        key={m}
+                        style={MENU_ITEM_STYLE}
+                        selected={matcher === m}
+                        onClick={() => {
+                            handleMenuItemClick(m);
+                        }}
+                    >
+                        {desc}
+                    </MenuItem>
+                ))}
+            </Menu>
             <InputBase
                 style={INPUT_STYLE}
                 inputProps={{
                     'aria-label': 'search input',
                     onChange: handleChange,
                     onKeyDown: handleKeydown,
+                    style: { padding: 0 },
                 }}
                 type="search"
                 placeholder="Search…"
@@ -109,13 +168,13 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
             />
             <div style={COUNTER_STYLE} ref={counterElem}></div>
             <Divider style={DIVIDER_STYLE} orientation="vertical" />
-            <IconButton size="small" aria-label="previous match" onClick={handlePrev}>
+            <IconButton size="small" title="Find backward" aria-label="find backward" onClick={handlePrev}>
                 <KeyboardArrowUpIcon fontSize="small" />
             </IconButton>
-            <IconButton size="small" aria-label="next match" onClick={handleNext}>
+            <IconButton size="small" title="Find forward" aria-label="find forward" onClick={handleNext}>
                 <KeyboardArrowDownIcon fontSize="small" />
             </IconButton>
-            <IconButton size="small" aria-label="close search" onClick={handleClose}>
+            <IconButton size="small" title="Close search" aria-label="close search" onClick={handleClose}>
                 <CloseIcon fontSize="small" />
             </IconButton>
         </Paper>
