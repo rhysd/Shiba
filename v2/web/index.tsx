@@ -13,7 +13,7 @@ declare global {
 const dispatcher = new Dispatcher();
 
 // The main process will send IPC events via this global function
-window.postShibaMessageFromMain = dispatcher.dispatchIpcMessage.bind(dispatcher);
+window.postShibaMessageFromMain = dispatcher.handleIpcMessage.bind(dispatcher);
 
 const root = document.getElementById('shiba-root');
 if (!root) {

@@ -59,6 +59,7 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         const current = document.querySelector('.search-text-current');
         if (current && !isInViewport(current)) {
             current.scrollIntoView({
+                behavior: 'smooth', // This does not work on WKWebView
                 block: 'center',
                 inline: 'center',
             });
