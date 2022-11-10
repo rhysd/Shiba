@@ -61,6 +61,7 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
             current.scrollIntoView({
                 block: 'center',
                 inline: 'center',
+                behavior: 'smooth',
             });
         }
         if (counterElem.current !== null) {
