@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
-import Button from '@mui/material/Button';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import type { SearchMatcher } from '../ipc';
 import { Dispatch, setSearchMatcher } from '../reducer';
 import * as log from '../log';
@@ -17,40 +18,14 @@ const ALL_MATCHERS: [SearchMatcher, string][] = [
     ['CaseInsensitive', 'case insensitive'],
     ['CaseSensitiveRegex', 'regular expression'],
 ];
-const BUTTON_STYLE: React.CSSProperties = {
-    textTransform: 'none',
-    backgroundColor: 'inherit',
-    fontSize: '1rem',
-    padding: '4px',
-    minWidth: '3rem',
-};
 
-interface IconProps {
-    matcher: SearchMatcher;
-    onClick: (e: React.MouseEvent<HTMLElement>) => void;
-}
-
-const MatcherIcon: React.FC<IconProps> = ({ matcher, onClick }) => (
-    <Button style={BUTTON_STYLE} onClick={onClick} title="Select search matcher" aria-label="select search matcher">
-        {matcher === 'SmartCase'
-            ? 'a→A'
-            : matcher === 'CaseSensitive'
-            ? 'a≠A'
-            : matcher === 'CaseInsensitive'
-            ? 'a=A'
-            : matcher === 'CaseSensitiveRegex'
-            ? '/aA/'
-            : '???'}
-    </Button>
-);
-
-interface SelectProps {
+interface Props {
     matcher: SearchMatcher;
     dispatch: Dispatch;
     onSelect?: (selected: SearchMatcher) => void;
 }
 
-export const MatcherSelect: React.FC<SelectProps> = ({ matcher, dispatch, onSelect }) => {
+export const MatcherSelect: React.FC<Props> = ({ matcher, dispatch, onSelect }) => {
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
     const handleOpen = (e: React.MouseEvent<HTMLElement>): void => {
@@ -70,7 +45,14 @@ export const MatcherSelect: React.FC<SelectProps> = ({ matcher, dispatch, onSele
 
     return (
         <>
-            <MatcherIcon matcher={matcher} onClick={handleOpen} />
+            <IconButton
+                size="small"
+                title="Select search matcher"
+                aria-label="select search matcher"
+                onClick={handleOpen}
+            >
+                <ManageSearchIcon />
+            </IconButton>
             <Menu anchorEl={anchor} open={anchor !== null} onClose={handleClose}>
                 {ALL_MATCHERS.map(([m, desc]) => (
                     <MenuItem
