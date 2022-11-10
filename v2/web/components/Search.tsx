@@ -1,24 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { Root as Hast } from 'hast';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Divider from '@mui/material/Divider';
-import MenuItem from '@mui/material/MenuItem';
-import Menu from '@mui/material/Menu';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
-import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-import {
-    Dispatch,
-    searchQuery,
-    searchNext,
-    searchPrevious,
-    closeSearch,
-    setSearchMatcher,
-    findSearchMatchElems,
-} from '../reducer';
+import { MatcherSelect } from './MatcherSelect';
+import { Dispatch, searchQuery, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
 import type { SearchMatcher } from '../ipc';
 import * as log from '../log';
 
@@ -46,16 +36,6 @@ const DIVIDER_STYLE: React.CSSProperties = {
     marginLeft: '0.5rem',
     height: '1.5rem',
 };
-const MENU_ITEM_STYLE: React.CSSProperties = {
-    fontFamily: 'inherit',
-    fontSize: '0.8rem',
-};
-const ALL_MATCHERS: [SearchMatcher, string][] = [
-    ['SmartCase', 'smart case'],
-    ['CaseSensitive', 'case sensitive'],
-    ['CaseInsensitive', 'case insensitive'],
-    ['CaseSensitiveRegex', 'regular expression'],
-];
 
 function isInViewport(elem: Element): boolean {
     const rect = elem.getBoundingClientRect();
@@ -72,8 +52,8 @@ interface Props {
 }
 
 export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispatch }) => {
-    const counterElem = useRef<HTMLDivElement>(null);
-    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const counterElem = useRef<HTMLDivElement | null>(null);
+    const inputElem = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         const current = document.querySelector('.search-text-current');
@@ -116,44 +96,14 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         }
         e.preventDefault();
     };
-    const handleMenuOpen = (e: React.MouseEvent<HTMLElement>): void => {
-        setMenuAnchor(e.currentTarget);
-    };
-    const handleMenuClose = (): void => {
-        setMenuAnchor(null);
-    };
-    const handleMenuItemClick = (selected: SearchMatcher): void => {
-        log.debug('Search matcher selected', selected);
-        if (selected !== matcher) {
-            dispatch(setSearchMatcher(selected));
-        }
-        setMenuAnchor(null);
+    const handleMatcherSelect = (): void => {
+        // Focus <input> at next tick since re-render will happen after this callback and it will blur the element again
+        setTimeout(() => inputElem.current?.focus(), 0);
     };
 
     return (
         <Paper elevation={4} style={PAPER_STYLE}>
-            <IconButton
-                size="small"
-                title="Select search matcher"
-                aria-label="select search matcher"
-                onClick={handleMenuOpen}
-            >
-                <ManageSearchIcon />
-            </IconButton>
-            <Menu anchorEl={menuAnchor} open={menuAnchor !== null} onClose={handleMenuClose}>
-                {ALL_MATCHERS.map(([m, desc]) => (
-                    <MenuItem
-                        key={m}
-                        style={MENU_ITEM_STYLE}
-                        selected={matcher === m}
-                        onClick={() => {
-                            handleMenuItemClick(m);
-                        }}
-                    >
-                        {desc}
-                    </MenuItem>
-                ))}
-            </Menu>
+            <MatcherSelect matcher={matcher} dispatch={dispatch} onSelect={handleMatcherSelect} />
             <InputBase
                 style={INPUT_STYLE}
                 inputProps={{
@@ -161,6 +111,7 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
                     onChange: handleChange,
                     onKeyDown: handleKeydown,
                     style: { padding: 0 },
+                    ref: inputElem,
                 }}
                 type="search"
                 placeholder="Search…"

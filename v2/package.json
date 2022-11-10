@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "watch": "concurrently -c auto npm:watch:js npm:watch:ts npm:watch:rs npm:watch:css",
-    "watch:js": "npm run bundle:js -- --watch",
+    "watch:js": "npm run bundle:js -- --watch --color=true",
     "watch:ts": "npm run lint:ts -- --watch --preserveWatchOutput --pretty",
     "watch:rs": "cargo watch --watch src -- cargo check --color always",
     "watch:css": "npm run bundle:css -- --watch",
