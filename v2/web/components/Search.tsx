@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Root as Hast } from 'hast';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
@@ -12,6 +12,7 @@ import { Dispatch, searchQuery, searchNext, searchPrevious, closeSearch, findSea
 import type { SearchMatcher } from '../ipc';
 import * as log from '../log';
 
+const DEBOUNCE_TIMEOUT = 200; // 200ms
 const PAPER_STYLE: React.CSSProperties = {
     position: 'fixed',
     top: 0,
@@ -54,6 +55,7 @@ interface Props {
 export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispatch }) => {
     const counterElem = useRef<HTMLDivElement | null>(null);
     const inputElem = useRef<HTMLInputElement | null>(null);
+    const [debId, setDebId] = useState<number | null>(null);
 
     useEffect(() => {
         const current = document.querySelector('.search-text-current');
@@ -81,9 +83,15 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         dispatch(closeSearch());
     };
     const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
-        // TODO: Consider to debounce this event. Updating highlighted matches require re-rendering the content.
-        // And re-rendering the content takes a few seconds on large content.
-        searchQuery(previewContent, e.currentTarget.value, index, matcher).then(dispatch).catch(log.error);
+        if (debId !== null) {
+            clearTimeout(debId);
+        }
+        const query = e.currentTarget.value;
+        const id = setTimeout(() => {
+            searchQuery(previewContent, query, index, matcher).then(dispatch).catch(log.error);
+            setDebId(null);
+        }, DEBOUNCE_TIMEOUT);
+        setDebId(id);
     };
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
         if (e.key === 'Enter' && !e.shiftKey) {
