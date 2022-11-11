@@ -57,7 +57,8 @@ export class Dispatcher {
             switch (msg.kind) {
                 case 'content': {
                     const query = this.state.search?.query ?? '';
-                    this.dispatch(await previewContent(msg.content, query, this.state.matcher));
+                    const offset = msg.offset ?? null;
+                    this.dispatch(await previewContent(msg.content, query, this.state.matcher, offset));
                     break;
                 }
                 case 'config':

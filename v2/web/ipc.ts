@@ -34,6 +34,7 @@ export type MessageFromMain =
     | {
           kind: 'content';
           content: string;
+          offset?: number;
       }
     | {
           kind: 'config';

@@ -11,7 +11,7 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeReact from 'rehype-react';
 import rehypeRaw from 'rehype-raw';
-import { visit, SKIP } from 'unist-util-visit';
+import { visit, SKIP, EXIT } from 'unist-util-visit';
 import { createElement, Fragment } from 'react';
 import type { SearchMatcher } from './ipc';
 import * as log from './log';
@@ -31,6 +31,14 @@ function cloneJson(x: any): any {
         }
         return ret;
     }
+}
+
+function textToElem(node: any, children: Array<HastText | HastElement>): HastElement {
+    node.type = 'element';
+    node.tagName = 'span';
+    node.properties = {};
+    node.children = children;
+    return node;
 }
 
 // Allow `class` attribute in all HTML elements for highlight.js
@@ -179,13 +187,6 @@ function highlight(matcher: Matcher, index: number | null, tree: Hast): void {
         };
     }
 
-    function textToElem(node: any, children: Array<HastText | HastElement>): void {
-        node.type = 'element';
-        node.tagName = 'span';
-        node.properties = {};
-        node.children = children;
-    }
-
     let count = 0;
     visit(tree, ['text'], node => {
         if (node.type !== 'text') {
@@ -234,6 +235,69 @@ interface HighlightOptions {
 const highlightPlugin: Plugin<[HighlightOptions], Hast, Hast> = ({ matcher, index }) =>
     highlight.bind(this, matcher, index);
 
+interface ChangeMarkerOptions {
+    offset: number | null;
+}
+const changeMarkerPlugin: Plugin<[ChangeMarkerOptions], Hast, Hast> = ({ offset }) => {
+    return tree => {
+        if (offset === null) {
+            return;
+        }
+
+        // Note: `let modified: HastElement | HastText | null = ...` does not work
+        let modified = null as HastElement | HastText | null;
+
+        visit(tree, node => {
+            // Note: `start` and `end` may be `null` due to unknown reason
+            const start = node.position?.start?.offset;
+            const end = node.position?.end?.offset;
+            if (start === undefined || end === undefined || offset < start || end < offset) {
+                return;
+            }
+
+            switch (node.type) {
+                case 'text': {
+                    modified = node;
+                    return EXIT;
+                }
+                case 'element': {
+                    modified = node;
+                    return;
+                }
+                default:
+                    return;
+            }
+        });
+
+        if (modified !== null) {
+            switch (modified.type) {
+                case 'text': {
+                    const text = { ...modified };
+                    const elem = textToElem(modified, [text]);
+                    elem.properties = {
+                        className: 'last-modified-marker',
+                    };
+                    log.debug('Last modified element:', elem);
+                    break;
+                }
+                case 'element': {
+                    modified.properties ??= {};
+                    if ('className' in modified.properties) {
+                        modified.properties['className'] += ' last-modified-marker';
+                    } else {
+                        modified.properties['className'] = 'last-modified-marker';
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
+        log.debug('Last modified node for offset', offset, modified);
+    };
+};
+
 const RehypeReactConfig = {
     createElement,
     Fragment,
@@ -242,7 +306,12 @@ const RehypeReactConfig = {
     },
 };
 
-export async function parseMarkdown(content: string, query: string, config: SearchMatcher): Promise<PreviewContent> {
+export async function parseMarkdown(
+    content: string,
+    query: string,
+    config: SearchMatcher,
+    changeOffset: number | null,
+): Promise<PreviewContent> {
     let hast: Hast | null = null;
     const plugin: Plugin<[], Hast, Hast> = () => tree => {
         if (query) {
@@ -262,6 +331,7 @@ export async function parseMarkdown(content: string, query: string, config: Sear
         .use(rehypeRaw)
         .use(rehypeHighlight, { plainText: ['txt', 'text'] })
         .use(rehypeSanitize, defaultSchema)
+        .use(changeMarkerPlugin, { offset: changeOffset })
         .use(plugin)
         .use(rehypeReact, RehypeReactConfig);
 

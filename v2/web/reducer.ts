@@ -202,7 +202,12 @@ export function setSearchMatcher(matcher: SearchMatcher): Action {
     return { kind: 'search_matcher', matcher };
 }
 
-export async function previewContent(markdown: string, query: string, matcher: SearchMatcher): Promise<Action> {
-    const content = await parseMarkdown(markdown, query, matcher);
+export async function previewContent(
+    markdown: string,
+    query: string,
+    matcher: SearchMatcher,
+    changeOffset: number | null,
+): Promise<Action> {
+    const content = await parseMarkdown(markdown, query, matcher, changeOffset);
     return { kind: 'preview_content', content, query };
 }

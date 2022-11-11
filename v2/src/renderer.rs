@@ -32,8 +32,15 @@ pub enum KeyAction {
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageToRenderer<'a> {
-    Content { content: &'a str },
-    Config { keymaps: &'a HashMap<String, KeyAction>, search: &'a SearchConfig },
+    Content {
+        content: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        offset: Option<usize>,
+    },
+    Config {
+        keymaps: &'a HashMap<String, KeyAction>,
+        search: &'a SearchConfig,
+    },
     Search,
     SearchNext,
     SearchPrevious,

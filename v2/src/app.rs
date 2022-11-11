@@ -89,6 +89,72 @@ impl History {
     }
 }
 
+struct PreviewContent {
+    home_dir: Option<PathBuf>,
+    content: String,
+}
+
+impl Default for PreviewContent {
+    fn default() -> Self {
+        Self { home_dir: dirs::home_dir(), content: String::new() }
+    }
+}
+
+impl PreviewContent {
+    fn title(&self, path: &Path) -> String {
+        if let Some(home_dir) = &self.home_dir {
+            if let Ok(path) = path.strip_prefix(home_dir) {
+                return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
+            }
+        }
+        format!("Shiba: {}", path.display())
+    }
+
+    pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R, reload: bool) -> Result<bool> {
+        log::debug!("Opening markdown preview for {:?}", path);
+        let content = match fs::read_to_string(path) {
+            Ok(content) => content,
+            Err(err) => {
+                // Do not return error because 'no such file' because the file might be renamed and
+                // no longer exists. This can happen when saving files on Vim. In this case, a file
+                // create event will follow so the preview can be updated with the event.
+                log::debug!("Could not open {:?} due to error: {}", path, err);
+                return Ok(false);
+            }
+        };
+
+        let prev_content = std::mem::replace(&mut self.content, content);
+        let content = self.content.as_str();
+
+        let msg = if reload {
+            Some(MessageToRenderer::Content { content, offset: None })
+        } else {
+            prev_content
+                .as_bytes()
+                .iter()
+                .zip(content.as_bytes().iter())
+                .position(|(a, b)| a != b)
+                .or_else(|| {
+                    let (prev_len, len) = (prev_content.len(), content.len());
+                    (prev_len != len).then_some(std::cmp::min(prev_len, len))
+                })
+                .map(|offset| MessageToRenderer::Content { content, offset: Some(offset) })
+        };
+
+        if let Some(msg) = msg {
+            renderer.send_message(msg)?;
+        } else {
+            log::debug!("Sending preview content was skipped since content did not change");
+        }
+
+        if reload {
+            renderer.set_title(&self.title(path));
+        }
+
+        Ok(true)
+    }
+}
+
 #[derive(Debug)]
 pub enum AppControl {
     Continue,
@@ -101,8 +167,8 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     opener: O,
     history: History,
     watcher: W,
-    home_dir: Option<PathBuf>,
     config: Config,
+    preview: PreviewContent,
     _dialog: PhantomData<D>,
 }
 
@@ -133,47 +199,16 @@ where
             opener: O::default(),
             history: History::new(History::DEFAULT_MAX_HISTORY_SIZE),
             watcher,
-            home_dir: dirs::home_dir(),
             config,
+            preview: PreviewContent::default(),
             _dialog: PhantomData,
         })
     }
 
-    fn title(&self, path: &Path) -> String {
-        if let Some(home_dir) = &self.home_dir {
-            if let Ok(path) = path.strip_prefix(home_dir) {
-                return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
-            }
-        }
-        format!("Shiba: {}", path.display())
-    }
-
-    fn preview(&self, path: &Path) -> Result<bool> {
-        log::debug!("Opening markdown preview for {:?}", path);
-        let content = match fs::read_to_string(path) {
-            Ok(content) => content,
-            Err(err) => {
-                // Do not return error because 'no such file' because the file might be renamed and
-                // no longer exists. This can happen when saving files on Vim. In this case, a file
-                // create event will follow so the preview can be updated with the event.
-                log::debug!("Could not open {:?} due to error: {}", path, err);
-                return Ok(false);
-            }
-        };
-
-        let msg = MessageToRenderer::Content { content: &content };
-        self.renderer.send_message(msg)?;
-
-        if !self.history.is_current(path) {
-            self.renderer.set_title(&self.title(path));
-        }
-
-        Ok(true)
-    }
-
     fn preview_new(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
-        if self.preview(&path)? {
+        let is_current = self.history.is_current(&path);
+        if self.preview.show(&path, &self.renderer, !is_current)? {
             self.history.push(path);
         }
         Ok(())
@@ -182,7 +217,7 @@ where
     fn forward(&mut self) -> Result<()> {
         if let Some(path) = self.history.next() {
             log::debug!("Forward to next preview page: {:?}", path);
-            self.preview(path)?;
+            self.preview.show(path, &self.renderer, true)?;
             self.history.forward();
         }
         Ok(())
@@ -191,7 +226,7 @@ where
     fn back(&mut self) -> Result<()> {
         if let Some(path) = self.history.prev() {
             log::debug!("Back to previous preview page: {:?}", path);
-            self.preview(path)?;
+            self.preview.show(path, &self.renderer, true)?;
             self.history.back();
         }
         Ok(())
@@ -200,7 +235,7 @@ where
     fn reload(&mut self) -> Result<()> {
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
-            self.preview(path)?;
+            self.preview.show(path, &self.renderer, true)?;
         }
         Ok(())
     }
@@ -268,7 +303,7 @@ where
                 log::debug!("Files changed: {:?}", paths);
                 if let Some(current) = self.history.current() {
                     if paths.contains(current) {
-                        self.preview(current)?;
+                        self.preview.show(current, &self.renderer, false)?;
                         return Ok(AppControl::Continue);
                     }
                 }
@@ -277,7 +312,7 @@ where
                     if !path.is_absolute() {
                         path = path.canonicalize()?;
                     }
-                    if self.preview(&path)? {
+                    if self.preview.show(&path, &self.renderer, true)? {
                         self.history.push(path);
                     }
                 }
