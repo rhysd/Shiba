@@ -43,6 +43,8 @@ function textToElem(node: any, children: Array<HastText | HastElement>): HastEle
 
 // Allow `class` attribute in all HTML elements for highlight.js
 defaultSchema.attributes!['*']!.push('className');
+// If this is set prefix 'user-content-' is set twice
+defaultSchema.clobber = [];
 
 export type ReactElement = React.ReactElement<unknown>;
 export interface PreviewContent {

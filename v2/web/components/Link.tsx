@@ -11,16 +11,22 @@ const TIP_STYLE: React.CSSProperties = {
     fontSize: '0.8rem',
 };
 
-export const Link: React.FC<Props> = ({ href, title, children }) => {
+export const Link: React.FC<Props> = props => {
+    if (!props.href) {
+        return <a {...props}>{props.children}</a>;
+    }
+
+    const { href, title, children } = props;
     const tipTitle = (
         <div style={TIP_STYLE}>
             {title}
             <div>{href}</div>
         </div>
     );
+    const anchorProps = { ...props, title: undefined, children: undefined };
     return (
         <Tooltip title={tipTitle} arrow disableInteractive>
-            <a href={href}>{children}</a>
+            <a {...anchorProps}>{children}</a>
         </Tooltip>
     );
 };

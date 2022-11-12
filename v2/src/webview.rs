@@ -164,6 +164,11 @@ fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<W
                     url.push('.');
                 }
 
+                if url.starts_with('#') {
+                    log::debug!("Allow navigating to hash link {}", url); // For footnotes
+                    return true;
+                }
+
                 UserEvent::OpenLocalPath(PathBuf::from(url))
             } else {
                 log::debug!("Navigating to URL {}", url);
