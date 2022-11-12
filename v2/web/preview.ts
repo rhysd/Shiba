@@ -329,10 +329,10 @@ export async function parseMarkdown(
         .use(remarkGemoji)
         .use(remarkRehype, { allowDangerousHtml: true })
         .use(rehypeRaw)
-        .use(rehypeHighlight, { plainText: ['txt', 'text'] })
+        .use(rehypeHighlight, { plainText: ['txt', 'text'], ignoreMissing: true })
         .use(rehypeSanitize, defaultSchema)
-        .use(changeMarkerPlugin, { offset: changeOffset })
         .use(plugin)
+        .use(changeMarkerPlugin, { offset: changeOffset })
         .use(rehypeReact, RehypeReactConfig);
 
     const file = await compiler.process(content);
