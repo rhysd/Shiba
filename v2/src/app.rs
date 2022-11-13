@@ -1,6 +1,7 @@
 use crate::cli::Options;
 use crate::config::Config;
 use crate::dialog::Dialog;
+use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
@@ -122,6 +123,9 @@ impl PreviewContent {
                 return Ok(false);
             }
         };
+
+        // TODO
+        renderer.send_message_raw(MarkdownParser::new(&content))?;
 
         let prev_content = std::mem::replace(&mut self.content, content);
         let content = self.content.as_str();

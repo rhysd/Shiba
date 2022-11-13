@@ -3,6 +3,7 @@ mod assets;
 mod cli;
 mod config;
 mod dialog;
+mod markdown;
 mod opener;
 mod renderer;
 mod watcher;

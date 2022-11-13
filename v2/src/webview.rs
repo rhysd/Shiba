@@ -1,7 +1,8 @@
 use crate::assets::{assets, is_asset_path, AssetsLoaded};
 use crate::cli::Options;
 use crate::renderer::{
-    MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
+    MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, RawMessageWriter,
+    Renderer, UserEvent,
 };
 use anyhow::Result;
 use std::cell::RefCell;
@@ -238,6 +239,14 @@ impl Renderer for Wry {
         serde_json::to_writer(&mut buf, &message)?;
         buf.push(b')');
         self.webview.evaluate_script(&String::from_utf8(buf).unwrap())?; // XXX: This UTF-8 validation is redundant
+        Ok(())
+    }
+
+    fn send_message_raw(&self, writer: impl RawMessageWriter) -> Result<()> {
+        let mut buf = "window.postShibaMessageFromMain(".to_string();
+        writer.write_to(&mut buf)?;
+        buf.push(')');
+        self.webview.evaluate_script(&buf)?;
         Ok(())
     }
 

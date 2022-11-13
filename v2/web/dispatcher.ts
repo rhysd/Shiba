@@ -10,6 +10,7 @@ import {
     setSearchMatcher,
 } from './reducer';
 import { sendMessage, MessageFromMain, KeyAction } from './ipc';
+import { PreviewContent } from './markdown';
 import * as log from './log';
 
 // Global action dispatcher to handle IPC messages from the main
@@ -17,12 +18,14 @@ import * as log from './log';
 export class Dispatcher {
     public dispatch: Dispatch;
     public state: State;
+    public content: PreviewContent;
 
     constructor() {
         this.dispatch = () => {
             // do nothing by default
         };
         this.state = INITIAL_STATE;
+        this.content = new PreviewContent();
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
@@ -61,6 +64,9 @@ export class Dispatcher {
                     this.dispatch(await previewContent(msg.content, query, this.state.matcher, offset));
                     break;
                 }
+                case 'parse_tree':
+                    this.content.render(msg.tree);
+                    break;
                 case 'config':
                     for (const keybind of Object.keys(msg.keymaps)) {
                         const action = msg.keymaps[keybind];

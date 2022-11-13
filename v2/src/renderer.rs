@@ -89,6 +89,10 @@ pub trait MenuItems {
     fn item_from_id(&self, id: Self::ItemId) -> Result<MenuItem>;
 }
 
+pub trait RawMessageWriter {
+    fn write_to(self, writer: impl fmt::Write) -> std::result::Result<(), fmt::Error>;
+}
+
 pub trait Renderer: Sized {
     type EventLoop;
     type Menu: MenuItems;
@@ -96,5 +100,6 @@ pub trait Renderer: Sized {
     fn open(options: &Options, event_loop: &Self::EventLoop) -> Result<Self>;
     fn menu(&self) -> &Self::Menu;
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
+    fn send_message_raw(&self, writer: impl RawMessageWriter) -> Result<()>;
     fn set_title(&self, title: &str);
 }
