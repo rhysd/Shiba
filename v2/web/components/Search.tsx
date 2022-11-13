@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { Root as Hast } from 'hast';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
@@ -8,11 +7,11 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
 import { MatcherSelect } from './MatcherSelect';
-import { Dispatch, searchQuery, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
+import { Dispatch, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
 import type { SearchMatcher } from '../ipc';
 import * as log from '../log';
 
-const DEBOUNCE_TIMEOUT = 200; // 200ms
+const DEBOUNCE_TIMEOUT = 100; // 100ms
 const PAPER_STYLE: React.CSSProperties = {
     position: 'fixed',
     top: 0,
@@ -46,13 +45,12 @@ function isInViewport(elem: Element): boolean {
 }
 
 interface Props {
-    previewContent: Hast;
     index: number | null;
     matcher: SearchMatcher;
     dispatch: Dispatch;
 }
 
-export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispatch }) => {
+export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
     const counterElem = useRef<HTMLDivElement | null>(null);
     const inputElem = useRef<HTMLInputElement | null>(null);
     const [debId, setDebId] = useState<number | null>(null);
@@ -71,7 +69,7 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
             const total = findSearchMatchElems().length;
             counterElem.current.textContent = `${nth} / ${total}`;
         }
-    }, [index, previewContent]);
+    }, [index]);
 
     const handlePrev = (): void => {
         dispatch(searchPrevious(index));
@@ -88,7 +86,7 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         }
         const query = e.currentTarget.value;
         const id = setTimeout(() => {
-            searchQuery(previewContent, query, index, matcher).then(dispatch).catch(log.error);
+            log.error('TODO: Search query', query, index);
             setDebId(null);
         }, DEBOUNCE_TIMEOUT);
         setDebId(id);
@@ -105,14 +103,14 @@ export const Search: React.FC<Props> = ({ previewContent, index, matcher, dispat
         }
         e.preventDefault();
     };
-    const handleMatcherSelect = (): void => {
+    const focusInputElem = (): void => {
         // Focus <input> at next tick since re-render will happen after this callback and it will blur the element again
         setTimeout(() => inputElem.current?.focus(), 0);
     };
 
     return (
         <Paper elevation={4} style={PAPER_STYLE}>
-            <MatcherSelect matcher={matcher} dispatch={dispatch} onSelect={handleMatcherSelect} />
+            <MatcherSelect matcher={matcher} dispatch={dispatch} onSelect={focusInputElem} />
             <InputBase
                 style={INPUT_STYLE}
                 inputProps={{

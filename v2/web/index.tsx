@@ -6,7 +6,7 @@ import type { MessageFromMain } from './ipc';
 
 declare global {
     interface Window {
-        postShibaMessageFromMain(msg: MessageFromMain): Promise<void>;
+        postShibaMessageFromMain(msg: MessageFromMain): void;
     }
 }
 

@@ -124,14 +124,10 @@ impl PreviewContent {
             }
         };
 
-        // TODO
-        renderer.send_message_raw(MarkdownParser::new(&content))?;
-
         let prev_content = std::mem::replace(&mut self.content, content);
         let content = self.content.as_str();
-
-        let msg = if reload {
-            Some(MessageToRenderer::Content { content, offset: None })
+        let offset = if reload {
+            None
         } else {
             prev_content
                 .as_bytes()
@@ -142,14 +138,10 @@ impl PreviewContent {
                     let (prev_len, len) = (prev_content.len(), content.len());
                     (prev_len != len).then_some(std::cmp::min(prev_len, len))
                 })
-                .map(|offset| MessageToRenderer::Content { content, offset: Some(offset) })
         };
+        log::debug!("TODO: Embed marker with offset: {:?}", offset);
 
-        if let Some(msg) = msg {
-            renderer.send_message(msg)?;
-        } else {
-            log::debug!("Sending preview content was skipped since content did not change");
-        }
+        renderer.send_message_raw(MarkdownParser::new(content))?;
 
         if reload {
             renderer.set_title(&self.title(path));

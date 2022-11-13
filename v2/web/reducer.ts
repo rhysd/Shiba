@@ -1,26 +1,19 @@
-import type { Root as Hast } from 'hast';
 import * as log from './log';
 import type { SearchMatcher } from './ipc';
-import { parseMarkdown, searchHast, PreviewContent } from './preview';
 
 export function findSearchMatchElems(): NodeListOf<HTMLElement> {
     return document.querySelectorAll('.search-text,.search-text-current');
 }
 
-export interface SearchState {
-    query: string;
-    index: number | null;
-}
-
 export interface State {
-    search: SearchState | null;
-    preview: PreviewContent | null;
+    searching: boolean;
+    searchIndex: number | null;
     matcher: SearchMatcher;
 }
 
 export const INITIAL_STATE: State = {
-    search: null,
-    preview: null,
+    searching: false,
+    searchIndex: null,
     matcher: 'SmartCase',
 };
 
@@ -32,9 +25,7 @@ type Action =
           kind: 'close_search';
       }
     | {
-          kind: 'search_query';
-          query: string;
-          content: PreviewContent;
+          kind: 'search_index';
           index: number | null;
       }
     | {
@@ -44,11 +35,6 @@ type Action =
     | {
           kind: 'search_matcher';
           matcher: SearchMatcher;
-      }
-    | {
-          kind: 'preview_content';
-          content: PreviewContent;
-          query: string;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -56,42 +42,19 @@ export function reducer(state: State, action: Action): State {
     log.debug('Dispatched new action', action.kind, action);
     switch (action.kind) {
         case 'open_search':
-            if (state.search !== null) {
-                return state; // When search is ongoing, do not update the state
+            if (state.searching) {
+                return state;
             }
-            return { ...state, search: { query: '', index: null } };
+            return { ...state, searching: true, searchIndex: null };
         case 'close_search':
-            return { ...state, search: null };
-        case 'search_query':
-            return {
-                ...state,
-                search: {
-                    query: action.query,
-                    index: action.index,
-                },
-                preview: action.content,
-            };
+            return { ...state, searching: false };
         case 'search_index':
-            if (state.search === null) {
+            if (!state.searching) {
                 return state;
             }
             return {
                 ...state,
-                search: {
-                    ...state.search,
-                    index: action.index,
-                },
-            };
-        case 'preview_content':
-            return {
-                ...state,
-                preview: action.content,
-                search: state.search
-                    ? {
-                          query: action.query,
-                          index: null,
-                      }
-                    : null,
+                searchIndex: action.index,
             };
         case 'search_matcher':
             if (state.matcher === action.matcher) {
@@ -115,17 +78,6 @@ export function closeSearch(): Action {
         elem.className = '';
     }
     return { kind: 'close_search' };
-}
-
-export async function searchQuery(
-    hast: Hast,
-    query: string,
-    index: number | null,
-    matcher: SearchMatcher,
-): Promise<Action> {
-    const react = await searchHast(hast, query, index, matcher);
-    const content = { react, hast };
-    return { kind: 'search_query', query, content, index };
 }
 
 export function searchIndex(index: number | null): Action {
@@ -200,14 +152,4 @@ export function searchPrevious(index: number | null): Action {
 
 export function setSearchMatcher(matcher: SearchMatcher): Action {
     return { kind: 'search_matcher', matcher };
-}
-
-export async function previewContent(
-    markdown: string,
-    query: string,
-    matcher: SearchMatcher,
-    changeOffset: number | null,
-): Promise<Action> {
-    const content = await parseMarkdown(markdown, query, matcher, changeOffset);
-    return { kind: 'preview_content', content, query };
 }

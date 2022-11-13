@@ -12,6 +12,7 @@ export class PreviewContent {
         this.rootElem = root;
     }
 
+    // Note: Render at requestAnimationFrame may be better for performance
     render(tree: ParseTreeElem[]): void {
         this.rootElem.textContent = '';
         const renderer = new ParseTreeRenderer();
@@ -19,7 +20,18 @@ export class PreviewContent {
             renderer.render(elem, this.rootElem);
         }
         renderer.end(this.rootElem);
+        // TODO: Scroll to last modified element
     }
+}
+
+function rawText(elem: ParseTreeElem): string {
+    if (typeof elem === 'string') {
+        return elem;
+    }
+    if ('c' in elem) {
+        return elem.c.map(rawText).join('');
+    }
+    return '';
 }
 
 interface TableState {
@@ -82,11 +94,7 @@ class ParseTreeRenderer {
                 if (elem.title) {
                     i.title = elem.title;
                 }
-                const tmp = document.createElement('span');
-                for (const child of elem.c) {
-                    this.render(child, tmp);
-                }
-                i.alt = tmp.innerHTML;
+                i.alt = elem.c.map(rawText).join('');
                 parent.appendChild(i);
                 return;
             }
@@ -143,7 +151,7 @@ class ParseTreeRenderer {
                 node = document.createElement('thead');
                 break;
             case 'tbody':
-                node = document.createElement('thead');
+                node = document.createElement('tbody');
                 break;
             case 'tr':
                 if (this.table) {
@@ -178,6 +186,7 @@ class ParseTreeRenderer {
                 a.href = `#user-content-fn-${elem.id}`;
                 a.id = `user-content-fnref-${elem.id}`;
                 a.setAttribute('aria-describedby', 'footnote-label');
+                a.textContent = `${elem.id}`;
                 const sup = document.createElement('sup');
                 sup.appendChild(a);
                 node = sup;
@@ -187,16 +196,8 @@ class ParseTreeRenderer {
                 this.footNotes.push(elem);
                 return;
             case 'html': {
-                const tmp = document.createElement('span');
-                tmp.innerHTML = elem.raw;
-                for (;;) {
-                    const c = tmp.lastChild;
-                    if (c === null) {
-                        return;
-                    }
-                    tmp.removeChild(c);
-                    parent.appendChild(c);
-                }
+                parent.innerHTML += elem.raw;
+                return;
             }
             default:
                 log.error('Unknown parse tree element:', JSON.stringify(elem));
@@ -239,7 +240,7 @@ class ParseTreeRenderer {
 
                 const a = document.createElement('a');
                 a.textContent = '↩';
-                a.href = `user-content-fnref-${elem.id}`;
+                a.href = `#user-content-fnref-${elem.id}`;
                 a.className = 'data-footnote-backref';
                 a.setAttribute('aria-label', 'Back to content');
 

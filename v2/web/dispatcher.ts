@@ -1,14 +1,5 @@
 import Mousetrap from 'mousetrap';
-import {
-    Dispatch,
-    State,
-    INITIAL_STATE,
-    previewContent,
-    openSearch,
-    searchNext,
-    searchPrevious,
-    setSearchMatcher,
-} from './reducer';
+import { Dispatch, State, INITIAL_STATE, openSearch, searchNext, searchPrevious, setSearchMatcher } from './reducer';
 import { sendMessage, MessageFromMain, KeyAction } from './ipc';
 import { PreviewContent } from './markdown';
 import * as log from './log';
@@ -38,32 +29,26 @@ export class Dispatcher {
     }
 
     searchNext(): void {
-        const { search } = this.state;
-        if (search !== null) {
-            this.dispatch(searchNext(search.index));
+        const { searching, searchIndex } = this.state;
+        if (searching) {
+            this.dispatch(searchNext(searchIndex));
         }
     }
 
     searchPrev(): void {
-        const { search } = this.state;
-        if (search !== null) {
-            this.dispatch(searchPrevious(search.index));
+        const { searching, searchIndex } = this.state;
+        if (searching) {
+            this.dispatch(searchPrevious(searchIndex));
         }
     }
 
     // Note: Passing message as JSON string and parse it with JSON.parse may be faster.
     // https://v8.dev/blog/cost-of-javascript-2019#json
-    async handleIpcMessage(msg: MessageFromMain): Promise<void> {
+    handleIpcMessage(msg: MessageFromMain): void {
         log.debug('Received IPC message from main:', msg.kind, msg);
         // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
         try {
             switch (msg.kind) {
-                case 'content': {
-                    const query = this.state.search?.query ?? '';
-                    const offset = msg.offset ?? null;
-                    this.dispatch(await previewContent(msg.content, query, this.state.matcher, offset));
-                    break;
-                }
                 case 'parse_tree':
                     this.content.render(msg.tree);
                     break;

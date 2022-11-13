@@ -147,11 +147,6 @@ export type ParseTreeElem =
 
 export type MessageFromMain =
     | {
-          kind: 'content';
-          content: string;
-          offset?: number;
-      }
-    | {
           kind: 'parse_tree';
           tree: ParseTreeElem[];
       }
