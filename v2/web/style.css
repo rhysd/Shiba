@@ -20,3 +20,8 @@ body {
 .search-text-current {
   background-color: #ef9a4a;
 }
+
+/* Both <pre> from github-markdown.css and <code> from highlight.js are trying to add 1em padding. */
+pre code.hljs {
+  padding: 0;
+}

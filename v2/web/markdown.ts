@@ -1,3 +1,4 @@
+import hljs from 'highlight.js';
 import * as log from './log';
 import type { ParseTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
 
@@ -140,8 +141,13 @@ class ParseTreeRenderer {
             case 'code': {
                 const c = document.createElement('code');
                 if (elem.lang) {
-                    // TODO: Get correct langauge from `elem.lang` via highlight.js
                     c.className = `language-${elem.lang}`;
+                    for (const child of elem.c) {
+                        this.render(child, c);
+                    }
+                    hljs.highlightElement(c);
+                    parent.appendChild(c);
+                    return;
                 }
                 node = c;
                 break;
