@@ -143,7 +143,10 @@ export type ParseTreeElem =
           title?: string;
           c: ParseTreeElem[]; // Note: Children are alt text
       }
-    | ParseTreeFootNoteDef;
+    | ParseTreeFootNoteDef
+    | {
+          t: 'modified'; // Special token to indicate the last modified position
+      };
 
 export type MessageFromMain =
     | {

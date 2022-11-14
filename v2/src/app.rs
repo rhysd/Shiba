@@ -139,9 +139,9 @@ impl PreviewContent {
                     (prev_len != len).then_some(std::cmp::min(prev_len, len))
                 })
         };
-        log::debug!("TODO: Embed marker with offset: {:?}", offset);
+        log::debug!("Last modified offset: {:?}", offset);
 
-        renderer.send_message_raw(MarkdownParser::new(content))?;
+        renderer.send_message_raw(MarkdownParser::new(content, offset))?;
 
         if reload {
             renderer.set_title(&self.title(path));

@@ -1,6 +1,14 @@
 import * as log from './log';
 import type { ParseTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
 
+function appearInViewport(elem: Element): boolean {
+    const { top, left, bottom, right } = elem.getBoundingClientRect();
+    const height = window.innerHeight ?? document.documentElement.clientHeight;
+    const width = window.innerWidth ?? document.documentElement.clientWidth;
+    const outside = bottom < 0 || height < top || right < 0 || width < left;
+    return !outside;
+}
+
 export class PreviewContent {
     rootElem: HTMLElement;
 
@@ -20,7 +28,20 @@ export class PreviewContent {
             renderer.render(elem, this.rootElem);
         }
         renderer.end(this.rootElem);
-        // TODO: Scroll to last modified element
+        this.scrollToLastModified();
+    }
+
+    scrollToLastModified(): void {
+        const marker = this.rootElem.querySelector('.last-modified-marker');
+        if (marker === null || appearInViewport(marker)) {
+            return;
+        }
+        log.debug('Scrolling to last modified element:', marker);
+        marker.scrollIntoView({
+            behavior: 'smooth', // This does not work on WKWebView
+            block: 'center',
+            inline: 'center',
+        });
     }
 }
 
@@ -196,8 +217,15 @@ class ParseTreeRenderer {
                 this.footNotes.push(elem);
                 return;
             case 'html': {
+                // TODO: Apply DomPurify to `elem.raw`
                 parent.innerHTML += elem.raw;
                 return;
+            }
+            case 'modified': {
+                const s = document.createElement('span');
+                s.className = 'last-modified-marker';
+                node = s;
+                break;
             }
             default:
                 log.error('Unknown parse tree element:', JSON.stringify(elem));
