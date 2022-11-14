@@ -6,7 +6,7 @@ import * as log from './log';
 
 // Global action dispatcher to handle IPC messages from the main
 
-export class Dispatcher {
+export class GlobalDispatcher {
     public dispatch: Dispatch;
     public state: State;
     public content: PreviewContent;
@@ -59,7 +59,11 @@ export class Dispatcher {
                             e.preventDefault();
                             e.stopPropagation();
                             log.debug('Triggered key shortcut:', action, 'by', keybind);
-                            this.handleKeyAction(action);
+                            try {
+                                this.handleKeyAction(action);
+                            } catch (err) {
+                                log.error('Error while handling key action', action, err);
+                            }
                         });
                     }
                     this.dispatch(setSearchMatcher(msg.search.matcher));
@@ -87,65 +91,61 @@ export class Dispatcher {
     }
 
     handleKeyAction(action: KeyAction): void {
-        try {
-            switch (action) {
-                case 'ScrollDown':
-                    window.scrollBy(0, window.innerHeight / 2);
-                    break;
-                case 'ScrollUp':
-                    window.scrollBy(0, -window.innerHeight / 2);
-                    break;
-                case 'ScrollLeft':
-                    window.scrollBy(-window.innerWidth / 2, 0);
-                    break;
-                case 'ScrollRight':
-                    window.scrollBy(window.innerWidth / 2, 0);
-                    break;
-                case 'ScrollPageDown':
-                    window.scrollBy(0, window.innerHeight);
-                    break;
-                case 'ScrollPageUp':
-                    window.scrollBy(0, -window.innerHeight);
-                    break;
-                case 'Forward':
-                    sendMessage({ kind: 'forward' });
-                    break;
-                case 'Back':
-                    sendMessage({ kind: 'back' });
-                    break;
-                case 'Reload':
-                    sendMessage({ kind: 'reload' });
-                    break;
-                case 'OpenFile':
-                    sendMessage({ kind: 'file_dialog' });
-                    break;
-                case 'OpenDir':
-                    sendMessage({ kind: 'dir_dialog' });
-                    break;
-                case 'ScrollTop':
-                    window.scrollTo(0, 0);
-                    break;
-                case 'ScrollBottom':
-                    window.scrollTo(0, document.body.scrollHeight);
-                    break;
-                case 'Search':
-                    this.openSearch();
-                    break;
-                case 'SearchNext':
-                    this.searchNext();
-                    break;
-                case 'SearchPrev':
-                    this.searchPrev();
-                    break;
-                case 'Quit':
-                    sendMessage({ kind: 'quit' });
-                    break;
-                default:
-                    log.error('Unknown key action:', action);
-                    break;
-            }
-        } catch (err) {
-            log.error('Could not handle key action', action, err);
+        switch (action) {
+            case 'ScrollDown':
+                window.scrollBy(0, window.innerHeight / 2);
+                break;
+            case 'ScrollUp':
+                window.scrollBy(0, -window.innerHeight / 2);
+                break;
+            case 'ScrollLeft':
+                window.scrollBy(-window.innerWidth / 2, 0);
+                break;
+            case 'ScrollRight':
+                window.scrollBy(window.innerWidth / 2, 0);
+                break;
+            case 'ScrollPageDown':
+                window.scrollBy(0, window.innerHeight);
+                break;
+            case 'ScrollPageUp':
+                window.scrollBy(0, -window.innerHeight);
+                break;
+            case 'Forward':
+                sendMessage({ kind: 'forward' });
+                break;
+            case 'Back':
+                sendMessage({ kind: 'back' });
+                break;
+            case 'Reload':
+                sendMessage({ kind: 'reload' });
+                break;
+            case 'OpenFile':
+                sendMessage({ kind: 'file_dialog' });
+                break;
+            case 'OpenDir':
+                sendMessage({ kind: 'dir_dialog' });
+                break;
+            case 'ScrollTop':
+                window.scrollTo(0, 0);
+                break;
+            case 'ScrollBottom':
+                window.scrollTo(0, document.body.scrollHeight);
+                break;
+            case 'Search':
+                this.openSearch();
+                break;
+            case 'SearchNext':
+                this.searchNext();
+                break;
+            case 'SearchPrev':
+                this.searchPrev();
+                break;
+            case 'Quit':
+                sendMessage({ kind: 'quit' });
+                break;
+            default:
+                log.error('Unknown key action:', action);
+                break;
         }
     }
 }

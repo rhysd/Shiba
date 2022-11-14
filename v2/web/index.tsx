@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './components/App';
-import { Dispatcher } from './dispatcher';
+import { GlobalDispatcher } from './dispatcher';
 import type { MessageFromMain } from './ipc';
 
 declare global {
@@ -10,7 +10,7 @@ declare global {
     }
 }
 
-const dispatcher = new Dispatcher();
+const dispatcher = new GlobalDispatcher();
 
 // The main process will send IPC events via this global function
 window.postShibaMessageFromMain = dispatcher.handleIpcMessage.bind(dispatcher);

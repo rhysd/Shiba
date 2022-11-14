@@ -2,10 +2,10 @@ import React, { useReducer, useEffect } from 'react';
 import { Search } from './Search';
 import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
-import type { Dispatcher } from '../dispatcher';
+import type { GlobalDispatcher } from '../dispatcher';
 
 interface Props {
-    dispatcher: Dispatcher;
+    dispatcher: GlobalDispatcher;
 }
 
 export const App: React.FC<Props> = ({ dispatcher }) => {
