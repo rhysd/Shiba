@@ -4,17 +4,45 @@ use pulldown_cmark::{
 };
 use std::collections::HashMap;
 use std::fmt::{self, Write};
+use std::marker::PhantomData;
 
 type Result<T> = std::result::Result<T, fmt::Error>;
-type Range = std::ops::Range<usize>;
+pub type Range = std::ops::Range<usize>;
 
-pub struct MarkdownParser<'a> {
-    parser: Parser<'a, 'a>,
-    offset: Option<usize>,
+pub trait ParseResult: Default {
+    fn on_text(&mut self, text: &str, range: &Range);
 }
 
-impl<'a> MarkdownParser<'a> {
-    pub fn new(source: &'a str, offset: Option<usize>) -> Self {
+impl ParseResult for () {
+    fn on_text(&mut self, _text: &str, _range: &Range) {}
+}
+
+#[derive(Clone, Copy)]
+pub enum TokenKind {
+    Normal,
+    MatchOther,
+    MatchCurrent,
+}
+
+pub trait TextTokenizer {
+    fn tokenize<'t>(&mut self, text: &'t str, range: &Range) -> (TokenKind, &'t str);
+}
+
+impl TextTokenizer for () {
+    fn tokenize<'t>(&mut self, text: &'t str, _range: &Range) -> (TokenKind, &'t str) {
+        (TokenKind::Normal, text)
+    }
+}
+
+pub struct MarkdownParser<'a, R: ParseResult, T: TextTokenizer> {
+    parser: Parser<'a, 'a>,
+    offset: Option<usize>,
+    text_tokenizer: T,
+    _phantom: PhantomData<R>,
+}
+
+impl<'a, R: ParseResult, T: TextTokenizer> MarkdownParser<'a, R, T> {
+    pub fn new(source: &'a str, offset: Option<usize>, text_tokenizer: T) -> Self {
         let mut options = Options::empty();
         options.insert(
             Options::ENABLE_STRIKETHROUGH
@@ -23,16 +51,19 @@ impl<'a> MarkdownParser<'a> {
                 | Options::ENABLE_TASKLISTS,
         );
         let parser = Parser::new_ext(source, options);
-        Self { parser, offset }
+        Self { parser, offset, text_tokenizer, _phantom: PhantomData }
     }
 }
 
-impl<'a> RawMessageWriter for MarkdownParser<'a> {
-    fn write_to(self, writer: impl Write) -> Result<()> {
-        let mut ser = ParseTreeSerializer::new(writer, self.offset);
+impl<'a, R: ParseResult, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, R, T> {
+    type Output = R;
+
+    fn write_to(self, writer: impl Write) -> Result<Self::Output> {
+        let mut ser = ParseTreeSerializer::new(writer, self.offset, self.text_tokenizer);
         ser.out.write_str(r#"{"kind":"parse_tree","tree":"#)?;
-        let mut writer = ser.push(self.parser)?;
-        writer.write_char('}')
+        ser.push(self.parser)?;
+        ser.out.write_char('}')?;
+        Ok(ser.parsed)
     }
 }
 
@@ -43,26 +74,41 @@ enum TableState {
     Row,
 }
 
-struct ParseTreeSerializer<'a, W: Write> {
+struct ParseTreeSerializer<'a, W: Write, R: ParseResult, T: TextTokenizer> {
     out: W,
     table: TableState,
     is_start: bool,
     ids: HashMap<CowStr<'a>, usize>,
     modified: Option<usize>,
+    parsed: R,
+    text_tokenizer: T,
 }
 
-impl<'a, W: Write> ParseTreeSerializer<'a, W> {
-    fn new(w: W, modified: Option<usize>) -> Self {
-        Self { out: w, table: TableState::Head, is_start: true, ids: HashMap::new(), modified }
+impl<'a, W: Write, R: ParseResult, T: TextTokenizer> ParseTreeSerializer<'a, W, R, T> {
+    fn new(w: W, modified: Option<usize>, text_tokenizer: T) -> Self {
+        Self {
+            out: w,
+            table: TableState::Head,
+            is_start: true,
+            ids: HashMap::new(),
+            modified,
+            parsed: R::default(),
+            text_tokenizer,
+        }
     }
 
-    fn push(mut self, parser: Parser<'a, 'a>) -> Result<W> {
+    fn push(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
         self.out.write_char('[')?;
         for (event, range) in parser.into_offset_iter() {
             self.event(event, range)?;
         }
-        self.out.write_char(']')?;
-        Ok(self.out)
+        // Modified offset was not consumed by any text, it would mean that some non-text parts after any text were
+        // modified. As a fallback, set 'modified' marker after the last text.
+        if self.modified.is_some() {
+            self.tag("modified")?;
+            self.out.write_char('}')?;
+        }
+        self.out.write_char(']')
     }
 
     fn string(&mut self, s: &str) -> Result<()> {
@@ -124,16 +170,43 @@ impl<'a, W: Write> ParseTreeSerializer<'a, W> {
         write!(self.out, r#"{{"t":"{}""#, name)
     }
 
+    fn text_tokens(&mut self, mut input: &str, mut range: Range) -> Result<()> {
+        while !input.is_empty() {
+            let (token, text) = self.text_tokenizer.tokenize(input, &range);
+            match token {
+                TokenKind::Normal => {
+                    self.comma()?;
+                    self.string(text)?;
+                }
+                TokenKind::MatchOther => {
+                    self.tag("match")?;
+                    self.children_begin()?;
+                    self.string(text)?;
+                    self.children_end()?;
+                }
+                TokenKind::MatchCurrent => {
+                    self.tag("match-current")?;
+                    self.children_begin()?;
+                    self.string(text)?;
+                    self.children_end()?;
+                }
+            }
+            input = &input[text.len()..];
+            range.start += text.len();
+        }
+        Ok(())
+    }
+
     fn text(&mut self, text: &str, range: Range) -> Result<()> {
+        self.parsed.on_text(text, &range);
+
         let Some(offset) = self.modified else {
-            self.comma()?;
-            return self.string(text);
+            return self.text_tokens(text, range);
         };
 
         let Range { start, end } = range;
         if end < offset {
-            self.comma()?;
-            return self.string(text);
+            return self.text_tokens(text, range);
         }
 
         // Handle the last modified offset with this text token
@@ -142,20 +215,20 @@ impl<'a, W: Write> ParseTreeSerializer<'a, W> {
 
         if offset <= start {
             self.tag("modified")?;
-            self.out.write_str("},")?;
-            self.string(text)
+            self.out.write_char('}')?;
+            self.text_tokens(text, range)
         } else if end == offset {
             self.comma()?;
-            self.string(text)?;
+            self.text_tokens(text, range)?;
             self.tag("modified")?;
             self.out.write_char('}')
         } else {
             self.comma()?;
             let i = offset - start;
-            self.string(&text[..i])?;
+            self.text_tokens(&text[..i], range.start..offset)?;
             self.tag("modified")?;
-            self.out.write_str("},")?;
-            self.string(&text[i..])
+            self.out.write_char('}')?;
+            self.text_tokens(&text[i..], offset..range.end)
         }
     }
 
@@ -167,8 +240,11 @@ impl<'a, W: Write> ParseTreeSerializer<'a, W> {
             End(tag) => self.end_tag(tag),
             Text(text) => self.text(&text, range),
             Code(text) => {
+                let pad = (range.len() - text.len()) / 2;
+                let inner_range = (range.start + pad)..(range.end - pad);
                 self.tag("code")?;
                 self.children_begin()?;
+                self.text(&text, inner_range)?;
                 self.string(&text)?;
                 self.children_end()
             }
@@ -178,10 +254,7 @@ impl<'a, W: Write> ParseTreeSerializer<'a, W> {
                 self.string(&html)?;
                 self.out.write_char('}')
             }
-            SoftBreak => {
-                self.comma()?;
-                self.out.write_str(r#""\n""#)
-            }
+            SoftBreak => self.text("\n", range),
             HardBreak => {
                 self.tag("br")?;
                 self.out.write_char('}')

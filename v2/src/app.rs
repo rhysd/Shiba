@@ -1,11 +1,12 @@
 use crate::cli::Options;
-use crate::config::Config;
+use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
+use crate::search::Text;
 use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
 use anyhow::{Context as _, Result};
 use std::collections::VecDeque;
@@ -93,11 +94,12 @@ impl History {
 struct PreviewContent {
     home_dir: Option<PathBuf>,
     content: String,
+    text: Text,
 }
 
 impl Default for PreviewContent {
     fn default() -> Self {
-        Self { home_dir: dirs::home_dir(), content: String::new() }
+        Self { home_dir: dirs::home_dir(), content: String::new(), text: Text::default() }
     }
 }
 
@@ -141,13 +143,34 @@ impl PreviewContent {
         };
         log::debug!("Last modified offset: {:?}", offset);
 
-        renderer.send_message_raw(MarkdownParser::new(content, offset))?;
+        self.text = renderer.send_message_raw(MarkdownParser::new(content, offset, ()))?;
 
         if reload {
             renderer.set_title(&self.title(path));
         }
 
         Ok(true)
+    }
+
+    pub fn search<R: Renderer>(
+        &mut self,
+        renderer: &R,
+        query: &str,
+        index: Option<usize>,
+        matcher: SearchMatcher,
+    ) -> Result<()> {
+        log::debug!("Re-rendering content with query {:?} and current index {:?}", query, index);
+        if query.is_empty() {
+            return renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()));
+        }
+
+        let matches = self.text.search(query, matcher);
+        log::debug!("Search hit {} matches", matches.len());
+
+        let Some(tokenizer) = matches.tokenizer(index) else {
+            return renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()));
+        };
+        renderer.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
     }
 }
 
@@ -271,6 +294,9 @@ where
                 if let Some(path) = mem::take(&mut self.options.init_file) {
                     self.preview_new(path)?;
                 }
+            }
+            MessageFromRenderer::Search { query, index, matcher } => {
+                self.preview.search(&self.renderer, &query, index, matcher)?
             }
             MessageFromRenderer::Forward => self.forward()?,
             MessageFromRenderer::Back => self.back()?,

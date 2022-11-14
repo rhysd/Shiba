@@ -1885,6 +1885,7 @@ dependencies = [
 name = "shiba-preview"
 version = "0.0.0"
 dependencies = [
+ "aho-corasick",
  "anyhow",
  "dirs",
  "env_logger",

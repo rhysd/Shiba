@@ -15,6 +15,7 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+aho-corasick = "0.7.19"
 anyhow = "1.0.66"
 dirs = "4.0.0"
 env_logger = "0.9.1"

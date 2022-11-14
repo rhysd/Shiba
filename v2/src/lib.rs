@@ -6,6 +6,7 @@ mod dialog;
 mod markdown;
 mod opener;
 mod renderer;
+mod search;
 mod watcher;
 mod webview;
 

@@ -8,8 +8,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
 import { MatcherSelect } from './MatcherSelect';
 import { Dispatch, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
-import type { SearchMatcher } from '../ipc';
-import * as log from '../log';
+import { type SearchMatcher, sendMessage } from '../ipc';
 
 const DEBOUNCE_TIMEOUT = 100; // 100ms
 const PAPER_STYLE: React.CSSProperties = {
@@ -78,6 +77,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
         dispatch(searchNext(index));
     };
     const handleClose = (): void => {
+        sendMessage({ kind: 'search', query: '', index: null, matcher });
         dispatch(closeSearch());
     };
     const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
@@ -86,7 +86,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
         }
         const query = e.currentTarget.value;
         const id = setTimeout(() => {
-            log.error('TODO: Search query', query, index);
+            sendMessage({ kind: 'search', query, index, matcher });
             setDebId(null);
         }, DEBOUNCE_TIMEOUT);
         setDebId(id);

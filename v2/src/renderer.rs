@@ -1,5 +1,5 @@
 use crate::cli::Options;
-use crate::config::Search as SearchConfig;
+use crate::config::{Search as SearchConfig, SearchMatcher};
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -50,6 +50,7 @@ pub enum MessageFromRenderer {
     Forward,
     Back,
     Quit,
+    Search { query: String, index: Option<usize>, matcher: SearchMatcher },
     Error { message: String },
 }
 
@@ -82,7 +83,8 @@ pub trait MenuItems {
 }
 
 pub trait RawMessageWriter {
-    fn write_to(self, writer: impl fmt::Write) -> std::result::Result<(), fmt::Error>;
+    type Output;
+    fn write_to(self, writer: impl fmt::Write) -> std::result::Result<Self::Output, fmt::Error>;
 }
 
 pub trait Renderer: Sized {
@@ -92,6 +94,6 @@ pub trait Renderer: Sized {
     fn open(options: &Options, event_loop: &Self::EventLoop) -> Result<Self>;
     fn menu(&self) -> &Self::Menu;
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
-    fn send_message_raw(&self, writer: impl RawMessageWriter) -> Result<()>;
+    fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
 }

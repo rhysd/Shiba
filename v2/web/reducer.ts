@@ -47,7 +47,7 @@ export function reducer(state: State, action: Action): State {
             }
             return { ...state, searching: true, searchIndex: null };
         case 'close_search':
-            return { ...state, searching: false };
+            return { ...state, searching: false, searchIndex: null };
         case 'search_index':
             if (!state.searching) {
                 return state;
@@ -73,10 +73,6 @@ export function openSearch(): Action {
 }
 
 export function closeSearch(): Action {
-    const elems = findSearchMatchElems();
-    for (const elem of elems) {
-        elem.className = '';
-    }
     return { kind: 'close_search' };
 }
 

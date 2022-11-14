@@ -242,12 +242,12 @@ impl Renderer for Wry {
         Ok(())
     }
 
-    fn send_message_raw(&self, writer: impl RawMessageWriter) -> Result<()> {
+    fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output> {
         let mut buf = "window.postShibaMessageFromMain(".to_string();
-        writer.write_to(&mut buf)?;
+        let result = writer.write_to(&mut buf)?;
         buf.push(')');
         self.webview.evaluate_script(&buf)?;
-        Ok(())
+        Ok(result)
     }
 
     fn set_title(&self, title: &str) {

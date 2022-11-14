@@ -146,6 +146,14 @@ export type ParseTreeElem =
     | ParseTreeFootNoteDef
     | {
           t: 'modified'; // Special token to indicate the last modified position
+      }
+    | {
+          t: 'match'; // Search match
+          c: ParseTreeElem[];
+      }
+    | {
+          t: 'match-current'; // Current search match
+          c: ParseTreeElem[];
       };
 
 export type MessageFromMain =
@@ -193,6 +201,12 @@ export type MessageToMain =
       }
     | {
           kind: 'dir_dialog';
+      }
+    | {
+          kind: 'search';
+          query: string;
+          index: number | null;
+          matcher: SearchMatcher;
       }
     | {
           kind: 'error';
