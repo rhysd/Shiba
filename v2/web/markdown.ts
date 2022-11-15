@@ -1,5 +1,6 @@
 import hljs from 'highlight.js';
 import tippy from 'tippy.js';
+import { sanitize } from 'dompurify';
 import * as log from './log';
 import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
 
@@ -42,6 +43,12 @@ function rawText(elem: RenderTreeElem): string {
         return elem.c.map(rawText).join('');
     }
     return '';
+}
+
+function span(className: string): HTMLSpanElement {
+    const s = document.createElement('span');
+    s.className = className;
+    return s;
 }
 
 interface TableState {
@@ -233,39 +240,32 @@ class RenderTreeRenderer {
                 this.footNotes.push(elem);
                 return;
             case 'html': {
-                // TODO: Apply DomPurify to `elem.raw`
-                parent.insertAdjacentHTML('beforeend', elem.raw);
+                const sanitized = sanitize(elem.raw, {
+                    USE_PROFILES: { html: true },
+                    RETURN_DOM_FRAGMENT: true,
+                });
+                parent.appendChild(sanitized);
                 return;
             }
             case 'modified': {
-                const s = document.createElement('span');
-                s.className = 'last-modified-marker';
-                this.lastModified = s;
-                node = s;
+                this.lastModified = span('last-modified-marker');
+                node = this.lastModified;
                 break;
             }
             case 'match': {
-                const s = document.createElement('span');
-                s.className = 'search-text';
-                node = s;
+                node = span('search-text');
                 break;
             }
             case 'match-current': {
-                const s = document.createElement('span');
-                s.className = 'search-text-current';
-                node = s;
+                node = span('search-text-current');
                 break;
             }
             case 'match-start': {
-                const s = document.createElement('span');
-                s.className = 'search-text-start';
-                node = s;
+                node = span('search-text-start');
                 break;
             }
             case 'match-current-start': {
-                const s = document.createElement('span');
-                s.className = 'search-text-current-start';
-                node = s;
+                node = span('search-text-current-start');
                 break;
             }
             default:

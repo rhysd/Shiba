@@ -35,6 +35,7 @@
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.13",
+    "dompurify": "^2.4.1",
     "github-markdown-css": "^5.1.0",
     "highlight.js": "^11.6.0",
     "mousetrap": "^1.6.5",
@@ -43,6 +44,7 @@
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {
+    "@types/dompurify": "^2.4.0",
     "@types/mousetrap": "^1.6.11",
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.9",
