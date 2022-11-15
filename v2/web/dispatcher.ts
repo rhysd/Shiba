@@ -57,7 +57,7 @@ export class GlobalDispatcher {
         // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
         try {
             switch (msg.kind) {
-                case 'parse_tree':
+                case 'render_tree':
                     this.content.render(msg.tree);
                     break;
                 case 'config':

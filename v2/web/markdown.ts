@@ -1,6 +1,6 @@
 import hljs from 'highlight.js';
 import * as log from './log';
-import type { ParseTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
+import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
 
 function appearInViewport(elem: Element): boolean {
     const { top, left, bottom, right } = elem.getBoundingClientRect();
@@ -22,7 +22,7 @@ export class PreviewContent {
     }
 
     // Note: Render at requestAnimationFrame may be better for performance
-    render(tree: ParseTreeElem[]): void {
+    render(tree: RenderTreeElem[]): void {
         this.rootElem.textContent = '';
         const renderer = new ParseTreeRenderer();
         for (const elem of tree) {
@@ -46,7 +46,7 @@ export class PreviewContent {
     }
 }
 
-function rawText(elem: ParseTreeElem): string {
+function rawText(elem: RenderTreeElem): string {
     if (typeof elem === 'string') {
         return elem;
     }
@@ -81,7 +81,7 @@ class ParseTreeRenderer {
         return aligns[index];
     }
 
-    render(elem: ParseTreeElem, parent: HTMLElement): void {
+    render(elem: RenderTreeElem, parent: HTMLElement): void {
         if (typeof elem === 'string') {
             parent.append(elem);
             return;
@@ -260,7 +260,7 @@ class ParseTreeRenderer {
                 break;
             }
             default:
-                log.error('Unknown parse tree element:', JSON.stringify(elem));
+                log.error('Unknown render tree element:', JSON.stringify(elem));
                 return;
         }
 

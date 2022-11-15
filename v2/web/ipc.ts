@@ -35,10 +35,10 @@ export interface ParseTreeFootNoteDef {
     t: 'fn-def';
     name?: string;
     id: number;
-    c: ParseTreeElem[];
+    c: RenderTreeElem[];
 }
 // Note: 't' is abbreviation of 'tag', 'c' is abbreviation of 'children' for saving spaces
-export type ParseTreeElem =
+export type RenderTreeElem =
     | string // Text node
     | {
           t: 'html';
@@ -60,88 +60,88 @@ export type ParseTreeElem =
       }
     | {
           t: 'p';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'h';
           level: number;
           id?: string;
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'table';
           align: ParseTreeTableAlign[];
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'thead';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'tbody';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'tr';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'th';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'td';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'blockquote';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'pre';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'code';
           lang?: string;
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'ol';
           start?: number;
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'ul';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'li';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'em';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'strong';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'del';
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'a';
           href: string;
           title?: string;
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'img';
           src: string;
           title?: string;
-          c: ParseTreeElem[]; // Note: Children are alt text
+          c: RenderTreeElem[]; // Note: Children are alt text
       }
     | ParseTreeFootNoteDef
     | {
@@ -149,25 +149,25 @@ export type ParseTreeElem =
       }
     | {
           t: 'match'; // Text search match tokens after match-start
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'match-current'; // Current text search match tokens after match-current-start
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'match-start'; // First text search match token
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       }
     | {
           t: 'match-current-start'; // First current text search match token
-          c: ParseTreeElem[];
+          c: RenderTreeElem[];
       };
 
 export type MessageFromMain =
     | {
-          kind: 'parse_tree';
-          tree: ParseTreeElem[];
+          kind: 'render_tree';
+          tree: RenderTreeElem[];
       }
     | {
           kind: 'config';

@@ -73,8 +73,8 @@ impl<'a, R: ParseResult, T: TextTokenizer> RawMessageWriter for MarkdownParser<'
     type Output = R;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
-        let mut ser = ParseTreeSerializer::new(writer, self.offset, self.text_tokenizer);
-        ser.out.write_str(r#"{"kind":"parse_tree","tree":"#)?;
+        let mut ser = RenderTreeSerializer::new(writer, self.offset, self.text_tokenizer);
+        ser.out.write_str(r#"{"kind":"render_tree","tree":"#)?;
         ser.push(self.parser)?;
         ser.out.write_char('}')?;
         Ok(ser.parsed)
@@ -88,7 +88,7 @@ enum TableState {
     Row,
 }
 
-struct ParseTreeSerializer<'a, W: Write, R: ParseResult, T: TextTokenizer> {
+struct RenderTreeSerializer<'a, W: Write, R: ParseResult, T: TextTokenizer> {
     out: W,
     table: TableState,
     is_start: bool,
@@ -98,7 +98,7 @@ struct ParseTreeSerializer<'a, W: Write, R: ParseResult, T: TextTokenizer> {
     text_tokenizer: T,
 }
 
-impl<'a, W: Write, R: ParseResult, T: TextTokenizer> ParseTreeSerializer<'a, W, R, T> {
+impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W, R, T> {
     fn new(w: W, modified: Option<usize>, text_tokenizer: T) -> Self {
         Self {
             out: w,
