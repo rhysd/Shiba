@@ -245,7 +245,6 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> ParseTreeSerializer<'a, W, 
                 self.tag("code")?;
                 self.children_begin()?;
                 self.text(&text, inner_range)?;
-                self.string(&text)?;
                 self.children_end()
             }
             Html(html) => {

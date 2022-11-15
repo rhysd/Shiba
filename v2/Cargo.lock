@@ -1894,6 +1894,7 @@ dependencies = [
  "notify",
  "open",
  "pulldown-cmark",
+ "regex",
  "rfd",
  "serde",
  "serde_json",

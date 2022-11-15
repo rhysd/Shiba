@@ -142,8 +142,7 @@ class ParseTreeRenderer {
                 const c = document.createElement('code');
                 // When text search matches in content of code block, the highlight element is included in children.
                 // highlight.js only allows highlighting text nodes.
-                const hasOnlyText = elem.c.every(e => typeof e === 'string');
-                if (hasOnlyText && elem.lang && hljs.getLanguage(elem.lang)) {
+                if (elem.lang && hljs.getLanguage(elem.lang) && elem.c.every(e => typeof e === 'string')) {
                     c.className = `language-${elem.lang}`;
                     for (const child of elem.c) {
                         this.render(child, c);

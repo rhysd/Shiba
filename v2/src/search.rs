@@ -1,6 +1,67 @@
 use crate::config::SearchMatcher;
 use crate::markdown::{ParseResult, Range, TextTokenizer, TokenKind};
-use aho_corasick::AhoCorasickBuilder;
+use aho_corasick::{
+    AhoCorasick, AhoCorasickBuilder, FindIter as AhoCorasickFindIter, Match as AhoCorasickMatch,
+};
+use anyhow::Result;
+use regex::{Match as RegexMatch, Matches as RegexMatches, Regex, RegexBuilder};
+
+trait MatchPosition {
+    fn start(&self) -> usize;
+    fn end(&self) -> usize;
+}
+
+impl MatchPosition for AhoCorasickMatch {
+    fn start(&self) -> usize {
+        self.start()
+    }
+    fn end(&self) -> usize {
+        self.end()
+    }
+}
+
+impl<'text> MatchPosition for RegexMatch<'text> {
+    fn start(&self) -> usize {
+        self.start()
+    }
+    fn end(&self) -> usize {
+        self.end()
+    }
+}
+
+trait Searcher: Sized {
+    type Match<'text>: MatchPosition;
+    type Iter<'slf, 'text>: Iterator<Item = Self::Match<'text>>
+    where
+        Self: 'slf;
+    fn new(query: &str, ignore_case: bool) -> Result<Self>;
+    fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text>;
+}
+
+impl Searcher for AhoCorasick<usize> {
+    type Match<'text> = AhoCorasickMatch;
+    type Iter<'slf, 'text> = AhoCorasickFindIter<'slf, 'text, usize>;
+
+    fn new(query: &str, ignore_case: bool) -> Result<Self> {
+        Ok(AhoCorasickBuilder::new().ascii_case_insensitive(ignore_case).build([query]))
+    }
+
+    fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text> {
+        self.find_iter(text)
+    }
+}
+
+impl Searcher for Regex {
+    type Match<'text> = RegexMatch<'text>;
+    type Iter<'slf, 'text> = RegexMatches<'slf, 'text>;
+
+    fn new(query: &str, ignore_case: bool) -> Result<Self> {
+        Ok(RegexBuilder::new(query).case_insensitive(ignore_case).build()?)
+    }
+    fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text> {
+        self.find_iter(text)
+    }
+}
 
 #[derive(Default)]
 pub struct Text {
@@ -12,6 +73,45 @@ impl ParseResult for Text {
     fn on_text(&mut self, text: &str, range: &Range) {
         self.text.push_str(text);
         self.maps.push(range.clone());
+    }
+}
+
+impl Text {
+    fn search_with<S: Searcher>(&self, query: &str, ignore_case: bool) -> Result<SearchMatches> {
+        let searcher = S::new(query, ignore_case)?;
+
+        let Some(mut mapper) = SourceMapper::new(&self.maps) else {
+            return Ok(SearchMatches::default());
+        };
+        let mut matches = vec![];
+        for mat in searcher.find_iter(&self.text) {
+            let Some(start) = mapper.map_inclusive(mat.start()) else {
+                break;
+            };
+            let Some(end) = mapper.map_exclusive(mat.end()) else {
+                break;
+            };
+            matches.push(start..end);
+        }
+
+        Ok(SearchMatches(matches))
+    }
+
+    pub fn search(&self, query: &str, matcher: SearchMatcher) -> Result<SearchMatches> {
+        use SearchMatcher::*;
+
+        let ignore_case = match matcher {
+            SmartCase => !query.chars().any(|c| c.is_ascii_uppercase()),
+            CaseInsensitive => true,
+            CaseSensitive | CaseSensitiveRegex => false,
+        };
+
+        match matcher {
+            SmartCase | CaseInsensitive | CaseSensitive => {
+                self.search_with::<AhoCorasick>(query, ignore_case)
+            }
+            CaseSensitiveRegex => self.search_with::<Regex>(query, ignore_case),
+        }
     }
 }
 
@@ -53,37 +153,6 @@ impl<'a> SourceMapper<'a> {
             }
         }
         Some(self.head.start + (index - self.offset))
-    }
-}
-
-impl Text {
-    pub fn search(&self, query: &str, matcher: SearchMatcher) -> SearchMatches {
-        let ignore_case = match matcher {
-            SearchMatcher::SmartCase => !query.chars().any(|c| c.is_ascii_uppercase()),
-            SearchMatcher::CaseInsensitive => true,
-            SearchMatcher::CaseSensitive => false,
-            SearchMatcher::CaseSensitiveRegex => {
-                log::error!("CaseSensitiveRegex matcher is not supported yet");
-                false
-            }
-        };
-        let ac = AhoCorasickBuilder::new().ascii_case_insensitive(ignore_case).build([query]);
-
-        let Some(mut mapper) = SourceMapper::new(&self.maps) else {
-            return SearchMatches::default();
-        };
-        let mut matches = vec![];
-        for mat in ac.find_iter(&self.text) {
-            let Some(start) = mapper.map_inclusive(mat.start()) else {
-                break;
-            };
-            let Some(end) = mapper.map_exclusive(mat.end()) else {
-                break;
-            };
-            matches.push(start..end);
-        }
-
-        SearchMatches(matches)
     }
 }
 

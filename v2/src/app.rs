@@ -164,7 +164,7 @@ impl PreviewContent {
             return renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()));
         }
 
-        let matches = self.text.search(query, matcher);
+        let matches = self.text.search(query, matcher)?;
         log::debug!("Search hit {} matches", matches.len());
 
         let Some(tokenizer) = matches.tokenizer(index) else {
