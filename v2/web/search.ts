@@ -1,3 +1,24 @@
+import * as log from './log';
+
+function isInViewport(elem: Element): boolean {
+    const rect = elem.getBoundingClientRect();
+    const height = window.innerHeight ?? document.documentElement.clientHeight;
+    const width = window.innerWidth ?? document.documentElement.clientWidth;
+    return 0 <= rect.top && 0 <= rect.left && rect.bottom <= height && rect.right <= width;
+}
+
+function scrollIntoView(elem: Element): void {
+    if (isInViewport(elem)) {
+        return;
+    }
+    log.debug('Scrolling to current match element:', elem);
+    elem.scrollIntoView({
+        behavior: 'smooth', // This does not work on WKWebView
+        block: 'center',
+        inline: 'center',
+    });
+}
+
 export function countSearchMatches(): number {
     return document.querySelectorAll('.search-text-start,.search-text-current-start').length;
 }
@@ -46,12 +67,15 @@ export function searchNextIndex(index: number | null): number | null {
         next ??= 0;
     }
 
+    log.debug('Search next index:', index, next);
     if (index !== next) {
         if (index !== null) {
             updateMatchClassNames('search-text', startIndices[index], all);
         }
         if (next !== null) {
-            updateMatchClassNames('search-text-current', startIndices[next], all);
+            const startIndex = startIndices[next];
+            updateMatchClassNames('search-text-current', startIndex, all);
+            scrollIntoView(all[startIndex]);
         }
     }
 
@@ -87,12 +111,15 @@ export function searchPreviousIndex(index: number | null): number | null {
         next = next !== undefined && next >= 0 ? next : startIndices.length - 1;
     }
 
+    log.debug('Search previous index:', index, next);
     if (index !== next) {
         if (index !== null) {
             updateMatchClassNames('search-text', startIndices[index], all);
         }
         if (next !== null) {
-            updateMatchClassNames('search-text-current', startIndices[next], all);
+            const startIndex = startIndices[next];
+            updateMatchClassNames('search-text-current', startIndex, all);
+            scrollIntoView(all[startIndex]);
         }
     }
 

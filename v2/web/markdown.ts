@@ -202,6 +202,7 @@ class ParseTreeRenderer {
                 break;
             case 'checkbox': {
                 const i = document.createElement('input');
+                i.type = 'checkbox';
                 i.disabled = true;
                 i.checked = elem.checked;
                 node = i;

@@ -37,13 +37,6 @@ const DIVIDER_STYLE: React.CSSProperties = {
     height: '1.5rem',
 };
 
-function isInViewport(elem: Element): boolean {
-    const rect = elem.getBoundingClientRect();
-    const height = window.innerHeight ?? document.documentElement.clientHeight;
-    const width = window.innerWidth ?? document.documentElement.clientWidth;
-    return 0 <= rect.top && 0 <= rect.left && rect.bottom <= height && rect.right <= width;
-}
-
 interface Props {
     index: number | null;
     matcher: SearchMatcher;
@@ -56,14 +49,6 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
     const [debId, setDebId] = useState<number | null>(null);
 
     useEffect(() => {
-        const current = document.querySelector('.search-text-current');
-        if (current && !isInViewport(current)) {
-            current.scrollIntoView({
-                behavior: 'smooth', // This does not work on WKWebView
-                block: 'center',
-                inline: 'center',
-            });
-        }
         if (counterElem.current !== null) {
             const nth = index !== null ? index + 1 : 0;
             const total = countSearchMatches();
