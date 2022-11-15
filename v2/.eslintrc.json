@@ -83,6 +83,10 @@
           "error",
           "in-try-catch"
         ],
+        "@typescript-eslint/consistent-type-imports": [
+          "error",
+          {"fixStyle": "inline-type-imports"}
+        ],
         "react-hooks/exhaustive-deps": "error",
         "react-hooks/rules-of-hooks": "error"
     }

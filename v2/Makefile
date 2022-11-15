@@ -1,4 +1,4 @@
-TS_SRC := $(wildcard web/*.ts)
+TS_SRC := $(wildcard web/*.ts web/*.tsx web/components/*.tsx)
 RS_SRC := $(wildcard src/*.rs)
 CSS := src/assets/github-markdown.css src/assets/github.css src/assets/style.css
 

@@ -7,7 +7,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
 import { MatcherSelect } from './MatcherSelect';
-import { Dispatch, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
+import { type Dispatch, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
 import { type SearchMatcher, sendMessage } from '../ipc';
 
 const DEBOUNCE_TIMEOUT = 100; // 100ms

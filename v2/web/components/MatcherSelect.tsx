@@ -4,7 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import type { SearchMatcher } from '../ipc';
-import { Dispatch, setSearchMatcher } from '../reducer';
+import { type Dispatch, setSearchMatcher } from '../reducer';
 import * as log from '../log';
 
 const MENU_ITEM_STYLE: React.CSSProperties = {

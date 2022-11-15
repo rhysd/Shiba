@@ -1,6 +1,14 @@
 import Mousetrap from 'mousetrap';
-import { Dispatch, State, INITIAL_STATE, openSearch, searchNext, searchPrevious, setSearchMatcher } from './reducer';
-import { sendMessage, MessageFromMain, KeyAction } from './ipc';
+import {
+    type Dispatch,
+    type State,
+    INITIAL_STATE,
+    openSearch,
+    searchNext,
+    searchPrevious,
+    setSearchMatcher,
+} from './reducer';
+import { sendMessage, type MessageFromMain, type KeyAction } from './ipc';
 import { PreviewContent } from './markdown';
 import * as log from './log';
 
