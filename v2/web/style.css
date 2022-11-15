@@ -27,3 +27,7 @@ body {
 pre code.hljs {
   padding: 0;
 }
+
+.tippy-content {
+  font-size: 0.8rem;
+}

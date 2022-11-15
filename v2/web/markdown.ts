@@ -1,4 +1,5 @@
 import hljs from 'highlight.js';
+import tippy from 'tippy.js';
 import * as log from './log';
 import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
 
@@ -104,9 +105,14 @@ class ParseTreeRenderer {
             case 'a': {
                 const a = document.createElement('a');
                 a.href = elem.href;
+                let content = elem.href;
+                let allowHTML = false;
                 if (elem.title) {
                     a.title = elem.title;
+                    content = `${elem.title}<br>${content}`;
+                    allowHTML = true;
                 }
+                tippy(a, { content, allowHTML });
                 node = a;
                 break;
             }
@@ -271,7 +277,10 @@ class ParseTreeRenderer {
             }
         }
 
-        parent.appendChild(node);
+        const x = parent.appendChild(node);
+        if (node.tagName.toLowerCase() === 'a') {
+            console.log('append:', node, x);
+        }
     }
 
     end(parent: HTMLElement): void {

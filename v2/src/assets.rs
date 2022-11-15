@@ -8,6 +8,7 @@ pub const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
 pub const GITHUB_MARKDOWN_CSS: &[u8] = include_bytes!("assets/github-markdown.css");
 pub const STYLE_CSS: &[u8] = include_bytes!("assets/style.css");
 pub const HLJS_GITHUB_CSS: &[u8] = include_bytes!("assets/github.css");
+pub const TIPPY_CSS: &[u8] = include_bytes!("assets/tippy.css");
 
 // TODO: hljs-theme.css will be customizable with user configuration file
 // TODO: user css can be applied by user configuration file
@@ -30,6 +31,7 @@ pub fn assets(path: &str) -> (Vec<u8>, &'static str) {
         "/style.css"           => STYLE_CSS,
         "/github-markdown.css" => GITHUB_MARKDOWN_CSS,
         "/hljs-theme.css"      => HLJS_GITHUB_CSS,
+        "/tippy.css"           => TIPPY_CSS,
         _                      => &[],
     };
 
@@ -38,7 +40,7 @@ pub fn assets(path: &str) -> (Vec<u8>, &'static str) {
 }
 
 const ASSET_PATHS: &[&str] =
-    &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css"];
+    &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css", "/tippy.css"];
 
 #[derive(Default)]
 pub struct AssetsLoaded([bool; ASSET_PATHS.len()]);
