@@ -38,7 +38,7 @@ trait Searcher: Sized {
     fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text>;
 }
 
-impl Searcher for AhoCorasick<usize> {
+impl Searcher for AhoCorasick {
     type Match<'text> = AhoCorasickMatch;
     type Iter<'slf, 'text> = AhoCorasickFindIter<'slf, 'text, usize>;
 
