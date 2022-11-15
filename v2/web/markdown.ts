@@ -25,25 +25,12 @@ export class PreviewContent {
     // Note: Render at requestAnimationFrame may be better for performance
     render(tree: RenderTreeElem[]): void {
         this.rootElem.textContent = '';
-        const renderer = new ParseTreeRenderer();
+        const renderer = new RenderTreeRenderer();
         for (const elem of tree) {
             renderer.render(elem, this.rootElem);
         }
         renderer.end(this.rootElem);
-        this.scrollToLastModified();
-    }
-
-    scrollToLastModified(): void {
-        const marker = this.rootElem.querySelector('.last-modified-marker');
-        if (marker === null || appearInViewport(marker)) {
-            return;
-        }
-        log.debug('Scrolling to last modified element:', marker);
-        marker.scrollIntoView({
-            behavior: 'smooth', // This does not work on WKWebView
-            block: 'center',
-            inline: 'center',
-        });
+        renderer.scrollToLastModified();
     }
 }
 
@@ -62,13 +49,27 @@ interface TableState {
     index: number;
 }
 
-class ParseTreeRenderer {
+class RenderTreeRenderer {
     table: TableState | null;
     footNotes: ParseTreeFootNoteDef[];
+    lastModified: HTMLSpanElement | null;
 
     constructor() {
         this.table = null;
         this.footNotes = [];
+        this.lastModified = null;
+    }
+
+    scrollToLastModified(): void {
+        if (this.lastModified === null || appearInViewport(this.lastModified)) {
+            return;
+        }
+        log.debug('Scrolling to last modified element:', this.lastModified);
+        this.lastModified.scrollIntoView({
+            behavior: 'smooth', // This does not work on WKWebView
+            block: 'center',
+            inline: 'center',
+        });
     }
 
     tableAlign(): ParseTreeTableAlign {
@@ -233,12 +234,13 @@ class ParseTreeRenderer {
                 return;
             case 'html': {
                 // TODO: Apply DomPurify to `elem.raw`
-                parent.innerHTML += elem.raw;
+                parent.insertAdjacentHTML('beforeend', elem.raw);
                 return;
             }
             case 'modified': {
                 const s = document.createElement('span');
                 s.className = 'last-modified-marker';
+                this.lastModified = s;
                 node = s;
                 break;
             }
@@ -277,10 +279,7 @@ class ParseTreeRenderer {
             }
         }
 
-        const x = parent.appendChild(node);
-        if (node.tagName.toLowerCase() === 'a') {
-            console.log('append:', node, x);
-        }
+        parent.appendChild(node);
     }
 
     end(parent: HTMLElement): void {
