@@ -166,7 +166,7 @@ impl SearchMatches {
 
     pub fn tokenizer(&self, index: Option<usize>) -> Option<MatchTokenizer<'_>> {
         let (head, tail) = self.0.split_first()?;
-        Some(MatchTokenizer { head, tail, current: 0, index })
+        Some(MatchTokenizer { head, tail, current: 0, is_start: true, index })
     }
 }
 
@@ -174,6 +174,7 @@ pub struct MatchTokenizer<'a> {
     head: &'a Range,
     tail: &'a [Range],
     current: usize,
+    is_start: bool,
     index: Option<usize>,
 }
 
@@ -185,12 +186,24 @@ impl<'a> MatchTokenizer<'a> {
         self.head = h;
         self.tail = t;
         self.current += 1;
+        self.is_start = true;
         true
     }
 
-    fn match_token(&self) -> TokenKind {
+    fn match_token(&mut self) -> TokenKind {
         match self.index {
-            Some(idx) if idx == self.current => TokenKind::MatchCurrent,
+            Some(idx) if idx == self.current => {
+                if self.is_start {
+                    self.is_start = false;
+                    TokenKind::MatchCurrentStart
+                } else {
+                    TokenKind::MatchCurrent
+                }
+            }
+            _ if self.is_start => {
+                self.is_start = false;
+                TokenKind::MatchOtherStart
+            }
             _ => TokenKind::MatchOther,
         }
     }

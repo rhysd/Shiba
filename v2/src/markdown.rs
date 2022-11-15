@@ -22,6 +22,20 @@ pub enum TokenKind {
     Normal,
     MatchOther,
     MatchCurrent,
+    MatchOtherStart,
+    MatchCurrentStart,
+}
+
+impl TokenKind {
+    fn tag(self) -> &'static str {
+        match self {
+            Self::Normal => unreachable!(),
+            Self::MatchOther => "match",
+            Self::MatchCurrent => "match-current",
+            Self::MatchOtherStart => "match-start",
+            Self::MatchCurrentStart => "match-current-start",
+        }
+    }
 }
 
 pub trait TextTokenizer {
@@ -171,21 +185,17 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> ParseTreeSerializer<'a, W, 
     }
 
     fn text_tokens(&mut self, mut input: &str, mut range: Range) -> Result<()> {
+        use TokenKind::*;
+
         while !input.is_empty() {
             let (token, text) = self.text_tokenizer.tokenize(input, &range);
             match token {
-                TokenKind::Normal => {
+                Normal => {
                     self.comma()?;
                     self.string(text)?;
                 }
-                TokenKind::MatchOther => {
-                    self.tag("match")?;
-                    self.children_begin()?;
-                    self.string(text)?;
-                    self.children_end()?;
-                }
-                TokenKind::MatchCurrent => {
-                    self.tag("match-current")?;
+                MatchOther | MatchCurrent | MatchOtherStart | MatchCurrentStart => {
+                    self.tag(token.tag())?;
                     self.children_begin()?;
                     self.string(text)?;
                     self.children_end()?;
@@ -194,6 +204,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> ParseTreeSerializer<'a, W, 
             input = &input[text.len()..];
             range.start += text.len();
         }
+
         Ok(())
     }
 

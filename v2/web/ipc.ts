@@ -148,11 +148,19 @@ export type ParseTreeElem =
           t: 'modified'; // Special token to indicate the last modified position
       }
     | {
-          t: 'match'; // Search match
+          t: 'match'; // Text search match tokens after match-start
           c: ParseTreeElem[];
       }
     | {
-          t: 'match-current'; // Current search match
+          t: 'match-current'; // Current text search match tokens after match-current-start
+          c: ParseTreeElem[];
+      }
+    | {
+          t: 'match-start'; // First text search match token
+          c: ParseTreeElem[];
+      }
+    | {
+          t: 'match-current-start'; // First current text search match token
           c: ParseTreeElem[];
       };
 

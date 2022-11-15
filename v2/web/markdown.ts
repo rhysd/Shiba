@@ -247,6 +247,18 @@ class ParseTreeRenderer {
                 node = s;
                 break;
             }
+            case 'match-start': {
+                const s = document.createElement('span');
+                s.className = 'search-text-start';
+                node = s;
+                break;
+            }
+            case 'match-current-start': {
+                const s = document.createElement('span');
+                s.className = 'search-text-current-start';
+                node = s;
+                break;
+            }
             default:
                 log.error('Unknown parse tree element:', JSON.stringify(elem));
                 return;

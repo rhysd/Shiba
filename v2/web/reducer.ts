@@ -1,9 +1,6 @@
 import * as log from './log';
 import type { SearchMatcher } from './ipc';
-
-export function findSearchMatchElems(): NodeListOf<HTMLElement> {
-    return document.querySelectorAll('.search-text,.search-text-current');
-}
+import { searchNextIndex, searchPreviousIndex } from './search';
 
 export interface State {
     searching: boolean;
@@ -81,69 +78,11 @@ export function searchIndex(index: number | null): Action {
 }
 
 export function searchNext(index: number | null): Action {
-    const elems = findSearchMatchElems();
-
-    let next;
-    if (elems.length === 0) {
-        next = null;
-    } else if (index !== null) {
-        next = index + 1 >= elems.length ? 0 : index + 1;
-    } else {
-        // Find the nearest next item against current scroll position
-        const y = window.scrollY;
-        for (const [i, e] of elems.entries()) {
-            if (e.offsetTop >= y) {
-                next = i;
-                break;
-            }
-        }
-        next ??= 0;
-    }
-
-    if (index !== next) {
-        if (index !== null) {
-            elems[index].className = 'search-text';
-        }
-        if (next !== null) {
-            elems[next].className = 'search-text-current';
-        }
-    }
-
-    return searchIndex(next);
+    return searchIndex(searchNextIndex(index));
 }
 
 export function searchPrevious(index: number | null): Action {
-    const elems = findSearchMatchElems();
-
-    let next;
-    if (elems.length === 0) {
-        next = null;
-    } else if (index !== null) {
-        next = index > 0 ? index - 1 : elems.length - 1;
-    } else {
-        // Find the nearest previous item against current scroll position
-        const height = window.innerHeight || document.documentElement.clientHeight;
-        const y = window.scrollY + height;
-        for (const [i, e] of elems.entries()) {
-            const bottom = e.offsetTop + e.clientHeight;
-            if (bottom >= y) {
-                next = i - 1;
-                break;
-            }
-        }
-        next = next !== undefined && next >= 0 ? next : elems.length - 1;
-    }
-
-    if (index !== next) {
-        if (index !== null) {
-            elems[index].className = 'search-text';
-        }
-        if (next !== null) {
-            elems[next].className = 'search-text-current';
-        }
-    }
-
-    return searchIndex(next);
+    return searchIndex(searchPreviousIndex(index));
 }
 
 export function setSearchMatcher(matcher: SearchMatcher): Action {

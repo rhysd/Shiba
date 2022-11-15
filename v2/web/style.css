@@ -13,10 +13,12 @@ body {
   padding: 8px;
 }
 
+.search-text-start,
 .search-text {
   background-color: #fffe54;
 }
 
+.search-text-current-start,
 .search-text-current {
   background-color: #ef9a4a;
 }

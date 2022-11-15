@@ -7,7 +7,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
 import { MatcherSelect } from './MatcherSelect';
-import { type Dispatch, searchNext, searchPrevious, closeSearch, findSearchMatchElems } from '../reducer';
+import { type Dispatch, searchNext, searchPrevious, closeSearch } from '../reducer';
+import { countSearchMatches } from '../search';
 import { type SearchMatcher, sendMessage } from '../ipc';
 
 const DEBOUNCE_TIMEOUT = 100; // 100ms
@@ -65,7 +66,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
         }
         if (counterElem.current !== null) {
             const nth = index !== null ? index + 1 : 0;
-            const total = findSearchMatchElems().length;
+            const total = countSearchMatches();
             counterElem.current.textContent = `${nth} / ${total}`;
         }
     }, [index]);
