@@ -6,12 +6,14 @@ export interface State {
     searching: boolean;
     searchIndex: number | null;
     matcher: SearchMatcher;
+    previewing: boolean;
 }
 
 export const INITIAL_STATE: State = {
     searching: false,
     searchIndex: null,
     matcher: 'SmartCase',
+    previewing: true,
 };
 
 type Action =
@@ -32,6 +34,10 @@ type Action =
     | {
           kind: 'search_matcher';
           matcher: SearchMatcher;
+      }
+    | {
+          kind: 'previewing';
+          previewing: boolean;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -54,10 +60,9 @@ export function reducer(state: State, action: Action): State {
                 searchIndex: action.index,
             };
         case 'search_matcher':
-            if (state.matcher === action.matcher) {
-                return state;
-            }
             return { ...state, matcher: action.matcher };
+        case 'previewing':
+            return { ...state, previewing: action.previewing };
         default:
             throw new Error(`Unknown action: ${action}`);
     }
@@ -87,4 +92,8 @@ export function searchPrevious(index: number | null): Action {
 
 export function setSearchMatcher(matcher: SearchMatcher): Action {
     return { kind: 'search_matcher', matcher };
+}
+
+export function setPreviewing(previewing: boolean): Action {
+    return { kind: 'previewing', previewing };
 }

@@ -187,6 +187,9 @@ export type MessageFromMain =
           kind: 'search_previous';
       }
     | {
+          kind: 'welcome';
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =

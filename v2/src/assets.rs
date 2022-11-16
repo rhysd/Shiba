@@ -1,4 +1,4 @@
-use std::mem;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(debug_assertions)]
 pub const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
@@ -9,49 +9,59 @@ pub const GITHUB_MARKDOWN_CSS: &[u8] = include_bytes!("assets/github-markdown.cs
 pub const STYLE_CSS: &[u8] = include_bytes!("assets/style.css");
 pub const HLJS_GITHUB_CSS: &[u8] = include_bytes!("assets/github.css");
 pub const TIPPY_CSS: &[u8] = include_bytes!("assets/tippy.css");
+pub const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
 // TODO: hljs-theme.css will be customizable with user configuration file
 // TODO: user css can be applied by user configuration file
 
-pub fn assets(path: &str) -> (Vec<u8>, &'static str) {
-    let mime = if path.ends_with('/') || path.ends_with(".html") {
-        "text/html;charset=UTF-8"
-    } else if path.ends_with(".js") {
-        "text/javascript;charset=UTF-8"
-    } else if path.ends_with(".css") {
-        "text/css;charset=UTF-8"
-    } else {
-        "text/plain;charset=UTF-8"
-    };
-
-    #[rustfmt::skip]
-    let body = match path {
-        "/"                    => INDEX_HTML,
-        "/bundle.js"           => BUNDLE_JS,
-        "/style.css"           => STYLE_CSS,
-        "/github-markdown.css" => GITHUB_MARKDOWN_CSS,
-        "/hljs-theme.css"      => HLJS_GITHUB_CSS,
-        "/tippy.css"           => TIPPY_CSS,
-        _                      => &[],
-    };
-
-    // Response body of custom protocol handler requires `Vec<u8>`
-    (body.to_vec(), mime)
-}
-
-const ASSET_PATHS: &[&str] =
+const ONETIME_ASSET_PATHS: &[&str] =
     &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css", "/tippy.css"];
 
-#[derive(Default)]
-pub struct AssetsLoaded([bool; ASSET_PATHS.len()]);
+const OTHER_ASSET_PATHS: &[&str] = &["/logo.png"];
 
-impl AssetsLoaded {
-    pub fn is_loaded(&mut self, path: &str) -> bool {
-        let Some(idx) = ASSET_PATHS.iter().position(|&p| p == path) else { return false; };
-        mem::replace(&mut self.0[idx], true)
-    }
+#[derive(Default)]
+pub struct Assets {
+    loaded: [AtomicBool; ONETIME_ASSET_PATHS.len()],
 }
 
-pub fn is_asset_path(path: &str) -> bool {
-    ASSET_PATHS.contains(&path)
+impl Assets {
+    pub fn load(path: &str) -> (&'static [u8], &'static str) {
+        let mime = if path.ends_with('/') || path.ends_with(".html") {
+            "text/html;charset=UTF-8"
+        } else if path.ends_with(".js") {
+            "text/javascript;charset=UTF-8"
+        } else if path.ends_with(".css") {
+            "text/css;charset=UTF-8"
+        } else if path.ends_with(".png") {
+            "image/png"
+        } else {
+            "text/plain;charset=UTF-8"
+        };
+
+        #[rustfmt::skip]
+        let body = match path {
+            "/"                    => INDEX_HTML,
+            "/bundle.js"           => BUNDLE_JS,
+            "/style.css"           => STYLE_CSS,
+            "/github-markdown.css" => GITHUB_MARKDOWN_CSS,
+            "/hljs-theme.css"      => HLJS_GITHUB_CSS,
+            "/tippy.css"           => TIPPY_CSS,
+            "/logo.png"            => LOGO_PNG,
+            _                      => unreachable!(),
+        };
+
+        (body, mime)
+    }
+
+    // `&self` must not be `&mut self` since the handler callbacks of `WebViewBuilder` are defined as `Fn`.
+    // The `Fn` boundary is derived from `webkit2gtk::WebView::connect_decide_policy` so it is difficult to change.
+    // https://github.com/tauri-apps/webkit2gtk-rs/blob/cce947f86f2c0d50710c1ea9ea9f160c8b6cbf4a/src/auto/web_view.rs#L1249
+    pub fn is_asset(&self, path: &str) -> bool {
+        if OTHER_ASSET_PATHS.contains(&path) {
+            return true;
+        }
+        let Some(idx) = ONETIME_ASSET_PATHS.iter().position(|&p| p == path) else { return false; };
+        let loaded = self.loaded[idx].swap(true, Ordering::Relaxed);
+        !loaded
+    }
 }

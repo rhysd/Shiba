@@ -36,6 +36,7 @@ pub enum MessageToRenderer<'a> {
     Search,
     SearchNext,
     SearchPrevious,
+    Welcome,
     Debug,
 }
 

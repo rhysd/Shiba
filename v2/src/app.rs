@@ -303,6 +303,8 @@ where
 
                 if let Some(path) = mem::take(&mut self.options.init_file) {
                     self.preview_new(path)?;
+                } else {
+                    self.renderer.send_message(MessageToRenderer::Welcome)?;
                 }
             }
             MessageFromRenderer::Search { query, index, matcher } => {

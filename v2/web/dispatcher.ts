@@ -7,6 +7,7 @@ import {
     searchNext,
     searchPrevious,
     setSearchMatcher,
+    setPreviewing,
 } from './reducer';
 import { sendMessage, type MessageFromMain, type KeyAction } from './ipc';
 import { PreviewContent } from './markdown';
@@ -59,6 +60,7 @@ export class GlobalDispatcher {
             switch (msg.kind) {
                 case 'render_tree':
                     this.content.render(msg.tree);
+                    this.dispatch(setPreviewing(true));
                     break;
                 case 'config':
                     for (const keybind of Object.keys(msg.keymaps)) {
@@ -84,6 +86,9 @@ export class GlobalDispatcher {
                     break;
                 case 'search_previous':
                     this.searchPrev();
+                    break;
+                case 'welcome':
+                    this.dispatch(setPreviewing(false));
                     break;
                 case 'debug':
                     log.enableDebug();
