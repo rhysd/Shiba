@@ -135,6 +135,7 @@ export type RenderTreeElem =
           t: 'a';
           href: string;
           title?: string;
+          auto?: boolean; // Autolink
           c: RenderTreeElem[];
       }
     | {

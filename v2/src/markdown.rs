@@ -1,4 +1,5 @@
 use crate::renderer::RawMessageWriter;
+use aho_corasick::AhoCorasick;
 use pulldown_cmark::{
     Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options, Parser, Tag,
 };
@@ -96,6 +97,7 @@ struct RenderTreeSerializer<'a, W: Write, R: ParseResult, T: TextTokenizer> {
     modified: Option<usize>,
     parsed: R,
     text_tokenizer: T,
+    autolinker: Autolinker,
 }
 
 impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W, R, T> {
@@ -108,6 +110,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             modified,
             parsed: R::default(),
             text_tokenizer,
+            autolinker: Autolinker::default(),
         }
     }
 
@@ -233,18 +236,43 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             self.out.write_char('}')?;
             self.text_tokens(text, range)
         } else if end == offset {
-            self.comma()?;
             self.text_tokens(text, range)?;
             self.tag("modified")?;
             self.out.write_char('}')
         } else {
-            self.comma()?;
             let i = offset - start;
             self.text_tokens(&text[..i], range.start..offset)?;
             self.tag("modified")?;
             self.out.write_char('}')?;
             self.text_tokens(&text[i..], offset..range.end)
         }
+    }
+
+    fn autolink_text(&mut self, mut text: &str, range: Range) -> Result<()> {
+        let Range { mut start, end } = range;
+        while let Some((s, e)) = self.autolinker.find_autolink(text) {
+            if s > 0 {
+                self.text(&text[..s], start..start + s)?;
+            }
+
+            let url = &text[s..e];
+            log::debug!("Auto-linking URL: {}", url);
+            self.tag("a")?;
+            self.out.write_str(r#","auto":true,"href":"#)?;
+            self.string(url)?;
+            self.children_begin()?;
+            self.text(url, start + s..start + e)?;
+            self.children_end()?;
+
+            text = &text[e..];
+            start += e;
+        }
+
+        if !text.is_empty() {
+            self.text(text, start..end)?;
+        }
+
+        Ok(())
     }
 
     fn events(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
@@ -255,7 +283,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             match event {
                 Start(tag) => self.start_tag(tag)?,
                 End(tag) => self.end_tag(tag)?,
-                Text(text) => self.text(&text, range)?,
+                Text(text) => self.autolink_text(&text, range)?,
                 Code(text) => {
                     let pad = (range.len() - text.len()) / 2;
                     let inner_range = (range.start + pad)..(range.end - pad);
@@ -465,5 +493,58 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 self.children_begin()
             }
         }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum UrlCharKind {
+    Invalid,
+    Term,
+    NonTerm,
+}
+
+impl UrlCharKind {
+    fn of(c: char) -> Self {
+        // https://www.rfc-editor.org/rfc/rfc3987
+        match c {
+            '\u{00}'..='\u{1F}' | ' ' | '|' | '"' | '<' | '>' | '`' | '\u{7F}'..='\u{9F}' => {
+                Self::Invalid
+            }
+            '?' | '!' | '.' | ',' | ':' | ';' | '*' | '&' | '\\' | '(' | ')' | '[' | ']' | '{'
+            | '}' | '\'' => Self::NonTerm,
+            _ => Self::Term,
+        }
+    }
+}
+
+struct Autolinker {
+    ac: AhoCorasick,
+}
+
+impl Default for Autolinker {
+    fn default() -> Self {
+        Self { ac: AhoCorasick::new(["https://", "http://"]) }
+    }
+}
+
+impl Autolinker {
+    fn find_autolink(&self, text: &str) -> Option<(usize, usize)> {
+        let mat = self.ac.find(text)?;
+        let (start, scheme_end) = (mat.start(), mat.end());
+
+        let mut len = 0;
+        for (i, c) in text[scheme_end..].char_indices() {
+            match UrlCharKind::of(c) {
+                UrlCharKind::Invalid => break,
+                UrlCharKind::Term => {
+                    len = i + c.len_utf8();
+                }
+                UrlCharKind::NonTerm => {}
+            }
+        }
+        if len == 0 {
+            return None;
+        }
+        Some((start, scheme_end + len))
     }
 }

@@ -120,7 +120,9 @@ class RenderTreeRenderer {
                     content = `${elem.title}<br>${content}`;
                     allowHTML = true;
                 }
-                tippy(a, { content, allowHTML });
+                if (!elem.auto) {
+                    tippy(a, { content, allowHTML });
+                }
                 node = a;
                 break;
             }
