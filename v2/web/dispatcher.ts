@@ -15,6 +15,29 @@ import * as log from './log';
 
 // Global action dispatcher to handle IPC messages from the main
 
+function scrollTo(
+    candidates: HTMLElement[] | NodeListOf<HTMLElement>,
+    pred: (e: HTMLElement, t: number) => boolean,
+): void {
+    if (candidates.length === 0) {
+        return;
+    }
+    let scrolled = false;
+    const windowTop = window.scrollY;
+    for (const elem of candidates) {
+        if (pred(elem, windowTop)) {
+            window.scrollTo(0, elem.offsetTop);
+            if (windowTop !== window.scrollY) {
+                scrolled = true;
+                break;
+            }
+        }
+    }
+    if (!scrolled) {
+        window.scrollTo(0, candidates[0].offsetTop);
+    }
+}
+
 export class GlobalDispatcher {
     public dispatch: Dispatch;
     public state: State;
@@ -68,7 +91,7 @@ export class GlobalDispatcher {
                         Mousetrap.bind(keybind, e => {
                             e.preventDefault();
                             e.stopPropagation();
-                            log.debug('Triggered key shortcut:', action, 'by', keybind);
+                            log.debug('Triggered key shortcut:', action, keybind);
                             try {
                                 this.handleKeyAction(action);
                             } catch (err) {
@@ -153,6 +176,17 @@ export class GlobalDispatcher {
             case 'SearchPrev':
                 this.searchPrev();
                 break;
+            case 'NextSection': {
+                const headings: NodeListOf<HTMLElement> = document.querySelectorAll('h1,h2,h3,h4,h5,h6');
+                scrollTo(headings, (elem, windowTop) => elem.offsetTop > windowTop);
+                break;
+            }
+            case 'PrevSection': {
+                const headings: HTMLElement[] = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+                headings.reverse();
+                scrollTo(headings, (elem, windowTop) => elem.offsetTop < windowTop);
+                break;
+            }
             case 'Quit':
                 sendMessage({ kind: 'quit' });
                 break;

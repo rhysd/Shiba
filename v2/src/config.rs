@@ -31,6 +31,8 @@ fn default_keymaps() -> HashMap<String, KeyAction> {
         ("pageup",    ScrollPageUp),
         ("ctrl+down", ScrollBottom),
         ("ctrl+up",   ScrollTop),
+        ("ctrl+j",    NextSection),
+        ("ctrl+k",    PrevSection),
     ];
 
     let mut m = HashMap::new();

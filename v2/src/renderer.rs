@@ -25,6 +25,8 @@ pub enum KeyAction {
     Search,
     NextSearch,
     PrevSearch,
+    NextSection,
+    PrevSection,
     Quit,
 }
 

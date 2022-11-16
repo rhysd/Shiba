@@ -98,7 +98,7 @@ export function searchPreviousIndex(index: number | null): number | null {
         next = index > 0 ? index - 1 : startIndices.length - 1;
     } else {
         // Find the nearest previous item against current scroll position
-        const height = window.innerHeight || document.documentElement.clientHeight;
+        const height = window.innerHeight ?? document.documentElement.clientHeight;
         const y = window.scrollY + height;
         for (const i of startIndices) {
             const e = all[i];

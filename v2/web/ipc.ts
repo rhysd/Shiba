@@ -25,6 +25,8 @@ export type KeyAction =
     | 'Search'
     | 'SearchNext'
     | 'SearchPrev'
+    | 'NextSection'
+    | 'PrevSection'
     | 'Quit';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
