@@ -517,19 +517,17 @@ impl UrlCharKind {
     }
 }
 
-struct Autolinker {
-    ac: AhoCorasick,
-}
+struct Autolinker(AhoCorasick);
 
 impl Default for Autolinker {
     fn default() -> Self {
-        Self { ac: AhoCorasick::new(["https://", "http://"]) }
+        Self(AhoCorasick::new(["https://", "http://"]))
     }
 }
 
 impl Autolinker {
     fn find_autolink(&self, text: &str) -> Option<(usize, usize)> {
-        let mat = self.ac.find(text)?;
+        let mat = self.0.find(text)?;
         let (start, scheme_end) = (mat.start(), mat.end());
 
         let mut len = 0;

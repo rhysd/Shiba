@@ -152,6 +152,10 @@ impl PreviewContent {
         Ok(true)
     }
 
+    pub fn rerender<R: Renderer>(&mut self, renderer: &R) -> Result<()> {
+        renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()))
+    }
+
     pub fn search<R: Renderer>(
         &mut self,
         renderer: &R,
@@ -161,14 +165,20 @@ impl PreviewContent {
     ) -> Result<()> {
         log::debug!("Re-rendering content with query {:?} and current index {:?}", query, index);
         if query.is_empty() {
-            return renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()));
+            return self.rerender(renderer);
         }
 
-        let matches = self.text.search(query, matcher)?;
+        let matches = match self.text.search(query, matcher) {
+            Ok(m) => m,
+            Err(err) => {
+                log::debug!("Could not build {:?} matcher for query {:?}: {}", matcher, query, err);
+                return self.rerender(renderer);
+            }
+        };
         log::debug!("Search hit {} matches", matches.len());
 
         let Some(tokenizer) = matches.tokenizer(index) else {
-            return renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()));
+            return self.rerender(renderer);
         };
         renderer.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
     }
