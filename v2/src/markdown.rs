@@ -1,5 +1,7 @@
 use crate::renderer::RawMessageWriter;
 use aho_corasick::AhoCorasick;
+use emojis::Emoji;
+use memchr::{memchr_iter, Memchr};
 use pulldown_cmark::{
     Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options, Parser, Tag,
 };
@@ -248,36 +250,28 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
         }
     }
 
-    fn emoji_text(&mut self, mut text: &str, range: Range) -> Result<()> {
+    fn emoji_text(&mut self, text: &str, range: Range) -> Result<()> {
         let Range { mut start, end } = range;
-        while let Some((s, e, emoji)) = tokenize_emoji(text) {
-            if let Some(emoji) = emoji {
-                if s > 0 {
-                    self.text(&text[..s], start..start + s)?;
+        for token in EmojiTokenizer::new(text) {
+            match token {
+                EmojiToken::Text(text) => {
+                    if !text.is_empty() {
+                        self.text(text, start..text.len())?;
+                        start += text.len();
+                    }
                 }
-
-                self.tag("emoji")?;
-                self.out.write_str(r#","name":"#)?;
-                self.string(emoji.name())?;
-                self.children_begin()?;
-                self.string(emoji.as_str())?;
-                self.children_end()?;
-
-                text = &text[e + 1..]; // `+ 1` for trailing ':'
-                start += e + 1;
-            } else {
-                if e > 0 {
-                    self.text(&text[..e], start..start + e)?;
+                EmojiToken::Emoji(emoji, len) => {
+                    self.tag("emoji")?;
+                    self.out.write_str(r#","name":"#)?;
+                    self.string(emoji.name())?;
+                    self.children_begin()?;
+                    self.string(emoji.as_str())?;
+                    self.children_end()?;
+                    start += len;
                 }
-                text = &text[e..];
-                start += e;
             }
         }
-
-        if !text.is_empty() {
-            self.text(text, start..end)?;
-        }
-
+        debug_assert_eq!(start, end);
         Ok(())
     }
 
@@ -590,11 +584,68 @@ impl Autolinker {
     }
 }
 
-fn tokenize_emoji(text: &str) -> Option<(usize, usize, Option<&'static emojis::Emoji>)> {
-    let mut iter = memchr::memchr_iter(b':', text.as_bytes());
-    let (Some(start), Some(end)) = (iter.next(), iter.next()) else {
-        return None;
-    };
-    let shortcode = &text[start + 1..end];
-    Some((start, end, emojis::get_by_shortcode(shortcode)))
+#[derive(Debug)]
+enum EmojiToken<'a> {
+    Text(&'a str),
+    Emoji(&'static Emoji, usize),
+}
+
+struct EmojiTokenizer<'a> {
+    text: &'a str,
+    iter: Memchr<'a>,
+    start: usize,
+}
+
+impl<'a> EmojiTokenizer<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { iter: memchr_iter(b':', text.as_bytes()), text, start: 0 }
+    }
+
+    fn eat(&mut self, end: usize) -> &'a str {
+        let text = &self.text[self.start..end];
+        self.start = end;
+        text
+    }
+}
+
+impl<'a> Iterator for EmojiTokenizer<'a> {
+    type Item = EmojiToken<'a>;
+
+    // Tokenizing example:
+    //   "foo :dog: bar :piyo: wow"
+    //   -> ":dog: bar :piyo: wow" (text "foo ")
+    //   -> " bar :piyo: wow"      (emoji "dog")
+    //   -> ":piyo: wow"           (text " bar ")
+    //   -> ": wow"                (text ":piyo")
+    //   -> ""                     (text ": wow")
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.start == self.text.len() {
+            return None;
+        }
+
+        let Some(end) = self.iter.next() else {
+            return Some(EmojiToken::Text(self.eat(self.text.len()))); // Eat all of rest
+        };
+
+        if self.start == end {
+            // Edge case: The initial input text starts with ':'
+            return Some(EmojiToken::Text(""));
+        }
+
+        if !self.text[self.start..].starts_with(':') {
+            return Some(EmojiToken::Text(self.eat(end)));
+        }
+
+        // Note:
+        //   text[start..end+1] == ":dog:"
+        //   text[start+1..end] == "dog"
+        //   text[start..end] == ":dog"
+        let short = &self.text[self.start + 1..end];
+        if let Some(emoji) = emojis::get_by_shortcode(short) {
+            self.start = end + 1;
+            Some(EmojiToken::Emoji(emoji, short.len() + 2))
+        } else {
+            Some(EmojiToken::Text(self.eat(end)))
+        }
+    }
 }
