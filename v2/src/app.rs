@@ -3,6 +3,7 @@ use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
+use crate::persistent::WindowState;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
 };
@@ -213,7 +214,8 @@ where
         let config = Config::load()?;
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
-        let renderer = R::open(&options, event_loop)?;
+        let window_state = if config.window().restore { WindowState::load() } else { None };
+        let renderer = R::open(&options, event_loop, window_state)?;
 
         let filter = PathFilter::new(&config);
         let mut watcher = W::new(event_loop, filter)?;
@@ -396,5 +398,14 @@ where
             MenuItem::Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
         }
         Ok(AppControl::Continue)
+    }
+
+    pub fn handle_exit(&self) -> Result<()> {
+        if self.config.window().restore {
+            if let Some(state) = self.renderer.window_state() {
+                state.save()?;
+            }
+        }
+        Ok(())
     }
 }

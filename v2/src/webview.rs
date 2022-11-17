@@ -1,5 +1,6 @@
 use crate::assets::Assets;
 use crate::cli::Options;
+use crate::persistent::WindowState;
 use crate::renderer::{
     MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, RawMessageWriter,
     Renderer, UserEvent,
@@ -7,10 +8,11 @@ use crate::renderer::{
 use anyhow::Result;
 use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
+use wry::application::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use wry::application::event_loop::EventLoop;
 use wry::application::keyboard::{KeyCode, ModifiersState};
 use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemAttributes};
-use wry::application::window::{Window, WindowBuilder};
+use wry::application::window::{Fullscreen, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
@@ -253,11 +255,26 @@ impl Renderer for Wry {
     type EventLoop = EventLoop<UserEvent>;
     type Menu = WryMenuIds;
 
-    fn open(options: &Options, event_loop: &Self::EventLoop) -> Result<Self> {
+    fn open(
+        options: &Options,
+        event_loop: &Self::EventLoop,
+        window_state: Option<WindowState>,
+    ) -> Result<Self> {
         let mut menu = MenuBar::new();
         let menu_ids = WryMenuIds::set_menu(&mut menu);
 
-        let window = WindowBuilder::new().with_title("Shiba").with_menu(menu).build(event_loop)?;
+        let mut builder = WindowBuilder::new().with_title("Shiba").with_menu(menu);
+        if let Some(state) = window_state {
+            log::debug!("Restoring window state {state:?}");
+            let size = PhysicalSize { width: state.width, height: state.height };
+            builder = builder.with_inner_size(Size::Physical(size));
+            let position = PhysicalPosition { x: state.x, y: state.y };
+            builder = builder.with_position(Position::Physical(position));
+            if state.fullscreen {
+                builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+            }
+        }
+        let window = builder.build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
 
         let webview = create_webview(window, event_loop)?;
@@ -295,5 +312,19 @@ impl Renderer for Wry {
     fn set_title(&self, title: &str) {
         log::debug!("Set window title: {}", title);
         self.webview.window().set_title(title);
+    }
+
+    fn window_state(&self) -> Option<WindowState> {
+        let w = self.webview.window();
+        let PhysicalPosition { x, y } = match w.inner_position() {
+            Ok(position) => position,
+            Err(err) => {
+                log::debug!("Could not get window position for window state: {}", err);
+                return None;
+            }
+        };
+        let PhysicalSize { width, height } = w.inner_size();
+        let fullscreen = w.fullscreen().is_some();
+        Some(WindowState { width, height, x, y, fullscreen })
     }
 }

@@ -1,5 +1,6 @@
 use crate::cli::Options;
 use crate::config::{Search as SearchConfig, SearchMatcher};
+use crate::persistent::WindowState;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -97,9 +98,14 @@ pub trait Renderer: Sized {
     type EventLoop;
     type Menu: MenuItems;
 
-    fn open(options: &Options, event_loop: &Self::EventLoop) -> Result<Self>;
+    fn open(
+        options: &Options,
+        event_loop: &Self::EventLoop,
+        window_state: Option<WindowState>,
+    ) -> Result<Self>;
     fn menu(&self) -> &Self::Menu;
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
+    fn window_state(&self) -> Option<WindowState>;
 }

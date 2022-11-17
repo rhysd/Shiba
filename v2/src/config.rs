@@ -90,6 +90,11 @@ pub struct Search {
     matcher: SearchMatcher,
 }
 
+#[derive(Default, Deserialize, Serialize, Debug)]
+pub struct Window {
+    pub restore: bool,
+}
+
 #[non_exhaustive]
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -101,6 +106,8 @@ pub struct Config {
     keymaps: HashMap<String, KeyAction>,
     #[serde(default)]
     search: Search,
+    #[serde(default)]
+    window: Window,
 }
 
 impl Default for Config {
@@ -110,6 +117,7 @@ impl Default for Config {
             debounce_throttle: default_throttle(),
             keymaps: default_keymaps(),
             search: Search::default(),
+            window: Window::default(),
         }
     }
 }
@@ -158,5 +166,9 @@ impl Config {
 
     pub fn search(&self) -> &Search {
         &self.search
+    }
+
+    pub fn window(&self) -> &Window {
+        &self.window
     }
 }
