@@ -89,18 +89,30 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
     };
 
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-        if (e.key === 'n' && !e.shiftKey && e.ctrlKey) {
+        if (
+            (e.key === 'n' && !e.shiftKey && e.ctrlKey) ||
+            (e.key === 'ArrowDown' && !e.ctrlKey) ||
+            (e.key === 'Tab' && !e.shiftKey)
+        ) {
             let next = index + 1;
             if (next >= visibleHeadings.length) {
-                next = 0;
+                next = 0; // wrap
             }
             setIndex(next);
-        } else if (e.key === 'p' && !e.shiftKey && e.ctrlKey) {
+        } else if (
+            (e.key === 'p' && !e.shiftKey && e.ctrlKey) ||
+            (e.key === 'ArrowUp' && !e.ctrlKey) ||
+            (e.key === 'Tab' && e.shiftKey)
+        ) {
             let next = index - 1;
             if (next <= 0) {
-                next = visibleHeadings.length > 0 ? visibleHeadings.length - 1 : 0;
+                next = Math.max(visibleHeadings.length - 1, 0); // wrap
             }
             setIndex(next);
+        } else if (e.key === 'ArrowDown' && e.ctrlKey) {
+            setIndex(Math.max(visibleHeadings.length - 1, 0));
+        } else if (e.key === 'ArrowUp' && e.ctrlKey) {
+            setIndex(0);
         } else if (e.key === 'Enter') {
             if (index < visibleHeadings.length) {
                 handleItemClick(visibleHeadings[index]);
