@@ -149,6 +149,10 @@ export type RenderTreeElem =
       }
     | ParseTreeFootNoteDef
     | {
+          t: 'emoji';
+          name: string;
+      }
+    | {
           t: 'modified'; // Special token to indicate the last modified position
       }
     | {

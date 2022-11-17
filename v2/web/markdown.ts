@@ -184,6 +184,12 @@ class RenderTreeRenderer {
             case 'li':
                 node = document.createElement('li');
                 break;
+            case 'emoji': {
+                const s = document.createElement('span');
+                s.title = elem.name;
+                node = s;
+                break;
+            }
             case 'table': {
                 this.table = {
                     aligns: elem.align,

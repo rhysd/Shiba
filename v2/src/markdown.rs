@@ -248,11 +248,44 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
         }
     }
 
+    fn emoji_text(&mut self, mut text: &str, range: Range) -> Result<()> {
+        let Range { mut start, end } = range;
+        while let Some((s, e, emoji)) = tokenize_emoji(text) {
+            if let Some(emoji) = emoji {
+                if s > 0 {
+                    self.text(&text[..s], start..start + s)?;
+                }
+
+                self.tag("emoji")?;
+                self.out.write_str(r#","name":"#)?;
+                self.string(emoji.name())?;
+                self.children_begin()?;
+                self.string(emoji.as_str())?;
+                self.children_end()?;
+
+                text = &text[e + 1..]; // `+ 1` for trailing ':'
+                start += e + 1;
+            } else {
+                if e > 0 {
+                    self.text(&text[..e], start..start + e)?;
+                }
+                text = &text[e..];
+                start += e;
+            }
+        }
+
+        if !text.is_empty() {
+            self.text(text, start..end)?;
+        }
+
+        Ok(())
+    }
+
     fn autolink_text(&mut self, mut text: &str, range: Range) -> Result<()> {
         let Range { mut start, end } = range;
         while let Some((s, e)) = self.autolinker.find_autolink(text) {
             if s > 0 {
-                self.text(&text[..s], start..start + s)?;
+                self.emoji_text(&text[..s], start..start + s)?;
             }
 
             let url = &text[s..e];
@@ -269,7 +302,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
         }
 
         if !text.is_empty() {
-            self.text(text, start..end)?;
+            self.emoji_text(text, start..end)?;
         }
 
         Ok(())
@@ -555,4 +588,13 @@ impl Autolinker {
         }
         Some((start, scheme_end + len))
     }
+}
+
+fn tokenize_emoji(text: &str) -> Option<(usize, usize, Option<&'static emojis::Emoji>)> {
+    let mut iter = memchr::memchr_iter(b':', text.as_bytes());
+    let (Some(start), Some(end)) = (iter.next(), iter.next()) else {
+        return None;
+    };
+    let shortcode = &text[start + 1..end];
+    Some((start, end, emojis::get_by_shortcode(shortcode)))
 }
