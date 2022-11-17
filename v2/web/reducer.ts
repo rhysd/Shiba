@@ -7,6 +7,7 @@ export interface State {
     searchIndex: number | null;
     matcher: SearchMatcher;
     previewing: boolean;
+    outline: boolean;
 }
 
 export const INITIAL_STATE: State = {
@@ -14,6 +15,7 @@ export const INITIAL_STATE: State = {
     searchIndex: null,
     matcher: 'SmartCase',
     previewing: true,
+    outline: false,
 };
 
 type Action =
@@ -38,6 +40,10 @@ type Action =
     | {
           kind: 'previewing';
           previewing: boolean;
+      }
+    | {
+          kind: 'outline';
+          open: boolean;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -63,6 +69,8 @@ export function reducer(state: State, action: Action): State {
             return { ...state, matcher: action.matcher };
         case 'previewing':
             return { ...state, previewing: action.previewing };
+        case 'outline':
+            return { ...state, outline: action.open };
         default:
             throw new Error(`Unknown action: ${action}`);
     }
@@ -96,4 +104,12 @@ export function setSearchMatcher(matcher: SearchMatcher): Action {
 
 export function setPreviewing(previewing: boolean): Action {
     return { kind: 'previewing', previewing };
+}
+
+export function openOutline(): Action {
+    return { kind: 'outline', open: true };
+}
+
+export function closeOutline(): Action {
+    return { kind: 'outline', open: false };
 }

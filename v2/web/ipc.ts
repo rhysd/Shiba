@@ -27,6 +27,7 @@ export type KeyAction =
     | 'SearchPrev'
     | 'NextSection'
     | 'PrevSection'
+    | 'Outline'
     | 'Quit';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
@@ -187,6 +188,9 @@ export type MessageFromMain =
       }
     | {
           kind: 'search_previous';
+      }
+    | {
+          kind: 'outline';
       }
     | {
           kind: 'welcome';

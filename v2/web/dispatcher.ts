@@ -8,12 +8,13 @@ import {
     searchPrevious,
     setSearchMatcher,
     setPreviewing,
+    openOutline,
 } from './reducer';
 import { sendMessage, type MessageFromMain, type KeyAction } from './ipc';
 import { PreviewContent } from './markdown';
 import * as log from './log';
 
-// Global action dispatcher to handle IPC messages from the main
+// Global action dispatcher to handle IPC messages from the main and key shortcuts
 
 function scrollTo(
     candidates: HTMLElement[] | NodeListOf<HTMLElement>,
@@ -110,6 +111,9 @@ export class GlobalDispatcher {
                 case 'search_previous':
                     this.searchPrev();
                     break;
+                case 'outline':
+                    this.dispatch(openOutline());
+                    break;
                 case 'welcome':
                     this.dispatch(setPreviewing(false));
                     break;
@@ -187,6 +191,9 @@ export class GlobalDispatcher {
                 scrollTo(headings, (elem, windowTop) => elem.offsetTop < windowTop);
                 break;
             }
+            case 'Outline':
+                this.dispatch(openOutline());
+                break;
             case 'Quit':
                 sendMessage({ kind: 'quit' });
                 break;

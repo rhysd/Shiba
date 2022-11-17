@@ -27,6 +27,7 @@ pub enum KeyAction {
     PrevSearch,
     NextSection,
     PrevSection,
+    Outline,
     Quit,
 }
 
@@ -39,6 +40,7 @@ pub enum MessageToRenderer<'a> {
     SearchNext,
     SearchPrevious,
     Welcome,
+    Outline,
     Debug,
 }
 
@@ -78,6 +80,7 @@ pub enum MenuItem {
     Search,
     SearchNext,
     SearchPrevious,
+    Outline,
 }
 
 pub trait MenuItems {

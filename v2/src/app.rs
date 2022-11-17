@@ -393,6 +393,7 @@ where
             MenuItem::SearchPrevious => {
                 self.renderer.send_message(MessageToRenderer::SearchPrevious)?
             }
+            MenuItem::Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
         }
         Ok(AppControl::Continue)
     }

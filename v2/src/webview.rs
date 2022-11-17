@@ -25,6 +25,7 @@ pub struct WryMenuIds {
     search: MenuId,
     search_next: MenuId,
     search_prev: MenuId,
+    outline: MenuId,
 }
 
 impl WryMenuIds {
@@ -52,7 +53,7 @@ impl WryMenuIds {
             .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
         let cmd_f = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyF);
         let search_item =
-            edit_menu.add_item(MenuItemAttributes::new("Search").with_accelerators(&cmd_f));
+            edit_menu.add_item(MenuItemAttributes::new("Search…").with_accelerators(&cmd_f));
         let cmd_g = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyG);
         let search_next_item =
             edit_menu.add_item(MenuItemAttributes::new("Search Next").with_accelerators(&cmd_g));
@@ -60,6 +61,9 @@ impl WryMenuIds {
             Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::SHIFT), KeyCode::KeyG);
         let search_prev_item = edit_menu
             .add_item(MenuItemAttributes::new("Search Previous").with_accelerators(&cmd_shift_g));
+        let cmd_s = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyH);
+        let outline_item = edit_menu
+            .add_item(MenuItemAttributes::new("Section Outline…").with_accelerators(&cmd_s));
         menu.add_submenu("Edit", true, edit_menu);
 
         let mut display_menu = MenuBar::new();
@@ -79,6 +83,7 @@ impl WryMenuIds {
             search: search_item.id(),
             search_next: search_next_item.id(),
             search_prev: search_prev_item.id(),
+            outline: outline_item.id(),
         }
     }
 }
@@ -105,6 +110,8 @@ impl MenuItems for WryMenuIds {
             Ok(AppMenuItem::SearchNext)
         } else if id == self.search_prev {
             Ok(AppMenuItem::SearchPrevious)
+        } else if id == self.outline {
+            Ok(AppMenuItem::Outline)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }
