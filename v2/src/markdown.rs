@@ -564,23 +564,24 @@ impl Default for Autolinker {
 
 impl Autolinker {
     fn find_autolink(&self, text: &str) -> Option<(usize, usize)> {
-        let mat = self.0.find(text)?;
-        let (start, scheme_end) = (mat.start(), mat.end());
+        for mat in self.0.find_iter(text) {
+            let (start, scheme_end) = (mat.start(), mat.end());
 
-        let mut len = 0;
-        for (i, c) in text[scheme_end..].char_indices() {
-            match UrlCharKind::of(c) {
-                UrlCharKind::Invalid => break,
-                UrlCharKind::Term => {
-                    len = i + c.len_utf8();
+            let mut len = 0;
+            for (i, c) in text[scheme_end..].char_indices() {
+                match UrlCharKind::of(c) {
+                    UrlCharKind::Invalid => break,
+                    UrlCharKind::Term => {
+                        len = i + c.len_utf8();
+                    }
+                    UrlCharKind::NonTerm => {}
                 }
-                UrlCharKind::NonTerm => {}
+            }
+            if len > 0 {
+                return Some((start, scheme_end + len));
             }
         }
-        if len == 0 {
-            return None;
-        }
-        Some((start, scheme_end + len))
+        None
     }
 }
 
