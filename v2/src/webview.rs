@@ -29,7 +29,20 @@ pub struct WryMenuIds {
 }
 
 impl WryMenuIds {
-    fn setup(menu: &mut MenuBar) -> Self {
+    fn set_menu(root_menu: &mut MenuBar) -> Self {
+        // Windows / macOS / Android / iOS: The metadata is ignored on these platforms.
+        #[cfg(target_os = "linux")]
+        let metadata = AboutMetadata {
+            version: Some("2.0.0-alpha".into()),
+            authors: Some(vec!["rhysd <lin90162@yahoo.co.jp>".into()]),
+            copyright: Some("Copyright (c) 2015 rhysd".into()),
+            license: Some("MIT".into()),
+            website: Some("https://github.com/rhysd/Shiba".into()),
+            ..Default::default()
+        };
+        #[cfg(not(target_os = "linux"))]
+        let metadata = AboutMetadata::default();
+
         let mut file_menu = MenuBar::new();
         let cmd_o = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyO);
         let open_file_item =
@@ -38,19 +51,29 @@ impl WryMenuIds {
             Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::ALT), KeyCode::KeyO);
         let watch_dir_item = file_menu
             .add_item(MenuItemAttributes::new("Watch Directory...").with_accelerators(&cmd_opt_o));
-        file_menu.add_native_item(MenuItem::About("Shiba".to_string(), AboutMetadata::default()));
+        file_menu.add_native_item(MenuItem::Separator);
+        file_menu.add_native_item(MenuItem::About("Shiba".to_string(), metadata));
+        file_menu.add_native_item(MenuItem::Separator);
+        file_menu.add_native_item(MenuItem::Services);
+        file_menu.add_native_item(MenuItem::Separator);
+        file_menu.add_native_item(MenuItem::Hide);
+        file_menu.add_native_item(MenuItem::HideOthers);
+        file_menu.add_native_item(MenuItem::ShowAll);
+        file_menu.add_native_item(MenuItem::Separator);
         let cmd_q = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyQ);
         let quit_item =
             file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
-        menu.add_submenu("File", true, file_menu);
+        root_menu.add_submenu("File", true, file_menu);
 
         let mut edit_menu = MenuBar::new();
-        let cmd_left_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketRight);
-        let forward_item = edit_menu
-            .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
-        let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
-        let back_item = edit_menu
-            .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
+        edit_menu.add_native_item(MenuItem::Undo);
+        edit_menu.add_native_item(MenuItem::Redo);
+        edit_menu.add_native_item(MenuItem::Separator);
+        edit_menu.add_native_item(MenuItem::Cut);
+        edit_menu.add_native_item(MenuItem::Copy);
+        edit_menu.add_native_item(MenuItem::Paste);
+        edit_menu.add_native_item(MenuItem::SelectAll);
+        edit_menu.add_native_item(MenuItem::Separator);
         let cmd_f = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyF);
         let search_item =
             edit_menu.add_item(MenuItemAttributes::new("Search…").with_accelerators(&cmd_f));
@@ -61,16 +84,32 @@ impl WryMenuIds {
             Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::SHIFT), KeyCode::KeyG);
         let search_prev_item = edit_menu
             .add_item(MenuItemAttributes::new("Search Previous").with_accelerators(&cmd_shift_g));
-        let cmd_s = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyH);
+        let cmd_s = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyS);
         let outline_item = edit_menu
             .add_item(MenuItemAttributes::new("Section Outline…").with_accelerators(&cmd_s));
-        menu.add_submenu("Edit", true, edit_menu);
+        root_menu.add_submenu("Edit", true, edit_menu);
 
         let mut display_menu = MenuBar::new();
         let cmd_r = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyR);
         let reload_item =
             display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
-        menu.add_submenu("Display", true, display_menu);
+        display_menu.add_native_item(MenuItem::Separator);
+        display_menu.add_native_item(MenuItem::EnterFullScreen);
+        root_menu.add_submenu("Display", true, display_menu);
+
+        let mut history_menu = MenuBar::new();
+        let cmd_left_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketRight);
+        let forward_item = history_menu
+            .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
+        let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
+        let back_item = history_menu
+            .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
+        root_menu.add_submenu("History", true, history_menu);
+
+        let mut window_menu = MenuBar::new();
+        window_menu.add_native_item(MenuItem::Minimize);
+        window_menu.add_native_item(MenuItem::Zoom);
+        root_menu.add_submenu("Window", true, window_menu);
 
         log::debug!("Added menubar to window");
         Self {
@@ -216,7 +255,7 @@ impl Renderer for Wry {
 
     fn open(options: &Options, event_loop: &Self::EventLoop) -> Result<Self> {
         let mut menu = MenuBar::new();
-        let menu_ids = WryMenuIds::setup(&mut menu);
+        let menu_ids = WryMenuIds::set_menu(&mut menu);
 
         let window = WindowBuilder::new().with_title("Shiba").with_menu(menu).build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
