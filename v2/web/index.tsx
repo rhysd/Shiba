@@ -10,14 +10,19 @@ declare global {
     }
 }
 
-const dispatcher = new GlobalDispatcher();
+const previewRoot = document.getElementById('preview-root');
+if (!previewRoot) {
+    throw new Error('The root element to mount Markdown preview is not found in DOM');
+}
+
+const dispatcher = new GlobalDispatcher(previewRoot);
 
 // The main process will send IPC events via this global function
 window.postShibaMessageFromMain = dispatcher.handleIpcMessage.bind(dispatcher);
 
-const root = document.getElementById('shiba-root');
-if (!root) {
+const reactRoot = document.getElementById('shiba-root');
+if (!reactRoot) {
     throw new Error('The root element to mount application is not found in DOM');
 }
 
-createRoot(root).render(<App dispatcher={dispatcher} />);
+createRoot(reactRoot).render(<App dispatcher={dispatcher} />);

@@ -38,6 +38,7 @@
     "dompurify": "^2.4.1",
     "github-markdown-css": "^5.1.0",
     "highlight.js": "^11.6.0",
+    "mermaid": "^9.2.2",
     "mousetrap": "^1.6.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

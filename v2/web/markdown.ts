@@ -1,8 +1,9 @@
 import hljs from 'highlight.js';
 import tippy from 'tippy.js';
 import { sanitize } from 'dompurify';
+import mermaid from 'mermaid';
 import * as log from './log';
-import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef } from './ipc';
+import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef, ParseTreeCode } from './ipc';
 
 function appearInViewport(elem: Element): boolean {
     const { top, left, bottom, right } = elem.getBoundingClientRect();
@@ -14,23 +15,23 @@ function appearInViewport(elem: Element): boolean {
 
 export class PreviewContent {
     rootElem: HTMLElement;
+    mermaidInit: boolean;
 
-    constructor() {
-        const root = document.getElementById('preview-root');
-        if (!root) {
-            throw new Error('The root element to mount Markdown preview is not found in DOM');
-        }
+    constructor(root: HTMLElement) {
         this.rootElem = root;
+        this.mermaidInit = false;
     }
 
     // Note: Render at requestAnimationFrame may be better for performance
     render(tree: RenderTreeElem[]): void {
         this.rootElem.textContent = '';
-        const renderer = new RenderTreeRenderer();
+        const mermaid = new MermaidRenderer(this.mermaidInit);
+        const renderer = new RenderTreeRenderer(mermaid);
         for (const elem of tree) {
             renderer.render(elem, this.rootElem);
         }
         renderer.end(this.rootElem);
+        this.mermaidInit = mermaid.initialized;
         renderer.scrollToLastModified();
     }
 }
@@ -60,11 +61,13 @@ class RenderTreeRenderer {
     table: TableState | null;
     footNotes: ParseTreeFootNoteDef[];
     lastModified: HTMLSpanElement | null;
+    mermaid: MermaidRenderer;
 
-    constructor() {
+    constructor(mermaid: MermaidRenderer) {
         this.table = null;
         this.footNotes = [];
         this.lastModified = null;
+        this.mermaid = mermaid;
     }
 
     scrollToLastModified(): void {
@@ -166,6 +169,10 @@ class RenderTreeRenderer {
                     hljs.highlightElement(c);
                     parent.appendChild(c);
                     return;
+                } else if (elem.lang === 'mermaid') {
+                    if (this.mermaid.renderTo(parent, elem)) {
+                        return;
+                    }
                 }
                 node = c;
                 break;
@@ -328,5 +335,40 @@ class RenderTreeRenderer {
         }
 
         parent.appendChild(section);
+    }
+}
+
+class MermaidRenderer {
+    initialized: boolean;
+    id: number;
+
+    constructor(init: boolean) {
+        this.initialized = init;
+        this.id = 0;
+    }
+
+    renderTo(parent: HTMLElement, elem: ParseTreeCode): boolean {
+        let content = '';
+        for (const child of elem.c) {
+            if (typeof child === 'string') {
+                content += child;
+            } else {
+                return false; // Reaches here when search highlight is included
+            }
+        }
+
+        if (!this.initialized) {
+            mermaid.initialize({ startOnLoad: false });
+            this.initialized = true;
+            log.debug('Initialized mermaid renderer for', elem);
+        }
+
+        const id = `graph-${this.id}`;
+        this.id++;
+        const svg = mermaid.render(id, content);
+        parent.className = 'mermaid';
+        parent.insertAdjacentHTML('beforeend', svg);
+
+        return true;
     }
 }

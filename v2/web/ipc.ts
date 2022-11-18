@@ -40,6 +40,11 @@ export interface ParseTreeFootNoteDef {
     id: number;
     c: RenderTreeElem[];
 }
+export interface ParseTreeCode {
+    t: 'code';
+    lang?: string;
+    c: RenderTreeElem[];
+}
 // Note: 't' is abbreviation of 'tag', 'c' is abbreviation of 'children' for saving spaces
 export type RenderTreeElem =
     | string // Text node
@@ -104,11 +109,7 @@ export type RenderTreeElem =
           t: 'pre';
           c: RenderTreeElem[];
       }
-    | {
-          t: 'code';
-          lang?: string;
-          c: RenderTreeElem[];
-      }
+    | ParseTreeCode
     | {
           t: 'ol';
           start?: number;
