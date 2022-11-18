@@ -251,7 +251,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
     }
 
     fn emoji_text(&mut self, text: &str, range: Range) -> Result<()> {
-        let Range { mut start, end } = range;
+        let mut start = range.start;
         for token in EmojiTokenizer::new(text) {
             match token {
                 EmojiToken::Text(text) => {
@@ -271,7 +271,10 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 }
             }
         }
-        debug_assert_eq!(start, end);
+        // Note: When some escaped text is included in input like "&amp;", `start == range.end` invariant is violated here.
+        // That's OK because pulldown-cmark tokenizes any escaped text as small as possible to reduce extra heap allocation.
+        // For instance "foo &amp; bar" is tokenized into three events Text("foo "), Text("&"), Test(" bar"). It means that
+        // any escaped charactor is followed by no text within the token.
         Ok(())
     }
 
