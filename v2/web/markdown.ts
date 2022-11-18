@@ -2,6 +2,13 @@ import hljs from 'highlight.js';
 import tippy from 'tippy.js';
 import { sanitize } from 'dompurify';
 import mermaid from 'mermaid';
+import { mathjax } from 'mathjax-full/js/mathjax';
+import type { MathDocument } from 'mathjax-full/js/core/MathDocument';
+import { TeX } from 'mathjax-full/js/input/tex';
+import { SVG } from 'mathjax-full/js/output/svg';
+import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
+import { HTMLAdaptor } from 'mathjax-full/js/adaptors/HTMLAdaptor';
+import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
 import * as log from './log';
 import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef, ParseTreeCode } from './ipc';
 
@@ -16,17 +23,19 @@ function appearInViewport(elem: Element): boolean {
 export class PreviewContent {
     rootElem: HTMLElement;
     mermaidInit: boolean;
+    mathjax: MathjaxRenderer;
 
-    constructor(root: HTMLElement) {
+    constructor(window: Window, root: HTMLElement) {
         this.rootElem = root;
         this.mermaidInit = false;
+        this.mathjax = new MathjaxRenderer(window);
     }
 
     // Note: Render at requestAnimationFrame may be better for performance
     render(tree: RenderTreeElem[]): void {
         this.rootElem.textContent = '';
         const mermaid = new MermaidRenderer(this.mermaidInit);
-        const renderer = new RenderTreeRenderer(mermaid);
+        const renderer = new RenderTreeRenderer(mermaid, this.mathjax);
         for (const elem of tree) {
             renderer.render(elem, this.rootElem);
         }
@@ -62,12 +71,14 @@ class RenderTreeRenderer {
     footNotes: ParseTreeFootNoteDef[];
     lastModified: HTMLSpanElement | null;
     mermaid: MermaidRenderer;
+    mathjax: MathjaxRenderer;
 
-    constructor(mermaid: MermaidRenderer) {
+    constructor(mermaid: MermaidRenderer, mathjax: MathjaxRenderer) {
         this.table = null;
         this.footNotes = [];
         this.lastModified = null;
         this.mermaid = mermaid;
+        this.mathjax = mathjax;
     }
 
     scrollToLastModified(): void {
@@ -171,6 +182,10 @@ class RenderTreeRenderer {
                     return;
                 } else if (elem.lang === 'mermaid') {
                     if (this.mermaid.renderTo(parent, elem)) {
+                        return;
+                    }
+                } else if (elem.lang === 'math') {
+                    if (this.mathjax.renderTo(parent, elem)) {
                         return;
                     }
                 }
@@ -368,6 +383,52 @@ class MermaidRenderer {
         const svg = mermaid.render(id, content);
         parent.className = 'mermaid';
         parent.insertAdjacentHTML('beforeend', svg);
+
+        return true;
+    }
+}
+
+class MathjaxRenderer {
+    document: MathDocument<HTMLElement, unknown, Document> | null;
+    window: Window;
+
+    constructor(window: Window) {
+        this.document = null;
+        this.window = window;
+    }
+
+    private getDocument(): MathDocument<HTMLElement, unknown, Document> {
+        if (this.document !== null) {
+            return this.document;
+        }
+
+        // HTMLAdaptor expects `MinWindow` interface for the type of argument. However, it is not compatible with
+        // `Window` when strictNullChecks is enabled. For example, `textContent` property is typed as `string | null`
+        // in `Window` but it is typed as `string` in `MinWindow`.
+        RegisterHTMLHandler(new HTMLAdaptor(this.window as any));
+        const document = mathjax.document('', {
+            InputJax: new TeX({ packages: AllPackages }),
+            OutputJax: new SVG({ fontCache: 'local' }),
+        });
+        this.document = document;
+
+        log.debug('Initialized Mathjax renderer', document);
+        return document;
+    }
+
+    renderTo(parent: HTMLElement, elem: ParseTreeCode): boolean {
+        let content = '';
+        for (const child of elem.c) {
+            if (typeof child === 'string') {
+                content += child;
+            } else {
+                return false; // Reaches here when search highlight is included
+            }
+        }
+
+        const document = this.getDocument();
+        const rendered = document.convert(content) as HTMLElement;
+        parent.insertAdjacentElement('beforeend', rendered);
 
         return true;
     }

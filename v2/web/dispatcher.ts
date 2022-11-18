@@ -44,12 +44,12 @@ export class GlobalDispatcher {
     public state: State;
     public content: PreviewContent;
 
-    constructor(previewRoot: HTMLElement) {
+    constructor(window: Window, previewRoot: HTMLElement) {
         this.dispatch = () => {
             // do nothing by default
         };
         this.state = INITIAL_STATE;
-        this.content = new PreviewContent(previewRoot);
+        this.content = new PreviewContent(window, previewRoot);
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {

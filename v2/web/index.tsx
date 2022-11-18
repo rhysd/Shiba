@@ -15,7 +15,7 @@ if (!previewRoot) {
     throw new Error('The root element to mount Markdown preview is not found in DOM');
 }
 
-const dispatcher = new GlobalDispatcher(previewRoot);
+const dispatcher = new GlobalDispatcher(window, previewRoot);
 
 // The main process will send IPC events via this global function
 window.postShibaMessageFromMain = dispatcher.handleIpcMessage.bind(dispatcher);
