@@ -20,7 +20,7 @@ impl ParseResult for () {
     fn on_text(&mut self, _text: &str, _range: &Range) {}
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum TokenKind {
     Normal,
     MatchOther,
@@ -256,7 +256,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             match token {
                 EmojiToken::Text(text) => {
                     if !text.is_empty() {
-                        self.text(text, start..text.len())?;
+                        self.text(text, start..start + text.len())?;
                         start += text.len();
                     }
                 }
