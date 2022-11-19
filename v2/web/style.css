@@ -21,7 +21,7 @@ body {
 }
 
 .markdown-body {
-  padding: 8px;
+  padding: 8px 16px;
 }
 
 .search-text-start,
