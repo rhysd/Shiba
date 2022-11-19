@@ -215,7 +215,7 @@ where
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
         let window_state = if config.window().restore { WindowState::load() } else { None };
-        let renderer = R::open(&options, &config, event_loop, window_state)?;
+        let renderer = R::new(&options, &config, event_loop, window_state)?;
 
         let filter = PathFilter::new(&config);
         let mut watcher = W::new(event_loop, filter)?;
@@ -303,6 +303,9 @@ where
                     search: self.config.search(),
                     theme: self.renderer.theme(),
                 })?;
+
+                // Open window when the content is ready. Otherwise a white window flashes when dark theme.
+                self.renderer.show();
 
                 if let Some(path) = mem::take(&mut self.options.init_file) {
                     self.preview_new(path)?;

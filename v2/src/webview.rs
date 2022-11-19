@@ -267,7 +267,7 @@ impl Renderer for Wry {
     type EventLoop = EventLoop<UserEvent>;
     type Menu = WryMenuIds;
 
-    fn open(
+    fn new(
         options: &Options,
         config: &Config,
         event_loop: &Self::EventLoop,
@@ -276,7 +276,8 @@ impl Renderer for Wry {
         let mut menu = MenuBar::new();
         let menu_ids = WryMenuIds::set_menu(&mut menu);
 
-        let mut builder = WindowBuilder::new().with_title("Shiba").with_menu(menu);
+        let mut builder =
+            WindowBuilder::new().with_title("Shiba").with_menu(menu).with_visible(false);
         if let Some(state) = window_state {
             log::debug!("Restoring window state {state:?}");
             let size = PhysicalSize { width: state.width, height: state.height };
@@ -348,5 +349,9 @@ impl Renderer for Wry {
 
     fn theme(&self) -> RendererTheme {
         window_theme(self.webview.window())
+    }
+
+    fn show(&self) {
+        self.webview.window().set_visible(true);
     }
 }

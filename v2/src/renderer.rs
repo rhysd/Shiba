@@ -104,7 +104,7 @@ pub trait Renderer: Sized {
     type EventLoop;
     type Menu: MenuItems;
 
-    fn open(
+    fn new(
         options: &Options,
         config: &Config,
         event_loop: &Self::EventLoop,
@@ -116,4 +116,5 @@ pub trait Renderer: Sized {
     fn set_title(&self, title: &str);
     fn window_state(&self) -> Option<WindowState>;
     fn theme(&self) -> Theme;
+    fn show(&self);
 }
