@@ -1,3 +1,4 @@
+use crate::cli::Options;
 use crate::renderer::KeyAction;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -90,9 +91,23 @@ pub struct Search {
     matcher: SearchMatcher,
 }
 
+#[derive(Clone, Copy, Deserialize, Serialize, Debug)]
+pub enum WindowTheme {
+    System,
+    Dark,
+    Light,
+}
+
+impl Default for WindowTheme {
+    fn default() -> Self {
+        Self::System
+    }
+}
+
 #[derive(Default, Deserialize, Serialize, Debug)]
 pub struct Window {
     pub restore: bool,
+    pub theme: WindowTheme,
 }
 
 #[non_exhaustive]
@@ -150,6 +165,13 @@ impl Config {
 
         log::debug!("Fallback to the default config since no config file could be loaded");
         Ok(Self::default())
+    }
+
+    pub fn merge_options(mut self, options: &Options) -> Self {
+        if let Some(theme) = options.theme {
+            self.window.theme = theme;
+        }
+        self
     }
 
     pub fn debounce_throttle(&self) -> Duration {

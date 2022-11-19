@@ -1,9 +1,10 @@
 use crate::assets::Assets;
 use crate::cli::Options;
+use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
     MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, RawMessageWriter,
-    Renderer, UserEvent,
+    Renderer, Theme as RendererTheme, UserEvent,
 };
 use anyhow::Result;
 use std::path::PathBuf;
@@ -12,7 +13,7 @@ use wry::application::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use wry::application::event_loop::EventLoop;
 use wry::application::keyboard::{KeyCode, ModifiersState};
 use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemAttributes};
-use wry::application::window::{Fullscreen, Window, WindowBuilder};
+use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
@@ -159,12 +160,23 @@ impl MenuItems for WryMenuIds {
     }
 }
 
+fn window_theme(window: &Window) -> RendererTheme {
+    match window.theme() {
+        Theme::Light => RendererTheme::Light,
+        Theme::Dark => RendererTheme::Dark,
+        t => {
+            log::error!("Unknown window theme: {:?}", t);
+            RendererTheme::Dark
+        }
+    }
+}
+
 fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
-
     let assets = Assets::default();
+    let theme = window_theme(&window);
 
     WebViewBuilder::new(window)?
         .with_url("shiba://localhost/")?
@@ -229,11 +241,11 @@ fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<W
             log::debug!("Rejected to open new window for URL: {}", url);
             false
         })
-        .with_custom_protocol("shiba".into(), |request| {
+        .with_custom_protocol("shiba".into(), move |request| {
             let uri = request.uri();
             log::debug!("Handling custom protocol: {:?}", uri);
             let path = uri.path();
-            let (body, mime) = Assets::load(path);
+            let (body, mime) = Assets::load(path, theme);
             let status = if body.is_empty() { 404 } else { 200 };
             // Response body of custom protocol handler requires `Vec<u8>`
             Response::builder()
@@ -257,6 +269,7 @@ impl Renderer for Wry {
 
     fn open(
         options: &Options,
+        config: &Config,
         event_loop: &Self::EventLoop,
         window_state: Option<WindowState>,
     ) -> Result<Self> {
@@ -273,6 +286,11 @@ impl Renderer for Wry {
             if state.fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
+        }
+        match config.window().theme {
+            ThemeConfig::System => {}
+            ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
+            ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
         }
         let window = builder.build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
@@ -326,5 +344,9 @@ impl Renderer for Wry {
         let PhysicalSize { width, height } = w.inner_size();
         let fullscreen = w.fullscreen().is_some();
         Some(WindowState { width, height, x, y, fullscreen })
+    }
+
+    fn theme(&self) -> RendererTheme {
+        window_theme(self.webview.window())
     }
 }

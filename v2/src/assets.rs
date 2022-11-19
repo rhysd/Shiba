@@ -1,3 +1,4 @@
+use crate::renderer::Theme;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(debug_assertions)]
@@ -8,6 +9,7 @@ pub const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
 pub const GITHUB_MARKDOWN_CSS: &[u8] = include_bytes!("assets/github-markdown.css");
 pub const STYLE_CSS: &[u8] = include_bytes!("assets/style.css");
 pub const HLJS_GITHUB_CSS: &[u8] = include_bytes!("assets/github.css");
+pub const HLJS_GITHUB_DARK_CSS: &[u8] = include_bytes!("assets/github-dark.css");
 pub const TIPPY_CSS: &[u8] = include_bytes!("assets/tippy.css");
 pub const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
@@ -25,7 +27,7 @@ pub struct Assets {
 }
 
 impl Assets {
-    pub fn load(path: &str) -> (&'static [u8], &'static str) {
+    pub fn load(path: &str, theme: Theme) -> (&'static [u8], &'static str) {
         let mime = if path.ends_with('/') || path.ends_with(".html") {
             "text/html;charset=UTF-8"
         } else if path.ends_with(".js") {
@@ -40,14 +42,15 @@ impl Assets {
 
         #[rustfmt::skip]
         let body = match path {
-            "/"                    => INDEX_HTML,
-            "/bundle.js"           => BUNDLE_JS,
-            "/style.css"           => STYLE_CSS,
-            "/github-markdown.css" => GITHUB_MARKDOWN_CSS,
-            "/hljs-theme.css"      => HLJS_GITHUB_CSS,
-            "/tippy.css"           => TIPPY_CSS,
-            "/logo.png"            => LOGO_PNG,
-            _                      => unreachable!(),
+            "/"                                       => INDEX_HTML,
+            "/bundle.js"                              => BUNDLE_JS,
+            "/style.css"                              => STYLE_CSS,
+            "/github-markdown.css"                    => GITHUB_MARKDOWN_CSS,
+            "/hljs-theme.css" if theme == Theme::Dark => HLJS_GITHUB_DARK_CSS,
+            "/hljs-theme.css"                         => HLJS_GITHUB_CSS,
+            "/tippy.css"                              => TIPPY_CSS,
+            "/logo.png"                               => LOGO_PNG,
+            _                                         => unreachable!(),
         };
 
         (body, mime)

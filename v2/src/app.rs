@@ -211,11 +211,11 @@ where
     R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
-        let config = Config::load()?;
+        let config = Config::load()?.merge_options(&options);
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
         let window_state = if config.window().restore { WindowState::load() } else { None };
-        let renderer = R::open(&options, event_loop, window_state)?;
+        let renderer = R::open(&options, &config, event_loop, window_state)?;
 
         let filter = PathFilter::new(&config);
         let mut watcher = W::new(event_loop, filter)?;

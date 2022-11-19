@@ -1,5 +1,5 @@
 use crate::cli::Options;
-use crate::config::{Search as SearchConfig, SearchMatcher};
+use crate::config::{Config, Search as SearchConfig, SearchMatcher};
 use crate::persistent::WindowState;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -94,12 +94,19 @@ pub trait RawMessageWriter {
     fn write_to(self, writer: impl fmt::Write) -> std::result::Result<Self::Output, fmt::Error>;
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Theme {
+    Dark,
+    Light,
+}
+
 pub trait Renderer: Sized {
     type EventLoop;
     type Menu: MenuItems;
 
     fn open(
         options: &Options,
+        config: &Config,
         event_loop: &Self::EventLoop,
         window_state: Option<WindowState>,
     ) -> Result<Self>;
@@ -108,4 +115,5 @@ pub trait Renderer: Sized {
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
     fn window_state(&self) -> Option<WindowState>;
+    fn theme(&self) -> Theme;
 }
