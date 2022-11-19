@@ -33,17 +33,22 @@ export type KeyAction =
 export type KeyMaps = { [keybind: string]: KeyAction };
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
 
-export type ParseTreeTableAlign = 'left' | 'center' | 'right' | null;
-export interface ParseTreeFootNoteDef {
+export type RenderTreeTableAlign = 'left' | 'center' | 'right' | null;
+export interface RenderTreeFootNoteDef {
     t: 'fn-def';
     name?: string;
     id: number;
     c: RenderTreeElem[];
 }
-export interface ParseTreeCode {
+export interface RenderTreeCode {
     t: 'code';
     lang?: string;
     c: RenderTreeElem[];
+}
+export interface RenderTreeMath {
+    t: 'math';
+    inline: boolean;
+    expr: string;
 }
 // Note: 't' is abbreviation of 'tag', 'c' is abbreviation of 'children' for saving spaces
 export type RenderTreeElem =
@@ -78,7 +83,7 @@ export type RenderTreeElem =
       }
     | {
           t: 'table';
-          align: ParseTreeTableAlign[];
+          align: RenderTreeTableAlign[];
           c: RenderTreeElem[];
       }
     | {
@@ -109,7 +114,7 @@ export type RenderTreeElem =
           t: 'pre';
           c: RenderTreeElem[];
       }
-    | ParseTreeCode
+    | RenderTreeCode
     | {
           t: 'ol';
           start?: number;
@@ -148,11 +153,12 @@ export type RenderTreeElem =
           title?: string;
           c: RenderTreeElem[]; // Note: Children are alt text
       }
-    | ParseTreeFootNoteDef
+    | RenderTreeFootNoteDef
     | {
           t: 'emoji';
           name: string;
       }
+    | RenderTreeMath
     | {
           t: 'modified'; // Special token to indicate the last modified position
       }

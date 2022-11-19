@@ -10,7 +10,13 @@ import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
 import { HTMLAdaptor } from 'mathjax-full/js/adaptors/HTMLAdaptor';
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
 import * as log from './log';
-import type { RenderTreeElem, ParseTreeTableAlign, ParseTreeFootNoteDef, ParseTreeCode } from './ipc';
+import type {
+    RenderTreeElem,
+    RenderTreeTableAlign,
+    RenderTreeFootNoteDef,
+    RenderTreeCode,
+    RenderTreeMath,
+} from './ipc';
 
 function appearInViewport(elem: Element): boolean {
     const { top, left, bottom, right } = elem.getBoundingClientRect();
@@ -62,13 +68,13 @@ function span(className: string): HTMLSpanElement {
 }
 
 interface TableState {
-    aligns: ParseTreeTableAlign[];
+    aligns: RenderTreeTableAlign[];
     index: number;
 }
 
 class RenderTreeRenderer {
     table: TableState | null;
-    footNotes: ParseTreeFootNoteDef[];
+    footNotes: RenderTreeFootNoteDef[];
     lastModified: HTMLSpanElement | null;
     mermaid: MermaidRenderer;
     mathjax: MathjaxRenderer;
@@ -93,7 +99,7 @@ class RenderTreeRenderer {
         });
     }
 
-    tableAlign(): ParseTreeTableAlign {
+    tableAlign(): RenderTreeTableAlign {
         if (this.table === null) {
             return null;
         }
@@ -185,7 +191,7 @@ class RenderTreeRenderer {
                         return;
                     }
                 } else if (elem.lang === 'math') {
-                    if (this.mathjax.renderTo(parent, elem)) {
+                    if (this.mathjax.renderCodeBlock(parent, elem)) {
                         return;
                     }
                 }
@@ -268,6 +274,9 @@ class RenderTreeRenderer {
             }
             case 'fn-def':
                 this.footNotes.push(elem);
+                return;
+            case 'math':
+                this.mathjax.renderMathElem(parent, elem);
                 return;
             case 'html': {
                 const sanitized = sanitize(elem.raw, {
@@ -362,7 +371,7 @@ class MermaidRenderer {
         this.id = 0;
     }
 
-    renderTo(parent: HTMLElement, elem: ParseTreeCode): boolean {
+    renderTo(parent: HTMLElement, elem: RenderTreeCode): boolean {
         let content = '';
         for (const child of elem.c) {
             if (typeof child === 'string') {
@@ -389,7 +398,7 @@ class MermaidRenderer {
 }
 
 class MathjaxRenderer {
-    document: MathDocument<HTMLElement, unknown, Document> | null;
+    document: MathDocument<HTMLElement, Text, Document> | null;
     window: Window;
 
     constructor(window: Window) {
@@ -397,7 +406,7 @@ class MathjaxRenderer {
         this.window = window;
     }
 
-    private getDocument(): MathDocument<HTMLElement, unknown, Document> {
+    private getDocument(): MathDocument<HTMLElement, Text, Document> {
         if (this.document !== null) {
             return this.document;
         }
@@ -416,7 +425,19 @@ class MathjaxRenderer {
         return document;
     }
 
-    renderTo(parent: HTMLElement, elem: ParseTreeCode): boolean {
+    private render(parent: HTMLElement, content: string, className: 'math-expr-block' | 'math-expr-inline'): void {
+        const document = this.getDocument();
+        const rendered = document.convert(content) as HTMLElement;
+        rendered.classList.add(className);
+        parent.insertAdjacentElement('beforeend', rendered);
+    }
+
+    renderMathElem(parent: HTMLElement, math: RenderTreeMath): void {
+        const className = math.inline ? 'math-expr-inline' : 'math-expr-block';
+        this.render(parent, math.expr, className);
+    }
+
+    renderCodeBlock(parent: HTMLElement, elem: RenderTreeCode): boolean {
         let content = '';
         for (const child of elem.c) {
             if (typeof child === 'string') {
@@ -426,10 +447,7 @@ class MathjaxRenderer {
             }
         }
 
-        const document = this.getDocument();
-        const rendered = document.convert(content) as HTMLElement;
-        parent.insertAdjacentElement('beforeend', rendered);
-
+        this.render(parent, content, 'math-expr-block');
         return true;
     }
 }

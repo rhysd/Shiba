@@ -31,3 +31,12 @@ pre code.hljs {
 .tippy-content {
   font-size: 0.8rem;
 }
+
+.math-expr-block {
+  display: flex;
+  justify-content: center;
+}
+
+.math-expr-inline {
+  display: inline;
+}

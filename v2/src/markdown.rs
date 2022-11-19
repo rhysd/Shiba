@@ -3,7 +3,8 @@ use aho_corasick::AhoCorasick;
 use emojis::Emoji;
 use memchr::{memchr_iter, Memchr};
 use pulldown_cmark::{
-    Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options, Parser, Tag,
+    Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, MathDisplay, Options, Parser,
+    Tag,
 };
 use std::collections::HashMap;
 use std::fmt::{self, Write};
@@ -65,7 +66,8 @@ impl<'a, R: ParseResult, T: TextTokenizer> MarkdownParser<'a, R, T> {
             Options::ENABLE_STRIKETHROUGH
                 | Options::ENABLE_FOOTNOTES
                 | Options::ENABLE_TABLES
-                | Options::ENABLE_TASKLISTS,
+                | Options::ENABLE_TASKLISTS
+                | Options::ENABLE_MATH,
         );
         let parser = Parser::new_ext(source, options);
         Self { parser, offset, text_tokenizer, _phantom: PhantomData }
@@ -352,6 +354,12 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 TaskListMarker(checked) => {
                     self.tag("checkbox")?;
                     write!(self.out, r#","checked":{}}}"#, checked)?;
+                }
+                Math(display, text) => {
+                    self.tag("math")?;
+                    write!(self.out, r#","inline":{},"expr":"#, display == MathDisplay::Inline)?;
+                    self.string(&text)?;
+                    self.out.write_char('}')?;
                 }
             }
         }
