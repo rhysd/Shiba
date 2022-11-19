@@ -1,6 +1,17 @@
 html {
-  background-color: white;
   margin: 0;
+}
+
+@media (prefers-color-scheme: light) {
+  html {
+    background-color: white;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    background-color: rgb(13 17 23);
+  }
 }
 
 body {
