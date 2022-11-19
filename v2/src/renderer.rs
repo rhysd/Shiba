@@ -36,7 +36,7 @@ pub enum KeyAction {
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageToRenderer<'a> {
-    Config { keymaps: &'a HashMap<String, KeyAction>, search: &'a SearchConfig },
+    Config { keymaps: &'a HashMap<String, KeyAction>, search: &'a SearchConfig, theme: Theme },
     Search,
     SearchNext,
     SearchPrevious,
@@ -94,7 +94,7 @@ pub trait RawMessageWriter {
     fn write_to(self, writer: impl fmt::Write) -> std::result::Result<Self::Output, fmt::Error>;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
 pub enum Theme {
     Dark,
     Light,

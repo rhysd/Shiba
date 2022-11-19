@@ -104,7 +104,7 @@ impl Default for WindowTheme {
     }
 }
 
-#[derive(Default, Deserialize, Serialize, Debug)]
+#[derive(Default, Deserialize, Debug)]
 pub struct Window {
     pub restore: bool,
     pub theme: WindowTheme,

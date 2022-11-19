@@ -1,5 +1,5 @@
 import hljs from 'highlight.js';
-import tippy from 'tippy.js';
+import tippy, { type Props as TippyProps } from 'tippy.js';
 import { sanitize } from 'dompurify';
 import mermaid from 'mermaid';
 import { mathjax } from 'mathjax-full/js/mathjax';
@@ -16,6 +16,7 @@ import type {
     RenderTreeFootNoteDef,
     RenderTreeCode,
     RenderTreeMath,
+    Theme,
 } from './ipc';
 
 function appearInViewport(elem: Element): boolean {
@@ -27,21 +28,28 @@ function appearInViewport(elem: Element): boolean {
 }
 
 export class PreviewContent {
-    rootElem: HTMLElement;
-    mermaidInit: boolean;
-    mathjax: MathjaxRenderer;
+    private readonly rootElem: HTMLElement;
+    private mermaidInit: boolean;
+    private readonly mathjax: MathjaxRenderer;
+    private theme: Theme;
 
     constructor(window: Window, root: HTMLElement) {
         this.rootElem = root;
         this.mermaidInit = false;
         this.mathjax = new MathjaxRenderer(window);
+        this.theme = 'Light';
+    }
+
+    setTheme(theme: Theme): void {
+        log.debug('Set system theme to', theme);
+        this.theme = theme;
     }
 
     // Note: Render at requestAnimationFrame may be better for performance
     render(tree: RenderTreeElem[]): void {
         this.rootElem.textContent = '';
-        const mermaid = new MermaidRenderer(this.mermaidInit);
-        const renderer = new RenderTreeRenderer(mermaid, this.mathjax);
+        const mermaid = new MermaidRenderer(this.mermaidInit, this.theme);
+        const renderer = new RenderTreeRenderer(mermaid, this.mathjax, this.theme);
         for (const elem of tree) {
             renderer.render(elem, this.rootElem);
         }
@@ -73,18 +81,20 @@ interface TableState {
 }
 
 class RenderTreeRenderer {
-    table: TableState | null;
-    footNotes: RenderTreeFootNoteDef[];
-    lastModified: HTMLSpanElement | null;
-    mermaid: MermaidRenderer;
-    mathjax: MathjaxRenderer;
+    private table: TableState | null;
+    private lastModified: HTMLSpanElement | null;
+    private readonly footNotes: RenderTreeFootNoteDef[];
+    private readonly mermaid: MermaidRenderer;
+    private readonly mathjax: MathjaxRenderer;
+    private readonly theme: Theme;
 
-    constructor(mermaid: MermaidRenderer, mathjax: MathjaxRenderer) {
+    constructor(mermaid: MermaidRenderer, mathjax: MathjaxRenderer, theme: Theme) {
         this.table = null;
         this.footNotes = [];
         this.lastModified = null;
         this.mermaid = mermaid;
         this.mathjax = mathjax;
+        this.theme = theme;
     }
 
     scrollToLastModified(): void {
@@ -108,6 +118,14 @@ class RenderTreeRenderer {
             return null;
         }
         return aligns[index];
+    }
+
+    tippyTheme(): string | undefined {
+        if (this.theme === 'Dark') {
+            return 'light';
+        } else {
+            return undefined;
+        }
     }
 
     render(elem: RenderTreeElem, parent: HTMLElement): void {
@@ -141,7 +159,11 @@ class RenderTreeRenderer {
                     allowHTML = true;
                 }
                 if (!elem.auto) {
-                    tippy(a, { content, allowHTML });
+                    const props: Partial<TippyProps> = { content, allowHTML };
+                    if (this.theme === 'Dark') {
+                        props.theme = 'light';
+                    }
+                    tippy(a, props);
                 }
                 node = a;
                 break;
@@ -363,12 +385,14 @@ class RenderTreeRenderer {
 }
 
 class MermaidRenderer {
-    initialized: boolean;
-    id: number;
+    private init: boolean;
+    private id: number;
+    private readonly theme: Theme;
 
-    constructor(init: boolean) {
-        this.initialized = init;
+    constructor(init: boolean, theme: Theme) {
+        this.init = init;
         this.id = 0;
+        this.theme = theme;
     }
 
     renderTo(parent: HTMLElement, elem: RenderTreeCode): boolean {
@@ -381,10 +405,11 @@ class MermaidRenderer {
             }
         }
 
-        if (!this.initialized) {
-            mermaid.initialize({ startOnLoad: false });
-            this.initialized = true;
-            log.debug('Initialized mermaid renderer for', elem);
+        if (!this.init) {
+            const theme = this.theme === 'Light' ? 'base' : 'dark';
+            mermaid.initialize({ startOnLoad: false, theme });
+            this.init = true;
+            log.debug('Initialized mermaid renderer', theme, elem);
         }
 
         const id = `graph-${this.id}`;
@@ -395,11 +420,17 @@ class MermaidRenderer {
 
         return true;
     }
+
+    get initialized(): boolean {
+        return this.init;
+    }
 }
 
+type MathClassName = 'math-expr-block' | 'math-expr-inline' | 'code-fence-math';
+
 class MathjaxRenderer {
-    document: MathDocument<HTMLElement, Text, Document> | null;
-    window: Window;
+    private document: MathDocument<HTMLElement, Text, Document> | null;
+    private readonly window: Window;
 
     constructor(window: Window) {
         this.document = null;
@@ -425,7 +456,7 @@ class MathjaxRenderer {
         return document;
     }
 
-    private render(parent: HTMLElement, content: string, className: 'math-expr-block' | 'math-expr-inline'): void {
+    private render(parent: HTMLElement, content: string, className: MathClassName): void {
         const document = this.getDocument();
         const rendered = document.convert(content) as HTMLElement;
         rendered.classList.add(className);
@@ -447,7 +478,7 @@ class MathjaxRenderer {
             }
         }
 
-        this.render(parent, content, 'math-expr-block');
+        this.render(parent, content, 'code-fence-math');
         return true;
     }
 }

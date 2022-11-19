@@ -100,6 +100,7 @@ export class GlobalDispatcher {
                             }
                         });
                     }
+                    this.content.setTheme(msg.theme);
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     break;
                 case 'search':

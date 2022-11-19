@@ -32,6 +32,7 @@ export type KeyAction =
 
 export type KeyMaps = { [keybind: string]: KeyAction };
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
+export type Theme = 'Dark' | 'Light';
 
 export type RenderTreeTableAlign = 'left' | 'center' | 'right' | null;
 export interface RenderTreeFootNoteDef {
@@ -190,6 +191,7 @@ export type MessageFromMain =
           search: {
               matcher: SearchMatcher;
           };
+          theme: Theme;
       }
     | {
           kind: 'search';

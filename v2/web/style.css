@@ -43,9 +43,15 @@ pre code.hljs {
   font-size: 0.8rem;
 }
 
+.code-fence-math {
+  display: flex;
+  justify-content: center;
+}
+
 .math-expr-block {
   display: flex;
   justify-content: center;
+  margin: 16px;
 }
 
 .math-expr-inline {

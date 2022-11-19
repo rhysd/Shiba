@@ -11,13 +11,21 @@ pub const STYLE_CSS: &[u8] = include_bytes!("assets/style.css");
 pub const HLJS_GITHUB_CSS: &[u8] = include_bytes!("assets/github.css");
 pub const HLJS_GITHUB_DARK_CSS: &[u8] = include_bytes!("assets/github-dark.css");
 pub const TIPPY_CSS: &[u8] = include_bytes!("assets/tippy.css");
+pub const TIPPY_LIGHT_CSS: &[u8] = include_bytes!("assets/light.css");
 pub const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
 // TODO: hljs-theme.css will be customizable with user configuration file
 // TODO: user css can be applied by user configuration file
 
-const ONETIME_ASSET_PATHS: &[&str] =
-    &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css", "/tippy.css"];
+const ONETIME_ASSET_PATHS: &[&str] = &[
+    "/",
+    "/bundle.js",
+    "/style.css",
+    "/github-markdown.css",
+    "/hljs-theme.css",
+    "/tippy.css",
+    "/tippy-light.css",
+];
 
 const OTHER_ASSET_PATHS: &[&str] = &["/logo.png"];
 
@@ -49,6 +57,7 @@ impl Assets {
             "/hljs-theme.css" if theme == Theme::Dark => HLJS_GITHUB_DARK_CSS,
             "/hljs-theme.css"                         => HLJS_GITHUB_CSS,
             "/tippy.css"                              => TIPPY_CSS,
+            "/tippy-light.css"                        => TIPPY_LIGHT_CSS,
             "/logo.png"                               => LOGO_PNG,
             _                                         => unreachable!(),
         };
