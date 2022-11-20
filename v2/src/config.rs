@@ -149,11 +149,15 @@ impl Default for PreviewHighlight {
 #[derive(Default, Deserialize, Debug, PartialEq, Eq)]
 pub struct Preview {
     highlight: PreviewHighlight,
+    css: Option<PathBuf>,
 }
 
 impl Preview {
     pub fn highlight(&self) -> &PreviewHighlight {
         &self.highlight
+    }
+    pub fn css_path(&self) -> Option<&Path> {
+        self.css.as_ref().map(PathBuf::as_ref)
     }
 }
 

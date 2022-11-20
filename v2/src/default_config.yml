@@ -73,3 +73,10 @@ preview:
   highlight:
     light: GitHub
     dark: GitHub Dark
+  # User CSS file path. This path must be a relative path from {config dir}/css. For example, the
+  # following config loads {config dir}/css/tufte.css. All paths in the CSS file are resolved within
+  # the directory so every asset (like fonts) must be put in the same directory.
+  # ```
+  # css: ./tufte.css
+  # ```
+  css: null

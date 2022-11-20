@@ -1,5 +1,8 @@
 use crate::config::Preview as Config;
 use crate::renderer::Theme as WindowTheme;
+use std::borrow::Cow;
+use std::fs;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(debug_assertions)]
@@ -118,19 +121,41 @@ fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
 
 pub struct AssetsLoader {
     hljs_css: &'static [u8],
+    preview_css: Cow<'static, [u8]>,
+    css_dir: Option<PathBuf>,
 }
 
 impl AssetsLoader {
-    pub fn new(config: &Config, theme: WindowTheme) -> Self {
+    pub fn new(config: &Config, theme: WindowTheme, config_dir: Option<PathBuf>) -> Self {
         let hl = config.highlight();
         let hljs_css = match theme {
             WindowTheme::Light => load_hljs_css(&hl.light, HLJS_DEFAULT_LIGHT_CSS),
             WindowTheme::Dark => load_hljs_css(&hl.dark, HLJS_DEFAULT_DARK_CSS),
         };
-        Self { hljs_css }
+
+        let css_dir = config_dir.map(|mut dir| {
+            dir.push("Shiba");
+            dir.push("css");
+            dir
+        });
+
+        let preview_css = if let (Some(dir), Some(file)) = (&css_dir, config.css_path()) {
+            let path = dir.join(file);
+            match fs::read(&path) {
+                Ok(content) => Cow::Owned(content),
+                Err(err) => {
+                    log::error!("Could not load user CSS from {:?}: {}", path, err);
+                    Cow::Borrowed(GITHUB_MARKDOWN_CSS)
+                }
+            }
+        } else {
+            Cow::Borrowed(GITHUB_MARKDOWN_CSS)
+        };
+
+        Self { hljs_css, preview_css, css_dir }
     }
 
-    pub fn load(&self, path: &str) -> (&'static [u8], &'static str) {
+    pub fn load(&self, path: &str) -> (Vec<u8>, &'static str) {
         let mime = if path.ends_with('/') || path.ends_with(".html") {
             "text/html;charset=UTF-8"
         } else if path.ends_with(".js") {
@@ -139,6 +164,18 @@ impl AssetsLoader {
             "text/css;charset=UTF-8"
         } else if path.ends_with(".png") {
             "image/png"
+        } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {
+            "image/jpg"
+        } else if path.ends_with(".ttf") {
+            "font/ttf"
+        } else if path.ends_with(".svg") {
+            "image/svg+xml"
+        } else if path.ends_with(".woff") {
+            "font/woff"
+        } else if path.ends_with(".woff2") {
+            "font/woff2"
+        } else if path.ends_with(".eot") {
+            "application/vnd.ms-fontobject"
         } else {
             "text/plain;charset=UTF-8"
         };
@@ -148,15 +185,27 @@ impl AssetsLoader {
             "/"                    => INDEX_HTML,
             "/bundle.js"           => BUNDLE_JS,
             "/style.css"           => STYLE_CSS,
-            "/github-markdown.css" => GITHUB_MARKDOWN_CSS,
+            "/github-markdown.css" => self.preview_css.as_ref(),
             "/hljs-theme.css"      => self.hljs_css,
             "/tippy.css"           => TIPPY_CSS,
             "/tippy-light.css"     => TIPPY_LIGHT_CSS,
             "/logo.png"            => LOGO_PNG,
-            _                      => unreachable!(),
+            _                      => {
+                if path.starts_with('/') {
+                    if let Some(dir) = &self.css_dir {
+                        let file = dir.join(&path[1..]);
+                        if let Ok(body) = fs::read(&file) {
+                            log::debug!("Resolved path {:?} to {:?} on filesystem", path, file);
+                            return (body, mime);
+                        }
+                    }
+                }
+                log::error!("Unexpected asset request: {:?}", path);
+                b""
+            }
         };
 
-        (body, mime)
+        (body.to_vec(), mime)
     }
 }
 
