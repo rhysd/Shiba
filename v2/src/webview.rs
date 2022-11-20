@@ -1,4 +1,4 @@
-use crate::assets::Assets;
+use crate::assets::{Assets, AssetsLoader};
 use crate::cli::Options;
 use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
@@ -171,12 +171,16 @@ fn window_theme(window: &Window) -> RendererTheme {
     }
 }
 
-fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<WebView> {
+fn create_webview(
+    window: Window,
+    event_loop: &EventLoop<UserEvent>,
+    config: &Config,
+) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
     let assets = Assets::default();
-    let theme = window_theme(&window);
+    let loader = AssetsLoader::new(config.preview(), window_theme(&window));
 
     WebViewBuilder::new(window)?
         .with_url("shiba://localhost/")?
@@ -245,7 +249,7 @@ fn create_webview(window: Window, event_loop: &EventLoop<UserEvent>) -> Result<W
             let uri = request.uri();
             log::debug!("Handling custom protocol: {:?}", uri);
             let path = uri.path();
-            let (body, mime) = Assets::load(path, theme);
+            let (body, mime) = loader.load(path);
             let status = if body.is_empty() { 404 } else { 200 };
             // Response body of custom protocol handler requires `Vec<u8>`
             Response::builder()
@@ -296,7 +300,7 @@ impl Renderer for Wry {
         let window = builder.build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
 
-        let webview = create_webview(window, event_loop)?;
+        let webview = create_webview(window, event_loop, config)?;
         log::debug!("WebView was created successfully with options: {:?}", options);
 
         #[cfg(debug_assertions)]

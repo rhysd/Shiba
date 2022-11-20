@@ -133,6 +133,30 @@ pub struct Window {
     pub theme: WindowTheme,
 }
 
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+pub struct PreviewHighlight {
+    pub dark: String,
+    pub light: String,
+}
+
+impl Default for PreviewHighlight {
+    fn default() -> Self {
+        Self { dark: "GitHub Dark".to_string(), light: "GitHub".to_string() }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+pub struct Preview {
+    highlight: PreviewHighlight,
+}
+
+impl Preview {
+    pub fn highlight(&self) -> &PreviewHighlight {
+        &self.highlight
+    }
+}
+
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct Config {
@@ -140,6 +164,7 @@ pub struct Config {
     keymaps: HashMap<String, KeyAction>,
     search: Search,
     window: Window,
+    preview: Preview,
 }
 
 impl Default for Config {
@@ -149,6 +174,7 @@ impl Default for Config {
             keymaps: default_keymaps(),
             search: Search::default(),
             window: Window::default(),
+            preview: Preview::default(),
         }
     }
 }
@@ -229,6 +255,10 @@ impl Config {
 
     pub fn window(&self) -> &Window {
         &self.window
+    }
+
+    pub fn preview(&self) -> &Preview {
+        &self.preview
     }
 }
 

@@ -59,3 +59,17 @@ window:
   # - Dark: always use dark theme
   # - Light: always use light theme
   theme: System
+
+# Configuration related to Markdown preview content.
+preview:
+  # Highlight theme for code blocks. Themes provided by highlight.js are available. For example, the
+  # following configuration uses 'Mono Blue' in light mode, and uses 'Tokyo Night Dark' in dark mode.
+  # ```
+  # highlight:
+  #   light: Mono Blue
+  #   dark: Tokyo Night Dark
+  # ```
+  # See the demo page to know all highlight themes: https://highlightjs.org/static/demo/
+  highlight:
+    light: GitHub
+    dark: GitHub Dark
