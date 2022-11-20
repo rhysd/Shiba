@@ -1,6 +1,6 @@
 TS_SRC := $(wildcard web/*.ts web/*.tsx web/components/*.tsx)
 RS_SRC := $(wildcard src/*.rs)
-CSS := src/assets/github-markdown.css src/assets/github.css src/assets/style.css
+CSS := $(shell find -E src/assets -type f -regex .*\.css$ )
 
 node_modules:
 	npm install
@@ -27,6 +27,6 @@ target/release/shiba: $(RS_SRC) $(CSS) src/assets/bundle.min.js src/assets/index
 build: target/debug/shiba
 release: target/release/shiba
 clean:
-	rm -rf src/assets/*.css src/assets/*.js node_modules target
+	rm -rf src/assets/**/*.css src/assets/*.js node_modules target
 
 .DEFAULT_GOAL := build

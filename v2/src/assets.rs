@@ -6,12 +6,15 @@ pub const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
 #[cfg(not(debug_assertions))]
 pub const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.min.js");
 pub const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
-pub const GITHUB_MARKDOWN_CSS: &[u8] = include_bytes!("assets/github-markdown.css");
-pub const STYLE_CSS: &[u8] = include_bytes!("assets/style.css");
-pub const HLJS_GITHUB_CSS: &[u8] = include_bytes!("assets/github.css");
-pub const HLJS_GITHUB_DARK_CSS: &[u8] = include_bytes!("assets/github-dark.css");
-pub const TIPPY_CSS: &[u8] = include_bytes!("assets/tippy.css");
-pub const TIPPY_LIGHT_CSS: &[u8] = include_bytes!("assets/light.css");
+pub const GITHUB_MARKDOWN_CSS: &[u8] =
+    include_bytes!("assets/node_modules/github-markdown-css/github-markdown.css");
+pub const STYLE_CSS: &[u8] = include_bytes!("assets/web/style.css");
+pub const HLJS_GITHUB_CSS: &[u8] =
+    include_bytes!("assets/node_modules/highlight.js/styles/github.css");
+pub const HLJS_GITHUB_DARK_CSS: &[u8] =
+    include_bytes!("assets/node_modules/highlight.js/styles/github-dark.css");
+pub const TIPPY_CSS: &[u8] = include_bytes!("assets/node_modules/tippy.js/dist/tippy.css");
+pub const TIPPY_LIGHT_CSS: &[u8] = include_bytes!("assets/node_modules/tippy.js/themes/light.css");
 pub const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
 // TODO: hljs-theme.css will be customizable with user configuration file
