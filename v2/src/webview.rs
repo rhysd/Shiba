@@ -180,7 +180,7 @@ fn create_webview(
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
     let assets = Assets::default();
-    let loader = AssetsLoader::new(config.preview(), window_theme(&window), dirs::config_dir());
+    let loader = AssetsLoader::new(config.preview(), window_theme(&window));
 
     WebViewBuilder::new(window)?
         .with_url("shiba://localhost/")?
@@ -255,7 +255,7 @@ fn create_webview(
             Response::builder()
                 .status(status)
                 .header(CONTENT_TYPE, mime)
-                .body(body)
+                .body(body.to_vec())
                 .map_err(Into::into)
         })
         .build()
