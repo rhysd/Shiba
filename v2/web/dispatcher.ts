@@ -9,6 +9,7 @@ import {
     setSearchMatcher,
     setPreviewing,
     openOutline,
+    setTheme,
 } from './reducer';
 import { sendMessage, type MessageFromMain, type KeyAction } from './ipc';
 import { PreviewContent } from './markdown';
@@ -101,6 +102,7 @@ export class GlobalDispatcher {
                         });
                     }
                     this.content.setTheme(msg.theme);
+                    this.dispatch(setTheme(msg.theme));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     break;
                 case 'search':

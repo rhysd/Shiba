@@ -166,7 +166,7 @@ fn window_theme(window: &Window) -> RendererTheme {
         Theme::Dark => RendererTheme::Dark,
         t => {
             log::error!("Unknown window theme: {:?}", t);
-            RendererTheme::Dark
+            RendererTheme::Light
         }
     }
 }

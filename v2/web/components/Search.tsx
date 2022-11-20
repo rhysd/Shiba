@@ -6,6 +6,7 @@ import Divider from '@mui/material/Divider';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloseIcon from '@mui/icons-material/Close';
+import Typography from '@mui/material/Typography';
 import { MatcherSelect } from './MatcherSelect';
 import { type Dispatch, searchNext, searchPrevious, closeSearch } from '../reducer';
 import { countSearchMatches } from '../search';
@@ -25,7 +26,6 @@ const PAPER_STYLE: React.CSSProperties = {
 const COUNTER_STYLE: React.CSSProperties = {
     maxWidth: '200px',
     cursor: 'default',
-    color: 'rgba(0,0,0,0.54)',
 };
 const INPUT_STYLE: React.CSSProperties = {
     flex: 'auto',
@@ -110,7 +110,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
                 placeholder="Search…"
                 autoFocus
             />
-            <div style={COUNTER_STYLE} ref={counterElem}></div>
+            <Typography style={COUNTER_STYLE} ref={counterElem}></Typography>
             <Divider style={DIVIDER_STYLE} orientation="vertical" />
             <IconButton size="small" title="Find backward" aria-label="find backward" onClick={handlePrev}>
                 <KeyboardArrowUpIcon fontSize="small" />

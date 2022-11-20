@@ -1,6 +1,8 @@
 import * as log from './log';
-import type { SearchMatcher } from './ipc';
+import type { SearchMatcher, Theme as WindowTheme } from './ipc';
 import { searchNextIndex, searchPreviousIndex } from './search';
+
+type Theme = 'light' | 'dark';
 
 export interface State {
     searching: boolean;
@@ -8,6 +10,7 @@ export interface State {
     matcher: SearchMatcher;
     previewing: boolean;
     outline: boolean;
+    theme: Theme;
 }
 
 export const INITIAL_STATE: State = {
@@ -16,6 +19,7 @@ export const INITIAL_STATE: State = {
     matcher: 'SmartCase',
     previewing: true,
     outline: false,
+    theme: 'light',
 };
 
 type Action =
@@ -44,6 +48,10 @@ type Action =
     | {
           kind: 'outline';
           open: boolean;
+      }
+    | {
+          kind: 'theme';
+          theme: Theme;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -71,6 +79,8 @@ export function reducer(state: State, action: Action): State {
             return { ...state, previewing: action.previewing };
         case 'outline':
             return { ...state, outline: action.open };
+        case 'theme':
+            return { ...state, theme: action.theme };
         default:
             throw new Error(`Unknown action: ${action}`);
     }
@@ -112,4 +122,11 @@ export function openOutline(): Action {
 
 export function closeOutline(): Action {
     return { kind: 'outline', open: false };
+}
+
+export function setTheme(theme: WindowTheme): Action {
+    return {
+        kind: 'theme',
+        theme: theme === 'Dark' ? 'dark' : 'light',
+    };
 }

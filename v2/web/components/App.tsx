@@ -1,4 +1,6 @@
 import React, { useReducer, useEffect } from 'react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { Search } from './Search';
 import { Welcome } from './Welcome';
 import { Outline } from './Outline';
@@ -6,13 +8,16 @@ import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
 
+const LIGHT_THEME = createTheme({ palette: { mode: 'light' } });
+const DARK_THEME = createTheme({ palette: { mode: 'dark' } });
+
 interface Props {
     dispatcher: GlobalDispatcher;
 }
 
 export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-    const { searching, searchIndex, matcher, previewing, outline } = state;
+    const { searching, searchIndex, matcher, previewing, outline, theme } = state;
 
     let searchInput;
     if (searching && previewing && !outline) {
@@ -37,10 +42,11 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     }, []); // Run only when component was mounted
 
     return (
-        <>
+        <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
+            <CssBaseline />
             {searchInput}
             {outlineDialog}
             {welcome}
-        </>
+        </ThemeProvider>
     );
 };
