@@ -8,7 +8,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 #[non_exhaustive]
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum KeyAction {
     Forward,
     Back,

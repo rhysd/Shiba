@@ -3,9 +3,11 @@ use crate::renderer::KeyAction;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::File;
-use std::path::Path;
+use std::fs::{self, File};
+use std::path::{Path, PathBuf};
 use std::time::Duration;
+
+const DEFAULT_CONFIG_FILE: &str = include_str!("default_config.yml");
 
 fn default_keymaps() -> HashMap<String, KeyAction> {
     use KeyAction::*;
@@ -43,12 +45,8 @@ fn default_keymaps() -> HashMap<String, KeyAction> {
     m
 }
 
-const fn default_throttle() -> u32 {
-    50
-}
-
 #[repr(transparent)]
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct FileExtensions(Vec<String>);
 
 impl Default for FileExtensions {
@@ -72,7 +70,30 @@ impl FileExtensions {
 }
 
 #[non_exhaustive]
-#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+pub struct Watch {
+    file_extensions: FileExtensions,
+    debounce_throttle: u32,
+}
+
+impl Default for Watch {
+    fn default() -> Self {
+        Self { file_extensions: Default::default(), debounce_throttle: 50 }
+    }
+}
+
+impl Watch {
+    pub fn debounce_throttle(&self) -> Duration {
+        Duration::from_millis(self.debounce_throttle as u64)
+    }
+
+    pub fn file_extensions(&self) -> &FileExtensions {
+        &self.file_extensions
+    }
+}
+
+#[non_exhaustive]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SearchMatcher {
     SmartCase,
     CaseSensitive,
@@ -86,12 +107,13 @@ impl Default for SearchMatcher {
     }
 }
 
-#[derive(Default, Deserialize, Serialize, Debug)]
+#[non_exhaustive]
+#[derive(Default, Deserialize, Serialize, Debug, PartialEq, Eq)]
 pub struct Search {
     matcher: SearchMatcher,
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize, Debug)]
+#[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
 pub enum WindowTheme {
     System,
     Dark,
@@ -104,32 +126,26 @@ impl Default for WindowTheme {
     }
 }
 
-#[derive(Default, Deserialize, Debug)]
+#[non_exhaustive]
+#[derive(Default, Deserialize, Debug, PartialEq, Eq)]
 pub struct Window {
     pub restore: bool,
     pub theme: WindowTheme,
 }
 
 #[non_exhaustive]
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct Config {
-    #[serde(default)]
-    file_extensions: FileExtensions,
-    #[serde(default = "default_throttle")]
-    debounce_throttle: u32,
-    #[serde(default = "default_keymaps")]
+    watch: Watch,
     keymaps: HashMap<String, KeyAction>,
-    #[serde(default)]
     search: Search,
-    #[serde(default)]
     window: Window,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            file_extensions: FileExtensions::default(),
-            debounce_throttle: default_throttle(),
+            watch: Watch::default(),
             keymaps: default_keymaps(),
             search: Search::default(),
             window: Window::default(),
@@ -138,25 +154,27 @@ impl Default for Config {
 }
 
 impl Config {
+    pub fn load_path(path: &Path) -> Option<Result<Self>> {
+        match File::open(path) {
+            Ok(file) => Some(
+                serde_yaml::from_reader(file)
+                    .with_context(|| format!("Could not parse config file as YAML: {:?}", path)),
+            ),
+            Err(err) => {
+                log::debug!("Could not read config file from {:?}: {}", path, err);
+                None
+            }
+        }
+    }
+
     pub fn load() -> Result<Self> {
         if let Some(mut config_path) = dirs::config_dir() {
             config_path.push("Shiba");
             if config_path.is_dir() {
                 for file in ["config.yml", "config.yaml"] {
                     config_path.push(file);
-                    match File::open(&config_path) {
-                        Ok(file) => {
-                            return serde_yaml::from_reader(file).with_context(|| {
-                                format!("Could not parse config file as YAML: {:?}", config_path)
-                            })
-                        }
-                        Err(err) => {
-                            log::debug!(
-                                "Could not read config file from {:?}: {}",
-                                config_path,
-                                err
-                            )
-                        }
+                    if let Some(result) = Self::load_path(&config_path) {
+                        return result;
                     }
                     config_path.pop();
                 }
@@ -167,6 +185,29 @@ impl Config {
         Ok(Self::default())
     }
 
+    pub fn generate_default_config_at(config_path: impl Into<PathBuf>) -> Result<()> {
+        let mut config_path = config_path.into();
+
+        config_path.push("Shiba");
+        fs::create_dir_all(&config_path).with_context(|| {
+            format!("Could not create directory for generating config file at {:?}", &config_path)
+        })?;
+
+        config_path.push("config.yml");
+        fs::write(&config_path, DEFAULT_CONFIG_FILE)
+            .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
+
+        log::info!("Generated the default config file at {:?}", config_path);
+        Ok(())
+    }
+
+    pub fn generate_default_config() -> Result<()> {
+        let Some(config_path) = dirs::config_dir() else {
+            anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
+        };
+        Self::generate_default_config_at(config_path)
+    }
+
     pub fn merge_options(mut self, options: &Options) -> Self {
         if let Some(theme) = options.theme {
             self.window.theme = theme;
@@ -174,12 +215,8 @@ impl Config {
         self
     }
 
-    pub fn debounce_throttle(&self) -> Duration {
-        Duration::from_millis(self.debounce_throttle as u64)
-    }
-
-    pub fn file_extensions(&self) -> &FileExtensions {
-        &self.file_extensions
+    pub fn watch(&self) -> &Watch {
+        &self.watch
     }
 
     pub fn keymaps(&self) -> &HashMap<String, KeyAction> {
@@ -192,5 +229,16 @@ impl Config {
 
     pub fn window(&self) -> &Window {
         &self.window
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_config() {
+        let cfg: Config = serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap();
+        assert_eq!(cfg, Config::default());
     }
 }

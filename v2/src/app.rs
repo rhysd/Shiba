@@ -211,13 +211,20 @@ where
     R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
-        let config = Config::load()?.merge_options(&options);
+        let config = if options.gen_config_file {
+            Config::generate_default_config()?;
+            Config::default()
+        } else {
+            Config::load()?
+        };
+        let config = config.merge_options(&options);
+
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
         let window_state = if config.window().restore { WindowState::load() } else { None };
         let renderer = R::new(&options, &config, event_loop, window_state)?;
 
-        let filter = PathFilter::new(&config);
+        let filter = PathFilter::new(config.watch());
         let mut watcher = W::new(event_loop, filter)?;
         for path in &options.watch_dirs {
             log::debug!("Watching initial directory: {:?}", path);
@@ -274,7 +281,7 @@ where
     fn open_file(&mut self) -> Result<()> {
         // Should we use directory of the current file?
         let cwd = env::current_dir()?;
-        if let Some(path) = D::pick_file(&cwd, self.config.file_extensions()) {
+        if let Some(path) = D::pick_file(&cwd, self.config.watch().file_extensions()) {
             log::debug!("Previewing file chosen by dialog: {:?}", path);
             self.preview_new(path)?;
         }
@@ -366,7 +373,7 @@ where
                     }
                 }
                 let path = path;
-                let is_markdown = self.config.file_extensions().matches(&path);
+                let is_markdown = self.config.watch().file_extensions().matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
                     self.preview_new(path)?;

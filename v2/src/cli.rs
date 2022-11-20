@@ -11,6 +11,7 @@ pub struct Options {
     pub init_file: Option<PathBuf>,
     pub watch_dirs: Vec<PathBuf>,
     pub theme: Option<WindowTheme>,
+    pub gen_config_file: bool,
 }
 
 impl Options {
@@ -18,13 +19,18 @@ impl Options {
         let mut opts = GetOpts::new();
         opts.optflag("h", "help", "print this help");
         opts.optopt("t", "theme", r#"window theme ("dark", "light" or "system")"#, "THEME");
+        opts.optflag(
+            "",
+            "generate-config-file",
+            "generate default config file at the default config directory. this overwrites an existing file",
+        );
 
         let matches = opts.parse(iter)?;
         if matches.opt_present("h") {
             println!("{}", opts.usage("Usage: shiba [option] [FILE] [DIR...]"));
             return Ok(None);
         }
-        let theme = match matches.opt_str("theme") {
+        let theme = match matches.opt_str("t") {
             Some(theme) => match theme.as_str() {
                 "dark" => Some(WindowTheme::Dark),
                 "light" => Some(WindowTheme::Light),
@@ -36,6 +42,7 @@ impl Options {
             },
             None => None,
         };
+        let gen_config_file = matches.opt_present("generate-config-file");
 
         let mut init_file = None;
         let mut watch_dirs = vec![];
@@ -54,6 +61,6 @@ impl Options {
             }
         }
 
-        Ok(Some(Self { debug: false, init_file, watch_dirs, theme }))
+        Ok(Some(Self { debug: false, init_file, watch_dirs, theme, gen_config_file }))
     }
 }

@@ -1,4 +1,4 @@
-use crate::config::{Config, FileExtensions};
+use crate::config::{FileExtensions, Watch as Config};
 use crate::renderer::UserEvent;
 use anyhow::Result;
 use notify::event::{CreateKind, DataChange, EventKind as WatchEventKind, ModifyKind};

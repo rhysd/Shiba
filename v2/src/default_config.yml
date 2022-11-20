@@ -1,0 +1,61 @@
+# Configuration related to monitoring file changes.
+watch:
+  # File extensions when watching directories. Shiba recognizes these file extensions as Markdown
+  # files and updates its preview when they are modified.
+  file_extensions:
+    - md
+    - mkd
+    - markdown
+  # Throttle for debouncing file change events in milliseconds. This is useful to avoid the preview
+  # repeatedly within very short span. This throttle is necessary since it is very common that text
+  # editor modifies the file multiple times on saving.
+  debounce_throttle: 50
+
+# Key mappings. Keys are key binds and their values are corresponding actions to be bound. Any
+# keymap sequences supported by mousetrap[1] are available for keys. Predefined action names are
+# available for values.
+#
+# [1]: https://craig.is/killing/mice
+keymaps:
+  j: ScrollDown
+  k: ScrollUp
+  h: ScrollLeft
+  l: ScrollRight
+  ctrl+b: Back
+  ctrl+f: Forward
+  r: Reload
+  g g: ScrollTop
+  G: ScrollBottom
+  ctrl+o: OpenFile
+  ctrl+d: ScrollPageDown
+  ctrl+u: ScrollPageUp
+  down: ScrollDown
+  up: ScrollUp
+  left: ScrollLeft
+  right: ScrollRight
+  pagedown: ScrollPageDown
+  pageup: ScrollPageUp
+  ctrl+down: ScrollBottom
+  ctrl+up: ScrollTop
+  ctrl+j: NextSection
+  ctrl+k: PrevSection
+
+# Configuration related to text search.
+search:
+  # How search query matches to text. The following preset matchers are available. Note that matcher
+  # can be changed by clicking an icon in the search box.
+  # - SmartCase: case-sensitive when some upper case alphabets are included. Otherwise case-insensitive
+  # - CaseSensitive: always case-sensitive
+  # - CaseInsensitive: always case-insensitive
+  # - CaseSensitiveRegex: case-sensitive regular expression
+  matcher: SmartCase
+
+# Configuration related to application window.
+window:
+  # Remember the window state (position, size, ...) and restore it when opening Shiba at next time.
+  restore: false
+  # Theme to apply to the application window. The following predefined values are available.
+  # - System: use theme set to the system settings
+  # - Dark: always use dark theme
+  # - Light: always use light theme
+  theme: System

@@ -39,3 +39,4 @@ jobs:
       - run: npm run lint:stylelint
       - run: cargo fmt -- --check
       - run: cargo clippy -- -D warnings
+      - run: cargo test
