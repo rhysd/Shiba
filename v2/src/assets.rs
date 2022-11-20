@@ -37,8 +37,9 @@ const OTHER_ASSET_PATHS: &[&str] = &["/logo.png"];
 fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
     log::debug!("Loading highlight.js theme {:?}", theme_name);
     match theme_name {
-        "Github" => HLJS_DEFAULT_LIGHT_CSS,
-        "Github Dark" => HLJS_DEFAULT_DARK_CSS,
+        "GitHub" | "Github"        => HLJS_DEFAULT_LIGHT_CSS,
+        "GitHub Dark"
+        | "Github Dark"            => HLJS_DEFAULT_DARK_CSS,
         "A11Y Dark"                => include_bytes!("assets/node_modules/highlight.js/styles/a11y-dark.css"),
         "A11Y Light"               => include_bytes!("assets/node_modules/highlight.js/styles/a11y-light.css"),
         "Agate"                    => include_bytes!("assets/node_modules/highlight.js/styles/agate.css"),
@@ -60,7 +61,8 @@ fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
         "Far"                      => include_bytes!("assets/node_modules/highlight.js/styles/far.css"),
         "Felipec"                  => include_bytes!("assets/node_modules/highlight.js/styles/felipec.css"),
         "Foundation"               => include_bytes!("assets/node_modules/highlight.js/styles/foundation.css"),
-        "Github Dark Dimmed"       => include_bytes!("assets/node_modules/highlight.js/styles/github-dark-dimmed.css"),
+        "Github Dark Dimmed"
+        | "GitHub Dark Dimmed"     => include_bytes!("assets/node_modules/highlight.js/styles/github-dark-dimmed.css"),
         "Gml"                      => include_bytes!("assets/node_modules/highlight.js/styles/gml.css"),
         "Googlecode"               => include_bytes!("assets/node_modules/highlight.js/styles/googlecode.css"),
         "Gradient Dark"            => include_bytes!("assets/node_modules/highlight.js/styles/gradient-dark.css"),

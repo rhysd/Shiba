@@ -1,7 +1,7 @@
 use crate::cli::Options;
 use crate::renderer::KeyAction;
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
@@ -157,6 +157,47 @@ impl Preview {
     }
 }
 
+fn resolve_path<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<Option<PathBuf>, D::Error> {
+    #[cfg(not(target_os = "windows"))]
+    const PREFIX: &str = "~/";
+    #[cfg(target_os = "windows")]
+    const PREFIX: &str = "~\\";
+
+    let s = String::deserialize(deserializer)?;
+    if &s == "null" {
+        return Ok(None);
+    }
+    if !s.starts_with(PREFIX) {
+        return Ok(Some(PathBuf::from(s)));
+    }
+
+    let Some(mut path) = dirs::home_dir() else {
+        return Ok(None);
+    };
+
+    path.push(&s[2..]);
+    if !path.is_dir() {
+        log::error!("Path {:?} in config is not a directory", path);
+        return Ok(None);
+    }
+
+    Ok(Some(path))
+}
+
+#[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+pub struct Dialog {
+    #[serde(deserialize_with = "resolve_path")]
+    default_dir: Option<PathBuf>,
+}
+
+impl Dialog {
+    pub fn default_dir(&self) -> Option<&Path> {
+        self.default_dir.as_deref()
+    }
+}
+
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct Config {
@@ -165,6 +206,7 @@ pub struct Config {
     search: Search,
     window: Window,
     preview: Preview,
+    dialog: Dialog,
 }
 
 impl Default for Config {
@@ -175,6 +217,7 @@ impl Default for Config {
             search: Search::default(),
             window: Window::default(),
             preview: Preview::default(),
+            dialog: Dialog::default(),
         }
     }
 }
@@ -184,7 +227,7 @@ impl Config {
         match File::open(path) {
             Ok(file) => Some(
                 serde_yaml::from_reader(file)
-                    .with_context(|| format!("Could not parse config file as YAML: {:?}", path)),
+                    .with_context(|| format!("Could not parse config file as YAML: {:?}. To reset config file, try --generate-config-file", path)),
             ),
             Err(err) => {
                 log::debug!("Could not read config file from {:?}: {}", path, err);
@@ -259,6 +302,10 @@ impl Config {
 
     pub fn preview(&self) -> &Preview {
         &self.preview
+    }
+
+    pub fn dialog(&self) -> &Dialog {
+        &self.dialog
     }
 }
 

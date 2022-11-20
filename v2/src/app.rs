@@ -279,22 +279,35 @@ where
     }
 
     fn open_file(&mut self) -> Result<()> {
-        // Should we use directory of the current file?
-        let cwd = env::current_dir()?;
-        if let Some(path) = D::pick_file(&cwd, self.config.watch().file_extensions()) {
-            log::debug!("Previewing file chosen by dialog: {:?}", path);
-            self.preview_new(path)?;
+        let extensions = self.config.watch().file_extensions();
+        let file = if let Some(dir) = self.config.dialog().default_dir() {
+            D::pick_file(dir, extensions)
+        } else {
+            let dir = env::current_dir().context("Error while opening a file dialog")?;
+            D::pick_file(&dir, extensions)
+        };
+
+        if let Some(file) = file {
+            log::debug!("Previewing file chosen by dialog: {:?}", file);
+            self.preview_new(file)?;
         }
+
         Ok(())
     }
 
     fn open_dir(&mut self) -> Result<()> {
-        // Should we use directory of the current file?
-        let cwd = env::current_dir()?;
-        if let Some(path) = D::pick_dir(&cwd) {
-            log::debug!("Watching directory chosen by dialog: {:?}", path);
-            self.watcher.watch(&path)?;
+        let dir = if let Some(dir) = self.config.dialog().default_dir() {
+            D::pick_dir(dir)
+        } else {
+            let dir = env::current_dir().context("Error while opening a directory dialog")?;
+            D::pick_dir(&dir)
+        };
+
+        if let Some(dir) = dir {
+            log::debug!("Watching directory chosen by dialog: {:?}", dir);
+            self.watcher.watch(&dir)?;
         }
+
         Ok(())
     }
 
