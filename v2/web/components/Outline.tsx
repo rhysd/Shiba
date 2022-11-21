@@ -80,12 +80,20 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
             return;
         }
 
+        let count = 0;
         setHeadings(
             headings.map(h => {
                 const text = h.text.toLowerCase();
-                return { ...h, show: text.includes(input) };
+                const show = text.includes(input);
+                if (show) {
+                    count++;
+                }
+                return { ...h, show };
             }),
         );
+        if (count - 1 < index) {
+            setIndex(count - 1);
+        }
     };
 
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {

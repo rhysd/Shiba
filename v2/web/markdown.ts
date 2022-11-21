@@ -431,7 +431,7 @@ class MermaidRenderer {
         }
 
         if (!this.init) {
-            const theme = this.theme === 'Light' ? 'base' : 'dark';
+            const theme = this.theme === 'Light' ? 'default' : 'dark';
             mermaid.initialize({ startOnLoad: false, theme });
             this.init = true;
             log.debug('Initialized mermaid renderer', theme, elem);
