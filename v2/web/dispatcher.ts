@@ -80,11 +80,12 @@ export class GlobalDispatcher {
     // https://v8.dev/blog/cost-of-javascript-2019#json
     handleIpcMessage(msg: MessageFromMain): void {
         log.debug('Received IPC message from main:', msg.kind, msg);
-        // This method must not throw exception since the main process call this method like `window.ShibaApp.receive(msg)`.
+        // This method must not throw exception since the main process call this method like `window.postShibaMessageFromMain(msg)`.
         try {
             switch (msg.kind) {
                 case 'render_tree':
                     this.content.render(msg.tree);
+                    this.content.setVisible(true);
                     this.dispatch(setPreviewing(true));
                     break;
                 case 'config':
@@ -119,6 +120,7 @@ export class GlobalDispatcher {
                     break;
                 case 'welcome':
                     this.dispatch(setPreviewing(false));
+                    this.content.setVisible(false);
                     break;
                 case 'debug':
                     log.enableDebug();

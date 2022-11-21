@@ -33,6 +33,3 @@ serde = "1.0.147"
 serde_json = "1.0.87"
 serde_yaml = "0.9.14"
 wry = "0.22.0"
-
-[target.'cfg(not(target_os = "macos"))'.dependencies]
-cssparser = "0.29.6"

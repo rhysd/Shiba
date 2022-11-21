@@ -1,6 +1,5 @@
 import React, { useReducer, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { Search } from './Search';
 import { Welcome } from './Welcome';
 import { Outline } from './Outline';
@@ -38,14 +37,11 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         dispatcher.setDispatch(dispatch, state);
     });
     useEffect(() => {
-        // Run only when component was mounted
-        const bg = dispatcher.content.backgroundColor;
-        sendMessage({ kind: 'init', bg });
-    }, [dispatcher]);
+        sendMessage({ kind: 'init' });
+    }, []); // Run only when component was mounted
 
     return (
         <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
-            <CssBaseline />
             {searchInput}
             {outlineDialog}
             {welcome}

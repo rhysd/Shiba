@@ -49,7 +49,7 @@ pub enum MessageToRenderer<'a> {
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageFromRenderer {
-    Init { bg: Option<String> },
+    Init,
     Reload,
     FileDialog,
     DirDialog,

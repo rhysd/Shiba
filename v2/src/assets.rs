@@ -124,6 +124,8 @@ fn load_user_css(config: &Config) -> Option<Vec<u8>> {
     let config_path = config.config_file()?;
     let css_path = config.preview().css_path()?;
     let css_path = config_path.parent()?.join(css_path);
+
+    log::debug!("Loading user CSS at {:?}", css_path);
     match fs::read(&css_path) {
         Ok(css) => Some(css),
         Err(err) => {

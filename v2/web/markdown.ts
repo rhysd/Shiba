@@ -33,16 +33,18 @@ export class PreviewContent {
     private readonly mathjax: MathjaxRenderer;
     private theme: Theme;
     private readonly bgColor: string | null;
+    private visible: boolean;
 
     constructor(window: Window, root: HTMLElement) {
         this.rootElem = root;
         this.mermaidInit = false;
         this.mathjax = new MathjaxRenderer(window);
         this.theme = 'Light';
+        this.visible = true;
 
         const bg = window.getComputedStyle(root, null).getPropertyValue('background-color');
         const html = document.documentElement;
-        if (bg && window.getComputedStyle(html, null).getPropertyValue('background-color') !== bg) {
+        if (bg) {
             html.style.backgroundColor = bg;
             this.bgColor = bg;
         } else {
@@ -53,6 +55,15 @@ export class PreviewContent {
     setTheme(theme: Theme): void {
         log.debug('Set system theme to', theme);
         this.theme = theme;
+    }
+
+    setVisible(visible: boolean): void {
+        if (visible === this.visible) {
+            return;
+        }
+        this.rootElem.style.display = visible ? '' : 'none';
+        this.visible = visible;
+        log.debug('Set preview content visibility', visible);
     }
 
     // Note: Render at requestAnimationFrame may be better for performance

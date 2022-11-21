@@ -214,7 +214,6 @@ export type MessageFromMain =
 export type MessageToMain =
     | {
           kind: 'init';
-          bg: string | null;
       }
     | {
           kind: 'quit';
