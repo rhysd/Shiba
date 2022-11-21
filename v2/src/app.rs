@@ -212,8 +212,7 @@ where
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let config = if options.gen_config_file {
-            Config::generate_default_config()?;
-            Config::default()
+            Config::generate_default_config()?
         } else {
             Config::load()?
         };

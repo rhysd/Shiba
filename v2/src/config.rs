@@ -149,11 +149,16 @@ impl Default for PreviewHighlight {
 #[derive(Default, Deserialize, Debug, PartialEq, Eq)]
 pub struct Preview {
     highlight: PreviewHighlight,
+    css: Option<PathBuf>,
 }
 
 impl Preview {
     pub fn highlight(&self) -> &PreviewHighlight {
         &self.highlight
+    }
+
+    pub fn css_path(&self) -> Option<&Path> {
+        self.css.as_deref()
     }
 }
 
@@ -200,7 +205,7 @@ impl Dialog {
 
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
-pub struct Config {
+pub struct ConfigData {
     watch: Watch,
     keymaps: HashMap<String, KeyAction>,
     search: Search,
@@ -209,7 +214,7 @@ pub struct Config {
     dialog: Dialog,
 }
 
-impl Default for Config {
+impl Default for ConfigData {
     fn default() -> Self {
         Self {
             watch: Watch::default(),
@@ -222,8 +227,14 @@ impl Default for Config {
     }
 }
 
+#[derive(Default, Debug)]
+pub struct Config {
+    data: ConfigData,
+    path: Option<PathBuf>,
+}
+
 impl Config {
-    pub fn load_path(path: &Path) -> Option<Result<Self>> {
+    pub fn load_data(path: &Path) -> Option<Result<ConfigData>> {
         match File::open(path) {
             Ok(file) => Some(
                 serde_yaml::from_reader(file)
@@ -242,8 +253,8 @@ impl Config {
             if config_path.is_dir() {
                 for file in ["config.yml", "config.yaml"] {
                     config_path.push(file);
-                    if let Some(result) = Self::load_path(&config_path) {
-                        return result;
+                    if let Some(data) = Self::load_data(&config_path) {
+                        return Ok(Config { data: data?, path: Some(config_path) });
                     }
                     config_path.pop();
                 }
@@ -254,7 +265,7 @@ impl Config {
         Ok(Self::default())
     }
 
-    pub fn generate_default_config_at(config_path: impl Into<PathBuf>) -> Result<()> {
+    pub fn generate_default_config_at(config_path: impl Into<PathBuf>) -> Result<Self> {
         let mut config_path = config_path.into();
 
         config_path.push("Shiba");
@@ -267,10 +278,12 @@ impl Config {
             .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
 
         log::info!("Generated the default config file at {:?}", config_path);
-        Ok(())
+        let mut config = Self::default();
+        config.path = Some(config_path);
+        Ok(config)
     }
 
-    pub fn generate_default_config() -> Result<()> {
+    pub fn generate_default_config() -> Result<Self> {
         let Some(config_path) = dirs::config_dir() else {
             anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
         };
@@ -279,33 +292,37 @@ impl Config {
 
     pub fn merge_options(mut self, options: &Options) -> Self {
         if let Some(theme) = options.theme {
-            self.window.theme = theme;
+            self.data.window.theme = theme;
         }
         self
     }
 
+    pub fn config_file(&self) -> Option<&Path> {
+        self.path.as_deref()
+    }
+
     pub fn watch(&self) -> &Watch {
-        &self.watch
+        &self.data.watch
     }
 
     pub fn keymaps(&self) -> &HashMap<String, KeyAction> {
-        &self.keymaps
+        &self.data.keymaps
     }
 
     pub fn search(&self) -> &Search {
-        &self.search
+        &self.data.search
     }
 
     pub fn window(&self) -> &Window {
-        &self.window
+        &self.data.window
     }
 
     pub fn preview(&self) -> &Preview {
-        &self.preview
+        &self.data.preview
     }
 
     pub fn dialog(&self) -> &Dialog {
-        &self.dialog
+        &self.data.dialog
     }
 }
 
@@ -314,8 +331,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn default_config() {
-        let cfg: Config = serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap();
-        assert_eq!(cfg, Config::default());
+    fn generated_default_config() {
+        let cfg: ConfigData = serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap();
+        assert_eq!(cfg, Config::default().data);
     }
 }

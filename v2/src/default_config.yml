@@ -44,6 +44,7 @@ keymaps:
 search:
   # How search query matches to text. The following preset matchers are available. Note that matcher
   # can be changed by clicking an icon in the search box.
+  #
   # - SmartCase: case-sensitive when some upper case alphabets are included. Otherwise case-insensitive
   # - CaseSensitive: always case-sensitive
   # - CaseInsensitive: always case-insensitive
@@ -55,6 +56,7 @@ window:
   # Remember the window state (position, size, ...) and restore it when opening Shiba at next time.
   restore: false
   # Theme to apply to the application window. The following predefined values are available.
+  #
   # - System: use theme set to the system settings
   # - Dark: always use dark theme
   # - Light: always use light theme
@@ -64,20 +66,36 @@ window:
 preview:
   # Highlight theme for code blocks. Themes provided by highlight.js are available. For example, the
   # following configuration uses 'Mono Blue' in light mode, and uses 'Tokyo Night Dark' in dark mode.
+  #
   # ```
   # highlight:
   #   light: Mono Blue
   #   dark: Tokyo Night Dark
   # ```
+  #
   # See the demo page to know all highlight themes: https://highlightjs.org/static/demo/
   highlight:
     light: GitHub
     dark: GitHub Dark
+  # Override CSS styles applied to Markdown preview with specified CSS file path. The path is
+  # relative to the configuration directory.
+  # Notes:
+  # - all styles must be applied under the `<article class="markdown-body">` element. Otherwise
+  #   they breaks some UI in the application.
+  # - fetching external resources (e.g. fonts) is not allowed for security reason at this point
+  #
+  # For example, when you want to apply dimmed version of GitHub color theme,
+  #
+  # 1. Download dimmed version of GitHub Markdown CSS from https://github.com/hyrious/github-markdown-css
+  # 2. Put it as `preview.css` in the configuration directory
+  # 3. Set `css: preview.css` below
+  css: null
 
 # Configuration related to dialog to open a file or watch a directory.
 dialog:
   # Default directory path to open when selecting a file to preview or a directory to watch. The
   # following example opens `~/Documents` by default.
+  #
   # ```
   # default_dir: ~/Documents
   # ```

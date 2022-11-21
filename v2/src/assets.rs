@@ -1,5 +1,7 @@
-use crate::config::Preview as Config;
+use crate::config::Config;
 use crate::renderer::Theme as WindowTheme;
+use std::borrow::Cow;
+use std::fs;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(debug_assertions)]
@@ -118,21 +120,47 @@ fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
     }
 }
 
+fn load_user_css(config: &Config) -> Option<Vec<u8>> {
+    let config_path = config.config_file()?;
+    let css_path = config.preview().css_path()?;
+    let css_path = config_path.parent()?.join(css_path);
+    match fs::read(&css_path) {
+        Ok(css) => Some(css),
+        Err(err) => {
+            log::error!(
+                "Could not load CSS file {:?} specified in config file {:?}: {}",
+                css_path,
+                config_path,
+                err,
+            );
+            None
+        }
+    }
+}
+
 pub struct AssetsLoader {
     hljs_css: &'static [u8],
+    markdown_css: Cow<'static, [u8]>,
 }
 
 impl AssetsLoader {
     pub fn new(config: &Config, theme: WindowTheme) -> Self {
-        let hl = config.highlight();
+        let hl = config.preview().highlight();
         let hljs_css = match theme {
             WindowTheme::Light => load_hljs_css(&hl.light, HLJS_DEFAULT_LIGHT_CSS),
             WindowTheme::Dark => load_hljs_css(&hl.dark, HLJS_DEFAULT_DARK_CSS),
         };
-        Self { hljs_css }
+
+        let markdown_css = if let Some(css) = load_user_css(config) {
+            Cow::Owned(css)
+        } else {
+            Cow::Borrowed(GITHUB_MARKDOWN_CSS)
+        };
+
+        Self { hljs_css, markdown_css }
     }
 
-    pub fn load(&self, path: &str) -> (&'static [u8], &'static str) {
+    pub fn load(&self, path: &str) -> (&[u8], &'static str) {
         let mime = if path.ends_with('/') || path.ends_with(".html") {
             "text/html;charset=UTF-8"
         } else if path.ends_with(".js") {
@@ -142,7 +170,7 @@ impl AssetsLoader {
         } else if path.ends_with(".png") {
             "image/png"
         } else {
-            "text/plain;charset=UTF-8"
+            "application/octet-stream"
         };
 
         #[rustfmt::skip]
@@ -150,12 +178,15 @@ impl AssetsLoader {
             "/"                    => INDEX_HTML,
             "/bundle.js"           => BUNDLE_JS,
             "/style.css"           => STYLE_CSS,
-            "/github-markdown.css" => GITHUB_MARKDOWN_CSS,
+            "/github-markdown.css" => self.markdown_css.as_ref(),
             "/hljs-theme.css"      => self.hljs_css,
             "/tippy.css"           => TIPPY_CSS,
             "/tippy-light.css"     => TIPPY_LIGHT_CSS,
             "/logo.png"            => LOGO_PNG,
-            _                      => unreachable!(),
+            _                      => {
+                log::error!("Fetching external resource {:?} is not allowed", path);
+                b""
+            }
         };
 
         (body, mime)
