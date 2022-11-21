@@ -29,6 +29,7 @@ pub struct WryMenuIds {
     search_next: MenuId,
     search_prev: MenuId,
     outline: MenuId,
+    print: MenuId,
 }
 
 impl WryMenuIds {
@@ -49,11 +50,13 @@ impl WryMenuIds {
         let mut file_menu = MenuBar::new();
         let cmd_o = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyO);
         let open_file_item =
-            file_menu.add_item(MenuItemAttributes::new("Open File...").with_accelerators(&cmd_o));
+            file_menu.add_item(MenuItemAttributes::new("Open File…").with_accelerators(&cmd_o));
         let cmd_opt_o =
             Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::ALT), KeyCode::KeyO);
         let watch_dir_item = file_menu
-            .add_item(MenuItemAttributes::new("Watch Directory...").with_accelerators(&cmd_opt_o));
+            .add_item(MenuItemAttributes::new("Watch Directory…").with_accelerators(&cmd_opt_o));
+        file_menu.add_native_item(MenuItem::Separator);
+        let print_item = file_menu.add_item(MenuItemAttributes::new("Print…"));
         file_menu.add_native_item(MenuItem::Separator);
         file_menu.add_native_item(MenuItem::About("Shiba".to_string(), metadata));
         file_menu.add_native_item(MenuItem::Separator);
@@ -126,6 +129,7 @@ impl WryMenuIds {
             search_next: search_next_item.id(),
             search_prev: search_prev_item.id(),
             outline: outline_item.id(),
+            print: print_item.id(),
         }
     }
 }
@@ -154,6 +158,8 @@ impl MenuItems for WryMenuIds {
             Ok(AppMenuItem::SearchPrevious)
         } else if id == self.outline {
             Ok(AppMenuItem::Outline)
+        } else if id == self.print {
+            Ok(AppMenuItem::Print)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }
@@ -362,5 +368,9 @@ impl Renderer for Wry {
     fn set_background_color(&self, rgba: (u8, u8, u8, u8)) -> Result<()> {
         self.webview.set_background_color(rgba)?;
         Ok(())
+    }
+
+    fn print(&self) -> Result<()> {
+        Ok(self.webview.print()?)
     }
 }

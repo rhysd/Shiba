@@ -82,6 +82,7 @@ pub enum MenuItem {
     SearchNext,
     SearchPrevious,
     Outline,
+    Print,
 }
 
 pub trait MenuItems {
@@ -118,4 +119,5 @@ pub trait Renderer: Sized {
     fn theme(&self) -> Theme;
     fn show(&self);
     fn set_background_color(&self, rbga: (u8, u8, u8, u8)) -> Result<()>;
+    fn print(&self) -> Result<()>;
 }

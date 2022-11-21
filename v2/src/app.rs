@@ -419,6 +419,7 @@ where
                 self.renderer.send_message(MessageToRenderer::SearchPrevious)?
             }
             MenuItem::Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
+            MenuItem::Print => self.renderer.print()?,
         }
         Ok(AppControl::Continue)
     }
