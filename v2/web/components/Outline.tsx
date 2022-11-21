@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -26,7 +26,6 @@ interface Heading {
     prefix: string;
     text: string;
     elem: HTMLHeadingElement;
-    show: boolean;
 }
 
 function collectHeadings(): Heading[] {
@@ -34,7 +33,7 @@ function collectHeadings(): Heading[] {
     for (const elem of document.querySelectorAll('h1,h2,h3,h4,h5,h6') as NodeListOf<HTMLHeadingElement>) {
         const prefix = '#'.repeat(parseInt(elem.tagName.slice(1), 10));
         const text = elem.textContent ?? '';
-        ret.push({ prefix, text, elem, show: true });
+        ret.push({ prefix, text, elem });
     }
     return ret;
 }
@@ -44,10 +43,12 @@ interface Props {
 }
 
 export const Outline: React.FC<Props> = ({ dispatch }) => {
-    const [index, setIndex] = useState(0);
-    const [headings, setHeadings] = useState(collectHeadings);
+    const [query, setQuery] = useState('');
+    const [unadjustedIndex, setIndex] = useState(0);
+    const allHeadings = useMemo(collectHeadings, []);
     const focusedItemRef = useRef<HTMLDivElement | null>(null);
-    const visibleHeadings = headings.filter(h => h.show);
+    const headings = query === '' ? allHeadings : allHeadings.filter(h => h.text.toLowerCase().includes(query));
+    const index = unadjustedIndex < headings.length ? unadjustedIndex : headings.length > 0 ? headings.length - 1 : 0;
 
     useEffect(() => {
         if (focusedItemRef.current !== null) {
@@ -74,26 +75,7 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
     };
 
     const handleInput = (e: React.FormEvent<HTMLInputElement>): void => {
-        const input = e.currentTarget.value.toLowerCase();
-        if (input.length === 0) {
-            setHeadings(headings.map(h => ({ ...h, show: true })));
-            return;
-        }
-
-        let count = 0;
-        setHeadings(
-            headings.map(h => {
-                const text = h.text.toLowerCase();
-                const show = text.includes(input);
-                if (show) {
-                    count++;
-                }
-                return { ...h, show };
-            }),
-        );
-        if (count - 1 < index) {
-            setIndex(count - 1);
-        }
+        setQuery(e.currentTarget.value.toLowerCase());
     };
 
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -103,7 +85,7 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
             (e.key === 'Tab' && !e.shiftKey)
         ) {
             let next = index + 1;
-            if (next >= visibleHeadings.length) {
+            if (next >= headings.length) {
                 next = 0; // wrap
             }
             setIndex(next);
@@ -114,16 +96,16 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
         ) {
             let next = index - 1;
             if (next <= 0) {
-                next = Math.max(visibleHeadings.length - 1, 0); // wrap
+                next = Math.max(headings.length - 1, 0); // wrap
             }
             setIndex(next);
         } else if (e.key === 'ArrowDown' && e.ctrlKey) {
-            setIndex(Math.max(visibleHeadings.length - 1, 0));
+            setIndex(Math.max(headings.length - 1, 0));
         } else if (e.key === 'ArrowUp' && e.ctrlKey) {
             setIndex(0);
         } else if (e.key === 'Enter') {
-            if (index < visibleHeadings.length) {
-                handleItemClick(visibleHeadings[index]);
+            if (index < headings.length) {
+                handleItemClick(headings[index]);
             }
         } else {
             return;
@@ -149,7 +131,7 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
             </DialogTitle>
             <DialogContent style={CONTENT_STYLE} dividers>
                 <List>
-                    {visibleHeadings.map((item, idx) => {
+                    {headings.map((item, idx) => {
                         const selected = index === idx;
                         const ref = index === idx ? focusedItemRef : undefined;
                         return (
