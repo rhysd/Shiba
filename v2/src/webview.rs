@@ -30,6 +30,8 @@ pub struct WryMenuIds {
     search_prev: MenuId,
     outline: MenuId,
     print: MenuId,
+    zoom_in: MenuId,
+    zoom_out: MenuId,
 }
 
 impl WryMenuIds {
@@ -101,6 +103,13 @@ impl WryMenuIds {
             display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
         display_menu.add_native_item(MenuItem::Separator);
         display_menu.add_native_item(MenuItem::EnterFullScreen);
+        display_menu.add_native_item(MenuItem::Separator);
+        let cmd_plus = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::Plus);
+        let zoom_in_item =
+            display_menu.add_item(MenuItemAttributes::new("Zoom In").with_accelerators(&cmd_plus));
+        let cmd_minus = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::Minus);
+        let zoom_out_item = display_menu
+            .add_item(MenuItemAttributes::new("Zoom Out").with_accelerators(&cmd_minus));
         root_menu.add_submenu("Display", true, display_menu);
 
         let mut history_menu = MenuBar::new();
@@ -130,6 +139,8 @@ impl WryMenuIds {
             search_prev: search_prev_item.id(),
             outline: outline_item.id(),
             print: print_item.id(),
+            zoom_in: zoom_in_item.id(),
+            zoom_out: zoom_out_item.id(),
         }
     }
 }
@@ -160,6 +171,10 @@ impl MenuItems for WryMenuIds {
             Ok(AppMenuItem::Outline)
         } else if id == self.print {
             Ok(AppMenuItem::Print)
+        } else if id == self.zoom_in {
+            Ok(AppMenuItem::ZoomIn)
+        } else if id == self.zoom_out {
+            Ok(AppMenuItem::ZoomOut)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }
@@ -372,5 +387,9 @@ impl Renderer for Wry {
 
     fn print(&self) -> Result<()> {
         Ok(self.webview.print()?)
+    }
+
+    fn zoom(&self, scale: f64) {
+        self.webview.zoom(scale);
     }
 }

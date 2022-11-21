@@ -83,6 +83,8 @@ pub enum MenuItem {
     SearchPrevious,
     Outline,
     Print,
+    ZoomIn,
+    ZoomOut,
 }
 
 pub trait MenuItems {
@@ -120,4 +122,5 @@ pub trait Renderer: Sized {
     fn show(&self);
     fn set_background_color(&self, rbga: (u8, u8, u8, u8)) -> Result<()>;
     fn print(&self) -> Result<()>;
+    fn zoom(&self, scale: f64);
 }

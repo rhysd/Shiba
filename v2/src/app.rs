@@ -199,6 +199,7 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     watcher: W,
     config: Config,
     preview: PreviewContent,
+    zoom_factor: f64,
     _dialog: PhantomData<D>,
 }
 
@@ -238,6 +239,7 @@ where
             watcher,
             config,
             preview: PreviewContent::default(),
+            zoom_factor: 1.0,
             _dialog: PhantomData,
         })
     }
@@ -308,6 +310,13 @@ where
         }
 
         Ok(())
+    }
+
+    fn zoom(&mut self, factor: f64) {
+        if (0.0..=2.0).contains(&factor) {
+            self.zoom_factor = factor;
+            self.renderer.zoom(factor);
+        }
     }
 
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<AppControl> {
@@ -420,6 +429,8 @@ where
             }
             MenuItem::Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
             MenuItem::Print => self.renderer.print()?,
+            MenuItem::ZoomIn => self.zoom(self.zoom_factor + 0.1),
+            MenuItem::ZoomOut => self.zoom(self.zoom_factor - 0.1),
         }
         Ok(AppControl::Continue)
     }
