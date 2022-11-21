@@ -17,6 +17,21 @@ use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
+#[cfg(not(target_os = "macos"))]
+fn parse_css_color(color: &str) -> Option<(u8, u8, u8, u8)> {
+    use cssparser::{Color, Parser, ParserInput};
+    let mut input = ParserInput::new(color);
+    let mut parser = Parser::new(&mut input);
+    match Color::parse(&mut parser) {
+        Ok(Color::RGBA(c)) => Some((c.red, c.green, c.blue, c.alpha)),
+        Ok(Color::CurrentColor) => None,
+        Err(err) => {
+            log::debug!("Could not parse CSS color sent from renderer: {:?}: {:?}", color, err);
+            None
+        }
+    }
+}
+
 struct History {
     max_items: usize,
     index: usize,
@@ -312,7 +327,7 @@ where
 
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<AppControl> {
         match message {
-            MessageFromRenderer::Init => {
+            MessageFromRenderer::Init { bg } => {
                 if self.options.debug {
                     self.renderer.send_message(MessageToRenderer::Debug)?;
                 }
@@ -322,6 +337,23 @@ where
                     search: self.config.search(),
                     theme: self.renderer.theme(),
                 })?;
+
+                // WebView::set_background_color is not supported on macOS
+                #[cfg(not(target_os = "macos"))]
+                if let Some(bg) = bg {
+                    if let Some(rgba) = parse_css_color(&bg) {
+                        log::debug!(
+                            "Setting background color {:?} sent from renderer: {:?}",
+                            bg,
+                            rgba,
+                        );
+                        self.renderer.set_background_color(rgba).with_context(|| {
+                            format!("Could not set RGBA background color: {:?}", rgba)
+                        })?;
+                    }
+                }
+                #[cfg(target_os = "macos")]
+                let _ = bg; // Suppress unused warning
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 self.renderer.show();

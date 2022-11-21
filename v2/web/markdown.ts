@@ -32,12 +32,22 @@ export class PreviewContent {
     private mermaidInit: boolean;
     private readonly mathjax: MathjaxRenderer;
     private theme: Theme;
+    private readonly bgColor: string | null;
 
     constructor(window: Window, root: HTMLElement) {
         this.rootElem = root;
         this.mermaidInit = false;
         this.mathjax = new MathjaxRenderer(window);
         this.theme = 'Light';
+
+        const bg = window.getComputedStyle(root, null).getPropertyValue('background-color');
+        const html = document.documentElement;
+        if (bg && window.getComputedStyle(html, null).getPropertyValue('background-color') !== bg) {
+            html.style.backgroundColor = bg;
+            this.bgColor = bg;
+        } else {
+            this.bgColor = null;
+        }
     }
 
     setTheme(theme: Theme): void {
@@ -56,6 +66,10 @@ export class PreviewContent {
         renderer.end(this.rootElem);
         this.mermaidInit = mermaid.initialized;
         renderer.scrollToLastModified();
+    }
+
+    get backgroundColor(): string | null {
+        return this.bgColor;
     }
 }
 

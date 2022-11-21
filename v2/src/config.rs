@@ -278,9 +278,7 @@ impl Config {
             .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
 
         log::info!("Generated the default config file at {:?}", config_path);
-        let mut config = Self::default();
-        config.path = Some(config_path);
-        Ok(config)
+        Ok(Config { path: Some(config_path), ..Default::default() })
     }
 
     pub fn generate_default_config() -> Result<Self> {

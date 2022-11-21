@@ -49,7 +49,7 @@ pub enum MessageToRenderer<'a> {
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageFromRenderer {
-    Init,
+    Init { bg: Option<String> },
     Reload,
     FileDialog,
     DirDialog,
@@ -117,4 +117,5 @@ pub trait Renderer: Sized {
     fn window_state(&self) -> Option<WindowState>;
     fn theme(&self) -> Theme;
     fn show(&self);
+    fn set_background_color(&self, rbga: (u8, u8, u8, u8)) -> Result<()>;
 }

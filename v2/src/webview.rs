@@ -358,4 +358,9 @@ impl Renderer for Wry {
     fn show(&self) {
         self.webview.window().set_visible(true);
     }
+
+    fn set_background_color(&self, rgba: (u8, u8, u8, u8)) -> Result<()> {
+        self.webview.set_background_color(rgba)?;
+        Ok(())
+    }
 }

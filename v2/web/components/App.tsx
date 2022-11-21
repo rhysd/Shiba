@@ -38,8 +38,10 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         dispatcher.setDispatch(dispatch, state);
     });
     useEffect(() => {
-        sendMessage({ kind: 'init' });
-    }, []); // Run only when component was mounted
+        // Run only when component was mounted
+        const bg = dispatcher.content.backgroundColor;
+        sendMessage({ kind: 'init', bg });
+    }, [dispatcher]);
 
     return (
         <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
