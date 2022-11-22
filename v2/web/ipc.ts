@@ -28,6 +28,7 @@ export type KeyAction =
     | 'NextSection'
     | 'PrevSection'
     | 'Outline'
+    | 'History'
     | 'Quit';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
@@ -186,6 +187,10 @@ export type MessageFromMain =
           tree: RenderTreeElem[];
       }
     | {
+          kind: 'new_file';
+          path: string;
+      }
+    | {
           kind: 'config';
           keymaps: KeyMaps;
           search: {
@@ -207,6 +212,9 @@ export type MessageFromMain =
       }
     | {
           kind: 'welcome';
+      }
+    | {
+          kind: 'history';
       }
     | {
           kind: 'debug';
@@ -238,6 +246,10 @@ export type MessageToMain =
           query: string;
           index: number | null;
           matcher: SearchMatcher;
+      }
+    | {
+          kind: 'open_file';
+          path: string;
       }
     | {
           kind: 'error';

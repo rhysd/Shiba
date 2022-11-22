@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Search } from './Search';
 import { Welcome } from './Welcome';
 import { Outline } from './Outline';
+import { History } from './History';
 import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
@@ -16,10 +17,10 @@ interface Props {
 
 export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-    const { searching, searchIndex, matcher, previewing, outline, theme } = state;
+    const { searching, searchIndex, matcher, previewing, outline, theme, history, files } = state;
 
     let searchInput;
-    if (searching && previewing && !outline) {
+    if (searching && previewing) {
         searchInput = <Search index={searchIndex} matcher={matcher} dispatch={dispatch} />;
     }
 
@@ -29,8 +30,13 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     }
 
     let outlineDialog;
-    if (outline && previewing && !searching) {
+    if (outline && previewing) {
         outlineDialog = <Outline dispatch={dispatch} />;
+    }
+
+    let historyDialog;
+    if (history && previewing) {
+        historyDialog = <History history={files} dispatch={dispatch} />;
     }
 
     useEffect(() => {
@@ -44,6 +50,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
             {searchInput}
             {outlineDialog}
+            {historyDialog}
             {welcome}
         </ThemeProvider>
     );

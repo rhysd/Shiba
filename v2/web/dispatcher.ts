@@ -10,6 +10,8 @@ import {
     setPreviewing,
     openOutline,
     setTheme,
+    newFile,
+    openHistory,
 } from './reducer';
 import { sendMessage, type MessageFromMain, type KeyAction } from './ipc';
 import { PreviewContent } from './markdown';
@@ -88,6 +90,9 @@ export class GlobalDispatcher {
                     this.content.setVisible(true);
                     this.dispatch(setPreviewing(true));
                     break;
+                case 'new_file':
+                    this.dispatch(newFile(msg.path));
+                    break;
                 case 'config':
                     for (const keybind of Object.keys(msg.keymaps)) {
                         const action = msg.keymaps[keybind];
@@ -117,6 +122,9 @@ export class GlobalDispatcher {
                     break;
                 case 'outline':
                     this.dispatch(openOutline());
+                    break;
+                case 'history':
+                    this.dispatch(openHistory());
                     break;
                 case 'welcome':
                     this.dispatch(setPreviewing(false));
@@ -198,6 +206,9 @@ export class GlobalDispatcher {
             }
             case 'Outline':
                 this.dispatch(openOutline());
+                break;
+            case 'History':
+                this.dispatch(openHistory());
                 break;
             case 'Quit':
                 sendMessage({ kind: 'quit' });

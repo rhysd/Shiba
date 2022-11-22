@@ -28,11 +28,17 @@ export interface Item {
 
 export interface Props<T extends Item> {
     items: T[];
+    placeholder: string;
     onClose: () => void;
     onSelect: (item: T) => void;
 }
 
-export function ListSearchDialog<T extends Item>({ items, onClose, onSelect }: Props<T>): React.ReactElement {
+export function ListSearchDialog<T extends Item>({
+    items,
+    placeholder,
+    onClose,
+    onSelect,
+}: Props<T>): React.ReactElement {
     const [query, setQuery] = useState('');
     const [unadjustedIndex, setIndex] = useState(0);
     const focusedItemRef = useRef<HTMLDivElement | null>(null);
@@ -53,6 +59,7 @@ export function ListSearchDialog<T extends Item>({ items, onClose, onSelect }: P
 
     const handleInput = (e: React.FormEvent<HTMLInputElement>): void => {
         setQuery(e.currentTarget.value.toLowerCase());
+        e.preventDefault();
     };
 
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -72,7 +79,7 @@ export function ListSearchDialog<T extends Item>({ items, onClose, onSelect }: P
             (e.key === 'Tab' && e.shiftKey)
         ) {
             let next = index - 1;
-            if (next <= 0) {
+            if (next < 0) {
                 next = Math.max(items.length - 1, 0); // wrap
             }
             setIndex(next);
@@ -90,8 +97,10 @@ export function ListSearchDialog<T extends Item>({ items, onClose, onSelect }: P
         e.preventDefault();
     };
 
+    // If `disablePortal` is not set, closing dialog with Enter or Escape automatically scrolls the parent
+    // to the end.
     return (
-        <Dialog PaperProps={PAPER_PROPS} onClose={onClose} open>
+        <Dialog PaperProps={PAPER_PROPS} onClose={onClose} open scroll="paper" disablePortal>
             <DialogTitle>
                 <InputBase
                     inputProps={{
@@ -101,7 +110,7 @@ export function ListSearchDialog<T extends Item>({ items, onClose, onSelect }: P
                         style: { padding: 0 },
                     }}
                     type="search"
-                    placeholder="Search outline…"
+                    placeholder={placeholder}
                     autoFocus
                     fullWidth
                 />

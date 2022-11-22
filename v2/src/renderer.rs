@@ -5,7 +5,7 @@ use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -29,6 +29,7 @@ pub enum KeyAction {
     NextSection,
     PrevSection,
     Outline,
+    History,
     Quit,
 }
 
@@ -42,6 +43,8 @@ pub enum MessageToRenderer<'a> {
     SearchPrevious,
     Welcome,
     Outline,
+    NewFile { path: &'a Path },
+    History,
     Debug,
 }
 
@@ -57,6 +60,7 @@ pub enum MessageFromRenderer {
     Back,
     Quit,
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
+    OpenFile { path: String },
     Error { message: String },
 }
 
@@ -85,6 +89,7 @@ pub enum MenuItem {
     Print,
     ZoomIn,
     ZoomOut,
+    History,
 }
 
 pub trait MenuItems {

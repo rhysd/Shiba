@@ -248,6 +248,7 @@ where
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         let is_current = self.history.is_current(&path);
         if self.preview.show(&path, &self.renderer, !is_current)? {
+            self.renderer.send_message(MessageToRenderer::NewFile { path: &path })?;
             self.history.push(path);
         }
         Ok(())
@@ -349,6 +350,12 @@ where
             MessageFromRenderer::Reload => self.reload()?,
             MessageFromRenderer::FileDialog => self.open_file()?,
             MessageFromRenderer::DirDialog => self.open_dir()?,
+            MessageFromRenderer::OpenFile { path } => {
+                let path = PathBuf::from(path);
+                if self.preview.show(&path, &self.renderer, true)? {
+                    self.history.push(path);
+                }
+            }
             MessageFromRenderer::Quit => return Ok(AppControl::Exit),
             MessageFromRenderer::Error { message } => {
                 anyhow::bail!("Error reported from renderer: {}", message)
@@ -381,6 +388,7 @@ where
                         path = path.canonicalize()?;
                     }
                     if self.preview.show(&path, &self.renderer, true)? {
+                        self.renderer.send_message(MessageToRenderer::NewFile { path: &path })?;
                         self.history.push(path);
                     }
                 }
@@ -431,6 +439,7 @@ where
             MenuItem::Print => self.renderer.print()?,
             MenuItem::ZoomIn => self.zoom(self.zoom_factor + 0.1),
             MenuItem::ZoomOut => self.zoom(self.zoom_factor - 0.1),
+            MenuItem::History => self.renderer.send_message(MessageToRenderer::History)?,
         }
         Ok(AppControl::Continue)
     }

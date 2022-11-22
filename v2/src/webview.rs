@@ -32,6 +32,7 @@ pub struct WryMenuIds {
     print: MenuId,
     zoom_in: MenuId,
     zoom_out: MenuId,
+    history: MenuId,
 }
 
 impl WryMenuIds {
@@ -119,6 +120,10 @@ impl WryMenuIds {
         let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
         let back_item = history_menu
             .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
+        history_menu.add_native_item(MenuItem::Separator);
+        let cmd_y = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyY);
+        let history_item =
+            history_menu.add_item(MenuItemAttributes::new("History…").with_accelerators(&cmd_y));
         root_menu.add_submenu("History", true, history_menu);
 
         let mut window_menu = MenuBar::new();
@@ -141,6 +146,7 @@ impl WryMenuIds {
             print: print_item.id(),
             zoom_in: zoom_in_item.id(),
             zoom_out: zoom_out_item.id(),
+            history: history_item.id(),
         }
     }
 }
@@ -175,6 +181,8 @@ impl MenuItems for WryMenuIds {
             Ok(AppMenuItem::ZoomIn)
         } else if id == self.zoom_out {
             Ok(AppMenuItem::ZoomOut)
+        } else if id == self.history {
+            Ok(AppMenuItem::History)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }

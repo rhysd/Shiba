@@ -86,9 +86,11 @@ preview:
   #
   # For example, when you want to apply dimmed version of GitHub color theme,
   #
-  # 1. Download dimmed version of GitHub Markdown CSS from https://github.com/hyrious/github-markdown-css
-  # 2. Put it as `preview.css` in the configuration directory
-  # 3. Set `css: preview.css` below
+  # 1. Download `dark_dimmed.css`[1], dimmed version of GitHub Markdown CSS
+  # 2. Put the downloaded file in the configuration directory
+  # 3. Set `css: dark_dimmed.css` below
+  #
+  # [1]: https://github.com/hyrious/github-markdown-css
   css: null
 
 # Configuration related to dialog to open a file or watch a directory.

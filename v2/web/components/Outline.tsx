@@ -38,5 +38,12 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
         dispatch(closeOutline());
     };
 
-    return <ListSearchDialog items={headings} onClose={handleClose} onSelect={handleSelect} />;
+    return (
+        <ListSearchDialog
+            items={headings}
+            placeholder="Search outline…"
+            onClose={handleClose}
+            onSelect={handleSelect}
+        />
+    );
 };
