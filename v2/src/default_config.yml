@@ -88,17 +88,10 @@ preview:
   #
   # 1. Download `dark_dimmed.css`[1], dimmed version of GitHub Markdown CSS
   # 2. Put the downloaded file in the configuration directory
-  # 3. Set it to the configuration. `null` means using the default CSS file
-  #    ```
-  #    css:
-  #      light: null
-  #      dark: dark_dimmed.css
-  #    ```
+  # 3. Set `css: dark_dimmed.css` below
   #
   # [1]: https://github.com/hyrious/github-markdown-css
-  css:
-    light: null
-    dark: null
+  css: null
 
 # Configuration related to dialog to open a file or watch a directory.
 dialog:

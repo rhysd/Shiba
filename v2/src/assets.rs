@@ -120,13 +120,9 @@ fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
     }
 }
 
-fn load_user_css(config: &Config, theme: WindowTheme) -> Option<Vec<u8>> {
+fn load_user_css(config: &Config) -> Option<Vec<u8>> {
     let config_path = config.config_file()?;
-    let css = config.preview().css();
-    let css_path = match theme {
-        WindowTheme::Light => css.light()?,
-        WindowTheme::Dark => css.dark()?,
-    };
+    let css_path = config.preview().css_path()?;
     let css_path = config_path.parent()?.join(css_path);
 
     log::debug!("Loading user CSS at {:?}", css_path);
@@ -157,7 +153,7 @@ impl AssetsLoader {
             WindowTheme::Dark => load_hljs_css(&hl.dark, HLJS_DEFAULT_DARK_CSS),
         };
 
-        let markdown_css = if let Some(css) = load_user_css(config, theme) {
+        let markdown_css = if let Some(css) = load_user_css(config) {
             Cow::Owned(css)
         } else {
             Cow::Borrowed(GITHUB_MARKDOWN_CSS)
