@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Palette } from './Palette';
 import { type Dispatch, closeOutline } from '../reducer';
 
@@ -18,6 +18,10 @@ function collectHeadings(): Heading[] {
     return ret;
 }
 
+function renderHeading(h: Heading): React.ReactNode {
+    return `${h.prefix} ${h.text}`;
+}
+
 interface Props {
     dispatch: Dispatch;
 }
@@ -25,18 +29,29 @@ interface Props {
 export const Outline: React.FC<Props> = ({ dispatch }) => {
     const headings = useMemo(collectHeadings, []);
 
-    const handleClose = (): void => {
+    const handleClose = useCallback((): void => {
         dispatch(closeOutline());
-    };
+    }, [dispatch]);
 
-    const handleSelect = (heading: Heading): void => {
-        heading.elem.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-            inline: 'start',
-        });
-        dispatch(closeOutline());
-    };
+    const handleSelect = useCallback(
+        (heading: Heading): void => {
+            heading.elem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'start',
+            });
+            dispatch(closeOutline());
+        },
+        [dispatch],
+    );
 
-    return <Palette items={headings} placeholder="Search outline…" onClose={handleClose} onSelect={handleSelect} />;
+    return (
+        <Palette
+            items={headings}
+            placeholder="Search outline…"
+            onClose={handleClose}
+            onSelect={handleSelect}
+            renderItem={renderHeading}
+        />
+    );
 };

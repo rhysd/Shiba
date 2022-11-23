@@ -29,6 +29,7 @@ export type KeyAction =
     | 'ScrollPrevSection'
     | 'Outline'
     | 'History'
+    | 'Help'
     | 'Quit';
 
 export type KeyMaps = { [keybind: string]: KeyAction };

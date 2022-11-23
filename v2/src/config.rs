@@ -1,5 +1,4 @@
 use crate::cli::Options;
-use crate::renderer::KeyAction;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
@@ -8,6 +7,33 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 const DEFAULT_CONFIG_FILE: &str = include_str!("default_config.yml");
+
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub enum KeyAction {
+    Forward,
+    Back,
+    Reload,
+    OpenFile,
+    OpenDir,
+    ScrollDown,
+    ScrollUp,
+    ScrollLeft,
+    ScrollRight,
+    ScrollPageDown,
+    ScrollPageUp,
+    ScrollTop,
+    ScrollBottom,
+    Search,
+    NextSearch,
+    PrevSearch,
+    ScrollNextSection,
+    ScrollPrevSection,
+    Outline,
+    History,
+    Help,
+    Quit,
+}
 
 fn default_keymaps() -> HashMap<String, KeyAction> {
     use KeyAction::*;
@@ -20,9 +46,6 @@ fn default_keymaps() -> HashMap<String, KeyAction> {
         ("l",         ScrollRight),
         ("ctrl+b",    Back),
         ("ctrl+f",    Forward),
-        ("r",         Reload),
-        ("g g",       ScrollTop),
-        ("G",         ScrollBottom),
         ("ctrl+o",    OpenFile),
         ("ctrl+d",    ScrollPageDown),
         ("ctrl+u",    ScrollPageUp),
@@ -36,6 +59,7 @@ fn default_keymaps() -> HashMap<String, KeyAction> {
         ("ctrl+up",   ScrollTop),
         ("ctrl+j",    ScrollNextSection),
         ("ctrl+k",    ScrollPrevSection),
+        ("?",         Help),
     ];
 
     let mut m = HashMap::new();

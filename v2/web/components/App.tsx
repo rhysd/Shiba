@@ -4,6 +4,7 @@ import { Search } from './Search';
 import { Welcome } from './Welcome';
 import { Outline } from './Outline';
 import { History } from './History';
+import { Guide } from './Guide';
 import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
@@ -17,7 +18,7 @@ interface Props {
 
 export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-    const { searching, searchIndex, matcher, previewing, outline, theme, history, files } = state;
+    const { searching, searchIndex, matcher, previewing, outline, theme, history, files, help } = state;
 
     let searchInput;
     if (searching && previewing) {
@@ -39,6 +40,11 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         historyDialog = <History history={files} dispatch={dispatch} />;
     }
 
+    let guideDialog;
+    if (help) {
+        guideDialog = <Guide keybinds={dispatcher.keymap.keybinds} dispatcher={dispatcher} />;
+    }
+
     useEffect(() => {
         dispatcher.setDispatch(dispatch, state);
     });
@@ -51,6 +57,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
             {searchInput}
             {outlineDialog}
             {historyDialog}
+            {guideDialog}
             {welcome}
         </ThemeProvider>
     );

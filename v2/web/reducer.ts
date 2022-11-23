@@ -13,6 +13,7 @@ export interface State {
     theme: Theme;
     history: boolean;
     files: string[];
+    help: boolean;
 }
 
 export const INITIAL_STATE: State = {
@@ -24,6 +25,7 @@ export const INITIAL_STATE: State = {
     theme: 'light',
     history: false,
     files: [],
+    help: false,
 };
 
 const MAX_HISTORIES = 50;
@@ -66,6 +68,10 @@ type Action =
     | {
           kind: 'new_file';
           path: string;
+      }
+    | {
+          kind: 'help';
+          open: boolean;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -98,7 +104,7 @@ export function reducer(state: State, action: Action): State {
             if (state.searching) {
                 return state;
             }
-            return { ...state, searching: true, searchIndex: null, outline: false, history: false };
+            return { ...state, searching: true, searchIndex: null, outline: false, history: false, help: false };
         case 'close_search':
             return { ...state, searching: false, searchIndex: null };
         case 'search_index':
@@ -114,9 +120,11 @@ export function reducer(state: State, action: Action): State {
         case 'previewing':
             return { ...state, previewing: action.previewing };
         case 'outline':
-            return { ...state, outline: action.open, searching: false, history: false };
+            return { ...state, outline: action.open, searching: false, history: false, help: false };
         case 'history':
-            return { ...state, history: action.open, searching: false, outline: false };
+            return { ...state, history: action.open, searching: false, outline: false, help: false };
+        case 'help':
+            return { ...state, help: action.open, searching: false, outline: false, history: false };
         case 'theme':
             return { ...state, theme: action.theme };
         default:
@@ -179,4 +187,12 @@ export function closeHistory(): Action {
 
 export function newFile(path: string): Action {
     return { kind: 'new_file', path };
+}
+
+export function openHelp(): Action {
+    return { kind: 'help', open: true };
+}
+
+export function closeHelp(): Action {
+    return { kind: 'help', open: false };
 }

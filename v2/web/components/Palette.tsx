@@ -22,7 +22,6 @@ const PAPER_PROPS: PaperProps = {
 };
 
 export interface Item {
-    prefix?: string;
     text: string;
 }
 
@@ -31,9 +30,16 @@ export interface Props<T extends Item> {
     placeholder: string;
     onClose: () => void;
     onSelect: (item: T) => void;
+    renderItem: (item: T) => React.ReactNode;
 }
 
-export function Palette<T extends Item>({ items, placeholder, onClose, onSelect }: Props<T>): React.ReactElement {
+export function Palette<T extends Item>({
+    items,
+    placeholder,
+    onClose,
+    onSelect,
+    renderItem,
+}: Props<T>): React.ReactElement {
     const [query, setQuery] = useState('');
     const [unadjustedIndex, setIndex] = useState(0);
     const focusedItemRef = useRef<HTMLDivElement | null>(null);
@@ -114,8 +120,7 @@ export function Palette<T extends Item>({ items, placeholder, onClose, onSelect 
                 <List>
                     {items.map((item, idx) => {
                         const selected = index === idx;
-                        const ref = index === idx ? focusedItemRef : undefined;
-                        const text = item.prefix === undefined ? item.text : `${item.prefix} ${item.text}`;
+                        const ref = selected ? focusedItemRef : undefined;
                         return (
                             <ListItemButton
                                 selected={selected}
@@ -125,7 +130,7 @@ export function Palette<T extends Item>({ items, placeholder, onClose, onSelect 
                                 ref={ref}
                                 key={idx}
                             >
-                                {text}
+                                {renderItem(item)}
                             </ListItemButton>
                         );
                     })}

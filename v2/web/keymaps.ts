@@ -1,5 +1,5 @@
 import Mousetrap from 'mousetrap';
-import { openOutline, openHistory } from './reducer';
+import { openOutline, openHistory, openHelp } from './reducer';
 import type { GlobalDispatcher } from './dispatcher';
 import { sendMessage, type KeyMaps, type KeyAction } from './ipc';
 import * as log from './log';
@@ -107,14 +107,14 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     },
 
     Forward: {
-        description: 'Go forawrd the next document in preview history',
+        description: 'Go forawrd to the next document in preview history',
         dispatch(): void {
             sendMessage({ kind: 'forward' });
         },
     },
 
     Back: {
-        description: 'Go ackward the previous document in preview history',
+        description: 'Go backward to the previous document in preview history',
         dispatch(): void {
             sendMessage({ kind: 'back' });
         },
@@ -128,56 +128,63 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     },
 
     OpenFile: {
-        description: 'Open dialog to choose a file to preview',
+        description: 'Open a dialog to choose a file to preview',
         dispatch(): void {
             sendMessage({ kind: 'file_dialog' });
         },
     },
 
     OpenDir: {
-        description: 'Open dialog to choose a directory to watch file changes',
+        description: 'Open a dialog to choose a directory to watch file changes',
         dispatch(): void {
             sendMessage({ kind: 'dir_dialog' });
         },
     },
 
     Search: {
-        description: 'Open in-page search box',
+        description: 'Open an in-page search box',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.openSearch();
         },
     },
 
     SearchNext: {
-        description: 'Focus next match of ongoing text search',
+        description: 'Focus the next match of ongoing text search',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.searchNext();
         },
     },
 
     SearchPrev: {
-        description: 'Focus previous match of ongoing text search',
+        description: 'Focus the previous match of the ongoing text search',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.searchPrev();
         },
     },
 
     Outline: {
-        description: 'Open palette to incrementally search section headers',
+        description: 'Open a palette to incrementally search the section outline',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.dispatch(openOutline());
         },
     },
 
     History: {
-        description: 'Open palette to incrementally search files in history',
+        description: 'Open a palette to incrementally search files in history',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.dispatch(openHistory());
         },
     },
 
+    Help: {
+        description: 'Show this help',
+        dispatch(dispatcher: GlobalDispatcher): void {
+            dispatcher.dispatch(openHelp());
+        },
+    },
+
     Quit: {
-        description: 'Quit application',
+        description: 'Quit the application',
         dispatch(): void {
             sendMessage({ kind: 'quit' });
         },
@@ -193,7 +200,7 @@ export interface BoundShortcut {
 export class KeyMapping {
     private sortedShortcuts: BoundShortcut[] = [];
 
-    get shortcuts(): BoundShortcut[] {
+    get keybinds(): BoundShortcut[] {
         return this.sortedShortcuts;
     }
 

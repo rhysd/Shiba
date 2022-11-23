@@ -1,37 +1,11 @@
 use crate::cli::Options;
-use crate::config::{Config, Search as SearchConfig, SearchMatcher};
+use crate::config::{Config, KeyAction, Search as SearchConfig, SearchMatcher};
 use crate::persistent::WindowState;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
-
-#[non_exhaustive]
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub enum KeyAction {
-    Forward,
-    Back,
-    Reload,
-    OpenFile,
-    OpenDir,
-    ScrollDown,
-    ScrollUp,
-    ScrollLeft,
-    ScrollRight,
-    ScrollPageDown,
-    ScrollPageUp,
-    ScrollTop,
-    ScrollBottom,
-    Search,
-    NextSearch,
-    PrevSearch,
-    ScrollNextSection,
-    ScrollPrevSection,
-    Outline,
-    History,
-    Quit,
-}
 
 #[derive(Serialize)]
 #[serde(tag = "kind")]

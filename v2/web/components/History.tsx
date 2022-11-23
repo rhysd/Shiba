@@ -13,6 +13,10 @@ export interface Props {
     dispatch: Dispatch;
 }
 
+function renderHistoryItem(item: HistoryItem): React.ReactNode {
+    return item.text;
+}
+
 export const History: React.FC<Props> = ({ history, dispatch }) => {
     const items = useMemo(() => {
         const items = history.map(path => ({ text: path }));
@@ -32,5 +36,13 @@ export const History: React.FC<Props> = ({ history, dispatch }) => {
         [dispatch],
     );
 
-    return <Palette items={items} placeholder="Search history…" onClose={handleClose} onSelect={handleSelect} />;
+    return (
+        <Palette
+            items={items}
+            placeholder="Search history…"
+            onClose={handleClose}
+            onSelect={handleSelect}
+            renderItem={renderHistoryItem}
+        />
+    );
 };
