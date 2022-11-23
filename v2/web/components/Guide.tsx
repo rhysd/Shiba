@@ -10,12 +10,21 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 import type { BoundShortcut } from '../keymaps';
 import type { GlobalDispatcher } from '../dispatcher';
 import { closeHelp } from '../reducer';
 
 const KEYBIND_ROW_STYLE: React.CSSProperties = {
     cursor: 'pointer',
+};
+const TITLE_STYLE: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'row',
+};
+const CLOSE_BUTTON_STYLE: React.CSSProperties = {
+    marginLeft: 'auto',
 };
 
 export interface Props {
@@ -30,7 +39,12 @@ export const Guide: React.FC<Props> = ({ keybinds, dispatcher }) => {
 
     return (
         <Dialog open scroll="paper" onClose={handleClose}>
-            <DialogTitle>Guide</DialogTitle>
+            <DialogTitle style={TITLE_STYLE}>
+                Guide
+                <IconButton aria-label="close" style={CLOSE_BUTTON_STYLE} onClick={handleClose}>
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
             <DialogContent dividers>
                 <TableContainer component={Paper}>
                     <Table aria-label="key shortcut table">
