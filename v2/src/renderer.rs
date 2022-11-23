@@ -49,7 +49,7 @@ pub enum UserEvent {
     Error(Error),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum MenuItem {
     Quit,
     Forward,

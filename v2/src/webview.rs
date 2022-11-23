@@ -7,6 +7,7 @@ use crate::renderer::{
     Renderer, Theme as RendererTheme, UserEvent,
 };
 use anyhow::Result;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
 use wry::application::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
@@ -18,24 +19,7 @@ use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
-pub struct WryMenuIds {
-    open_file: MenuId,
-    watch_dir: MenuId,
-    quit: MenuId,
-    forward: MenuId,
-    back: MenuId,
-    reload: MenuId,
-    search: MenuId,
-    search_next: MenuId,
-    search_prev: MenuId,
-    outline: MenuId,
-    print: MenuId,
-    zoom_in: MenuId,
-    zoom_out: MenuId,
-    history: MenuId,
-    help: MenuId,
-    open_repo: MenuId,
-}
+pub struct WryMenuIds(HashMap<MenuId, AppMenuItem>);
 
 impl WryMenuIds {
     fn set_menu(root_menu: &mut MenuBar) -> Self {
@@ -54,14 +38,14 @@ impl WryMenuIds {
 
         let mut file_menu = MenuBar::new();
         let cmd_o = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyO);
-        let open_file_item =
+        let open_file =
             file_menu.add_item(MenuItemAttributes::new("Open File…").with_accelerators(&cmd_o));
         let cmd_opt_o =
             Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::ALT), KeyCode::KeyO);
-        let watch_dir_item = file_menu
+        let watch_dir = file_menu
             .add_item(MenuItemAttributes::new("Watch Directory…").with_accelerators(&cmd_opt_o));
         file_menu.add_native_item(MenuItem::Separator);
-        let print_item = file_menu.add_item(MenuItemAttributes::new("Print…"));
+        let print = file_menu.add_item(MenuItemAttributes::new("Print…"));
         file_menu.add_native_item(MenuItem::Separator);
         file_menu.add_native_item(MenuItem::About("Shiba".to_string(), metadata));
         file_menu.add_native_item(MenuItem::Separator);
@@ -72,8 +56,7 @@ impl WryMenuIds {
         file_menu.add_native_item(MenuItem::ShowAll);
         file_menu.add_native_item(MenuItem::Separator);
         let cmd_q = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyQ);
-        let quit_item =
-            file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
+        let quit = file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
         root_menu.add_submenu("File", true, file_menu);
 
         let mut edit_menu = MenuBar::new();
@@ -86,45 +69,45 @@ impl WryMenuIds {
         edit_menu.add_native_item(MenuItem::SelectAll);
         edit_menu.add_native_item(MenuItem::Separator);
         let cmd_f = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyF);
-        let search_item =
+        let search =
             edit_menu.add_item(MenuItemAttributes::new("Search…").with_accelerators(&cmd_f));
         let cmd_g = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyG);
-        let search_next_item =
+        let search_next =
             edit_menu.add_item(MenuItemAttributes::new("Search Next").with_accelerators(&cmd_g));
         let cmd_shift_g =
             Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::SHIFT), KeyCode::KeyG);
-        let search_prev_item = edit_menu
+        let search_prev = edit_menu
             .add_item(MenuItemAttributes::new("Search Previous").with_accelerators(&cmd_shift_g));
         let cmd_s = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyS);
-        let outline_item = edit_menu
+        let outline = edit_menu
             .add_item(MenuItemAttributes::new("Section Outline…").with_accelerators(&cmd_s));
         root_menu.add_submenu("Edit", true, edit_menu);
 
         let mut display_menu = MenuBar::new();
         let cmd_r = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyR);
-        let reload_item =
+        let reload =
             display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
         display_menu.add_native_item(MenuItem::Separator);
         display_menu.add_native_item(MenuItem::EnterFullScreen);
         display_menu.add_native_item(MenuItem::Separator);
         let cmd_plus = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::Plus);
-        let zoom_in_item =
+        let zoom_in =
             display_menu.add_item(MenuItemAttributes::new("Zoom In").with_accelerators(&cmd_plus));
         let cmd_minus = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::Minus);
-        let zoom_out_item = display_menu
+        let zoom_out = display_menu
             .add_item(MenuItemAttributes::new("Zoom Out").with_accelerators(&cmd_minus));
         root_menu.add_submenu("Display", true, display_menu);
 
         let mut history_menu = MenuBar::new();
         let cmd_left_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketRight);
-        let forward_item = history_menu
+        let forward = history_menu
             .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
         let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
-        let back_item = history_menu
+        let back = history_menu
             .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
         history_menu.add_native_item(MenuItem::Separator);
         let cmd_y = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyY);
-        let history_item =
+        let history =
             history_menu.add_item(MenuItemAttributes::new("History…").with_accelerators(&cmd_y));
         root_menu.add_submenu("History", true, history_menu);
 
@@ -134,29 +117,37 @@ impl WryMenuIds {
         root_menu.add_submenu("Window", true, window_menu);
 
         let mut help_menu = MenuBar::new();
-        let guide_item = help_menu.add_item(MenuItemAttributes::new("Show Guide…"));
-        let open_repo_item = help_menu.add_item(MenuItemAttributes::new("Open Repository Page"));
+        let guide = help_menu.add_item(MenuItemAttributes::new("Show Guide…"));
+        let open_repo = help_menu.add_item(MenuItemAttributes::new("Open Repository Page"));
         root_menu.add_submenu("Help", true, help_menu);
 
         log::debug!("Added menubar to window");
-        Self {
-            open_file: open_file_item.id(),
-            watch_dir: watch_dir_item.id(),
-            quit: quit_item.id(),
-            forward: forward_item.id(),
-            back: back_item.id(),
-            reload: reload_item.id(),
-            search: search_item.id(),
-            search_next: search_next_item.id(),
-            search_prev: search_prev_item.id(),
-            outline: outline_item.id(),
-            print: print_item.id(),
-            zoom_in: zoom_in_item.id(),
-            zoom_out: zoom_out_item.id(),
-            history: history_item.id(),
-            help: guide_item.id(),
-            open_repo: open_repo_item.id(),
-        }
+
+        #[rustfmt::skip]
+        let ids = HashMap::from_iter({
+            use AppMenuItem::*;
+
+            [
+                (open_file.id(),   OpenFile),
+                (watch_dir.id(),   WatchDir),
+                (quit.id(),        Quit),
+                (forward.id(),     Forward),
+                (back.id(),        Back),
+                (reload.id(),      Reload),
+                (search.id(),      Search),
+                (search_next.id(), SearchNext),
+                (search_prev.id(), SearchPrevious),
+                (outline.id(),     Outline),
+                (print.id(),       Print),
+                (zoom_in.id(),     ZoomIn),
+                (zoom_out.id(),    ZoomOut),
+                (history.id(),     History),
+                (guide.id(),       Help),
+                (open_repo.id(),   OpenRepo),
+            ]
+        });
+
+        Self(ids)
     }
 }
 
@@ -164,38 +155,8 @@ impl MenuItems for WryMenuIds {
     type ItemId = MenuId;
 
     fn item_from_id(&self, id: Self::ItemId) -> Result<AppMenuItem> {
-        if id == self.open_file {
-            Ok(AppMenuItem::OpenFile)
-        } else if id == self.watch_dir {
-            Ok(AppMenuItem::WatchDir)
-        } else if id == self.quit {
-            Ok(AppMenuItem::Quit)
-        } else if id == self.forward {
-            Ok(AppMenuItem::Forward)
-        } else if id == self.back {
-            Ok(AppMenuItem::Back)
-        } else if id == self.reload {
-            Ok(AppMenuItem::Reload)
-        } else if id == self.search {
-            Ok(AppMenuItem::Search)
-        } else if id == self.search_next {
-            Ok(AppMenuItem::SearchNext)
-        } else if id == self.search_prev {
-            Ok(AppMenuItem::SearchPrevious)
-        } else if id == self.outline {
-            Ok(AppMenuItem::Outline)
-        } else if id == self.print {
-            Ok(AppMenuItem::Print)
-        } else if id == self.zoom_in {
-            Ok(AppMenuItem::ZoomIn)
-        } else if id == self.zoom_out {
-            Ok(AppMenuItem::ZoomOut)
-        } else if id == self.history {
-            Ok(AppMenuItem::History)
-        } else if id == self.help {
-            Ok(AppMenuItem::Help)
-        } else if id == self.open_repo {
-            Ok(AppMenuItem::OpenRepo)
+        if let Some(item) = self.0.get(&id).copied() {
+            Ok(item)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }
