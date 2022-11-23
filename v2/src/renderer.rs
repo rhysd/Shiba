@@ -19,6 +19,7 @@ pub enum MessageToRenderer<'a> {
     Outline,
     NewFile { path: &'a Path },
     History,
+    Help,
     Debug,
 }
 
@@ -64,6 +65,8 @@ pub enum MenuItem {
     ZoomIn,
     ZoomOut,
     History,
+    Help,
+    OpenRepo,
 }
 
 pub trait MenuItems {

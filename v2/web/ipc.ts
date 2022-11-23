@@ -218,6 +218,9 @@ export type MessageFromMain =
           kind: 'history';
       }
     | {
+          kind: 'help';
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =

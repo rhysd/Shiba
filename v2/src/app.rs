@@ -440,6 +440,8 @@ where
             MenuItem::ZoomIn => self.zoom(self.zoom_factor + 0.1),
             MenuItem::ZoomOut => self.zoom(self.zoom_factor - 0.1),
             MenuItem::History => self.renderer.send_message(MessageToRenderer::History)?,
+            MenuItem::Help => self.renderer.send_message(MessageToRenderer::Help)?,
+            MenuItem::OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
         }
         Ok(AppControl::Continue)
     }

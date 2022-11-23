@@ -23,9 +23,6 @@ keymaps:
   l: ScrollRight
   ctrl+b: Back
   ctrl+f: Forward
-  r: Reload
-  g g: ScrollTop
-  G: ScrollBottom
   ctrl+o: OpenFile
   ctrl+d: ScrollPageDown
   ctrl+u: ScrollPageUp
@@ -39,6 +36,7 @@ keymaps:
   ctrl+up: ScrollTop
   ctrl+j: ScrollNextSection
   ctrl+k: ScrollPrevSection
+  ?: Help
 
 # Configuration related to text search.
 search:

@@ -11,6 +11,7 @@ import {
     setTheme,
     newFile,
     openHistory,
+    openHelp,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
 import { PreviewContent } from './markdown';
@@ -96,6 +97,9 @@ export class GlobalDispatcher {
                 case 'welcome':
                     this.dispatch(setPreviewing(false));
                     this.content.setVisible(false);
+                    break;
+                case 'help':
+                    this.dispatch(openHelp());
                     break;
                 case 'debug':
                     log.enableDebug();

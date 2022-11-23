@@ -33,6 +33,8 @@ pub struct WryMenuIds {
     zoom_in: MenuId,
     zoom_out: MenuId,
     history: MenuId,
+    help: MenuId,
+    open_repo: MenuId,
 }
 
 impl WryMenuIds {
@@ -131,6 +133,11 @@ impl WryMenuIds {
         window_menu.add_native_item(MenuItem::Zoom);
         root_menu.add_submenu("Window", true, window_menu);
 
+        let mut help_menu = MenuBar::new();
+        let guide_item = help_menu.add_item(MenuItemAttributes::new("Show Guide…"));
+        let open_repo_item = help_menu.add_item(MenuItemAttributes::new("Open Repository Page"));
+        root_menu.add_submenu("Help", true, help_menu);
+
         log::debug!("Added menubar to window");
         Self {
             open_file: open_file_item.id(),
@@ -147,6 +154,8 @@ impl WryMenuIds {
             zoom_in: zoom_in_item.id(),
             zoom_out: zoom_out_item.id(),
             history: history_item.id(),
+            help: guide_item.id(),
+            open_repo: open_repo_item.id(),
         }
     }
 }
@@ -183,6 +192,10 @@ impl MenuItems for WryMenuIds {
             Ok(AppMenuItem::ZoomOut)
         } else if id == self.history {
             Ok(AppMenuItem::History)
+        } else if id == self.help {
+            Ok(AppMenuItem::Help)
+        } else if id == self.open_repo {
+            Ok(AppMenuItem::OpenRepo)
         } else {
             Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
         }
