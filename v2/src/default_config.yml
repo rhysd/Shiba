@@ -37,8 +37,8 @@ keymaps:
   pageup: ScrollPageUp
   ctrl+down: ScrollBottom
   ctrl+up: ScrollTop
-  ctrl+j: NextSection
-  ctrl+k: PrevSection
+  ctrl+j: ScrollNextSection
+  ctrl+k: ScrollPrevSection
 
 # Configuration related to text search.
 search:

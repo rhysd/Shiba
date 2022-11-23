@@ -33,12 +33,7 @@ export interface Props<T extends Item> {
     onSelect: (item: T) => void;
 }
 
-export function ListSearchDialog<T extends Item>({
-    items,
-    placeholder,
-    onClose,
-    onSelect,
-}: Props<T>): React.ReactElement {
+export function Palette<T extends Item>({ items, placeholder, onClose, onSelect }: Props<T>): React.ReactElement {
     const [query, setQuery] = useState('');
     const [unadjustedIndex, setIndex] = useState(0);
     const focusedItemRef = useRef<HTMLDivElement | null>(null);

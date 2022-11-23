@@ -1,4 +1,3 @@
-import Mousetrap from 'mousetrap';
 import {
     type Dispatch,
     type State,
@@ -13,39 +12,18 @@ import {
     newFile,
     openHistory,
 } from './reducer';
-import { sendMessage, type MessageFromMain, type KeyAction } from './ipc';
+import type { MessageFromMain } from './ipc';
 import { PreviewContent } from './markdown';
+import { KeyMapping } from './keymaps';
 import * as log from './log';
 
 // Global action dispatcher to handle IPC messages from the main and key shortcuts
 
-function scrollTo(
-    candidates: HTMLElement[] | NodeListOf<HTMLElement>,
-    pred: (e: HTMLElement, t: number) => boolean,
-): void {
-    if (candidates.length === 0) {
-        return;
-    }
-    let scrolled = false;
-    const windowTop = window.scrollY;
-    for (const elem of candidates) {
-        if (pred(elem, windowTop)) {
-            window.scrollTo(0, elem.offsetTop);
-            if (windowTop !== window.scrollY) {
-                scrolled = true;
-                break;
-            }
-        }
-    }
-    if (!scrolled) {
-        window.scrollTo(0, candidates[0].offsetTop);
-    }
-}
-
 export class GlobalDispatcher {
-    public dispatch: Dispatch;
-    public state: State;
-    public content: PreviewContent;
+    public dispatch: Dispatch; // This prop will be updated by `App` component
+    public state: State; // This prop will be updated by `App` component
+    readonly content: PreviewContent;
+    readonly keymap: KeyMapping;
 
     constructor(window: Window, previewRoot: HTMLElement) {
         this.dispatch = () => {
@@ -53,6 +31,7 @@ export class GlobalDispatcher {
         };
         this.state = INITIAL_STATE;
         this.content = new PreviewContent(window, previewRoot);
+        this.keymap = new KeyMapping();
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
@@ -94,19 +73,7 @@ export class GlobalDispatcher {
                     this.dispatch(newFile(msg.path));
                     break;
                 case 'config':
-                    for (const keybind of Object.keys(msg.keymaps)) {
-                        const action = msg.keymaps[keybind];
-                        Mousetrap.bind(keybind, e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            log.debug('Triggered key shortcut:', action, keybind);
-                            try {
-                                this.handleKeyAction(action);
-                            } catch (err) {
-                                log.error('Error while handling key action', action, err);
-                            }
-                        });
-                    }
+                    this.keymap.register(msg.keymaps, this);
                     this.content.setTheme(msg.theme);
                     this.dispatch(setTheme(msg.theme));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
@@ -140,82 +107,6 @@ export class GlobalDispatcher {
             }
         } catch (err) {
             log.error('Error while handling received IPC message', err, msg);
-        }
-    }
-
-    handleKeyAction(action: KeyAction): void {
-        switch (action) {
-            case 'ScrollDown':
-                window.scrollBy(0, window.innerHeight / 2);
-                break;
-            case 'ScrollUp':
-                window.scrollBy(0, -window.innerHeight / 2);
-                break;
-            case 'ScrollLeft':
-                window.scrollBy(-window.innerWidth / 2, 0);
-                break;
-            case 'ScrollRight':
-                window.scrollBy(window.innerWidth / 2, 0);
-                break;
-            case 'ScrollPageDown':
-                window.scrollBy(0, window.innerHeight);
-                break;
-            case 'ScrollPageUp':
-                window.scrollBy(0, -window.innerHeight);
-                break;
-            case 'Forward':
-                sendMessage({ kind: 'forward' });
-                break;
-            case 'Back':
-                sendMessage({ kind: 'back' });
-                break;
-            case 'Reload':
-                sendMessage({ kind: 'reload' });
-                break;
-            case 'OpenFile':
-                sendMessage({ kind: 'file_dialog' });
-                break;
-            case 'OpenDir':
-                sendMessage({ kind: 'dir_dialog' });
-                break;
-            case 'ScrollTop':
-                window.scrollTo(0, 0);
-                break;
-            case 'ScrollBottom':
-                window.scrollTo(0, document.body.scrollHeight);
-                break;
-            case 'Search':
-                this.openSearch();
-                break;
-            case 'SearchNext':
-                this.searchNext();
-                break;
-            case 'SearchPrev':
-                this.searchPrev();
-                break;
-            case 'NextSection': {
-                const headings: NodeListOf<HTMLElement> = document.querySelectorAll('h1,h2,h3,h4,h5,h6');
-                scrollTo(headings, (elem, windowTop) => elem.offsetTop > windowTop);
-                break;
-            }
-            case 'PrevSection': {
-                const headings: HTMLElement[] = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
-                headings.reverse();
-                scrollTo(headings, (elem, windowTop) => elem.offsetTop < windowTop);
-                break;
-            }
-            case 'Outline':
-                this.dispatch(openOutline());
-                break;
-            case 'History':
-                this.dispatch(openHistory());
-                break;
-            case 'Quit':
-                sendMessage({ kind: 'quit' });
-                break;
-            default:
-                log.error('Unknown key action:', action);
-                break;
         }
     }
 }

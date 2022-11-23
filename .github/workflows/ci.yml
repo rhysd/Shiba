@@ -39,4 +39,5 @@ jobs:
       - run: npm run lint:stylelint
       - run: cargo fmt -- --check
       - run: cargo clippy -- -D warnings
+      # TODO: Separate a new job to run unit tests
       - run: cargo test

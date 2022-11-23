@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ListSearchDialog } from './ListSearchDialog';
+import { Palette } from './Palette';
 import { type Dispatch, closeOutline } from '../reducer';
 
 interface Heading {
@@ -38,12 +38,5 @@ export const Outline: React.FC<Props> = ({ dispatch }) => {
         dispatch(closeOutline());
     };
 
-    return (
-        <ListSearchDialog
-            items={headings}
-            placeholder="Search outline…"
-            onClose={handleClose}
-            onSelect={handleSelect}
-        />
-    );
+    return <Palette items={headings} placeholder="Search outline…" onClose={handleClose} onSelect={handleSelect} />;
 };

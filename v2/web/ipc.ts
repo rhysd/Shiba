@@ -25,8 +25,8 @@ export type KeyAction =
     | 'Search'
     | 'SearchNext'
     | 'SearchPrev'
-    | 'NextSection'
-    | 'PrevSection'
+    | 'ScrollNextSection'
+    | 'ScrollPrevSection'
     | 'Outline'
     | 'History'
     | 'Quit';

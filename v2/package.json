@@ -25,7 +25,7 @@
     "lint:rustfmt": "cargo fmt --check -- --color always",
     "lint:eslint": "eslint 'web/**/*.ts' 'web/**/*.tsx'",
     "lint:stylelint": "stylelint web/style.css",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cargo test",
     "prepare": "cd .. && husky install"
   },
   "author": "rhysd <lin90162@yahoo.co.jp> (https://rhysd.github.io/)",
