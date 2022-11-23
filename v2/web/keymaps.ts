@@ -34,63 +34,63 @@ export interface KeyShortcut {
 
 const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     ScrollDown: {
-        description: 'Scroll down the page by half of window height',
+        description: 'Scroll down the page by half of window height.',
         dispatch(): void {
             window.scrollBy(0, window.innerHeight / 2);
         },
     },
 
     ScrollUp: {
-        description: 'Scroll up the page by half of window height',
+        description: 'Scroll up the page by half of window height.',
         dispatch(): void {
             window.scrollBy(0, -window.innerHeight / 2);
         },
     },
 
     ScrollLeft: {
-        description: 'Scroll the page to the left by half of window width',
+        description: 'Scroll the page to the left by half of window width.',
         dispatch(): void {
             window.scrollBy(-window.innerWidth / 2, 0);
         },
     },
 
     ScrollRight: {
-        description: 'Scroll the page to the right by half of window width',
+        description: 'Scroll the page to the right by half of window width.',
         dispatch(): void {
             window.scrollBy(window.innerWidth / 2, 0);
         },
     },
 
     ScrollPageDown: {
-        description: 'Scroll down the page by window height',
+        description: 'Scroll down the page by window height.',
         dispatch(): void {
             window.scrollBy(0, window.innerHeight);
         },
     },
 
     ScrollPageUp: {
-        description: 'Scroll up the page by window height',
+        description: 'Scroll up the page by window height.',
         dispatch(): void {
             window.scrollBy(0, -window.innerHeight);
         },
     },
 
     ScrollTop: {
-        description: 'Scroll to the top of the page',
+        description: 'Scroll to the top of the page.',
         dispatch(): void {
             window.scrollTo(0, 0);
         },
     },
 
     ScrollBottom: {
-        description: 'Scroll to the bottom of the page',
+        description: 'Scroll to the bottom of the page.',
         dispatch(): void {
             window.scrollTo(0, document.body.scrollHeight);
         },
     },
 
     ScrollNextSection: {
-        description: 'Scroll to the next section header',
+        description: 'Scroll to the next section header.',
         dispatch(): void {
             const headings: NodeListOf<HTMLElement> = document.querySelectorAll('h1,h2,h3,h4,h5,h6');
             scrollTo(headings, (elem, windowTop) => elem.offsetTop > windowTop);
@@ -98,7 +98,7 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     },
 
     ScrollPrevSection: {
-        description: 'Scroll to the previous section header',
+        description: 'Scroll to the previous section header.',
         dispatch(): void {
             const headings: HTMLElement[] = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
             headings.reverse();
@@ -107,100 +107,99 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     },
 
     Forward: {
-        description: 'Go forawrd to the next document in preview history',
+        description: 'Go forawrd to the next document in preview history.',
         dispatch(): void {
             sendMessage({ kind: 'forward' });
         },
     },
 
     Back: {
-        description: 'Go backward to the previous document in preview history',
+        description: 'Go backward to the previous document in preview history.',
         dispatch(): void {
             sendMessage({ kind: 'back' });
         },
     },
 
     Reload: {
-        description: 'Reload the current document preview',
+        description: 'Reload the current document preview.',
         dispatch(): void {
             sendMessage({ kind: 'reload' });
         },
     },
 
     OpenFile: {
-        description: 'Open a dialog to choose a file to preview',
+        description: 'Open a dialog to choose a file to preview.',
         dispatch(): void {
             sendMessage({ kind: 'file_dialog' });
         },
     },
 
     OpenDir: {
-        description: 'Open a dialog to choose a directory to watch file changes',
+        description: 'Open a dialog to choose a directory to watch file changes.',
         dispatch(): void {
             sendMessage({ kind: 'dir_dialog' });
         },
     },
 
     Search: {
-        description: 'Open an in-page search box',
+        description: 'Open an in-page search box.',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.openSearch();
         },
     },
 
     SearchNext: {
-        description: 'Focus the next match of ongoing text search',
+        description: 'Focus the next match of ongoing text search.',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.searchNext();
         },
     },
 
     SearchPrev: {
-        description: 'Focus the previous match of the ongoing text search',
+        description: 'Focus the previous match of the ongoing text search.',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.searchPrev();
         },
     },
 
     Outline: {
-        description: 'Open a palette to incrementally search the section outline',
+        description: 'Open a palette to incrementally search the section outline.',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.dispatch(openOutline());
         },
     },
 
     History: {
-        description: 'Open a palette to incrementally search files in history',
+        description: 'Open a palette to incrementally search files in history.',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.dispatch(openHistory());
         },
     },
 
     Help: {
-        description: 'Show this help',
+        description: 'Show this help.',
         dispatch(dispatcher: GlobalDispatcher): void {
             dispatcher.dispatch(openHelp());
         },
     },
 
     Quit: {
-        description: 'Quit the application',
+        description: 'Quit the application.',
         dispatch(): void {
             sendMessage({ kind: 'quit' });
         },
     },
 };
 
-export interface BoundShortcut {
+export interface BoundShortcut extends KeyShortcut {
     action: KeyAction;
     binds: string[];
-    shortcut: KeyShortcut;
 }
 
 export class KeyMapping {
     private sortedShortcuts: BoundShortcut[] = [];
 
-    get keybinds(): BoundShortcut[] {
+    get shortcuts(): BoundShortcut[] {
         return this.sortedShortcuts;
     }
 
@@ -216,9 +215,9 @@ export class KeyMapping {
 
             const shortcut = KeyShortcuts[action];
             const method = shortcut.dispatch.bind(undefined, dispatcher);
-            Mousetrap.bind(keybind, e => {
-                e.preventDefault();
-                e.stopPropagation();
+            Mousetrap.bind(keybind, event => {
+                event.preventDefault();
+                event.stopPropagation();
                 log.debug('Triggered key shortcut:', action, keybind);
                 try {
                     method();
@@ -227,15 +226,15 @@ export class KeyMapping {
                 }
             });
 
-            const b = bounds.get(action);
-            if (b === undefined) {
+            const s = bounds.get(action);
+            if (s === undefined) {
                 bounds.set(action, {
+                    ...shortcut,
                     action,
                     binds: [keybind],
-                    shortcut,
                 });
             } else {
-                b.binds.push(keybind);
+                s.binds.push(keybind);
             }
         }
 

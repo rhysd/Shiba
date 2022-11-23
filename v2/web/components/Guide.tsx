@@ -12,6 +12,8 @@ import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import Typography from '@mui/material/Typography';
+import Link from '@mui/material/Link';
 import type { BoundShortcut } from '../keymaps';
 import type { GlobalDispatcher } from '../dispatcher';
 import { closeHelp } from '../reducer';
@@ -26,13 +28,19 @@ const TITLE_STYLE: React.CSSProperties = {
 const CLOSE_BUTTON_STYLE: React.CSSProperties = {
     marginLeft: 'auto',
 };
+const BOTTOM_DESC_STYLE: React.CSSProperties = {
+    marginTop: '16px',
+};
+const BIND_CHIP_STYLE: React.CSSProperties = {
+    marginLeft: '4px',
+};
 
 export interface Props {
-    keybinds: BoundShortcut[];
+    shortcuts: BoundShortcut[];
     dispatcher: GlobalDispatcher;
 }
 
-export const Guide: React.FC<Props> = ({ keybinds, dispatcher }) => {
+export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
     const handleClose = (): void => {
         dispatcher.dispatch(closeHelp());
     };
@@ -46,7 +54,7 @@ export const Guide: React.FC<Props> = ({ keybinds, dispatcher }) => {
                 </IconButton>
             </DialogTitle>
             <DialogContent dividers>
-                <TableContainer component={Paper}>
+                <TableContainer component={Paper} variant="outlined">
                     <Table aria-label="key shortcut table">
                         <TableHead>
                             <TableRow>
@@ -55,27 +63,37 @@ export const Guide: React.FC<Props> = ({ keybinds, dispatcher }) => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {keybinds.map((bind, i) => (
+                            {shortcuts.map((shortcut, i) => (
                                 <TableRow
                                     key={i}
                                     hover
                                     onClick={() => {
                                         handleClose();
-                                        bind.shortcut.dispatch(dispatcher);
+                                        shortcut.dispatch(dispatcher);
                                     }}
                                     style={KEYBIND_ROW_STYLE}
                                 >
                                     <TableCell>
-                                        {bind.binds.map((b, j) => (
-                                            <Chip key={j} size="small" label={b} variant="outlined" />
+                                        {shortcut.binds.map((b, j) => (
+                                            <Chip
+                                                key={j}
+                                                size="small"
+                                                label={b}
+                                                style={j === 0 ? {} : BIND_CHIP_STYLE}
+                                            />
                                         ))}
                                     </TableCell>
-                                    <TableCell>{bind.shortcut.description}</TableCell>
+                                    <TableCell>{shortcut.description}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
+                <Typography paragraph style={BOTTOM_DESC_STYLE}>
+                    Visit <Link href="https://github.com/rhysd/Shiba/tree/master/docs">the document directory</Link> to
+                    know about usage and customization. If you're seeing some bugs, report it by{' '}
+                    <Link href="https://github.com/rhysd/Shiba/issues">creating a new issue</Link>.
+                </Typography>
             </DialogContent>
         </Dialog>
     );

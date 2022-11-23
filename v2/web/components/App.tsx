@@ -42,7 +42,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     let guideDialog;
     if (help) {
-        guideDialog = <Guide keybinds={dispatcher.keymap.keybinds} dispatcher={dispatcher} />;
+        guideDialog = <Guide shortcuts={dispatcher.keymap.shortcuts} dispatcher={dispatcher} />;
     }
 
     useEffect(() => {
