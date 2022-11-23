@@ -147,9 +147,25 @@ impl Default for PreviewHighlight {
 
 #[non_exhaustive]
 #[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+pub struct Css {
+    light: Option<PathBuf>,
+    dark: Option<PathBuf>,
+}
+
+impl Css {
+    pub fn light(&self) -> Option<&Path> {
+        self.light.as_deref()
+    }
+    pub fn dark(&self) -> Option<&Path> {
+        self.dark.as_deref()
+    }
+}
+
+#[non_exhaustive]
+#[derive(Default, Deserialize, Debug, PartialEq, Eq)]
 pub struct Preview {
     highlight: PreviewHighlight,
-    css: Option<PathBuf>,
+    css: Css,
 }
 
 impl Preview {
@@ -157,8 +173,8 @@ impl Preview {
         &self.highlight
     }
 
-    pub fn css_path(&self) -> Option<&Path> {
-        self.css.as_deref()
+    pub fn css(&self) -> &Css {
+        &self.css
     }
 }
 
