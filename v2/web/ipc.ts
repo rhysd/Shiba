@@ -30,6 +30,8 @@ export type KeyAction =
     | 'Outline'
     | 'History'
     | 'Help'
+    | 'ZoomIn'
+    | 'ZoomOut'
     | 'Quit';
 
 export type KeyMaps = { [keybind: string]: KeyAction };
@@ -258,6 +260,10 @@ export type MessageToMain =
     | {
           kind: 'open_file';
           path: string;
+      }
+    | {
+          kind: 'zoom';
+          zoom: 'In' | 'Out';
       }
     | {
           kind: 'error';

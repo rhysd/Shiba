@@ -183,6 +183,20 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
         },
     },
 
+    ZoomIn: {
+        description: 'Zoom in on the page.',
+        dispatch(): void {
+            sendMessage({ kind: 'zoom', zoom: 'In' });
+        },
+    },
+
+    ZoomOut: {
+        description: 'Zoom out on the page.',
+        dispatch(): void {
+            sendMessage({ kind: 'zoom', zoom: 'Out' });
+        },
+    },
+
     Quit: {
         description: 'Quit the application.',
         dispatch(): void {

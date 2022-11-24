@@ -5,7 +5,7 @@ use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
 use crate::persistent::WindowState;
 use crate::renderer::{
-    MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent,
+    MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent, Zoom,
 };
 use crate::search::Text;
 use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
@@ -16,12 +16,6 @@ use std::fs;
 use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
-
-#[derive(Clone, Copy)]
-enum Zoom {
-    In,
-    Out,
-}
 
 struct History {
     max_items: usize,
@@ -371,6 +365,7 @@ where
                     self.history.push(path);
                 }
             }
+            MessageFromRenderer::Zoom { zoom } => self.zoom(zoom)?,
             MessageFromRenderer::Quit => return Ok(AppControl::Exit),
             MessageFromRenderer::Error { message } => {
                 anyhow::bail!("Error reported from renderer: {}", message)

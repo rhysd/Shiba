@@ -32,6 +32,8 @@ pub enum KeyAction {
     Outline,
     History,
     Help,
+    ZoomIn,
+    ZoomOut,
     Quit,
 }
 

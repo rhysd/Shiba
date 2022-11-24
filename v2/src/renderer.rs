@@ -24,6 +24,12 @@ pub enum MessageToRenderer<'a> {
     Debug,
 }
 
+#[derive(Clone, Copy, Deserialize, Debug)]
+pub enum Zoom {
+    In,
+    Out,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
@@ -37,6 +43,7 @@ pub enum MessageFromRenderer {
     Quit,
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
     OpenFile { path: String },
+    Zoom { zoom: Zoom },
     Error { message: String },
 }
 
