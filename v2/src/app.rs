@@ -17,6 +17,12 @@ use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
+#[derive(Clone, Copy)]
+enum Zoom {
+    In,
+    Out,
+}
+
 struct History {
     max_items: usize,
     index: usize,
@@ -199,7 +205,6 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     watcher: W,
     config: Config,
     preview: PreviewContent,
-    zoom_factor: f64,
     _dialog: PhantomData<D>,
 }
 
@@ -239,7 +244,6 @@ where
             watcher,
             config,
             preview: PreviewContent::default(),
-            zoom_factor: 1.0,
             _dialog: PhantomData,
         })
     }
@@ -313,11 +317,22 @@ where
         Ok(())
     }
 
-    fn zoom(&mut self, factor: f64) {
-        if (0.0..=2.0).contains(&factor) {
-            self.zoom_factor = factor;
-            self.renderer.zoom(factor);
-        }
+    fn zoom(&mut self, zoom: Zoom) -> Result<()> {
+        let level = match zoom {
+            Zoom::In => self.renderer.zoom_level().zoom_in(),
+            Zoom::Out => self.renderer.zoom_level().zoom_out(),
+        };
+
+        let Some(level) = level else {
+            return Ok(());
+        };
+
+        self.renderer.zoom(level);
+        let percent = level.percent();
+        log::debug!("Changed zoom factor: {}%", percent);
+        self.renderer.send_message(MessageToRenderer::Zoom { percent })?;
+
+        Ok(())
     }
 
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<AppControl> {
@@ -437,8 +452,8 @@ where
             }
             MenuItem::Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
             MenuItem::Print => self.renderer.print()?,
-            MenuItem::ZoomIn => self.zoom(self.zoom_factor + 0.1),
-            MenuItem::ZoomOut => self.zoom(self.zoom_factor - 0.1),
+            MenuItem::ZoomIn => self.zoom(Zoom::In)?,
+            MenuItem::ZoomOut => self.zoom(Zoom::Out)?,
             MenuItem::History => self.renderer.send_message(MessageToRenderer::History)?,
             MenuItem::Help => self.renderer.send_message(MessageToRenderer::Help)?,
             MenuItem::OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,

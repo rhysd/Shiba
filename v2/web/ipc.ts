@@ -221,6 +221,10 @@ export type MessageFromMain =
           kind: 'help';
       }
     | {
+          kind: 'zoom';
+          percent: number;
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =

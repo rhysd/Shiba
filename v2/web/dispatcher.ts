@@ -12,6 +12,7 @@ import {
     newFile,
     openHistory,
     openHelp,
+    notifyZoom,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
 import { PreviewContent } from './markdown';
@@ -100,6 +101,9 @@ export class GlobalDispatcher {
                     break;
                 case 'help':
                     this.dispatch(openHelp());
+                    break;
+                case 'zoom':
+                    this.dispatch(notifyZoom(msg.percent));
                     break;
                 case 'debug':
                     log.enableDebug();

@@ -1,3 +1,4 @@
+use crate::renderer::ZoomLevel;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -10,6 +11,7 @@ pub struct WindowState {
     pub width: u32,
     pub height: u32,
     pub fullscreen: bool,
+    pub zoom_level: ZoomLevel,
 }
 
 impl WindowState {

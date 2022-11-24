@@ -5,6 +5,7 @@ import { Welcome } from './Welcome';
 import { Outline } from './Outline';
 import { History } from './History';
 import { Guide } from './Guide';
+import { ZoomNotification } from './Notification';
 import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
@@ -18,7 +19,19 @@ interface Props {
 
 export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-    const { searching, searchIndex, matcher, previewing, outline, theme, history, files, help } = state;
+    const {
+        searching,
+        searchIndex,
+        matcher,
+        previewing,
+        outline,
+        theme,
+        history,
+        files,
+        help,
+        notification,
+        zoomPercent,
+    } = state;
 
     let searchInput;
     if (searching && previewing) {
@@ -59,6 +72,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
             {historyDialog}
             {guideDialog}
             {welcome}
+            <ZoomNotification open={notification} percent={zoomPercent} dispatch={dispatch} />
         </ThemeProvider>
     );
 };

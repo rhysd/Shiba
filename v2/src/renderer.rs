@@ -20,6 +20,7 @@ pub enum MessageToRenderer<'a> {
     NewFile { path: &'a Path },
     History,
     Help,
+    Zoom { percent: u16 },
     Debug,
 }
 
@@ -85,6 +86,54 @@ pub enum Theme {
     Light,
 }
 
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
+pub struct ZoomLevel(u8);
+
+impl ZoomLevel {
+    const MAX: u8 = 14;
+
+    // Following the same zoom factors in Chrome
+    pub fn factor(self) -> f64 {
+        match self.0 {
+            0 => 0.25,
+            1 => 0.33,
+            2 => 0.50,
+            3 => 0.67,
+            4 => 0.75,
+            5 => 0.80,
+            6 => 0.90,
+            7 => 1.00,
+            8 => 1.10,
+            9 => 1.25,
+            10 => 1.50,
+            11 => 1.75,
+            12 => 2.00,
+            13 => 2.50,
+            14 => 3.00,
+            _ => unreachable!("Invalid zoom level {:?}", self.0),
+        }
+    }
+
+    pub fn percent(self) -> u16 {
+        (self.factor() * 100.0) as u16
+    }
+
+    pub fn zoom_in(self) -> Option<Self> {
+        (self.0 < Self::MAX).then_some(Self(self.0 + 1))
+    }
+
+    pub fn zoom_out(self) -> Option<Self> {
+        self.0.checked_sub(1).map(Self)
+    }
+}
+
+impl Default for ZoomLevel {
+    fn default() -> Self {
+        Self(7) // Zoom factor 1.0
+    }
+}
+
 pub trait Renderer: Sized {
     type EventLoop;
     type Menu: MenuItems;
@@ -104,5 +153,6 @@ pub trait Renderer: Sized {
     fn show(&self);
     fn set_background_color(&self, rbga: (u8, u8, u8, u8)) -> Result<()>;
     fn print(&self) -> Result<()>;
-    fn zoom(&self, scale: f64);
+    fn zoom(&mut self, level: ZoomLevel);
+    fn zoom_level(&self) -> ZoomLevel;
 }

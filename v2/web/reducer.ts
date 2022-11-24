@@ -14,6 +14,8 @@ export interface State {
     history: boolean;
     files: string[];
     help: boolean;
+    notification: boolean;
+    zoomPercent: number;
 }
 
 export const INITIAL_STATE: State = {
@@ -26,6 +28,8 @@ export const INITIAL_STATE: State = {
     history: false,
     files: [],
     help: false,
+    notification: false,
+    zoomPercent: 0, // This initial value will never be shown
 };
 
 const MAX_HISTORIES = 50;
@@ -72,6 +76,14 @@ type Action =
     | {
           kind: 'help';
           open: boolean;
+      }
+    | {
+          kind: 'notification';
+          open: boolean;
+      }
+    | {
+          kind: 'zoom';
+          percent: number;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -125,6 +137,10 @@ export function reducer(state: State, action: Action): State {
             return { ...state, history: action.open, searching: false, outline: false, help: false };
         case 'help':
             return { ...state, help: action.open, searching: false, outline: false, history: false };
+        case 'zoom':
+            return { ...state, notification: true, zoomPercent: action.percent };
+        case 'notification':
+            return { ...state, notification: action.open };
         case 'theme':
             return { ...state, theme: action.theme };
         default:
@@ -195,4 +211,12 @@ export function openHelp(): Action {
 
 export function closeHelp(): Action {
     return { kind: 'help', open: false };
+}
+
+export function notifyZoom(percent: number): Action {
+    return { kind: 'zoom', percent };
+}
+
+export function dismissNotification(): Action {
+    return { kind: 'notification', open: false };
 }

@@ -4,7 +4,7 @@ use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
     MenuItem as AppMenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, RawMessageWriter,
-    Renderer, Theme as RendererTheme, UserEvent,
+    Renderer, Theme as RendererTheme, UserEvent, ZoomLevel,
 };
 use anyhow::Result;
 use std::collections::HashMap;
@@ -268,6 +268,7 @@ fn create_webview(
 pub struct Wry {
     webview: WebView,
     menu_ids: WryMenuIds,
+    zoom_level: ZoomLevel,
 }
 
 impl Renderer for Wry {
@@ -285,7 +286,8 @@ impl Renderer for Wry {
 
         let mut builder =
             WindowBuilder::new().with_title("Shiba").with_menu(menu).with_visible(false);
-        if let Some(state) = window_state {
+
+        let zoom_level = if let Some(state) = window_state {
             log::debug!("Restoring window state {state:?}");
             let size = PhysicalSize { width: state.width, height: state.height };
             builder = builder.with_inner_size(Size::Physical(size));
@@ -294,17 +296,26 @@ impl Renderer for Wry {
             if state.fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
-        }
+            state.zoom_level
+        } else {
+            ZoomLevel::default()
+        };
+
         match config.window().theme {
             ThemeConfig::System => {}
             ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
             ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
         }
+
         let window = builder.build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
 
         let webview = create_webview(window, event_loop, config)?;
         log::debug!("WebView was created successfully with options: {:?}", options);
+
+        if zoom_level.factor() != 1.0 {
+            webview.zoom(zoom_level.factor());
+        }
 
         #[cfg(debug_assertions)]
         if options.debug {
@@ -312,7 +323,7 @@ impl Renderer for Wry {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(Wry { webview, menu_ids })
+        Ok(Wry { webview, menu_ids, zoom_level })
     }
 
     fn menu(&self) -> &Self::Menu {
@@ -351,7 +362,8 @@ impl Renderer for Wry {
         };
         let PhysicalSize { width, height } = w.inner_size();
         let fullscreen = w.fullscreen().is_some();
-        Some(WindowState { width, height, x, y, fullscreen })
+        let zoom_level = self.zoom_level;
+        Some(WindowState { width, height, x, y, fullscreen, zoom_level })
     }
 
     fn theme(&self) -> RendererTheme {
@@ -371,7 +383,12 @@ impl Renderer for Wry {
         Ok(self.webview.print()?)
     }
 
-    fn zoom(&self, scale: f64) {
-        self.webview.zoom(scale);
+    fn zoom(&mut self, level: ZoomLevel) {
+        self.webview.zoom(level.factor());
+        self.zoom_level = level;
+    }
+
+    fn zoom_level(&self) -> ZoomLevel {
+        self.zoom_level
     }
 }
