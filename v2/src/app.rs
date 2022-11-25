@@ -3,7 +3,7 @@ use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
-use crate::persistent::{LoadRecentFiles, PersistentData, WriteRecentFiles};
+use crate::persistent::{DataDir, LoadRecentFiles, SaveRecentFiles};
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent, Zoom,
 };
@@ -203,7 +203,7 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     watcher: W,
     config: Config,
     preview: PreviewContent,
-    persistent_data: PersistentData,
+    data_dir: DataDir,
     _dialog: PhantomData<D>,
 }
 
@@ -225,8 +225,8 @@ where
 
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
-        let persistent_data = PersistentData::new();
-        let window_state = persistent_data.load(&config);
+        let data_dir = DataDir::new();
+        let window_state = data_dir.load(&config);
         let renderer = R::new(&options, &config, event_loop, window_state)?;
 
         let filter = PathFilter::new(config.watch());
@@ -237,7 +237,7 @@ where
         }
 
         let mut history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
-        if let Some(recent) = persistent_data.load::<LoadRecentFiles>(&config) {
+        if let Some(recent) = data_dir.load::<LoadRecentFiles>(&config) {
             for path in recent.paths {
                 history.push(path);
             }
@@ -251,7 +251,7 @@ where
             watcher,
             config,
             preview: PreviewContent::default(),
-            persistent_data,
+            data_dir,
             _dialog: PhantomData,
         })
     }
@@ -475,13 +475,12 @@ where
     pub fn handle_exit(&self) -> Result<()> {
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
-                self.persistent_data.write(&state)?;
+                self.data_dir.save(&state)?;
             }
         }
-        let max_recent_files = self.config.preview().recent_files();
-        if max_recent_files > 0 {
-            let data = WriteRecentFiles::new(self.history.iter(), max_recent_files);
-            self.persistent_data.write(&data)?;
+        let max_files = self.config.preview().recent_files();
+        if max_files > 0 {
+            self.data_dir.save(&SaveRecentFiles::new(self.history.iter(), max_files))?;
         }
         Ok(())
     }

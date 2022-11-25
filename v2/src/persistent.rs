@@ -6,18 +6,42 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+fn deserialize<'de, D: Deserialize<'de>>(data: &'de [u8], path: &Path) -> Option<D> {
+    match serde_json::from_slice(data) {
+        Ok(state) => Some(state),
+        Err(err) => {
+            log::error!(
+                "Persistent data file is broken. Remove {:?} to solve this error: {}",
+                path,
+                err,
+            );
+            None
+        }
+    }
+}
+
+fn read_file(path: &Path) -> Option<Vec<u8>> {
+    match fs::read(path) {
+        Ok(data) => Some(data),
+        Err(err) => {
+            log::debug!("Could not load persistent data from {:?}: {}", path, err);
+            None
+        }
+    }
+}
+
+pub trait PersistentDataSave: Serialize {
+    const FILE_NAME: &'static str;
+}
 pub trait PersistentDataLoad: Sized {
     fn load(data_dir: &Path, config: &Config) -> Option<Self>;
 }
-pub trait PersistentDataWrite: Sized {
-    fn write(&self, data_dir: &Path) -> Result<()>;
+
+pub struct DataDir {
+    path: Option<PathBuf>,
 }
 
-pub struct PersistentData {
-    data_dir: Option<PathBuf>,
-}
-
-impl PersistentData {
+impl DataDir {
     pub fn new() -> Self {
         fn data_dir() -> Option<PathBuf> {
             let mut dir = dirs::data_dir()?;
@@ -26,30 +50,25 @@ impl PersistentData {
             Some(dir)
         }
 
-        let data_dir = data_dir();
-        if data_dir.is_none() {
-            log::debug!(
-                "Data directory could not be prepared. Persistent data will not be available"
-            );
-        }
-
-        Self { data_dir }
+        let path = data_dir();
+        log::debug!("Data directory: {:?}", path);
+        Self { path }
     }
 
     pub fn load<L: PersistentDataLoad>(&self, config: &Config) -> Option<L> {
-        if let Some(dir) = &self.data_dir {
-            L::load(dir, config)
-        } else {
-            None
-        }
+        self.path.as_deref().and_then(|dir| L::load(dir, config))
     }
 
-    pub fn write<W: PersistentDataWrite>(&self, data: &W) -> Result<()> {
-        if let Some(dir) = &self.data_dir {
-            data.write(dir)
-        } else {
-            Ok(())
-        }
+    pub fn save<S: PersistentDataSave>(&self, data: &S) -> Result<()> {
+        let Some(dir) = &self.path else {
+            return Ok(());
+        };
+        let path = dir.join(S::FILE_NAME);
+        let data = serde_json::to_string(data)
+            .with_context(|| format!("Could not serialize persistent data to {path:?}"))?;
+        log::debug!("Saved persistent data at {:?}", path);
+        fs::write(&path, &data)
+            .with_context(|| format!("Could not save persistent data to file {:?}", path))
     }
 }
 
@@ -63,45 +82,45 @@ pub struct WindowState {
     pub zoom_level: ZoomLevel,
 }
 
+impl PersistentDataSave for WindowState {
+    const FILE_NAME: &'static str = "window.json";
+}
+
 impl PersistentDataLoad for WindowState {
     fn load(data_dir: &Path, config: &Config) -> Option<Self> {
         if !config.window().restore {
             return None;
         }
 
-        let path = data_dir.join("window.json");
-        log::debug!("Loading window state from {:?}", path);
+        let path = data_dir.join(Self::FILE_NAME);
+        let bytes = read_file(&path)?;
+        let state = deserialize(&bytes, &path)?;
 
-        let data = match fs::read(&path) {
-            Ok(data) => data,
-            Err(err) => {
-                log::debug!("Could not load window state from {:?}: {}", path, err);
-                return None;
-            }
-        };
-
-        match serde_json::from_slice(&data) {
-            Ok(state) => Some(state),
-            Err(err) => {
-                log::error!(
-                    "Window state file is broken. Remove {:?} to solve this error: {}",
-                    path,
-                    err,
-                );
-                None
-            }
-        }
+        log::debug!("Loaded window state from {:?}: {:?}", path, state);
+        Some(state)
     }
 }
 
-impl PersistentDataWrite for WindowState {
-    fn write(&self, data_dir: &Path) -> Result<()> {
-        let path = data_dir.join("window.json");
-        let data = serde_json::to_string(&self)
-            .with_context(|| format!("Could not serialize window state file {path:?}"))?;
-        log::debug!("Saving window state to {:?}", path);
-        Ok(fs::write(&path, data)?)
+impl<'a> SaveRecentFiles<'a> {
+    pub fn new(iter: impl Iterator<Item = &'a Path>, max_size: usize) -> Self {
+        let mut seen = HashSet::new();
+        let mut paths = vec![];
+        for path in iter {
+            if paths.len() >= max_size {
+                break;
+            }
+            if seen.contains(path) {
+                continue;
+            }
+            seen.insert(path);
+            paths.push(path);
+        }
+        Self { paths }
     }
+}
+
+impl<'a> PersistentDataSave for SaveRecentFiles<'a> {
+    const FILE_NAME: &'static str = "recent_files.json";
 }
 
 #[derive(Default, Deserialize, Debug)]
@@ -116,63 +135,17 @@ impl PersistentDataLoad for LoadRecentFiles {
             return None;
         }
 
-        let path = data_dir.join("recent_files.json");
-        log::debug!("Loading recent files from {:?}", path);
+        let path = data_dir.join(SaveRecentFiles::FILE_NAME);
+        let bytes = read_file(&path)?;
+        let mut state = deserialize::<Self>(&bytes, &path)?;
+        state.paths.retain(|p| p.exists());
 
-        let data = match fs::read(&path) {
-            Ok(data) => data,
-            Err(err) => {
-                log::debug!("Could not load recent files from {path:?}: {err}");
-                return None;
-            }
-        };
-
-        match serde_json::from_slice::<Self>(&data) {
-            Ok(mut state) => {
-                if state.paths.len() > max_size {
-                    state.paths.drain(0..state.paths.len() - max_size);
-                }
-                Some(state)
-            }
-            Err(err) => {
-                log::error!(
-                    "Window state file is broken. Remove {path:?} to solve this error: {err}",
-                );
-                None
-            }
-        }
+        log::debug!("Loaded recent files from {:?} ({} paths)", path, state.paths.len());
+        Some(state)
     }
 }
 
 #[derive(Default, Serialize, Debug)]
-pub struct WriteRecentFiles<'a> {
+pub struct SaveRecentFiles<'a> {
     pub paths: Vec<&'a Path>,
-}
-
-impl<'a> WriteRecentFiles<'a> {
-    pub fn new(iter: impl Iterator<Item = &'a Path>, max_size: usize) -> Self {
-        let mut seen = HashSet::new();
-        let mut paths = vec![];
-        for path in iter {
-            if paths.len() >= max_size {
-                return Self { paths };
-            }
-            if seen.contains(path) {
-                continue;
-            }
-            seen.insert(path);
-            paths.push(path);
-        }
-        Self { paths }
-    }
-}
-
-impl<'a> PersistentDataWrite for WriteRecentFiles<'a> {
-    fn write(&self, data_dir: &Path) -> Result<()> {
-        let path = data_dir.join("recent_files.json");
-        let data = serde_json::to_string(&self)
-            .with_context(|| format!("Could not serialize recent files to {path:?}"))?;
-        log::debug!("Saving recent files to {:?}", path);
-        Ok(fs::write(&path, data)?)
-    }
 }
