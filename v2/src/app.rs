@@ -274,6 +274,7 @@ where
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
             self.preview.show(path, &self.renderer, true)?;
+            self.renderer.send_message(MessageToRenderer::Reload)?;
         }
         Ok(())
     }

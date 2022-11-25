@@ -227,6 +227,9 @@ export type MessageFromMain =
           percent: number;
       }
     | {
+          kind: 'reload';
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =

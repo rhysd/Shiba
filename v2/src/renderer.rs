@@ -21,6 +21,7 @@ pub enum MessageToRenderer<'a> {
     History,
     Help,
     Zoom { percent: u16 },
+    Reload,
     Debug,
 }
 

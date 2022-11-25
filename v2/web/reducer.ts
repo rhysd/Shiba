@@ -4,6 +4,15 @@ import { searchNextIndex, searchPreviousIndex } from './search';
 
 type Theme = 'light' | 'dark';
 
+export type NotificationContent =
+    | {
+          kind: 'zoom';
+          percent: number;
+      }
+    | {
+          kind: 'reload';
+      };
+
 export interface State {
     searching: boolean;
     searchIndex: number | null;
@@ -14,8 +23,8 @@ export interface State {
     history: boolean;
     files: string[];
     help: boolean;
-    notification: boolean;
-    zoomPercent: number;
+    notifying: boolean;
+    notification: NotificationContent;
 }
 
 export const INITIAL_STATE: State = {
@@ -28,8 +37,8 @@ export const INITIAL_STATE: State = {
     history: false,
     files: [],
     help: false,
-    notification: false,
-    zoomPercent: 0, // This initial value will never be shown
+    notifying: false,
+    notification: { kind: 'reload' },
 };
 
 const MAX_HISTORIES = 50;
@@ -79,11 +88,7 @@ type Action =
       }
     | {
           kind: 'notification';
-          open: boolean;
-      }
-    | {
-          kind: 'zoom';
-          percent: number;
+          notification: NotificationContent | null;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -137,10 +142,12 @@ export function reducer(state: State, action: Action): State {
             return { ...state, history: action.open, searching: false, outline: false, help: false };
         case 'help':
             return { ...state, help: action.open, searching: false, outline: false, history: false };
-        case 'zoom':
-            return { ...state, notification: true, zoomPercent: action.percent };
         case 'notification':
-            return { ...state, notification: action.open };
+            if (action.notification === null) {
+                return { ...state, notifying: false };
+            } else {
+                return { ...state, notifying: true, notification: action.notification };
+            }
         case 'theme':
             return { ...state, theme: action.theme };
         default:
@@ -214,9 +221,13 @@ export function closeHelp(): Action {
 }
 
 export function notifyZoom(percent: number): Action {
-    return { kind: 'zoom', percent };
+    return { kind: 'notification', notification: { kind: 'zoom', percent } };
 }
 
 export function dismissNotification(): Action {
-    return { kind: 'notification', open: false };
+    return { kind: 'notification', notification: null };
+}
+
+export function notifyReload(): Action {
+    return { kind: 'notification', notification: { kind: 'reload' } };
 }

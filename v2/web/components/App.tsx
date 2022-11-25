@@ -5,7 +5,7 @@ import { Welcome } from './Welcome';
 import { Outline } from './Outline';
 import { History } from './History';
 import { Guide } from './Guide';
-import { ZoomNotification } from './Notification';
+import { Notification } from './Notification';
 import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
@@ -29,8 +29,8 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         history,
         files,
         help,
+        notifying,
         notification,
-        zoomPercent,
     } = state;
 
     let searchInput;
@@ -72,7 +72,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
             {historyDialog}
             {guideDialog}
             {welcome}
-            <ZoomNotification open={notification} percent={zoomPercent} dispatch={dispatch} />
+            <Notification open={notifying} content={notification} dispatch={dispatch} />
         </ThemeProvider>
     );
 };
