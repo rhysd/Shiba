@@ -11,16 +11,25 @@ use std::path::{Path, PathBuf};
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageToRenderer<'a> {
-    Config { keymaps: &'a HashMap<String, KeyAction>, search: &'a SearchConfig, theme: Theme },
+    Config {
+        keymaps: &'a HashMap<String, KeyAction>,
+        search: &'a SearchConfig,
+        theme: Theme,
+        recent: Vec<&'a Path>,
+    },
     Search,
     SearchNext,
     SearchPrevious,
     Welcome,
     Outline,
-    NewFile { path: &'a Path },
+    NewFile {
+        path: &'a Path,
+    },
     History,
     Help,
-    Zoom { percent: u16 },
+    Zoom {
+        percent: u16,
+    },
     Reload,
     Debug,
 }

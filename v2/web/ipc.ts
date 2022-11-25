@@ -200,6 +200,7 @@ export type MessageFromMain =
               matcher: SearchMatcher;
           };
           theme: Theme;
+          recent: string[];
       }
     | {
           kind: 'search';

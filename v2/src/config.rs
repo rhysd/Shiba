@@ -172,10 +172,17 @@ impl Default for PreviewHighlight {
 }
 
 #[non_exhaustive]
-#[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct Preview {
     highlight: PreviewHighlight,
     css: Option<PathBuf>,
+    recent_files: usize,
+}
+
+impl Default for Preview {
+    fn default() -> Self {
+        Self { highlight: PreviewHighlight::default(), css: None, recent_files: 100 }
+    }
 }
 
 impl Preview {
@@ -185,6 +192,10 @@ impl Preview {
 
     pub fn css_path(&self) -> Option<&Path> {
         self.css.as_deref()
+    }
+
+    pub fn recent_files(&self) -> usize {
+        self.recent_files
     }
 }
 

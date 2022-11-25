@@ -3,7 +3,7 @@ use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
-use crate::persistent::WindowState;
+use crate::persistent::{LoadRecentFiles, PersistentData, WriteRecentFiles};
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent, Zoom,
 };
@@ -89,6 +89,10 @@ impl History {
         } else {
             false
         }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &'_ Path> {
+        self.items.iter().map(PathBuf::as_path)
     }
 }
 
@@ -199,6 +203,7 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     watcher: W,
     config: Config,
     preview: PreviewContent,
+    persistent_data: PersistentData,
     _dialog: PhantomData<D>,
 }
 
@@ -220,7 +225,8 @@ where
 
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
-        let window_state = if config.window().restore { WindowState::load() } else { None };
+        let persistent_data = PersistentData::new();
+        let window_state = persistent_data.load(&config);
         let renderer = R::new(&options, &config, event_loop, window_state)?;
 
         let filter = PathFilter::new(config.watch());
@@ -230,14 +236,22 @@ where
             watcher.watch(path)?;
         }
 
+        let mut history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
+        if let Some(recent) = persistent_data.load::<LoadRecentFiles>(&config) {
+            for path in recent.paths {
+                history.push(path);
+            }
+        }
+
         Ok(Self {
             options,
             renderer,
             opener: O::default(),
-            history: History::new(History::DEFAULT_MAX_HISTORY_SIZE),
+            history,
             watcher,
             config,
             preview: PreviewContent::default(),
+            persistent_data,
             _dialog: PhantomData,
         })
     }
@@ -341,6 +355,7 @@ where
                     keymaps: self.config.keymaps(),
                     search: self.config.search(),
                     theme: self.renderer.theme(),
+                    recent: self.history.iter().collect(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
@@ -460,8 +475,13 @@ where
     pub fn handle_exit(&self) -> Result<()> {
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
-                state.save()?;
+                self.persistent_data.write(&state)?;
             }
+        }
+        let max_recent_files = self.config.preview().recent_files();
+        if max_recent_files > 0 {
+            let data = WriteRecentFiles::new(self.history.iter(), max_recent_files);
+            self.persistent_data.write(&data)?;
         }
         Ok(())
     }

@@ -14,6 +14,7 @@ import {
     openHelp,
     notifyZoom,
     notifyReload,
+    setRecentFiles,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
 import { PreviewContent } from './markdown';
@@ -80,6 +81,7 @@ export class GlobalDispatcher {
                     this.content.setTheme(msg.theme);
                     this.dispatch(setTheme(msg.theme));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
+                    this.dispatch(setRecentFiles(msg.recent));
                     break;
                 case 'search':
                     this.openSearch();

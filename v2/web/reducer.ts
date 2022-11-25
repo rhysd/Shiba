@@ -89,6 +89,10 @@ type Action =
     | {
           kind: 'notification';
           notification: NotificationContent | null;
+      }
+    | {
+          kind: 'recent_files';
+          paths: string[];
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -150,6 +154,8 @@ export function reducer(state: State, action: Action): State {
             }
         case 'theme':
             return { ...state, theme: action.theme };
+        case 'recent_files':
+            return { ...state, files: action.paths };
         default:
             throw new Error(`Unknown action: ${action}`);
     }
@@ -230,4 +236,8 @@ export function dismissNotification(): Action {
 
 export function notifyReload(): Action {
     return { kind: 'notification', notification: { kind: 'reload' } };
+}
+
+export function setRecentFiles(paths: string[]): Action {
+    return { kind: 'recent_files', paths };
 }
