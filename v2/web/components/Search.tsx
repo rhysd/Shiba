@@ -26,6 +26,8 @@ const PAPER_STYLE: React.CSSProperties = {
 const COUNTER_STYLE: React.CSSProperties = {
     maxWidth: '200px',
     cursor: 'default',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
 };
 const INPUT_STYLE: React.CSSProperties = {
     flex: 'auto',
@@ -110,7 +112,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
                 placeholder="Search…"
                 autoFocus
             />
-            <Typography style={COUNTER_STYLE} ref={counterElem}></Typography>
+            <Typography color="text.secondary" style={COUNTER_STYLE} ref={counterElem}></Typography>
             <Divider style={DIVIDER_STYLE} orientation="vertical" />
             <IconButton size="small" title="Find backward" aria-label="find backward" onClick={handlePrev}>
                 <KeyboardArrowUpIcon fontSize="small" />

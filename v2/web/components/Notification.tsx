@@ -21,6 +21,8 @@ const BODY_STYLE: React.CSSProperties = {
     borderBottom: '0',
     padding: '2px 8px',
     cursor: 'default',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
 };
 const MESSAGE_STYLE: React.CSSProperties = {
     marginRight: '8px',
