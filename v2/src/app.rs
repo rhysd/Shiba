@@ -217,7 +217,13 @@ where
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let config = if options.gen_config_file {
-            Config::generate_default_config()?
+            if let Some(dir) = &options.config_dir {
+                Config::generate_default_config_at(dir)?
+            } else {
+                Config::generate_default_config()?
+            }
+        } else if let Some(dir) = &options.config_dir {
+            Config::load_dir(dir)?
         } else {
             Config::load()?
         };
@@ -225,7 +231,11 @@ where
 
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
-        let data_dir = DataDir::new();
+        let data_dir = if let Some(dir) = &options.data_dir {
+            DataDir::custom_dir(dir)
+        } else {
+            DataDir::new()
+        };
         let window_state = if config.window().restore { data_dir.load() } else { None };
         let renderer = R::new(&options, &config, event_loop, window_state)?;
 

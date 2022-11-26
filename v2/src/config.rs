@@ -2,7 +2,7 @@ use crate::cli::Options;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
-use std::fs::{self, File};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -260,17 +260,11 @@ impl Default for ConfigData {
     }
 }
 
-#[derive(Default, Debug)]
-pub struct Config {
-    data: ConfigData,
-    path: Option<PathBuf>,
-}
-
-impl Config {
-    pub fn load_data(path: &Path) -> Option<Result<ConfigData>> {
-        match File::open(path) {
-            Ok(file) => Some(
-                serde_yaml::from_reader(file)
+impl ConfigData {
+    fn load(path: &Path) -> Option<Result<Self>> {
+        match fs::read(path) {
+            Ok(bytes) => Some(
+                serde_yaml::from_slice(&bytes)
                     .with_context(|| format!("Could not parse config file as YAML: {:?}. To reset config file, try --generate-config-file", path)),
             ),
             Err(err) => {
@@ -279,29 +273,43 @@ impl Config {
             }
         }
     }
+}
 
-    pub fn load() -> Result<Self> {
-        if let Some(mut config_path) = dirs::config_dir() {
-            config_path.push("Shiba");
-            if config_path.is_dir() {
-                for file in ["config.yml", "config.yaml"] {
-                    config_path.push(file);
-                    if let Some(data) = Self::load_data(&config_path) {
-                        return Ok(Config { data: data?, path: Some(config_path) });
-                    }
-                    config_path.pop();
+#[derive(Default, Debug)]
+pub struct Config {
+    data: ConfigData,
+    path: Option<PathBuf>,
+}
+
+impl Config {
+    pub fn load_dir(path: impl Into<PathBuf>) -> Result<Self> {
+        let mut path = path.into();
+        if path.is_dir() {
+            for file in ["config.yml", "config.yaml"] {
+                path.push(file);
+                if let Some(data) = ConfigData::load(&path) {
+                    return Ok(Config { data: data?, path: Some(path) });
                 }
+                path.pop();
             }
         }
-
-        log::debug!("Fallback to the default config since no config file could be loaded");
+        log::debug!("config.yml nor config.yaml was found in {path:?}. Using the default config");
         Ok(Self::default())
+    }
+
+    pub fn load() -> Result<Self> {
+        if let Some(mut path) = dirs::config_dir() {
+            path.push("Shiba");
+            Self::load_dir(path)
+        } else {
+            log::debug!("Config directory does not exist. Using the default config");
+            Ok(Self::default())
+        }
     }
 
     pub fn generate_default_config_at(config_path: impl Into<PathBuf>) -> Result<Self> {
         let mut config_path = config_path.into();
 
-        config_path.push("Shiba");
         fs::create_dir_all(&config_path).with_context(|| {
             format!("Could not create directory for generating config file at {:?}", &config_path)
         })?;
@@ -315,9 +323,10 @@ impl Config {
     }
 
     pub fn generate_default_config() -> Result<Self> {
-        let Some(config_path) = dirs::config_dir() else {
+        let Some(mut config_path) = dirs::config_dir() else {
             anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
         };
+        config_path.push("Shiba");
         Self::generate_default_config_at(config_path)
     }
 

@@ -28,7 +28,6 @@ impl DataDir {
         Self { path: data_dir() }
     }
 
-    #[allow(dead_code)] // This method is for tests
     pub fn custom_dir(dir: impl Into<PathBuf>) -> Self {
         let dir = dir.into();
         Self { path: dir.is_dir().then_some(dir) }
@@ -43,6 +42,7 @@ impl DataDir {
                 return None;
             }
         };
+        // serde_json::from_reader may be efficient when writing large data
         match serde_json::from_slice(&bytes) {
             Ok(data) => Some(data),
             Err(err) => {
@@ -59,6 +59,7 @@ impl DataDir {
             return Ok(());
         };
         let path = dir.join(D::FILE);
+        // serde_json::to_writer may be efficient when writing large data
         let s = serde_json::to_string(data)
             .with_context(|| format!("Could not serialize persistent data to {path:?}"))?;
         log::debug!("Saved persistent data at {path:?}");

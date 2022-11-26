@@ -12,6 +12,8 @@ pub struct Options {
     pub watch_dirs: Vec<PathBuf>,
     pub theme: Option<WindowTheme>,
     pub gen_config_file: bool,
+    pub config_dir: Option<PathBuf>,
+    pub data_dir: Option<PathBuf>,
 }
 
 impl Options {
@@ -22,8 +24,10 @@ impl Options {
         opts.optflag(
             "",
             "generate-config-file",
-            "generate default config file at the default config directory. this overwrites an existing file",
+            "generate default config file at the config directory. this overwrites an existing file",
         );
+        opts.optopt("", "config-dir", "custom config directory path", "PATH");
+        opts.optopt("", "data-dir", "custom data directory path", "PATH");
 
         let matches = opts.parse(iter)?;
         if matches.opt_present("h") {
@@ -43,6 +47,8 @@ impl Options {
             None => None,
         };
         let gen_config_file = matches.opt_present("generate-config-file");
+        let config_dir = matches.opt_str("config-dir").map(PathBuf::from);
+        let data_dir = matches.opt_str("data-dir").map(PathBuf::from);
 
         let mut init_file = None;
         let mut watch_dirs = vec![];
@@ -61,6 +67,14 @@ impl Options {
             }
         }
 
-        Ok(Some(Self { debug: false, init_file, watch_dirs, theme, gen_config_file }))
+        Ok(Some(Self {
+            debug: false,
+            init_file,
+            watch_dirs,
+            theme,
+            gen_config_file,
+            config_dir,
+            data_dir,
+        }))
     }
 }
