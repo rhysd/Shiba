@@ -193,10 +193,6 @@ impl Preview {
     pub fn css_path(&self) -> Option<&Path> {
         self.css.as_deref()
     }
-
-    pub fn recent_files(&self) -> usize {
-        self.recent_files
-    }
 }
 
 fn resolve_path<'de, D: Deserializer<'de>>(
@@ -358,6 +354,10 @@ impl Config {
 
     pub fn dialog(&self) -> &Dialog {
         &self.data.dialog
+    }
+
+    pub fn max_recent_files(&self) -> usize {
+        self.data.preview.recent_files
     }
 }
 

@@ -3,7 +3,7 @@ use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::MarkdownParser;
 use crate::opener::Opener;
-use crate::persistent::{DataDir, PersistentData, RecentFiles, WindowState};
+use crate::persistent::DataDir;
 use crate::renderer::{
     MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent, Zoom,
 };
@@ -226,7 +226,7 @@ where
         log::debug!("Application config: {:?}, options: {:?}", config, options);
 
         let data_dir = DataDir::new();
-        let window_state = data_dir.load(&config);
+        let window_state = if config.window().restore { data_dir.load() } else { None };
         let renderer = R::new(&options, &config, event_loop, window_state)?;
 
         let filter = PathFilter::new(config.watch());
@@ -237,10 +237,8 @@ where
         }
 
         let mut history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
-        if let Some(recent) = data_dir.load::<RecentFiles>(&config) {
-            for path in recent.paths {
-                history.push(path);
-            }
+        for path in data_dir.load_recent_files(config.max_recent_files()) {
+            history.push(path);
         }
 
         Ok(Self {
@@ -473,18 +471,12 @@ where
     }
 
     pub fn handle_exit(&self) -> Result<()> {
-        if WindowState::is_enabled(&self.config) {
+        if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
-                self.data_dir.save::<WindowState>(&state)?;
+                self.data_dir.save(&state)?;
             }
         }
-        if RecentFiles::is_enabled(&self.config) {
-            let ser = <RecentFiles as PersistentData>::Serialize::new(
-                self.history.iter(),
-                self.config.preview().recent_files(),
-            );
-            self.data_dir.save::<RecentFiles>(&ser)?;
-        }
+        self.data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
         Ok(())
     }
 }

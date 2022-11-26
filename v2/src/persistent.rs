@@ -1,4 +1,3 @@
-use crate::config::Config;
 use crate::renderer::ZoomLevel;
 use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
@@ -7,11 +6,10 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub trait PersistentData: DeserializeOwned {
-    const FILE_NAME: &'static str; // Path::new is not const yet
-    type Serialize<'s>: Serialize;
-    fn is_enabled(config: &Config) -> bool;
-    fn configure(&mut self, _config: &Config) {}
+const RECENT_FILES_FILE: &str = "recent_files.json";
+
+pub trait PersistentData {
+    const FILE: &'static str;
 }
 
 pub struct DataDir {
@@ -24,20 +22,20 @@ impl DataDir {
             let mut dir = dirs::data_dir()?;
             dir.push("Shiba");
             fs::create_dir_all(&dir).ok()?;
+            log::debug!("Data directory: {dir:?}");
             Some(dir)
         }
-
-        let path = data_dir();
-        log::debug!("Data directory: {path:?}");
-        Self { path }
+        Self { path: data_dir() }
     }
 
-    pub fn load<D: PersistentData>(&self, config: &Config) -> Option<D> {
-        if !D::is_enabled(config) {
-            return None;
-        }
+    #[allow(dead_code)] // This method is for tests
+    pub fn custom_dir(dir: impl Into<PathBuf>) -> Self {
+        let dir = dir.into();
+        Self { path: dir.is_dir().then_some(dir) }
+    }
 
-        let path = self.path.as_deref()?.join(D::FILE_NAME);
+    pub fn load<D: PersistentData + DeserializeOwned>(&self) -> Option<D> {
+        let path = self.path.as_deref()?.join(D::FILE);
         let bytes = match fs::read(&path) {
             Ok(data) => data,
             Err(err) => {
@@ -45,31 +43,85 @@ impl DataDir {
                 return None;
             }
         };
-        let mut data: D = match serde_json::from_slice(&bytes) {
-            Ok(data) => data,
+        match serde_json::from_slice(&bytes) {
+            Ok(data) => Some(data),
             Err(err) => {
                 log::error!(
                     "Persistent data is broken. Remove {path:?} to solve this error: {err}"
                 );
-                return None;
+                None
             }
-        };
-
-        data.configure(config);
-        log::debug!("Loaded persistent data from {path:?}");
-        Some(data)
+        }
     }
 
-    pub fn save<'s, D: PersistentData>(&self, data: &D::Serialize<'s>) -> Result<()> {
+    pub fn save<D: PersistentData + Serialize>(&self, data: &D) -> Result<()> {
         let Some(dir) = &self.path else {
             return Ok(());
         };
-        let path = dir.join(D::FILE_NAME);
-        let data = serde_json::to_string(data)
+        let path = dir.join(D::FILE);
+        let s = serde_json::to_string(data)
             .with_context(|| format!("Could not serialize persistent data to {path:?}"))?;
         log::debug!("Saved persistent data at {path:?}");
-        fs::write(&path, &data)
+        fs::write(&path, &s)
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
+    }
+
+    pub fn load_recent_files(&self, max_files: usize) -> Vec<PathBuf> {
+        if max_files == 0 {
+            return vec![];
+        }
+
+        #[derive(Deserialize)]
+        struct Data {
+            paths: Vec<PathBuf>,
+        }
+        impl PersistentData for Data {
+            const FILE: &'static str = RECENT_FILES_FILE;
+        }
+
+        let Some(Data { mut paths }) = self.load() else {
+            return vec![];
+        };
+
+        paths.retain(|p| p.exists());
+        let len = paths.len();
+        if len > max_files {
+            paths.drain(0..len - max_files);
+        }
+
+        paths
+    }
+
+    pub fn save_recent_files<'a, I>(&self, iter: I, max_files: usize) -> Result<()>
+    where
+        I: Iterator<Item = &'a Path>,
+    {
+        let mut seen = HashSet::new();
+        let mut paths = vec![];
+        for path in iter {
+            if paths.len() >= max_files {
+                break;
+            }
+            if seen.contains(path) {
+                continue;
+            }
+            seen.insert(path);
+            paths.push(path);
+        }
+
+        if paths.is_empty() {
+            return Ok(());
+        }
+
+        #[derive(Serialize)]
+        struct Data<'a> {
+            paths: Vec<&'a Path>,
+        }
+        impl<'a> PersistentData for Data<'a> {
+            const FILE: &'static str = RECENT_FILES_FILE;
+        }
+
+        self.save(&Data { paths })
     }
 }
 
@@ -84,57 +136,18 @@ pub struct WindowState {
 }
 
 impl PersistentData for WindowState {
-    const FILE_NAME: &'static str = "window.json";
-
-    type Serialize<'s> = WindowState;
-
-    fn is_enabled(config: &Config) -> bool {
-        config.window().restore
-    }
+    const FILE: &'static str = "window.json";
 }
 
-#[derive(Serialize, Debug)]
-pub struct SerializeRecentFiles<'a> {
-    pub paths: Vec<&'a Path>,
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl<'a> SerializeRecentFiles<'a> {
-    pub fn new(iter: impl Iterator<Item = &'a Path>, max_size: usize) -> Self {
-        let mut seen = HashSet::new();
-        let mut paths = vec![];
-        for path in iter {
-            if paths.len() >= max_size {
-                break;
-            }
-            if seen.contains(path) {
-                continue;
-            }
-            seen.insert(path);
-            paths.push(path);
-        }
-        Self { paths }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct RecentFiles {
-    pub paths: Vec<PathBuf>,
-}
-
-impl PersistentData for RecentFiles {
-    const FILE_NAME: &'static str = "recent_files.json";
-
-    type Serialize<'s> = SerializeRecentFiles<'s>;
-
-    fn is_enabled(config: &Config) -> bool {
-        config.preview().recent_files() > 0
-    }
-
-    fn configure(&mut self, config: &Config) {
-        self.paths.retain(|p| p.exists());
-        let max = config.preview().recent_files();
-        if self.paths.len() > max {
-            self.paths.drain(0..self.paths.len() - max);
-        }
+    #[test]
+    fn custom_dir() {
+        let dir = DataDir::custom_dir(Path::new("."));
+        assert!(dir.path.is_some());
+        let dir = DataDir::custom_dir(Path::new("this-directory-does-not-exist"));
+        assert!(dir.path.is_none());
     }
 }
