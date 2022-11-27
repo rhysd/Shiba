@@ -74,14 +74,16 @@ impl<'a, R: ParseResult, T: TextTokenizer> MarkdownParser<'a, R, T> {
     }
 }
 
+// Note: Build raw JavaScript string literal to evaluate.
+// String built with this builder will be evaluated via JSON.parse like `receive(JSON.parse('{"kind":"render_tree",...}'))`.
 impl<'a, R: ParseResult, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, R, T> {
     type Output = R;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
         let mut ser = RenderTreeSerializer::new(writer, self.offset, self.text_tokenizer);
-        ser.out.write_str(r#"{"kind":"render_tree","tree":"#)?;
+        ser.out.write_str(r#"'{"kind":"render_tree","tree":"#)?;
         ser.push(self.parser)?;
-        ser.out.write_char('}')?;
+        ser.out.write_str("}'")?;
         Ok(ser.parsed)
     }
 }
@@ -130,26 +132,41 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
         self.out.write_char(']')
     }
 
+    #[allow(clippy::just_underscores_and_digits)]
     fn string_content(&mut self, s: &str) -> Result<()> {
+        const BB: u8 = b'b'; // \x08
+        const TT: u8 = b't'; // \x09
+        const NN: u8 = b'n'; // \x0a
+        const FF: u8 = b'f'; // \x0c
+        const RR: u8 = b'r'; // \x0d
+        const DQ: u8 = b'"'; // \x22
+        const SQ: u8 = b'\''; // \x27
+        const BS: u8 = b'\\'; // \x5c
+        const XX: u8 = 1; // \x00...\x1f non-printable
+        const __: u8 = 0;
+
         #[rustfmt::skip]
         const ESCAPE_TABLE: [u8; 128] = [
-            0, 0, 0,    0, 0, 0, 0, 0, b'b', b't', b'n', 0, b'f',  b'r', 0, 0, // 16
-            0, 0, 0,    0, 0, 0, 0, 0, 0,    0,    0,    0, 0,     0,    0, 0, // 32
-            1, 1, b'"', 1, 1, 1, 1, 1, 1,    1,    1,    1, 1,     1,    1, 1, // 48
-            1, 1, 1,    1, 1, 1, 1, 1, 1,    1,    1,    1, 1,     1,    1, 1, // 64
-            1, 1, 1,    1, 1, 1, 1, 1, 1,    1,    1,    1, 1,     1,    1, 1, // 80
-            1, 1, 1,    1, 1, 1, 1, 1, 1,    1,    1,    1, b'\\', 1,    1, 1, // 96
-            1, 1, 1,    1, 1, 1, 1, 1, 1,    1,    1,    1, 1,     1,    1, 1, // 112
-            1, 1, 1,    1, 1, 1, 1, 1, 1,    1,    1,    1, 1,     1,    1, 0, // 128
+            //   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+            XX, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
+            XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 1
+            __, __, DQ, __, __, __, __, SQ, __, __, __, __, __, __, __, __, // 2
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 4
+            __, __, __, __, __, __, __, __, __, __, __, __, BS, __, __, __, // 5
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 6
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, XX, // 7
         ];
 
         for c in s.chars() {
             if c < (128 as char) {
                 match ESCAPE_TABLE[c as usize] {
-                    1 => self.out.write_char(c)?,
-                    0 => write!(self.out, "\\u{:04x}", c as u32)?,
+                    __ => self.out.write_char(c)?,
+                    BS => self.out.write_str(r#"\\\\"#)?, // Escape twice for JS and JSON (\\\\ → \\ → \)
+                    SQ => self.out.write_str(r#"\'"#)?, // JSON string will be put in '...' JS string. ' needs to be escaped
+                    XX => write!(self.out, r#"\\u{:04x}"#, c as u32)?,
                     b => {
-                        self.out.write_char('\\')?;
+                        self.out.write_str(r#"\\"#)?; // Escape \ itself: JSON.parse('\\n')
                         self.out.write_char(b as char)?;
                     }
                 }
