@@ -5,6 +5,7 @@ use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+use std::io;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize)]
@@ -94,7 +95,7 @@ pub trait MenuItems {
 
 pub trait RawMessageWriter {
     type Output;
-    fn write_to(self, writer: impl fmt::Write) -> std::result::Result<Self::Output, fmt::Error>;
+    fn write_to(self, writer: impl io::Write) -> io::Result<Self::Output>;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]

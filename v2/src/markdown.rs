@@ -7,10 +7,9 @@ use pulldown_cmark::{
     Tag,
 };
 use std::collections::HashMap;
-use std::fmt::{self, Write};
+use std::io::{Result, Write};
 use std::marker::PhantomData;
 
-type Result<T> = std::result::Result<T, fmt::Error>;
 pub type Range = std::ops::Range<usize>;
 
 pub trait ParseResult: Default {
@@ -81,9 +80,9 @@ impl<'a, R: ParseResult, T: TextTokenizer> RawMessageWriter for MarkdownParser<'
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
         let mut ser = RenderTreeSerializer::new(writer, self.offset, self.text_tokenizer);
-        ser.out.write_str(r#"'{"kind":"render_tree","tree":"#)?;
+        ser.out.write_all(br#"'{"kind":"render_tree","tree":"#)?;
         ser.push(self.parser)?;
-        ser.out.write_str("}'")?;
+        ser.out.write_all(b"}'")?;
         Ok(ser.parsed)
     }
 }
@@ -121,15 +120,15 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
     }
 
     fn push(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
-        self.out.write_char('[')?;
+        self.out.write_all(b"[")?;
         self.events(parser)?;
         // Modified offset was not consumed by any text, it would mean that some non-text parts after any text were
         // modified. As a fallback, set 'modified' marker after the last text.
         if self.modified.is_some() {
             self.tag("modified")?;
-            self.out.write_char('}')?;
+            self.out.write_all(b"}")?;
         }
-        self.out.write_char(']')
+        self.out.write_all(b"]")
     }
 
     #[allow(clippy::just_underscores_and_digits)]
@@ -146,7 +145,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
         const __: u8 = 0;
 
         #[rustfmt::skip]
-        const ESCAPE_TABLE: [u8; 128] = [
+        const ESCAPE_TABLE: [u8; 256] = [
             //   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
             XX, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
             XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 1
@@ -156,22 +155,26 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             __, __, __, __, __, __, __, __, __, __, __, __, BS, __, __, __, // 5
             __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 6
             __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, XX, // 7
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 8
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 9
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // A
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // E
+            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
         ];
 
-        for c in s.chars() {
-            if c < (128 as char) {
-                match ESCAPE_TABLE[c as usize] {
-                    __ => self.out.write_char(c)?,
-                    BS => self.out.write_str(r#"\\\\"#)?, // Escape twice for JS and JSON (\\\\ → \\ → \)
-                    SQ => self.out.write_str(r#"\'"#)?, // JSON string will be put in '...' JS string. ' needs to be escaped
-                    XX => write!(self.out, r#"\\u{:04x}"#, c as u32)?,
-                    b => {
-                        self.out.write_str(r#"\\"#)?; // Escape \ itself: JSON.parse('\\n')
-                        self.out.write_char(b as char)?;
-                    }
+        for &b in s.as_bytes().iter() {
+            match ESCAPE_TABLE[b as usize] {
+                __ => self.out.write_all(&[b])?,
+                BS => self.out.write_all(br#"\\\\"#)?, // Escape twice for JS and JSON (\\\\ → \\ → \)
+                SQ => self.out.write_all(br#"\'"#)?, // JSON string will be put in '...' JS string. ' needs to be escaped
+                XX => write!(self.out, r#"\\u{:04x}"#, b)?,
+                b => {
+                    self.out.write_all(br#"\\"#)?; // Escape \ itself: JSON.parse('\\n')
+                    self.out.write_all(&[b])?;
                 }
-            } else {
-                self.out.write_char(c)?;
             }
         }
 
@@ -179,17 +182,17 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
     }
 
     fn string(&mut self, s: &str) -> Result<()> {
-        self.out.write_char('"')?;
+        self.out.write_all(b"\"")?;
         self.string_content(s)?;
-        self.out.write_char('"')
+        self.out.write_all(b"\"")
     }
 
     fn alignment(&mut self, a: Alignment) -> Result<()> {
-        self.out.write_str(match a {
-            Alignment::None => "null",
-            Alignment::Left => r#""left""#,
-            Alignment::Center => r#""center""#,
-            Alignment::Right => r#""right""#,
+        self.out.write_all(match a {
+            Alignment::None => b"null",
+            Alignment::Left => br#""left""#,
+            Alignment::Center => br#""center""#,
+            Alignment::Right => br#""right""#,
         })
     }
 
@@ -200,7 +203,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
 
     fn comma(&mut self) -> Result<()> {
         if !self.is_start {
-            self.out.write_char(',')?;
+            self.out.write_all(b",")?;
         } else {
             self.is_start = false;
         }
@@ -254,17 +257,17 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
 
         if offset <= start {
             self.tag("modified")?;
-            self.out.write_char('}')?;
+            self.out.write_all(b"}")?;
             self.text_tokens(text, range)
         } else if end == offset {
             self.text_tokens(text, range)?;
             self.tag("modified")?;
-            self.out.write_char('}')
+            self.out.write_all(b"}")
         } else {
             let i = offset - start;
             self.text_tokens(&text[..i], range.start..offset)?;
             self.tag("modified")?;
-            self.out.write_char('}')?;
+            self.out.write_all(b"}")?;
             self.text_tokens(&text[i..], offset..range.end)
         }
     }
@@ -281,7 +284,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 }
                 EmojiToken::Emoji(emoji, len) => {
                     self.tag("emoji")?;
-                    self.out.write_str(r#","name":"#)?;
+                    self.out.write_all(br#","name":"#)?;
                     self.string(emoji.name())?;
                     self.children_begin()?;
                     self.string(emoji.as_str())?;
@@ -307,7 +310,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             let url = &text[s..e];
             log::debug!("Auto-linking URL: {}", url);
             self.tag("a")?;
-            self.out.write_str(r#","auto":true,"href":"#)?;
+            self.out.write_all(br#","auto":true,"href":"#)?;
             self.string(url)?;
             self.children_begin()?;
             self.text(url, start + s..start + e)?;
@@ -343,7 +346,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 }
                 Html(html) => {
                     self.tag("html")?;
-                    self.out.write_str(r#","raw":""#)?;
+                    self.out.write_all(br#","raw":""#)?;
                     self.string_content(&html)?;
 
                     // Collect all HTML events into one element object
@@ -352,16 +355,16 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                         events.next();
                     }
 
-                    self.out.write_str(r#""}"#)?;
+                    self.out.write_all(br#""}"#)?;
                 }
                 SoftBreak => self.text("\n", range)?,
                 HardBreak => {
                     self.tag("br")?;
-                    self.out.write_char('}')?;
+                    self.out.write_all(b"}")?;
                 }
                 Rule => {
                     self.tag("hr")?;
-                    self.out.write_char('}')?;
+                    self.out.write_all(b"}")?;
                 }
                 FootnoteReference(name) => {
                     self.tag("fn-ref")?;
@@ -376,7 +379,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                     self.tag("math")?;
                     write!(self.out, r#","inline":{},"expr":"#, display == MathDisplay::Inline)?;
                     self.string(&text)?;
-                    self.out.write_char('}')?;
+                    self.out.write_all(b"}")?;
                 }
             }
         }
@@ -386,12 +389,12 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
 
     fn children_begin(&mut self) -> Result<()> {
         self.is_start = true;
-        self.out.write_str(r#","c":["#)
+        self.out.write_all(br#","c":["#)
     }
 
     fn children_end(&mut self) -> Result<()> {
         self.is_start = false;
-        self.out.write_str("]}")
+        self.out.write_all(b"]}")
     }
 
     fn start_tag(&mut self, tag: Tag<'a>) -> Result<()> {
@@ -414,23 +417,23 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 write!(self.out, r#","level":{}"#, level)?;
 
                 if let Some(id) = id {
-                    self.out.write_str(r#","id":"#)?;
+                    self.out.write_all(br#","id":"#)?;
                     self.string(id)?;
                 }
             }
             Table(alignments) => {
                 self.tag("table")?;
 
-                self.out.write_str(r#","align":["#)?;
+                self.out.write_all(br#","align":["#)?;
                 let mut alignments = alignments.into_iter();
                 if let Some(a) = alignments.next() {
                     self.alignment(a)?;
                 }
                 for a in alignments {
-                    self.out.write_char(',')?;
+                    self.out.write_all(b",")?;
                     self.alignment(a)?;
                 }
-                self.out.write_char(']')?;
+                self.out.write_all(b"]")?;
             }
             TableHead => {
                 self.table = TableState::Head;
@@ -459,7 +462,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 if let CodeBlockKind::Fenced(info) = info {
                     if let Some(lang) = info.split(' ').next() {
                         if !lang.is_empty() {
-                            self.out.write_str(r#","lang":"#)?;
+                            self.out.write_all(br#","lang":"#)?;
                             self.string(lang)?;
                         }
                     }
@@ -478,7 +481,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             Link(link_type, dest, title) => {
                 self.tag("a")?;
 
-                self.out.write_str(r#","href":"#)?;
+                self.out.write_all(br#","href":"#)?;
                 match link_type {
                     LinkType::Email => {
                         let mut href = "mailto:".to_string();
@@ -489,7 +492,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 }
 
                 if !title.is_empty() {
-                    self.out.write_str(r#","title":"#)?;
+                    self.out.write_all(br#","title":"#)?;
                     self.string(&title)?;
                 }
             }
@@ -497,18 +500,18 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 self.tag("img")?;
 
                 if !title.is_empty() {
-                    self.out.write_str(r#","title":"#)?;
+                    self.out.write_all(br#","title":"#)?;
                     self.string(&title)?;
                 }
 
-                self.out.write_str(r#","src":"#)?;
+                self.out.write_all(br#","src":"#)?;
                 self.string(&dest)?;
             }
             FootnoteDefinition(name) => {
                 self.tag("fn-def")?;
 
                 if !name.is_empty() {
-                    self.out.write_str(r#","name":"#)?;
+                    self.out.write_all(br#","name":"#)?;
                     self.string(&name)?;
                 }
 
