@@ -1,5 +1,5 @@
 use crate::config::SearchMatcher;
-use crate::markdown::{ParseResult, Range, TextTokenizer, TokenKind};
+use crate::markdown::{Range, TextTokenizer, TextVisitor, TokenKind};
 use aho_corasick::{
     AhoCorasick, AhoCorasickBuilder, FindIter as AhoCorasickFindIter, Match as AhoCorasickMatch,
 };
@@ -31,34 +31,34 @@ impl<'text> MatchPosition for RegexMatch<'text> {
 
 trait Searcher: Sized {
     type Match<'text>: MatchPosition;
-    type Iter<'slf, 'text>: Iterator<Item = Self::Match<'text>>
+    type Iter<'me, 'text>: Iterator<Item = Self::Match<'text>>
     where
-        Self: 'slf;
+        Self: 'me;
     fn new(query: &str, ignore_case: bool) -> Result<Self>;
-    fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text>;
+    fn find_iter<'me, 'text>(&'me self, text: &'text str) -> Self::Iter<'me, 'text>;
 }
 
 impl Searcher for AhoCorasick {
     type Match<'text> = AhoCorasickMatch;
-    type Iter<'slf, 'text> = AhoCorasickFindIter<'slf, 'text, usize>;
+    type Iter<'me, 'text> = AhoCorasickFindIter<'me, 'text, usize>;
 
     fn new(query: &str, ignore_case: bool) -> Result<Self> {
         Ok(AhoCorasickBuilder::new().ascii_case_insensitive(ignore_case).build([query]))
     }
 
-    fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text> {
+    fn find_iter<'me, 'text>(&'me self, text: &'text str) -> Self::Iter<'me, 'text> {
         self.find_iter(text)
     }
 }
 
 impl Searcher for Regex {
     type Match<'text> = RegexMatch<'text>;
-    type Iter<'slf, 'text> = RegexMatches<'slf, 'text>;
+    type Iter<'me, 'text> = RegexMatches<'me, 'text>;
 
     fn new(query: &str, ignore_case: bool) -> Result<Self> {
         Ok(RegexBuilder::new(query).case_insensitive(ignore_case).build()?)
     }
-    fn find_iter<'slf, 'text>(&'slf self, text: &'text str) -> Self::Iter<'slf, 'text> {
+    fn find_iter<'me, 'text>(&'me self, text: &'text str) -> Self::Iter<'me, 'text> {
         self.find_iter(text)
     }
 }
@@ -69,8 +69,8 @@ pub struct Text {
     maps: Vec<Range>,
 }
 
-impl ParseResult for Text {
-    fn on_text(&mut self, text: &str, range: &Range) {
+impl TextVisitor for Text {
+    fn visit(&mut self, text: &str, range: &Range) {
         self.text.push_str(text);
         self.maps.push(range.clone());
     }

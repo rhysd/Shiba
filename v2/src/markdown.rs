@@ -13,12 +13,12 @@ use std::marker::PhantomData;
 type Result<T> = std::result::Result<T, fmt::Error>;
 pub type Range = std::ops::Range<usize>;
 
-pub trait ParseResult: Default {
-    fn on_text(&mut self, text: &str, range: &Range);
+pub trait TextVisitor: Default {
+    fn visit(&mut self, text: &str, range: &Range);
 }
 
-impl ParseResult for () {
-    fn on_text(&mut self, _text: &str, _range: &Range) {}
+impl TextVisitor for () {
+    fn visit(&mut self, _text: &str, _range: &Range) {}
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -52,14 +52,14 @@ impl TextTokenizer for () {
     }
 }
 
-pub struct MarkdownParser<'a, R: ParseResult, T: TextTokenizer> {
+pub struct MarkdownParser<'a, V: TextVisitor, T: TextTokenizer> {
     parser: Parser<'a, 'a>,
     offset: Option<usize>,
     text_tokenizer: T,
-    _phantom: PhantomData<R>,
+    _phantom: PhantomData<V>,
 }
 
-impl<'a, R: ParseResult, T: TextTokenizer> MarkdownParser<'a, R, T> {
+impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
     pub fn new(source: &'a str, offset: Option<usize>, text_tokenizer: T) -> Self {
         let mut options = Options::empty();
         options.insert(
@@ -76,15 +76,15 @@ impl<'a, R: ParseResult, T: TextTokenizer> MarkdownParser<'a, R, T> {
 
 // Note: Build raw JavaScript string literal to evaluate.
 // String built with this builder will be evaluated via JSON.parse like `receive(JSON.parse('{"kind":"render_tree",...}'))`.
-impl<'a, R: ParseResult, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, R, T> {
-    type Output = R;
+impl<'a, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, V, T> {
+    type Output = V;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
         let mut ser = RenderTreeSerializer::new(writer, self.offset, self.text_tokenizer);
         ser.out.write_str(r#"'{"kind":"render_tree","tree":"#)?;
         ser.push(self.parser)?;
         ser.out.write_str("}'")?;
-        Ok(ser.parsed)
+        Ok(ser.text_visitor)
     }
 }
 
@@ -95,18 +95,18 @@ enum TableState {
     Row,
 }
 
-struct RenderTreeSerializer<'a, W: Write, R: ParseResult, T: TextTokenizer> {
+struct RenderTreeSerializer<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
     out: W,
     table: TableState,
     is_start: bool,
     ids: HashMap<CowStr<'a>, usize>,
     modified: Option<usize>,
-    parsed: R,
+    text_visitor: V,
     text_tokenizer: T,
     autolinker: Autolinker,
 }
 
-impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W, R, T> {
+impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W, V, T> {
     fn new(w: W, modified: Option<usize>, text_tokenizer: T) -> Self {
         Self {
             out: w,
@@ -114,7 +114,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
             is_start: true,
             ids: HashMap::new(),
             modified,
-            parsed: R::default(),
+            text_visitor: V::default(),
             text_tokenizer,
             autolinker: Autolinker::default(),
         }
@@ -237,7 +237,7 @@ impl<'a, W: Write, R: ParseResult, T: TextTokenizer> RenderTreeSerializer<'a, W,
     }
 
     fn text(&mut self, text: &str, range: Range) -> Result<()> {
-        self.parsed.on_text(text, &range);
+        self.text_visitor.visit(text, &range);
 
         let Some(offset) = self.modified else {
             return self.text_tokens(text, range);
