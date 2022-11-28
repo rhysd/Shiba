@@ -39,6 +39,11 @@ const DIVIDER_STYLE: React.CSSProperties = {
     height: '1.5rem',
 };
 
+// XXX: Safari has a bug to scroll the page to the input element automatically.
+// This happens only when the first input is ESC. Both setting `autoFocus` and calling `inputElem.focus()` on the
+// element mounted reproduce this issue.
+// https://github.com/react-bootstrap/react-bootstrap/issues/6321
+
 interface Props {
     index: number | null;
     matcher: SearchMatcher;

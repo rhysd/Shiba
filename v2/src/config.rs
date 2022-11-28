@@ -157,6 +157,7 @@ impl Default for WindowTheme {
 pub struct Window {
     pub restore: bool,
     pub theme: WindowTheme,
+    pub always_on_top: bool,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]

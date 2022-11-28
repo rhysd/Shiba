@@ -307,6 +307,10 @@ impl Renderer for Wry {
             ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
         }
 
+        if config.window().always_on_top {
+            builder = builder.with_always_on_top(true);
+        }
+
         let window = builder.build(event_loop)?;
         log::debug!("Event loop and window were created successfully");
 

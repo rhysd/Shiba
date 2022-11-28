@@ -59,6 +59,8 @@ window:
   # - Dark: always use dark theme
   # - Light: always use light theme
   theme: System
+  # Application window is always on top of other windows.
+  always_on_top: false
 
 # Configuration related to Markdown preview content.
 preview:
