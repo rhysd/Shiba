@@ -93,6 +93,13 @@ export function Palette<T extends Item>({
                 onSelect(items[index]);
             }
         } else {
+            // Note: This `blur()` call is a workaround for Safari.
+            // Safari has a bug to scroll the page to the input element automatically.
+            // To prevent this issue, removing the focus before unmounting is needed.
+            // https://github.com/sweetalert2/sweetalert2/issues/2088
+            if (e.key === 'Escape') {
+                e.currentTarget.blur();
+            }
             return;
         }
         e.preventDefault();
