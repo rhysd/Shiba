@@ -105,6 +105,17 @@ interface TableState {
     index: number;
 }
 
+function setTableAlign(elem: HTMLElement, { aligns, index }: TableState): void {
+    if (aligns.length <= index) {
+        return;
+    }
+    const align = aligns[index];
+    if (align === null) {
+        return;
+    }
+    elem.style.textAlign = align;
+}
+
 class RenderTreeRenderer {
     private table: TableState | null;
     private lastModified: HTMLSpanElement | null;
@@ -132,17 +143,6 @@ class RenderTreeRenderer {
             block: 'center',
             inline: 'center',
         });
-    }
-
-    tableAlign(): RenderTreeTableAlign {
-        if (this.table === null) {
-            return null;
-        }
-        const { aligns, index } = this.table;
-        if (aligns.length >= index) {
-            return null;
-        }
-        return aligns[index];
     }
 
     tippyTheme(): string | undefined {
@@ -286,16 +286,18 @@ class RenderTreeRenderer {
                 node = document.createElement('tr');
                 break;
             case 'th':
+                node = document.createElement('th');
                 if (this.table) {
+                    setTableAlign(node, this.table);
                     this.table.index++;
                 }
-                node = document.createElement('th');
                 break;
             case 'td':
+                node = document.createElement('td');
                 if (this.table) {
+                    setTableAlign(node, this.table);
                     this.table.index++;
                 }
-                node = document.createElement('td');
                 break;
             case 'checkbox': {
                 const i = document.createElement('input');
