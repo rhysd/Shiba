@@ -73,3 +73,9 @@ pre code.hljs {
 .math-expr-inline {
   display: inline;
 }
+
+/* `scrollIntoView` does not work when `display: none` is set */
+.last-modified-marker {
+  width: 0;
+  height: 0;
+}

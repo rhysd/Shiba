@@ -10,14 +10,7 @@ import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
 import { HTMLAdaptor } from 'mathjax-full/js/adaptors/HTMLAdaptor';
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
 import * as log from './log';
-import type {
-    RenderTreeElem,
-    RenderTreeTableAlign,
-    RenderTreeFootNoteDef,
-    RenderTreeCode,
-    RenderTreeMath,
-    Theme,
-} from './ipc';
+import type { RenderTreeElem, RenderTreeTableAlign, RenderTreeFootNoteDef, RenderTreeMath, Theme } from './ipc';
 
 function appearInViewport(elem: Element): boolean {
     const { top, left, bottom, right } = elem.getBoundingClientRect();
@@ -145,12 +138,38 @@ class RenderTreeRenderer {
         });
     }
 
+    setLastModified(): HTMLSpanElement {
+        const s = span('last-modified-marker');
+        this.lastModified = s;
+        return s;
+    }
+
     tippyTheme(): string | undefined {
         if (this.theme === 'Dark') {
             return 'light';
         } else {
             return undefined;
         }
+    }
+
+    childrenText(parent: HTMLElement, children: RenderTreeElem[]): null | string {
+        let modified = false;
+        let content = '';
+        for (const child of children) {
+            if (typeof child === 'string') {
+                content += child;
+            } else if (child.t === 'modified') {
+                modified = true;
+            } else {
+                return null; // Reaches here when search highlight is included
+            }
+        }
+
+        if (modified) {
+            parent.append(this.setLastModified());
+        }
+
+        return content;
     }
 
     render(elem: RenderTreeElem, parent: HTMLElement): void {
@@ -225,21 +244,28 @@ class RenderTreeRenderer {
                 const c = document.createElement('code');
                 // When text search matches in content of code block, the highlight element is included in children.
                 // highlight.js only allows highlighting text nodes.
-                if (elem.lang && hljs.getLanguage(elem.lang) && elem.c.every(e => typeof e === 'string')) {
-                    c.className = `language-${elem.lang}`;
-                    for (const child of elem.c) {
-                        this.render(child, c);
-                    }
-                    hljs.highlightElement(c);
-                    parent.appendChild(c);
-                    return;
-                } else if (elem.lang === 'mermaid') {
-                    if (this.mermaid.renderTo(parent, elem)) {
-                        return;
-                    }
-                } else if (elem.lang === 'math') {
-                    if (this.mathjax.renderCodeBlock(parent, elem)) {
-                        return;
+                if (elem.lang) {
+                    if (hljs.getLanguage(elem.lang)) {
+                        const content = this.childrenText(parent, elem.c);
+                        if (content !== null) {
+                            c.className = `language-${elem.lang}`;
+                            c.textContent = content;
+                            hljs.highlightElement(c);
+                            parent.appendChild(c);
+                            return;
+                        }
+                    } else if (elem.lang === 'mermaid') {
+                        const content = this.childrenText(parent, elem.c);
+                        if (content !== null) {
+                            this.mermaid.renderChart(parent, content);
+                            return;
+                        }
+                    } else if (elem.lang === 'math') {
+                        const content = this.childrenText(parent, elem.c);
+                        if (content !== null) {
+                            this.mathjax.renderCodeBlock(parent, content);
+                            return;
+                        }
                     }
                 }
                 node = c;
@@ -336,8 +362,7 @@ class RenderTreeRenderer {
                 return;
             }
             case 'modified': {
-                this.lastModified = span('last-modified-marker');
-                node = this.lastModified;
+                node = this.setLastModified();
                 break;
             }
             case 'match': {
@@ -422,21 +447,12 @@ class MermaidRenderer {
         this.theme = theme;
     }
 
-    renderTo(parent: HTMLElement, elem: RenderTreeCode): boolean {
-        let content = '';
-        for (const child of elem.c) {
-            if (typeof child === 'string') {
-                content += child;
-            } else {
-                return false; // Reaches here when search highlight is included
-            }
-        }
-
+    renderChart(parent: HTMLElement, content: string): void {
         if (!this.init) {
             const theme = this.theme === 'Light' ? 'default' : 'dark';
             mermaid.initialize({ startOnLoad: false, theme });
             this.init = true;
-            log.debug('Initialized mermaid renderer', theme, elem);
+            log.debug('Initialized mermaid renderer', theme, content);
         }
 
         const id = `graph-${this.id}`;
@@ -444,8 +460,6 @@ class MermaidRenderer {
         const svg = mermaid.render(id, content);
         parent.className = 'mermaid';
         parent.insertAdjacentHTML('beforeend', svg);
-
-        return true;
     }
 
     get initialized(): boolean {
@@ -495,17 +509,7 @@ class MathjaxRenderer {
         this.render(parent, math.expr, className);
     }
 
-    renderCodeBlock(parent: HTMLElement, elem: RenderTreeCode): boolean {
-        let content = '';
-        for (const child of elem.c) {
-            if (typeof child === 'string') {
-                content += child;
-            } else {
-                return false; // Reaches here when search highlight is included
-            }
-        }
-
-        this.render(parent, content, 'code-fence-math');
-        return true;
+    renderCodeBlock(parent: HTMLElement, expr: string): void {
+        this.render(parent, expr, 'code-fence-math');
     }
 }

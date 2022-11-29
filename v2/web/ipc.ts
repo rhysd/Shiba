@@ -45,11 +45,6 @@ export interface RenderTreeFootNoteDef {
     id: number;
     c: RenderTreeElem[];
 }
-export interface RenderTreeCode {
-    t: 'code';
-    lang?: string;
-    c: RenderTreeElem[];
-}
 export interface RenderTreeMath {
     t: 'math';
     inline: boolean;
@@ -119,7 +114,11 @@ export type RenderTreeElem =
           t: 'pre';
           c: RenderTreeElem[];
       }
-    | RenderTreeCode
+    | {
+          t: 'code';
+          lang?: string;
+          c: RenderTreeElem[];
+      }
     | {
           t: 'ol';
           start?: number;
