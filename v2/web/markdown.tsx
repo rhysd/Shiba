@@ -98,7 +98,7 @@ export class ReactMarkdownRenderer {
 
     renderFootnotes(): React.ReactNode {
         if (this.footNotes.length === 0) {
-            return undefined;
+            return null;
         }
         log.debug('Rendering footnotes', this.footNotes);
 
@@ -115,14 +115,7 @@ export class ReactMarkdownRenderer {
                 </a>
             );
 
-            const last = lastElementOf(children);
-            if (last !== null) {
-                last.props ??= {};
-                last.props.children ??= [];
-                last.props.children.push(backref);
-            } else {
-                children.push(backref);
-            }
+            (lastElementOf(children)?.props?.children ?? children).push(backref);
 
             return (
                 <li key={idx} id={`user-content-fn-${elem.id}`}>
@@ -130,6 +123,7 @@ export class ReactMarkdownRenderer {
                 </li>
             );
         });
+
         return (
             <section className="footnotes">
                 <h2 id="footnote-label">Footnotes</h2>
@@ -237,31 +231,28 @@ export class ReactMarkdownRenderer {
                     }
                 }
                 return <code key={key}>{elem.c.map(this.render)}</code>;
-            case 'ol': {
+            case 'ol':
                 return (
                     <ol key={key} start={elem.start}>
                         {elem.c.map(this.render)}
                     </ol>
                 );
-            }
             case 'ul':
                 return <ul key={key}>{elem.c.map(this.render)}</ul>;
             case 'li':
                 return <li key={key}>{elem.c.map(this.render)}</li>;
-            case 'emoji': {
+            case 'emoji':
                 return (
                     <span key={key} title={elem.name}>
                         {elem.c.map(this.render)}
                     </span>
                 );
-            }
-            case 'table': {
+            case 'table':
                 this.table = {
                     aligns: elem.align,
                     index: 0,
                 };
                 return <table key={key}>{elem.c.map(this.render)}</table>;
-            }
             case 'thead':
                 return <thead key={key}>{elem.c.map(this.render)}</thead>;
             case 'tbody':
@@ -316,7 +307,7 @@ export class ReactMarkdownRenderer {
                 );
             case 'fn-def':
                 this.footNotes.push(elem);
-                return <React.Fragment key={key}></React.Fragment>; // Footnotes will be rendered at the bottom of page
+                return null; // Footnotes will be rendered at the bottom of page
             case 'math':
                 return (
                     <Mathjax
@@ -359,7 +350,7 @@ export class ReactMarkdownRenderer {
                 );
             default:
                 log.error('Unknown render tree element:', JSON.stringify(elem));
-                return <React.Fragment key={key}></React.Fragment>;
+                return null;
         }
     }
 }
