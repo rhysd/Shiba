@@ -16,22 +16,13 @@ pub const HLJS_DEFAULT_LIGHT_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github.css");
 pub const HLJS_DEFAULT_DARK_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github-dark.css");
-pub const TIPPY_CSS: &[u8] = include_bytes!("assets/node_modules/tippy.js/dist/tippy.css");
-pub const TIPPY_LIGHT_CSS: &[u8] = include_bytes!("assets/node_modules/tippy.js/themes/light.css");
 pub const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
 // TODO: hljs-theme.css will be customizable with user configuration file
 // TODO: user css can be applied by user configuration file
 
-const ONETIME_ASSET_PATHS: &[&str] = &[
-    "/",
-    "/bundle.js",
-    "/style.css",
-    "/github-markdown.css",
-    "/hljs-theme.css",
-    "/tippy.css",
-    "/tippy-light.css",
-];
+const ONETIME_ASSET_PATHS: &[&str] =
+    &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css"];
 
 const OTHER_ASSET_PATHS: &[&str] = &["/logo.png"];
 
@@ -182,8 +173,6 @@ impl AssetsLoader {
             "/style.css"           => STYLE_CSS,
             "/github-markdown.css" => self.markdown_css.as_ref(),
             "/hljs-theme.css"      => self.hljs_css,
-            "/tippy.css"           => TIPPY_CSS,
-            "/tippy-light.css"     => TIPPY_LIGHT_CSS,
             "/logo.png"            => LOGO_PNG,
             _                      => {
                 log::error!("Fetching external resource {:?} is not allowed", path);

@@ -10,12 +10,7 @@ declare global {
     }
 }
 
-const previewRoot = document.getElementById('preview-root');
-if (!previewRoot) {
-    throw new Error('The root element to mount Markdown preview is not found in DOM');
-}
-
-const dispatcher = new GlobalDispatcher(window, previewRoot);
+const dispatcher = new GlobalDispatcher();
 
 // The main process will send IPC events via this global function
 window.postShibaMessageFromMain = dispatcher.handleIpcMessage.bind(dispatcher);

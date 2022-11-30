@@ -70,10 +70,10 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
     };
     const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
         if (debId !== null) {
-            clearTimeout(debId);
+            window.clearTimeout(debId);
         }
         const query = e.currentTarget.value;
-        const id = setTimeout(() => {
+        const id = window.setTimeout(() => {
             sendMessage({ kind: 'search', query, index, matcher });
             setDebId(null);
         }, DEBOUNCE_TIMEOUT);
@@ -98,7 +98,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
     };
     const focusInputElem = (): void => {
         // Focus <input> at next tick since re-render will happen after this callback and it will blur the element again
-        setTimeout(() => inputElem.current?.focus(), 0);
+        window.setTimeout(() => inputElem.current?.focus(), 0);
     };
 
     return (

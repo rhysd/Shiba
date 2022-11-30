@@ -1,6 +1,7 @@
 import * as log from './log';
 import type { SearchMatcher, Theme as WindowTheme } from './ipc';
 import { searchNextIndex, searchPreviousIndex } from './search';
+import type { MarkdownReactTree } from './markdown';
 
 type Theme = 'light' | 'dark';
 
@@ -14,10 +15,10 @@ export type NotificationContent =
       };
 
 export interface State {
+    previewTree: MarkdownReactTree;
     searching: boolean;
     searchIndex: number | null;
     matcher: SearchMatcher;
-    previewing: boolean;
     outline: boolean;
     theme: Theme;
     history: boolean;
@@ -25,13 +26,14 @@ export interface State {
     help: boolean;
     notifying: boolean;
     notification: NotificationContent;
+    welcome: boolean;
 }
 
 export const INITIAL_STATE: State = {
+    previewTree: { root: null, lastModified: null },
     searching: false,
     searchIndex: null,
     matcher: 'SmartCase',
-    previewing: true,
     outline: false,
     theme: 'light',
     history: false,
@@ -39,11 +41,16 @@ export const INITIAL_STATE: State = {
     help: false,
     notifying: false,
     notification: { kind: 'reload' },
+    welcome: false,
 };
 
 const MAX_HISTORIES = 50;
 
 type Action =
+    | {
+          kind: 'preview_content';
+          tree: MarkdownReactTree;
+      }
     | {
           kind: 'open_search';
       }
@@ -61,10 +68,6 @@ type Action =
     | {
           kind: 'search_matcher';
           matcher: SearchMatcher;
-      }
-    | {
-          kind: 'previewing';
-          previewing: boolean;
       }
     | {
           kind: 'outline';
@@ -93,12 +96,17 @@ type Action =
     | {
           kind: 'recent_files';
           paths: string[];
+      }
+    | {
+          kind: 'welcome';
       };
 export type Dispatch = React.Dispatch<Action>;
 
 export function reducer(state: State, action: Action): State {
     log.debug('Dispatched new action', action.kind, action);
     switch (action.kind) {
+        case 'preview_content':
+            return { ...state, previewTree: action.tree, welcome: false };
         case 'new_file': {
             const index = state.files.indexOf(action.path);
             if (index >= 0) {
@@ -138,8 +146,6 @@ export function reducer(state: State, action: Action): State {
             };
         case 'search_matcher':
             return { ...state, matcher: action.matcher };
-        case 'previewing':
-            return { ...state, previewing: action.previewing };
         case 'outline':
             return { ...state, outline: action.open, searching: false, history: false, help: false };
         case 'history':
@@ -156,12 +162,18 @@ export function reducer(state: State, action: Action): State {
             return { ...state, theme: action.theme };
         case 'recent_files':
             return { ...state, files: action.paths };
+        case 'welcome':
+            return { ...state, welcome: true };
         default:
             throw new Error(`Unknown action: ${action}`);
     }
 }
 
 // Action creators
+
+export function previewContent(tree: MarkdownReactTree): Action {
+    return { kind: 'preview_content', tree };
+}
 
 export function openSearch(): Action {
     return { kind: 'open_search' };
@@ -185,10 +197,6 @@ export function searchPrevious(index: number | null): Action {
 
 export function setSearchMatcher(matcher: SearchMatcher): Action {
     return { kind: 'search_matcher', matcher };
-}
-
-export function setPreviewing(previewing: boolean): Action {
-    return { kind: 'previewing', previewing };
 }
 
 export function openOutline(): Action {
@@ -240,4 +248,8 @@ export function notifyReload(): Action {
 
 export function setRecentFiles(paths: string[]): Action {
     return { kind: 'recent_files', paths };
+}
+
+export function welcome(): Action {
+    return { kind: 'welcome' };
 }

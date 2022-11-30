@@ -12,7 +12,7 @@
     "watch:css": "npm run bundle:css -- --watch",
     "bundle": "concurrently -c auto npm:bundle:js npm:bundle:css",
     "bundle:js": "esbuild web/index.tsx --bundle --outfile=src/assets/bundle.js --platform=browser --color=true",
-    "bundle:css": "esbuild --minify --color=true --outdir=src/assets web/style.css node_modules/github-markdown-css/github-markdown.css node_modules/highlight.js/styles/*.css node_modules/tippy.js/dist/tippy.css node_modules/tippy.js/themes/light.css",
+    "bundle:css": "esbuild --minify --color=true --outdir=src/assets web/style.css node_modules/github-markdown-css/github-markdown.css node_modules/highlight.js/styles/*.css",
     "release:js": "esbuild web/index.tsx --bundle --outfile=src/assets/bundle.min.js --platform=browser --minify --color=true",
     "fix": "concurrently -m 1 -c auto npm:fix:cargo npm:fix:eslint npm:fix:ts",
     "fix:cargo": "cargo fmt",
@@ -42,8 +42,7 @@
     "mermaid": "^9.2.2",
     "mousetrap": "^1.6.5",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tippy.js": "^6.3.7"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/dompurify": "^2.4.0",

@@ -1,5 +1,6 @@
 import React, { useReducer, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Preview } from './Preview';
 import { Search } from './Search';
 import { Welcome } from './Welcome';
 import { Outline } from './Outline';
@@ -20,10 +21,10 @@ interface Props {
 export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const {
+        previewTree,
         searching,
         searchIndex,
         matcher,
-        previewing,
         outline,
         theme,
         history,
@@ -31,25 +32,26 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         help,
         notifying,
         notification,
+        welcome,
     } = state;
 
     let searchInput;
-    if (searching && previewing) {
+    if (searching && !welcome) {
         searchInput = <Search index={searchIndex} matcher={matcher} dispatch={dispatch} />;
     }
 
-    let welcome;
-    if (!previewing) {
-        welcome = <Welcome />;
+    let welcomePage;
+    if (welcome) {
+        welcomePage = <Welcome />;
     }
 
     let outlineDialog;
-    if (outline && previewing) {
+    if (outline && !welcome) {
         outlineDialog = <Outline dispatch={dispatch} />;
     }
 
     let historyDialog;
-    if (history && previewing) {
+    if (history && !welcome) {
         historyDialog = <History history={files} dispatch={dispatch} />;
     }
 
@@ -67,11 +69,12 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     return (
         <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
+            <Preview tree={previewTree} />
             {searchInput}
             {outlineDialog}
             {historyDialog}
             {guideDialog}
-            {welcome}
+            {welcomePage}
             <Notification open={notifying} content={notification} dispatch={dispatch} />
         </ThemeProvider>
     );

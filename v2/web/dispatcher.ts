@@ -2,11 +2,11 @@ import {
     type Dispatch,
     type State,
     INITIAL_STATE,
+    previewContent,
     openSearch,
     searchNext,
     searchPrevious,
     setSearchMatcher,
-    setPreviewing,
     openOutline,
     setTheme,
     newFile,
@@ -15,9 +15,10 @@ import {
     notifyZoom,
     notifyReload,
     setRecentFiles,
+    welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
-import { PreviewContent } from './markdown';
+import { ReactMarkdownRenderer } from './markdown';
 import { KeyMapping } from './keymaps';
 import * as log from './log';
 
@@ -26,15 +27,13 @@ import * as log from './log';
 export class GlobalDispatcher {
     public dispatch: Dispatch; // This prop will be updated by `App` component
     public state: State; // This prop will be updated by `App` component
-    readonly content: PreviewContent;
     readonly keymap: KeyMapping;
 
-    constructor(window: Window, previewRoot: HTMLElement) {
+    constructor() {
         this.dispatch = () => {
             // do nothing by default
         };
         this.state = INITIAL_STATE;
-        this.content = new PreviewContent(window, previewRoot);
         this.keymap = new KeyMapping();
     }
 
@@ -68,17 +67,17 @@ export class GlobalDispatcher {
         // This method must not throw exception since the main process call this method like `window.postShibaMessageFromMain(msg)`.
         try {
             switch (msg.kind) {
-                case 'render_tree':
-                    this.content.render(msg.tree);
-                    this.content.setVisible(true);
-                    this.dispatch(setPreviewing(true));
+                case 'render_tree': {
+                    const renderer = new ReactMarkdownRenderer();
+                    const tree = renderer.renderMarkdown(msg.tree);
+                    this.dispatch(previewContent(tree));
                     break;
+                }
                 case 'new_file':
                     this.dispatch(newFile(msg.path));
                     break;
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
-                    this.content.setTheme(msg.theme);
                     this.dispatch(setTheme(msg.theme));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
@@ -99,8 +98,7 @@ export class GlobalDispatcher {
                     this.dispatch(openHistory());
                     break;
                 case 'welcome':
-                    this.dispatch(setPreviewing(false));
-                    this.content.setVisible(false);
+                    this.dispatch(welcome());
                     break;
                 case 'help':
                     this.dispatch(openHelp());
