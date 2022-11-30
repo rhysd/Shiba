@@ -475,6 +475,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
             Emphasis => self.tag("em")?,
             Strong => self.tag("strong")?,
             Strikethrough => self.tag("del")?,
+            Link(LinkType::Autolink, _, _) => return Ok(()), // Ignore autolink since it is linked by `Autolinker`
             Link(link_type, dest, title) => {
                 self.tag("a")?;
 
@@ -524,6 +525,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
     fn end_tag(&mut self, tag: Tag<'a>) -> Result<()> {
         use Tag::*;
         match tag {
+            Link(LinkType::Autolink, _, _) => Ok(()), // Ignore autolink since it is linked by `Autolinker`
             Paragraph
             | Heading(_, _, _)
             | TableRow
