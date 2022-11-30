@@ -6,7 +6,6 @@ import * as log from './log';
 import { CodeBlock } from './components/CodeBlock';
 import { Mathjax } from './components/Mathjax';
 import { Mermaid } from './components/Mermaid';
-import { Link } from './components/Link';
 
 const FOOTNOTE_BACKREF_STYLE: React.CSSProperties = {
     fontFamily: 'monospace',
@@ -181,10 +180,15 @@ export class ReactMarkdownRenderer {
                         </a>
                     );
                 } else {
+                    // Note: material-ui's `Tooltip` component makes rendering this markdown preview 10x slower. Don't use it.
+                    let title = elem.href;
+                    if (elem.title && elem.title !== title) {
+                        title = `"${elem.title}" ${title}`;
+                    }
                     return (
-                        <Link key={key} title={elem.title} href={elem.href}>
+                        <a key={key} title={title} href={elem.href}>
                             {elem.c.map(this.render)}
-                        </Link>
+                        </a>
                     );
                 }
             case 'img': {
