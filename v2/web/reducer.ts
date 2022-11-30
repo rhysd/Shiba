@@ -1,5 +1,5 @@
 import * as log from './log';
-import type { SearchMatcher, Theme as WindowTheme } from './ipc';
+import type { SearchMatcher, WindowTheme } from './ipc';
 import { searchNextIndex, searchPreviousIndex } from './search';
 import type { MarkdownReactTree } from './markdown';
 

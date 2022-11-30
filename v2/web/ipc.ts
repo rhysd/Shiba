@@ -36,7 +36,7 @@ export type KeyAction =
 
 export type KeyMaps = { [keybind: string]: KeyAction };
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
-export type Theme = 'Dark' | 'Light';
+export type WindowTheme = 'Dark' | 'Light';
 
 export type RenderTreeTableAlign = 'left' | 'center' | 'right' | null;
 export interface RenderTreeFootNoteDef {
@@ -44,11 +44,6 @@ export interface RenderTreeFootNoteDef {
     name?: string;
     id: number;
     c: RenderTreeElem[];
-}
-export interface RenderTreeMath {
-    t: 'math';
-    inline: boolean;
-    expr: string;
 }
 // Note: 't' is abbreviation of 'tag', 'c' is abbreviation of 'children' for saving spaces
 export type RenderTreeElem =
@@ -163,7 +158,11 @@ export type RenderTreeElem =
           name: string;
           c: RenderTreeElem[];
       }
-    | RenderTreeMath
+    | {
+          t: 'math';
+          inline: boolean;
+          expr: string;
+      }
     | {
           t: 'modified'; // Special token to indicate the last modified position
       }
@@ -199,7 +198,7 @@ export type MessageFromMain =
           search: {
               matcher: SearchMatcher;
           };
-          theme: Theme;
+          theme: WindowTheme;
           recent: string[];
       }
     | {

@@ -73,9 +73,9 @@ function tableAlignStyle({ aligns, index }: TableState): React.CSSProperties | n
 }
 
 export class ReactMarkdownRenderer {
-    table: TableState | null;
-    lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
-    readonly footNotes: RenderTreeFootNoteDef[];
+    private table: TableState | null;
+    private lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
+    private readonly footNotes: RenderTreeFootNoteDef[];
 
     constructor() {
         this.table = null;
@@ -96,7 +96,7 @@ export class ReactMarkdownRenderer {
         return { root, lastModified: this.lastModifiedRef };
     }
 
-    renderFootnotes(): React.ReactNode {
+    private renderFootnotes(): React.ReactNode {
         if (this.footNotes.length === 0) {
             return null;
         }
@@ -132,13 +132,13 @@ export class ReactMarkdownRenderer {
         );
     }
 
-    lastModified(key?: number): React.ReactNode {
+    private lastModified(key?: number): React.ReactNode {
         const ref = React.createRef<HTMLSpanElement>();
         this.lastModifiedRef = ref;
         return <span key={key} className="last-modified-marker" ref={ref} />;
     }
 
-    maybeModified(elem: React.ReactElement, modified: boolean, key: number | undefined): React.ReactNode {
+    private maybeModified(elem: React.ReactElement, modified: boolean, key: number | undefined): React.ReactNode {
         if (!modified) {
             return elem;
         }
@@ -150,7 +150,7 @@ export class ReactMarkdownRenderer {
         );
     }
 
-    render(elem: RenderTreeElem, key?: number): React.ReactNode {
+    private render(elem: RenderTreeElem, key?: number): React.ReactNode {
         if (typeof elem === 'string') {
             return elem;
         }
