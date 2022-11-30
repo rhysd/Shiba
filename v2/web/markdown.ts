@@ -36,9 +36,8 @@ export class PreviewContent {
         this.visible = true;
 
         const bg = window.getComputedStyle(root, null).getPropertyValue('background-color');
-        const html = document.documentElement;
         if (bg) {
-            html.style.backgroundColor = bg;
+            document.documentElement.style.backgroundColor = bg;
             this.bgColor = bg;
         } else {
             this.bgColor = null;
@@ -361,26 +360,21 @@ class RenderTreeRenderer {
                 parent.appendChild(sanitized);
                 return;
             }
-            case 'modified': {
+            case 'modified':
                 node = this.setLastModified();
                 break;
-            }
-            case 'match': {
+            case 'match':
                 node = span('search-text');
                 break;
-            }
-            case 'match-current': {
+            case 'match-current':
                 node = span('search-text-current');
                 break;
-            }
-            case 'match-start': {
+            case 'match-start':
                 node = span('search-text-start');
                 break;
-            }
-            case 'match-current-start': {
+            case 'match-current-start':
                 node = span('search-text-current-start');
                 break;
-            }
             default:
                 log.error('Unknown render tree element:', JSON.stringify(elem));
                 return;

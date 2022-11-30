@@ -161,6 +161,7 @@ export type RenderTreeElem =
     | {
           t: 'emoji';
           name: string;
+          c: RenderTreeElem[];
       }
     | RenderTreeMath
     | {
