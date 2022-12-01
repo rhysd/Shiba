@@ -60,8 +60,6 @@ export class GlobalDispatcher {
         }
     }
 
-    // Note: Passing message as JSON string and parse it with JSON.parse may be faster.
-    // https://v8.dev/blog/cost-of-javascript-2019#json
     handleIpcMessage(msg: MessageFromMain): void {
         log.debug('Received IPC message from main:', msg.kind, msg);
         // This method must not throw exception since the main process call this method like `window.postShibaMessageFromMain(msg)`.

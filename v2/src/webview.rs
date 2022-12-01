@@ -13,7 +13,9 @@ use wry::application::accelerator::Accelerator;
 use wry::application::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use wry::application::event_loop::EventLoop;
 use wry::application::keyboard::{KeyCode, ModifiersState};
-use wry::application::menu::{AboutMetadata, MenuBar, MenuId, MenuItem, MenuItemAttributes};
+#[cfg(not(target_os = "windows"))]
+use wry::application::menu::AboutMetadata;
+use wry::application::menu::{MenuBar, MenuId, MenuItem, MenuItemAttributes};
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
@@ -23,6 +25,11 @@ pub struct WryMenuIds(HashMap<MenuId, AppMenuItem>);
 
 impl WryMenuIds {
     fn set_menu(root_menu: &mut MenuBar) -> Self {
+        #[cfg(target_os = "macos")]
+        const MOD: ModifiersState = ModifiersState::SUPER;
+        #[cfg(not(target_os = "macos"))]
+        const MOD: ModifiersState = ModifiersState::CONTROL;
+
         // Windows / macOS / Android / iOS: The metadata is ignored on these platforms.
         #[cfg(target_os = "linux")]
         let metadata = AboutMetadata {
@@ -33,29 +40,33 @@ impl WryMenuIds {
             website: Some("https://github.com/rhysd/Shiba".into()),
             ..Default::default()
         };
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(not(any(target_os = "linux", target_os = "windows")))]
         let metadata = AboutMetadata::default();
 
+        // Note: Some native menu items are not supported by Windows. Those items are actually not inserted into menu bar.
+
         let mut file_menu = MenuBar::new();
-        let cmd_o = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyO);
+        let cmd_o = Accelerator::new(Some(MOD), KeyCode::KeyO);
         let open_file =
             file_menu.add_item(MenuItemAttributes::new("Open File…").with_accelerators(&cmd_o));
-        let cmd_opt_o =
-            Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::ALT), KeyCode::KeyO);
+        let cmd_shift_o = Accelerator::new(Some(MOD | ModifiersState::SHIFT), KeyCode::KeyO);
         let watch_dir = file_menu
-            .add_item(MenuItemAttributes::new("Watch Directory…").with_accelerators(&cmd_opt_o));
+            .add_item(MenuItemAttributes::new("Watch Directory…").with_accelerators(&cmd_shift_o));
         file_menu.add_native_item(MenuItem::Separator);
         let print = file_menu.add_item(MenuItemAttributes::new("Print…"));
         file_menu.add_native_item(MenuItem::Separator);
-        file_menu.add_native_item(MenuItem::About("Shiba".to_string(), metadata));
-        file_menu.add_native_item(MenuItem::Separator);
-        file_menu.add_native_item(MenuItem::Services);
-        file_menu.add_native_item(MenuItem::Separator);
+        #[cfg(not(target_os = "windows"))]
+        {
+            file_menu.add_native_item(MenuItem::About("Shiba".to_string(), metadata));
+            file_menu.add_native_item(MenuItem::Separator);
+            file_menu.add_native_item(MenuItem::Services);
+            file_menu.add_native_item(MenuItem::Separator);
+        }
         file_menu.add_native_item(MenuItem::Hide);
         file_menu.add_native_item(MenuItem::HideOthers);
         file_menu.add_native_item(MenuItem::ShowAll);
         file_menu.add_native_item(MenuItem::Separator);
-        let cmd_q = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyQ);
+        let cmd_q = Accelerator::new(Some(MOD), KeyCode::KeyQ);
         let quit = file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
         root_menu.add_submenu("File", true, file_menu);
 
@@ -68,45 +79,47 @@ impl WryMenuIds {
         edit_menu.add_native_item(MenuItem::Paste);
         edit_menu.add_native_item(MenuItem::SelectAll);
         edit_menu.add_native_item(MenuItem::Separator);
-        let cmd_f = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyF);
+        let cmd_f = Accelerator::new(Some(MOD), KeyCode::KeyF);
         let search =
             edit_menu.add_item(MenuItemAttributes::new("Search…").with_accelerators(&cmd_f));
-        let cmd_g = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyG);
+        let cmd_g = Accelerator::new(Some(MOD), KeyCode::KeyG);
         let search_next =
             edit_menu.add_item(MenuItemAttributes::new("Search Next").with_accelerators(&cmd_g));
-        let cmd_shift_g =
-            Accelerator::new(Some(ModifiersState::SUPER | ModifiersState::SHIFT), KeyCode::KeyG);
+        let cmd_shift_g = Accelerator::new(Some(MOD | ModifiersState::SHIFT), KeyCode::KeyG);
         let search_prev = edit_menu
             .add_item(MenuItemAttributes::new("Search Previous").with_accelerators(&cmd_shift_g));
-        let cmd_s = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyS);
+        let cmd_s = Accelerator::new(Some(MOD), KeyCode::KeyS);
         let outline = edit_menu
             .add_item(MenuItemAttributes::new("Section Outline…").with_accelerators(&cmd_s));
         root_menu.add_submenu("Edit", true, edit_menu);
 
         let mut display_menu = MenuBar::new();
-        let cmd_r = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyR);
+        let cmd_r = Accelerator::new(Some(MOD), KeyCode::KeyR);
         let reload =
             display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
         display_menu.add_native_item(MenuItem::Separator);
-        display_menu.add_native_item(MenuItem::EnterFullScreen);
-        display_menu.add_native_item(MenuItem::Separator);
-        let cmd_plus = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::Plus);
+        #[cfg(not(target_os = "windows"))]
+        {
+            display_menu.add_native_item(MenuItem::EnterFullScreen);
+            display_menu.add_native_item(MenuItem::Separator);
+        }
+        let cmd_plus = Accelerator::new(Some(MOD), KeyCode::Plus);
         let zoom_in =
             display_menu.add_item(MenuItemAttributes::new("Zoom In").with_accelerators(&cmd_plus));
-        let cmd_minus = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::Minus);
+        let cmd_minus = Accelerator::new(Some(MOD), KeyCode::Minus);
         let zoom_out = display_menu
             .add_item(MenuItemAttributes::new("Zoom Out").with_accelerators(&cmd_minus));
         root_menu.add_submenu("Display", true, display_menu);
 
         let mut history_menu = MenuBar::new();
-        let cmd_left_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketRight);
+        let cmd_left_bracket = Accelerator::new(Some(MOD), KeyCode::BracketRight);
         let forward = history_menu
             .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
-        let cmd_right_bracket = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::BracketLeft);
+        let cmd_right_bracket = Accelerator::new(Some(MOD), KeyCode::BracketLeft);
         let back = history_menu
             .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
         history_menu.add_native_item(MenuItem::Separator);
-        let cmd_y = Accelerator::new(Some(ModifiersState::SUPER), KeyCode::KeyY);
+        let cmd_y = Accelerator::new(Some(MOD), KeyCode::KeyY);
         let history =
             history_menu.add_item(MenuItemAttributes::new("History…").with_accelerators(&cmd_y));
         root_menu.add_submenu("History", true, history_menu);
