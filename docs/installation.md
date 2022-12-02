@@ -3,7 +3,7 @@ Install Shiba
 
 Installing and preparing Shiba is very easy.
 You can install Shiba in 3 ways.
-Almost all of you should follow [general way](#general).  If you want to manage Shiba with [npm](https://www.npmjs.com/), please consider to use [npm way](#npm)
+Almost all of you should follow [general way](#general).  If you want to manage Shiba with [npm](https://www.npmjs.com/), please consider to use [npm way](#npm).
 
 
 ## <a name="general"></a> General
@@ -26,7 +26,7 @@ If you want to put Shiba.app in Dock and start with double click, put `Shiba.app
 And you can also use [Homebrew Cask](https://caskroom.github.io/) to install Shiba.
 
 ```
-$ brew cask install shiba
+$ brew install --cask shiba
 ```
 
 ### Windows
