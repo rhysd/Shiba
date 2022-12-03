@@ -2,7 +2,6 @@ use crate::config::Config;
 use crate::renderer::Theme as WindowTheme;
 use std::borrow::Cow;
 use std::fs;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(debug_assertions)]
 pub const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
@@ -20,11 +19,6 @@ pub const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
 // TODO: hljs-theme.css will be customizable with user configuration file
 // TODO: user css can be applied by user configuration file
-
-const ONETIME_ASSET_PATHS: &[&str] =
-    &["/", "/bundle.js", "/style.css", "/github-markdown.css", "/hljs-theme.css"];
-
-const OTHER_ASSET_PATHS: &[&str] = &["/logo.png"];
 
 #[rustfmt::skip]
 fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
@@ -131,12 +125,12 @@ fn load_user_css(config: &Config) -> Option<Vec<u8>> {
     }
 }
 
-pub struct AssetsLoader {
+pub struct Assets {
     hljs_css: &'static [u8],
     markdown_css: Cow<'static, [u8]>,
 }
 
-impl AssetsLoader {
+impl Assets {
     pub fn new(config: &Config, theme: WindowTheme) -> Self {
         let hl = config.preview().highlight();
         let hljs_css = match theme {
@@ -172,14 +166,14 @@ impl AssetsLoader {
 
         #[rustfmt::skip]
         let body = match path {
-            "/"                    => INDEX_HTML.into(),
+            "/index.html"          => INDEX_HTML.into(),
             "/bundle.js"           => BUNDLE_JS.into(),
             "/style.css"           => STYLE_CSS.into(),
             "/github-markdown.css" => self.markdown_css.to_vec(),
             "/hljs-theme.css"      => self.hljs_css.into(),
             "/logo.png"            => LOGO_PNG.into(),
             path                   => {
-                log::debug!("Fetching external resource {:?} dynamically", path);
+                log::debug!("Dynamically loading external resource {:?}", path);
                 match fs::read(path) {
                     Ok(content) => content,
                     Err(err) => {
@@ -191,24 +185,5 @@ impl AssetsLoader {
         };
 
         (body, mime)
-    }
-}
-
-#[derive(Default)]
-pub struct Assets {
-    loaded: [AtomicBool; ONETIME_ASSET_PATHS.len()],
-}
-
-impl Assets {
-    // `&self` must not be `&mut self` since the handler callbacks of `WebViewBuilder` are defined as `Fn`.
-    // The `Fn` boundary is derived from `webkit2gtk::WebView::connect_decide_policy` so it is difficult to change.
-    // https://github.com/tauri-apps/webkit2gtk-rs/blob/cce947f86f2c0d50710c1ea9ea9f160c8b6cbf4a/src/auto/web_view.rs#L1249
-    pub fn is_asset(&self, path: &str) -> bool {
-        if OTHER_ASSET_PATHS.contains(&path) {
-            return true;
-        }
-        let Some(idx) = ONETIME_ASSET_PATHS.iter().position(|&p| p == path) else { return false; };
-        let loaded = self.loaded[idx].swap(true, Ordering::Relaxed);
-        !loaded
     }
 }

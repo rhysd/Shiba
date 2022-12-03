@@ -1,4 +1,4 @@
-use crate::assets::{Assets, AssetsLoader};
+use crate::assets::Assets;
 use crate::cli::Options;
 use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
@@ -195,11 +195,10 @@ fn create_webview(
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
-    let assets = Assets::default();
-    let loader = AssetsLoader::new(config, window_theme(&window));
+    let loader = Assets::new(config, window_theme(&window));
 
     WebViewBuilder::new(window)?
-        .with_url("shiba://localhost/")?
+        .with_url("shiba://localhost/index.html")?
         .with_ipc_handler(move |_w, s| {
             let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
             log::debug!("Message from WebView: {:?}", m);
@@ -223,15 +222,13 @@ fn create_webview(
             //   macOS, Linux → <scheme_name>://<path>
             //   Windows → https://<scheme_name>.<path>
             #[cfg(not(target_os = "windows"))]
-            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost";
+            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
             #[cfg(target_os = "windows")]
-            const CUSTOM_PROTOCOL_URL: &str = "https://shiba.localhost";
+            const CUSTOM_PROTOCOL_URL: &str = "https://shiba.localhost/";
 
             let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
                 log::debug!("Navigating to custom protocol URL {}", url);
-                let path = &url[CUSTOM_PROTOCOL_URL.len()..];
-
-                if assets.is_asset(path) {
+                if &url[CUSTOM_PROTOCOL_URL.len()..] == "index.html" {
                     return true;
                 }
 
@@ -242,10 +239,15 @@ fn create_webview(
                     }
                 }
 
-                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shiba://localhost/foo/bar -> /foo/bar
+                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shiba://localhost/foo/bar -> foo/bar
+                if url.is_empty() {
+                    url.push('.');
+                }
+
+                log::debug!("Opening local path {:?}", url);
                 UserEvent::OpenLocalPath(PathBuf::from(url))
             } else {
-                log::debug!("Navigating to URL {}", url);
+                log::debug!("Navigating to URL {:?}", url);
                 UserEvent::OpenExternalLink(url)
             };
 
