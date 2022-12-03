@@ -131,6 +131,10 @@ impl PreviewContent {
             }
         };
 
+        if let Some(path) = path.parent() {
+            renderer.send_message(MessageToRenderer::BaseDir { path })?;
+        }
+
         let prev_content = std::mem::replace(&mut self.content, content);
         let content = self.content.as_str();
         let offset = if reload {

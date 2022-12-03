@@ -153,7 +153,7 @@ impl AssetsLoader {
         Self { hljs_css, markdown_css }
     }
 
-    pub fn load(&self, path: &str) -> (&[u8], &'static str) {
+    pub fn load(&self, path: &str) -> (Vec<u8>, &'static str) {
         let mime = if path.ends_with('/') || path.ends_with(".html") {
             "text/html;charset=UTF-8"
         } else if path.ends_with(".js") {
@@ -162,21 +162,31 @@ impl AssetsLoader {
             "text/css;charset=UTF-8"
         } else if path.ends_with(".png") {
             "image/png"
+        } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {
+            "image/jpeg"
+        } else if path.ends_with(".svg") {
+            "image/svg+xml"
         } else {
             "application/octet-stream"
         };
 
         #[rustfmt::skip]
         let body = match path {
-            "/"                    => INDEX_HTML,
-            "/bundle.js"           => BUNDLE_JS,
-            "/style.css"           => STYLE_CSS,
-            "/github-markdown.css" => self.markdown_css.as_ref(),
-            "/hljs-theme.css"      => self.hljs_css,
-            "/logo.png"            => LOGO_PNG,
-            _                      => {
-                log::error!("Fetching external resource {:?} is not allowed", path);
-                b""
+            "/"                    => INDEX_HTML.into(),
+            "/bundle.js"           => BUNDLE_JS.into(),
+            "/style.css"           => STYLE_CSS.into(),
+            "/github-markdown.css" => self.markdown_css.to_vec(),
+            "/hljs-theme.css"      => self.hljs_css.into(),
+            "/logo.png"            => LOGO_PNG.into(),
+            path                   => {
+                log::debug!("Fetching external resource {:?} dynamically", path);
+                match fs::read(path) {
+                    Ok(content) => content,
+                    Err(err) => {
+                        log::error!("Could not read external resource {:?}: {}", path, err);
+                        vec![]
+                    }
+                }
             }
         };
 

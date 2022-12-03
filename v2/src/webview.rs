@@ -223,28 +223,26 @@ fn create_webview(
             //   macOS, Linux → <scheme_name>://<path>
             //   Windows → https://<scheme_name>.<path>
             #[cfg(not(target_os = "windows"))]
-            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
+            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost";
             #[cfg(target_os = "windows")]
-            const CUSTOM_PROTOCOL_URL: &str = "https://shiba.localhost/";
+            const CUSTOM_PROTOCOL_URL: &str = "https://shiba.localhost";
 
             let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
                 log::debug!("Navigating to custom protocol URL {}", url);
-                let path = &url[CUSTOM_PROTOCOL_URL.len() - 1..]; // `- 1` for first '/'
+                let path = &url[CUSTOM_PROTOCOL_URL.len()..];
 
                 if assets.is_asset(path) {
                     return true;
                 }
 
-                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shiba://localhost/foo/bar -> foo/bar
-                if url.is_empty() {
-                    url.push('.');
+                if let Some(idx) = url.rfind('/') {
+                    if url[idx + 1..].starts_with('#') {
+                        log::debug!("Allow navigating to hash link {}", url); // For footnotes
+                        return true;
+                    }
                 }
 
-                if url.starts_with('#') {
-                    log::debug!("Allow navigating to hash link {}", url); // For footnotes
-                    return true;
-                }
-
+                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shiba://localhost/foo/bar -> /foo/bar
                 UserEvent::OpenLocalPath(PathBuf::from(url))
             } else {
                 log::debug!("Navigating to URL {}", url);
@@ -271,7 +269,7 @@ fn create_webview(
             Response::builder()
                 .status(status)
                 .header(CONTENT_TYPE, mime)
-                .body(body.to_vec())
+                .body(body)
                 .map_err(Into::into)
         })
         .build()

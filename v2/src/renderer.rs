@@ -32,6 +32,9 @@ pub enum MessageToRenderer<'a> {
     },
     Reload,
     Debug,
+    BaseDir {
+        path: &'a Path,
+    },
 }
 
 #[derive(Clone, Copy, Deserialize, Debug)]
