@@ -9,6 +9,8 @@ use pulldown_cmark::{
 use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::marker::PhantomData;
+use std::ops::Deref;
+use std::path::Path;
 
 type Result<T> = std::result::Result<T, fmt::Error>;
 pub type Range = std::ops::Range<usize>;
@@ -52,15 +54,69 @@ impl TextTokenizer for () {
     }
 }
 
+#[derive(Default)]
+struct SlashPath(String);
+
+impl<'a> From<&'a Path> for SlashPath {
+    fn from(path: &'a Path) -> Self {
+        #[cfg(not(target_os = "windows"))]
+        let mut path = path.to_string_lossy().into_owned();
+        #[cfg(target_os = "windows")]
+        let mut path = path.to_string_lossy().replace("\\", "/");
+        if path.ends_with('/') {
+            path.pop(); // Ensure the path does not end with /
+        }
+        Self(path)
+    }
+}
+
+impl Deref for SlashPath {
+    type Target = str;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Default)]
+pub struct MarkdownParseTarget {
+    source: String,
+    base_dir: SlashPath,
+}
+
+impl MarkdownParseTarget {
+    pub fn new(source: String, base_dir: Option<&Path>) -> Self {
+        let base_dir = if let Some(path) = base_dir {
+            SlashPath::from(path)
+        } else {
+            SlashPath("/".to_string())
+        };
+        Self { source, base_dir }
+    }
+
+    pub fn modified_offset(&self, new: &Self) -> Option<usize> {
+        let (prev_source, new_source) = (&self.source, &new.source);
+        prev_source
+            .as_bytes()
+            .iter()
+            .zip(new_source.as_bytes().iter())
+            .position(|(a, b)| a != b)
+            .or_else(|| {
+                let (prev_len, new_len) = (prev_source.len(), new_source.len());
+                (prev_len != new_len).then_some(std::cmp::min(prev_len, new_len))
+            })
+    }
+}
+
 pub struct MarkdownParser<'a, V: TextVisitor, T: TextTokenizer> {
     parser: Parser<'a, 'a>,
+    base_dir: &'a SlashPath,
     offset: Option<usize>,
     text_tokenizer: T,
     _phantom: PhantomData<V>,
 }
 
 impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
-    pub fn new(source: &'a str, offset: Option<usize>, text_tokenizer: T) -> Self {
+    pub fn new(target: &'a MarkdownParseTarget, offset: Option<usize>, text_tokenizer: T) -> Self {
         let mut options = Options::empty();
         options.insert(
             Options::ENABLE_STRIKETHROUGH
@@ -69,8 +125,9 @@ impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
                 | Options::ENABLE_TASKLISTS
                 | Options::ENABLE_MATH,
         );
-        let parser = Parser::new_ext(source, options);
-        Self { parser, offset, text_tokenizer, _phantom: PhantomData }
+        let parser = Parser::new_ext(&target.source, options);
+        let base_dir = &target.base_dir;
+        Self { parser, base_dir, offset, text_tokenizer, _phantom: PhantomData }
     }
 }
 
@@ -80,7 +137,8 @@ impl<'a, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'
     type Output = V;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
-        let mut ser = RenderTreeSerializer::new(writer, self.offset, self.text_tokenizer);
+        let mut ser =
+            RenderTreeSerializer::new(writer, self.base_dir, self.offset, self.text_tokenizer);
         ser.out.write_str(r#"'{"kind":"render_tree","tree":"#)?;
         ser.push(self.parser)?;
         ser.out.write_str("}'")?;
@@ -97,6 +155,7 @@ enum TableState {
 
 struct RenderTreeSerializer<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
     out: W,
+    base_dir: &'a SlashPath,
     table: TableState,
     is_start: bool,
     ids: HashMap<CowStr<'a>, usize>,
@@ -106,10 +165,58 @@ struct RenderTreeSerializer<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
     autolinker: Autolinker,
 }
 
+// This function is not a method of `RenderTreeSerializer` because it does not work when the `s` parameter is calculated from `self`. In this case borrowing `self` mutablly is not possible
+#[allow(clippy::just_underscores_and_digits)]
+fn string_content<W: Write>(mut out: W, s: &str) -> Result<()> {
+    const BB: u8 = b'b'; // \x08
+    const TT: u8 = b't'; // \x09
+    const NN: u8 = b'n'; // \x0a
+    const FF: u8 = b'f'; // \x0c
+    const RR: u8 = b'r'; // \x0d
+    const DQ: u8 = b'"'; // \x22
+    const SQ: u8 = b'\''; // \x27
+    const BS: u8 = b'\\'; // \x5c
+    const XX: u8 = 1; // \x00...\x1f non-printable
+    const __: u8 = 0;
+
+    #[rustfmt::skip]
+    const ESCAPE_TABLE: [u8; 128] = [
+        //   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+        XX, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
+        XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 1
+        __, __, DQ, __, __, __, __, SQ, __, __, __, __, __, __, __, __, // 2
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 4
+        __, __, __, __, __, __, __, __, __, __, __, __, BS, __, __, __, // 5
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 6
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, XX, // 7
+    ];
+
+    for c in s.chars() {
+        if c < (128 as char) {
+            match ESCAPE_TABLE[c as usize] {
+                __ => out.write_char(c)?,
+                BS => out.write_str(r#"\\\\"#)?, // Escape twice for JS and JSON (\\\\ → \\ → \)
+                SQ => out.write_str(r#"\'"#)?, // JSON string will be put in '...' JS string. ' needs to be escaped
+                XX => write!(out, r#"\\u{:04x}"#, c as u32)?,
+                b => {
+                    out.write_str(r#"\\"#)?; // Escape \ itself: JSON.parse('\\n')
+                    out.write_char(b as char)?;
+                }
+            }
+        } else {
+            out.write_char(c)?;
+        }
+    }
+
+    Ok(())
+}
+
 impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W, V, T> {
-    fn new(w: W, modified: Option<usize>, text_tokenizer: T) -> Self {
+    fn new(w: W, base_dir: &'a SlashPath, modified: Option<usize>, text_tokenizer: T) -> Self {
         Self {
             out: w,
+            base_dir,
             table: TableState::Head,
             is_start: true,
             ids: HashMap::new(),
@@ -132,55 +239,9 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
         self.out.write_char(']')
     }
 
-    #[allow(clippy::just_underscores_and_digits)]
-    fn string_content(&mut self, s: &str) -> Result<()> {
-        const BB: u8 = b'b'; // \x08
-        const TT: u8 = b't'; // \x09
-        const NN: u8 = b'n'; // \x0a
-        const FF: u8 = b'f'; // \x0c
-        const RR: u8 = b'r'; // \x0d
-        const DQ: u8 = b'"'; // \x22
-        const SQ: u8 = b'\''; // \x27
-        const BS: u8 = b'\\'; // \x5c
-        const XX: u8 = 1; // \x00...\x1f non-printable
-        const __: u8 = 0;
-
-        #[rustfmt::skip]
-        const ESCAPE_TABLE: [u8; 128] = [
-            //   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-            XX, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
-            XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 1
-            __, __, DQ, __, __, __, __, SQ, __, __, __, __, __, __, __, __, // 2
-            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
-            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 4
-            __, __, __, __, __, __, __, __, __, __, __, __, BS, __, __, __, // 5
-            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 6
-            __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, XX, // 7
-        ];
-
-        for c in s.chars() {
-            if c < (128 as char) {
-                match ESCAPE_TABLE[c as usize] {
-                    __ => self.out.write_char(c)?,
-                    BS => self.out.write_str(r#"\\\\"#)?, // Escape twice for JS and JSON (\\\\ → \\ → \)
-                    SQ => self.out.write_str(r#"\'"#)?, // JSON string will be put in '...' JS string. ' needs to be escaped
-                    XX => write!(self.out, r#"\\u{:04x}"#, c as u32)?,
-                    b => {
-                        self.out.write_str(r#"\\"#)?; // Escape \ itself: JSON.parse('\\n')
-                        self.out.write_char(b as char)?;
-                    }
-                }
-            } else {
-                self.out.write_char(c)?;
-            }
-        }
-
-        Ok(())
-    }
-
     fn string(&mut self, s: &str) -> Result<()> {
         self.out.write_char('"')?;
-        self.string_content(s)?;
+        string_content(&mut self.out, s)?;
         self.out.write_char('"')
     }
 
@@ -344,11 +405,11 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 Html(html) => {
                     self.tag("html")?;
                     self.out.write_str(r#","raw":""#)?;
-                    self.string_content(&html)?;
+                    string_content(&mut self.out, &html)?;
 
                     // Collect all HTML events into one element object
                     while let Some((Html(html), _)) = events.peek() {
-                        self.string_content(html)?;
+                        string_content(&mut self.out, html)?;
                         events.next();
                     }
 
@@ -382,6 +443,26 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
         }
 
         Ok(())
+    }
+
+    fn rebase_relative_link(&mut self, dest: &str) -> Result<()> {
+        if dest.starts_with('#')
+            || dest.starts_with("https://")
+            || dest.starts_with("http://")
+            || dest.starts_with("//")
+        {
+            return self.string(dest);
+        }
+
+        // Rebase the relative link with `self.base_dir`
+        let base_dir = &self.base_dir;
+        self.out.write_char('"')?;
+        string_content(&mut self.out, base_dir)?;
+        if !dest.starts_with('/') {
+            self.out.write_char('/')?;
+        }
+        string_content(&mut self.out, dest)?;
+        self.out.write_char('"')
     }
 
     fn children_begin(&mut self) -> Result<()> {
@@ -486,7 +567,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
                         href.push_str(&dest);
                         self.string(&href)?;
                     }
-                    _ => self.string(&dest)?,
+                    _ => self.rebase_relative_link(&dest)?,
                 }
 
                 if !title.is_empty() {
@@ -503,7 +584,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 }
 
                 self.out.write_str(r#","src":"#)?;
-                self.string(&dest)?;
+                self.rebase_relative_link(&dest)?;
             }
             FootnoteDefinition(name) => {
                 self.tag("fn-def")?;

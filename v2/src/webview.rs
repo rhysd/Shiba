@@ -239,13 +239,15 @@ fn create_webview(
                     }
                 }
 
-                url.drain(0..CUSTOM_PROTOCOL_URL.len()); // shiba://localhost/foo/bar -> foo/bar
+                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
                 if url.is_empty() {
                     url.push('.');
                 }
 
-                log::debug!("Opening local path {:?}", url);
-                UserEvent::OpenLocalPath(PathBuf::from(url))
+                // TODO: This does not work on Windows since path separator is not /
+                let path = PathBuf::from(url);
+                log::debug!("Opening local path {:?}", path);
+                UserEvent::OpenLocalPath(path)
             } else {
                 log::debug!("Navigating to URL {:?}", url);
                 UserEvent::OpenExternalLink(url)

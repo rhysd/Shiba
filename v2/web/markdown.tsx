@@ -76,14 +76,12 @@ export class ReactMarkdownRenderer {
     private table: TableState | null;
     private lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
     private readonly footNotes: RenderTreeFootNoteDef[];
-    private readonly baseDir: string;
 
-    constructor(baseDir: string) {
+    constructor() {
         this.table = null;
         this.footNotes = [];
         this.lastModifiedRef = null;
         this.render = this.render.bind(this);
-        this.baseDir = baseDir;
     }
 
     renderMarkdown(tree: RenderTreeElem[]): MarkdownReactTree {
@@ -152,21 +150,6 @@ export class ReactMarkdownRenderer {
         );
     }
 
-    private absPath(href: string): string {
-        if (
-            href.startsWith('#') ||
-            href.startsWith('http://') ||
-            href.startsWith('https://') ||
-            href.startsWith('//')
-        ) {
-            return href;
-        }
-        if (href.startsWith('/')) {
-            href = href.slice(1);
-        }
-        return this.baseDir + href;
-    }
-
     private render(elem: RenderTreeElem, key?: number): React.ReactNode {
         if (typeof elem === 'string') {
             return elem;
@@ -197,13 +180,13 @@ export class ReactMarkdownRenderer {
                         title = `"${elem.title}" ${title}`;
                     }
                     return (
-                        <a key={key} title={title} href={this.absPath(elem.href)}>
+                        <a key={key} title={title} href={elem.href}>
                             {elem.c.map(this.render)}
                         </a>
                     );
                 }
             case 'img': {
-                return <img key={key} src={this.absPath(elem.src)} alt={rawText(elem)} title={elem.title} />;
+                return <img key={key} src={elem.src} alt={rawText(elem)} title={elem.title} />;
             }
             case 'br':
                 return <br key={key} />;
@@ -337,7 +320,7 @@ export class ReactMarkdownRenderer {
                 const sanitized = sanitize(elem.raw, { USE_PROFILES: { html: true } });
                 // XXX: This <span> element is necessary because React cannot render inner HTML under fragment
                 // https://github.com/reactjs/rfcs/pull/129
-                // XXX: Relative paths don't work because they need to be adjusted by `this.absPath`.
+                // XXX: Relative paths don't work because they need to be adjusted with base directory path
                 return <span key={key} dangerouslySetInnerHTML={{ __html: sanitized }} />; // eslint-disable-line @typescript-eslint/naming-convention
             }
             case 'modified':

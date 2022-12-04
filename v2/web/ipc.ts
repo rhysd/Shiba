@@ -193,10 +193,6 @@ export type MessageFromMain =
           path: string;
       }
     | {
-          kind: 'base_dir';
-          path: string;
-      }
-    | {
           kind: 'config';
           keymaps: KeyMaps;
           search: {

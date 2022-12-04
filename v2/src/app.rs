@@ -1,7 +1,7 @@
 use crate::cli::Options;
 use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
-use crate::markdown::MarkdownParser;
+use crate::markdown::{MarkdownParseTarget, MarkdownParser};
 use crate::opener::Opener;
 use crate::persistent::DataDir;
 use crate::renderer::{
@@ -98,13 +98,17 @@ impl History {
 
 struct PreviewContent {
     home_dir: Option<PathBuf>,
-    content: String,
+    content: MarkdownParseTarget,
     text: Text,
 }
 
 impl Default for PreviewContent {
     fn default() -> Self {
-        Self { home_dir: dirs::home_dir(), content: String::new(), text: Text::default() }
+        Self {
+            home_dir: dirs::home_dir(),
+            content: MarkdownParseTarget::default(),
+            text: Text::default(),
+        }
     }
 }
 
@@ -120,8 +124,8 @@ impl PreviewContent {
 
     pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R, reload: bool) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
-        let content = match fs::read_to_string(path) {
-            Ok(content) => content,
+        let source = match fs::read_to_string(path) {
+            Ok(source) => source,
             Err(err) => {
                 // Do not return error because 'no such file' because the file might be renamed and
                 // no longer exists. This can happen when saving files on Vim. In this case, a file
@@ -131,28 +135,12 @@ impl PreviewContent {
             }
         };
 
-        if let Some(path) = path.parent() {
-            renderer.send_message(MessageToRenderer::BaseDir { path })?;
-        }
-
-        let prev_content = std::mem::replace(&mut self.content, content);
-        let content = self.content.as_str();
-        let offset = if reload {
-            None
-        } else {
-            prev_content
-                .as_bytes()
-                .iter()
-                .zip(content.as_bytes().iter())
-                .position(|(a, b)| a != b)
-                .or_else(|| {
-                    let (prev_len, len) = (prev_content.len(), content.len());
-                    (prev_len != len).then_some(std::cmp::min(prev_len, len))
-                })
-        };
+        let new_content = MarkdownParseTarget::new(source, path.parent());
+        let prev_content = std::mem::replace(&mut self.content, new_content);
+        let offset = if reload { None } else { prev_content.modified_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);
 
-        self.text = renderer.send_message_raw(MarkdownParser::new(content, offset, ()))?;
+        self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
 
         if reload {
             renderer.set_title(&self.title(path));

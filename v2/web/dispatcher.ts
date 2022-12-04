@@ -28,7 +28,6 @@ export class GlobalDispatcher {
     public dispatch: Dispatch; // This prop will be updated by `App` component
     public state: State; // This prop will be updated by `App` component
     public readonly keymap: KeyMapping;
-    private baseDir: string;
 
     constructor() {
         this.dispatch = () => {
@@ -36,7 +35,6 @@ export class GlobalDispatcher {
         };
         this.state = INITIAL_STATE;
         this.keymap = new KeyMapping();
-        this.baseDir = '/';
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
@@ -68,19 +66,11 @@ export class GlobalDispatcher {
         try {
             switch (msg.kind) {
                 case 'render_tree': {
-                    const renderer = new ReactMarkdownRenderer(this.baseDir);
+                    const renderer = new ReactMarkdownRenderer();
                     const tree = renderer.renderMarkdown(msg.tree);
                     this.dispatch(previewContent(tree));
                     break;
                 }
-                // Note: Setting the base directory path to <base> element does not work because hash link tries to
-                // navigate to outside of page
-                case 'base_dir':
-                    this.baseDir = msg.path;
-                    if (!this.baseDir.endsWith('/')) {
-                        this.baseDir += '/';
-                    }
-                    break;
                 case 'new_file':
                     this.dispatch(newFile(msg.path));
                     break;
