@@ -153,7 +153,12 @@ export class ReactMarkdownRenderer {
     }
 
     private absPath(href: string): string {
-        if (href.startsWith('#') || href.startsWith('http://') || href.startsWith('https://')) {
+        if (
+            href.startsWith('#') ||
+            href.startsWith('http://') ||
+            href.startsWith('https://') ||
+            href.startsWith('//')
+        ) {
             return href;
         }
         if (href.startsWith('/')) {
