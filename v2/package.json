@@ -35,7 +35,6 @@
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.10.16",
     "@mui/material": "^5.10.16",
-    "dompurify": "^2.4.1",
     "github-markdown-css": "^5.1.0",
     "highlight.js": "^11.7.0",
     "mathjax-full": "^3.2.2",
@@ -45,7 +44,6 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/dompurify": "^2.4.0",
     "@types/mousetrap": "^1.6.11",
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.9",

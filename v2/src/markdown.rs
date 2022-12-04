@@ -1,4 +1,5 @@
 use crate::renderer::RawMessageWriter;
+use crate::sanitizer::{should_rebase_url, Sanitizer, SlashPath};
 use aho_corasick::AhoCorasick;
 use emojis::Emoji;
 use memchr::{memchr_iter, Memchr};
@@ -6,10 +7,10 @@ use pulldown_cmark::{
     Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, MathDisplay, Options, Parser,
     Tag,
 };
+use std::cmp;
 use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::marker::PhantomData;
-use std::ops::Deref;
 use std::path::Path;
 
 type Result<T> = std::result::Result<T, fmt::Error>;
@@ -55,29 +56,6 @@ impl TextTokenizer for () {
 }
 
 #[derive(Default)]
-struct SlashPath(String);
-
-impl<'a> From<&'a Path> for SlashPath {
-    fn from(path: &'a Path) -> Self {
-        #[cfg(not(target_os = "windows"))]
-        let mut path = path.to_string_lossy().into_owned();
-        #[cfg(target_os = "windows")]
-        let mut path = path.to_string_lossy().replace("\\", "/");
-        if path.ends_with('/') {
-            path.pop(); // Ensure the path does not end with /
-        }
-        Self(path)
-    }
-}
-
-impl Deref for SlashPath {
-    type Target = str;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Default)]
 pub struct MarkdownParseTarget {
     source: String,
     base_dir: SlashPath,
@@ -85,11 +63,8 @@ pub struct MarkdownParseTarget {
 
 impl MarkdownParseTarget {
     pub fn new(source: String, base_dir: Option<&Path>) -> Self {
-        let base_dir = if let Some(path) = base_dir {
-            SlashPath::from(path)
-        } else {
-            SlashPath("/".to_string())
-        };
+        let base_dir =
+            if let Some(path) = base_dir { SlashPath::from(path) } else { SlashPath::default() };
         Self { source, base_dir }
     }
 
@@ -102,7 +77,7 @@ impl MarkdownParseTarget {
             .position(|(a, b)| a != b)
             .or_else(|| {
                 let (prev_len, new_len) = (prev_source.len(), new_source.len());
-                (prev_len != new_len).then_some(std::cmp::min(prev_len, new_len))
+                (prev_len != new_len).then_some(cmp::min(prev_len, new_len))
             })
     }
 }
@@ -163,6 +138,7 @@ struct RenderTreeSerializer<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
     text_visitor: V,
     text_tokenizer: T,
     autolinker: Autolinker,
+    sanitizer: Sanitizer<'a>,
 }
 
 // This function is not a method of `RenderTreeSerializer` because it does not work when the `s` parameter is calculated from `self`. In this case borrowing `self` mutablly is not possible
@@ -224,6 +200,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
             text_visitor: V::default(),
             text_tokenizer,
             autolinker: Autolinker::default(),
+            sanitizer: Sanitizer::new(base_dir),
         }
     }
 
@@ -405,11 +382,12 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 Html(html) => {
                     self.tag("html")?;
                     self.out.write_str(r#","raw":""#)?;
-                    string_content(&mut self.out, &html)?;
+
+                    string_content(&mut self.out, &self.sanitizer.clean(&html))?;
 
                     // Collect all HTML events into one element object
                     while let Some((Html(html), _)) = events.peek() {
-                        string_content(&mut self.out, html)?;
+                        string_content(&mut self.out, &self.sanitizer.clean(html))?;
                         events.next();
                     }
 
@@ -445,19 +423,14 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
         Ok(())
     }
 
-    fn rebase_relative_link(&mut self, dest: &str) -> Result<()> {
-        if dest.starts_with('#')
-            || dest.starts_with("https://")
-            || dest.starts_with("http://")
-            || dest.starts_with("//")
-        {
+    fn rebase_link(&mut self, dest: &str) -> Result<()> {
+        if !should_rebase_url(dest) {
             return self.string(dest);
         }
 
-        // Rebase the relative link with `self.base_dir`
-        let base_dir = &self.base_dir;
+        // Rebase 'foo/bar/' with '/path/to/base' as '/path/to/base/foo/bar'
         self.out.write_char('"')?;
-        string_content(&mut self.out, base_dir)?;
+        string_content(&mut self.out, self.base_dir)?;
         if !dest.starts_with('/') {
             self.out.write_char('/')?;
         }
@@ -567,7 +540,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
                         href.push_str(&dest);
                         self.string(&href)?;
                     }
-                    _ => self.rebase_relative_link(&dest)?,
+                    _ => self.rebase_link(&dest)?,
                 }
 
                 if !title.is_empty() {
@@ -584,7 +557,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeSerializer<'a, W,
                 }
 
                 self.out.write_str(r#","src":"#)?;
-                self.rebase_relative_link(&dest)?;
+                self.rebase_link(&dest)?;
             }
             FootnoteDefinition(name) => {
                 self.tag("fn-def")?;

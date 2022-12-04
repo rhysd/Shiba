@@ -1,6 +1,5 @@
 import React from 'react';
 import hljs from 'highlight.js';
-import { sanitize } from 'dompurify';
 import type { RenderTreeElem, RenderTreeFootNoteDef, RenderTreeTableAlign } from './ipc';
 import * as log from './log';
 import { CodeBlock } from './components/CodeBlock';
@@ -317,11 +316,10 @@ export class ReactMarkdownRenderer {
                     />
                 );
             case 'html': {
-                const sanitized = sanitize(elem.raw, { USE_PROFILES: { html: true } });
                 // XXX: This <span> element is necessary because React cannot render inner HTML under fragment
                 // https://github.com/reactjs/rfcs/pull/129
                 // XXX: Relative paths don't work because they need to be adjusted with base directory path
-                return <span key={key} dangerouslySetInnerHTML={{ __html: sanitized }} />; // eslint-disable-line @typescript-eslint/naming-convention
+                return <span key={key} dangerouslySetInnerHTML={{ __html: elem.raw }} />; // eslint-disable-line @typescript-eslint/naming-convention
             }
             case 'modified':
                 return this.lastModified(key);

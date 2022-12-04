@@ -16,6 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 aho-corasick = "0.7.19"
+ammonia = "3.3.0"
 anyhow = "1.0.66"
 dirs = "4.0.0"
 emojis = "0.5.1"
@@ -24,6 +25,7 @@ getopts = "0.2.21"
 log = "0.4.17"
 memchr = "2.5.0"
 notify = "5.0.0"
+once_cell = "1.16.0"
 open = "3.0.3"
 phf = { version = "0.11.1", features = ["macros"] }
 # https://github.com/raphlinus/pulldown-cmark/pull/622

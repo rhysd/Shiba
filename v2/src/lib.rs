@@ -9,6 +9,7 @@ mod markdown;
 mod opener;
 mod persistent;
 mod renderer;
+mod sanitizer;
 mod search;
 mod watcher;
 mod webview;
