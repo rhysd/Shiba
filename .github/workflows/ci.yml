@@ -37,7 +37,7 @@ jobs:
       - run: npm run lint:prettier
       - run: npm run lint:eslint
       - run: npm run lint:stylelint
-      - run: cargo fmt -- --check
-      - run: cargo clippy -- -D warnings
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all --benches -- -D warnings
       # TODO: Separate a new job to run unit tests
       - run: cargo test

@@ -14,10 +14,13 @@ mod search;
 mod watcher;
 mod webview;
 
+pub use cli::Options;
+pub use markdown::{MarkdownParseTarget, MarkdownParser}; // For benchmarks
+pub use renderer::RawMessageWriter; // For benchmarks
+
 use crate::webview::Wry;
 use anyhow::{Error, Result};
 use app::{App, AppControl};
-pub use cli::Options;
 use notify::RecommendedWatcher;
 use opener::SystemOpener;
 use rfd::FileDialog;
