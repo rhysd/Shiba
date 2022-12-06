@@ -7,7 +7,7 @@ fn run(source: String, offset: Option<usize>) {
     let target = MarkdownParseTarget::new(source, None);
     let parser = MarkdownParser::new(&target, offset, ());
     let mut buf = Vec::new();
-    let () = parser.write_to(&mut buf);
+    let () = parser.write_to(&mut buf).unwrap();
     let buf = String::from_utf8(buf).unwrap();
     assert!(!buf.is_empty());
 }
