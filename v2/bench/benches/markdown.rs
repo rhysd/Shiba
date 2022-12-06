@@ -3,28 +3,33 @@ use shiba_bench::asset;
 use shiba_preview::{MarkdownParseTarget, MarkdownParser, RawMessageWriter};
 
 #[inline]
-fn run(source: String) {
+fn run(source: String, offset: Option<usize>) {
     let target = MarkdownParseTarget::new(source, None);
-    let parser = MarkdownParser::new(&target, None, ());
-    let mut buf = String::new();
+    let parser = MarkdownParser::new(&target, offset, ());
+    let mut buf = Vec::new();
     let () = parser.write_to(&mut buf).unwrap();
+    let buf = String::from_utf8(buf).unwrap();
     assert!(!buf.is_empty());
 }
 
-fn encode(c: &mut Criterion) {
+fn parse(c: &mut Criterion) {
+    let small = asset("example.md");
     c.bench_function("markdown::small", |b| {
-        let source = asset("example.md");
-        b.iter(move || run(source.clone()));
+        b.iter(|| run(small.to_string(), None));
     });
     c.bench_function("markdown::middle", |b| {
         let source = asset("actionlint.md");
-        b.iter(move || run(source.clone()));
+        b.iter(move || run(source.clone(), None));
     });
     c.bench_function("markdown::large", |b| {
         let source = asset("rust_releases.md");
-        b.iter(move || run(source.clone()));
+        b.iter(move || run(source.clone(), None));
+    });
+    c.bench_function("markdown::offset", |b| {
+        let offset = Some(small.len() / 2);
+        b.iter(|| run(small.to_string(), offset));
     });
 }
 
-criterion_group!(benches, encode);
+criterion_group!(benches, parse);
 criterion_main!(benches);
