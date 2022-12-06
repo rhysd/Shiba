@@ -10,7 +10,7 @@ edition = "2021"
 bench = false
 
 [dependencies]
-shiba-preview = { path = ".." }
+shiba-preview = { path = "..", features = ["__bench"] }
 
 [dev-dependencies]
 criterion = "0.4.0"

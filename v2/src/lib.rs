@@ -15,8 +15,10 @@ mod watcher;
 mod webview;
 
 pub use cli::Options;
-pub use markdown::{MarkdownParseTarget, MarkdownParser}; // For benchmarks
-pub use renderer::RawMessageWriter; // For benchmarks
+#[cfg(feature = "__bench")]
+pub use markdown::{MarkdownParseTarget, MarkdownParser};
+#[cfg(feature = "__bench")]
+pub use renderer::RawMessageWriter;
 
 use crate::webview::Wry;
 use anyhow::{Error, Result};
