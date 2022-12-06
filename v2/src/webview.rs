@@ -359,7 +359,7 @@ impl Renderer for Wry {
 
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output> {
         let mut buf = b"window.postShibaMessageFromMain(JSON.parse(".to_vec();
-        let result = writer.write_to(&mut buf)?;
+        let result = writer.write_to(&mut buf);
         buf.extend(b"))");
         self.webview.evaluate_script(&String::from_utf8(buf).unwrap())?;
         Ok(result)

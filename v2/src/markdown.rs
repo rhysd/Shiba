@@ -110,13 +110,13 @@ impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
 impl<'a, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, V, T> {
     type Output = V;
 
-    fn write_to(self, writer: impl Write) -> Result<Self::Output> {
+    fn write_to(self, writer: &mut Vec<u8>) -> Self::Output {
         let mut enc =
             RenderTreeEncoder::new(writer, self.base_dir, self.offset, self.text_tokenizer);
-        enc.out.write_all(br#"'{"kind":"render_tree","tree":"#)?;
-        enc.push(self.parser)?;
-        enc.out.write_all(b"}'")?;
-        Ok(enc.text_visitor)
+        enc.out.extend_from_slice(br#"'{"kind":"render_tree","tree":"#);
+        enc.push(self.parser);
+        enc.out.extend_from_slice(b"}'");
+        enc.text_visitor
     }
 }
 
@@ -127,8 +127,8 @@ enum TableState {
     Row,
 }
 
-struct RenderTreeEncoder<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
-    out: W,
+struct RenderTreeEncoder<'w, 'a: 'w, V: TextVisitor, T: TextTokenizer> {
+    out: &'w mut Vec<u8>,
     base_dir: &'a SlashPath,
     table: TableState,
     is_start: bool,
@@ -143,7 +143,7 @@ struct RenderTreeEncoder<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
 // Note: Be careful, this function is called in the hot loop on encoding texts
 #[inline]
 #[allow(clippy::just_underscores_and_digits)]
-fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
+fn encode_string_byte(out: &mut Vec<u8>, b: u8) {
     const BB: u8 = b'b'; // \x08
     const TT: u8 = b't'; // \x09
     const NN: u8 = b'n'; // \x0a
@@ -177,20 +177,22 @@ fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
     ];
 
     match ESCAPE_TABLE[b as usize] {
-        __ => out.write_all(&[b]),
-        BS => out.write_all(br#"\\\\"#), // Escape twice for JS and JSON (\\\\ → \\ → \)
-        SQ => out.write_all(br#"\'"#), // JSON string will be put in '...' JS string. ' needs to be escaped
-        XX => write!(out, r#"\\u{:04x}"#, b),
-        b => out.write_all(&[b'\\', b'\\', b]), // Escape \ itself: JSON.parse('\\n')
+        __ => out.push(b),
+        BS => out.extend_from_slice(br#"\\\\"#), // Escape twice for JS and JSON (\\\\ → \\ → \)
+        SQ => out.extend_from_slice(br#"\'"#), // JSON string will be put in '...' JS string. ' needs to be escaped
+        XX => {
+            let _ = write!(out, r#"\\u{:04x}"#, b);
+        }
+        b => out.extend_from_slice(&[b'\\', b'\\', b]), // Escape \ itself: JSON.parse('\\n')
     }
 }
 
-struct StringContentEncoder<W: Write>(W);
+struct StringContentEncoder<'a>(&'a mut Vec<u8>);
 
-impl<W: Write> Write for StringContentEncoder<W> {
+impl<'a> Write for StringContentEncoder<'a> {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         for b in buf.iter().copied() {
-            encode_string_byte(&mut self.0, b)?;
+            encode_string_byte(self.0, b);
         }
         Ok(buf.len())
     }
@@ -199,8 +201,13 @@ impl<W: Write> Write for StringContentEncoder<W> {
     }
 }
 
-impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V, T> {
-    fn new(w: W, base_dir: &'a SlashPath, modified: Option<usize>, text_tokenizer: T) -> Self {
+impl<'w, 'a: 'w, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'w, 'a, V, T> {
+    fn new(
+        w: &'w mut Vec<u8>,
+        base_dir: &'a SlashPath,
+        modified: Option<usize>,
+        text_tokenizer: T,
+    ) -> Self {
         Self {
             out: w,
             base_dir,
@@ -215,38 +222,37 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         }
     }
 
-    fn push(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
-        self.out.write_all(b"[")?;
-        self.events(parser)?;
+    fn push(&mut self, parser: Parser<'a, 'a>) {
+        self.out.push(b'[');
+        self.events(parser);
         // Modified offset was not consumed by any text, it would mean that some non-text parts after any text were
         // modified. As a fallback, set 'modified' marker after the last text.
         if self.modified.is_some() {
-            self.tag("modified")?;
-            self.out.write_all(b"}")?;
+            self.tag("modified");
+            self.out.push(b'}');
         }
-        self.out.write_all(b"]")
+        self.out.push(b']');
     }
 
-    fn string_content(&mut self, s: &str) -> Result<()> {
+    fn string_content(&mut self, s: &str) {
         for b in s.as_bytes().iter().copied() {
-            encode_string_byte(&mut self.out, b)?;
+            encode_string_byte(&mut self.out, b);
         }
-        Ok(())
     }
 
-    fn string(&mut self, s: &str) -> Result<()> {
-        self.out.write_all(b"\"")?;
-        self.string_content(s)?;
-        self.out.write_all(b"\"")
+    fn string(&mut self, s: &str) {
+        self.out.push(b'"');
+        self.string_content(s);
+        self.out.push(b'"');
     }
 
-    fn alignment(&mut self, a: Alignment) -> Result<()> {
-        self.out.write_all(match a {
+    fn alignment(&mut self, a: Alignment) {
+        self.out.extend_from_slice(match a {
             Alignment::None => b"null",
             Alignment::Left => br#""left""#,
             Alignment::Center => br#""center""#,
             Alignment::Right => br#""right""#,
-        })
+        });
     }
 
     fn id(&mut self, name: CowStr<'a>) -> usize {
@@ -254,54 +260,53 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         *self.ids.entry(name).or_insert(new)
     }
 
-    fn comma(&mut self) -> Result<()> {
+    fn comma(&mut self) {
         if !self.is_start {
-            self.out.write_all(b",")?;
+            self.out.push(b',');
         } else {
             self.is_start = false;
         }
-        Ok(())
     }
 
-    fn tag(&mut self, name: &str) -> Result<()> {
-        self.comma()?;
-        write!(self.out, r#"{{"t":"{}""#, name)
+    fn tag(&mut self, name: &str) {
+        self.comma();
+        let _ = write!(self.out, r#"{{"t":"{}""#, name);
     }
 
-    fn text_tokens(&mut self, mut input: &str, mut range: Range) -> Result<()> {
+    fn text_tokens(&mut self, mut input: &str, mut range: Range) {
         use TokenKind::*;
 
         while !input.is_empty() {
             let (token, text) = self.text_tokenizer.tokenize(input, &range);
             match token {
                 Normal => {
-                    self.comma()?;
-                    self.string(text)?;
+                    self.comma();
+                    self.string(text);
                 }
                 MatchOther | MatchCurrent | MatchOtherStart | MatchCurrentStart => {
-                    self.tag(token.tag())?;
-                    self.children_begin()?;
-                    self.string(text)?;
-                    self.tag_end()?;
+                    self.tag(token.tag());
+                    self.children_begin();
+                    self.string(text);
+                    self.tag_end();
                 }
             }
             input = &input[text.len()..];
             range.start += text.len();
         }
-
-        Ok(())
     }
 
-    fn text(&mut self, text: &str, range: Range) -> Result<()> {
+    fn text(&mut self, text: &str, range: Range) {
         self.text_visitor.visit(text, &range);
 
         let Some(offset) = self.modified else {
-            return self.text_tokens(text, range);
+            self.text_tokens(text, range);
+            return;
         };
 
         let Range { start, end } = range;
         if end < offset {
-            return self.text_tokens(text, range);
+            self.text_tokens(text, range);
+            return;
         }
 
         // Handle the last modified offset with this text token
@@ -309,39 +314,39 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         log::debug!("Handling last modified offset: {:?}", offset);
 
         if offset <= start {
-            self.tag("modified")?;
-            self.out.write_all(b"}")?;
-            self.text_tokens(text, range)
+            self.tag("modified");
+            self.out.push(b'}');
+            self.text_tokens(text, range);
         } else if end == offset {
-            self.text_tokens(text, range)?;
-            self.tag("modified")?;
-            self.out.write_all(b"}")
+            self.text_tokens(text, range);
+            self.tag("modified");
+            self.out.push(b'}');
         } else {
             let i = offset - start;
-            self.text_tokens(&text[..i], range.start..offset)?;
-            self.tag("modified")?;
-            self.out.write_all(b"}")?;
-            self.text_tokens(&text[i..], offset..range.end)
+            self.text_tokens(&text[..i], range.start..offset);
+            self.tag("modified");
+            self.out.push(b'}');
+            self.text_tokens(&text[i..], offset..range.end);
         }
     }
 
-    fn emoji_text(&mut self, text: &str, range: Range) -> Result<()> {
+    fn emoji_text(&mut self, text: &str, range: Range) {
         let mut start = range.start;
         for token in EmojiTokenizer::new(text) {
             match token {
                 EmojiToken::Text(text) => {
                     if !text.is_empty() {
-                        self.text(text, start..start + text.len())?;
+                        self.text(text, start..start + text.len());
                         start += text.len();
                     }
                 }
                 EmojiToken::Emoji(emoji, len) => {
-                    self.tag("emoji")?;
-                    self.out.write_all(br#","name":"#)?;
-                    self.string(emoji.name())?;
-                    self.children_begin()?;
-                    self.string(emoji.as_str())?;
-                    self.tag_end()?;
+                    self.tag("emoji");
+                    self.out.extend_from_slice(br#","name":"#);
+                    self.string(emoji.name());
+                    self.children_begin();
+                    self.string(emoji.as_str());
+                    self.tag_end();
                     start += len;
                 }
             }
@@ -350,131 +355,128 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         // That's OK because pulldown-cmark tokenizes any escaped text as small as possible to reduce extra heap allocation.
         // For instance "foo &amp; bar" is tokenized into three events Text("foo "), Text("&"), Test(" bar"). It means that
         // any escaped charactor is followed by no text within the token.
-        Ok(())
     }
 
-    fn autolink_text(&mut self, mut text: &str, range: Range) -> Result<()> {
+    fn autolink_text(&mut self, mut text: &str, range: Range) {
         let Range { mut start, end } = range;
         while let Some((s, e)) = self.autolinker.find_autolink(text) {
             if s > 0 {
-                self.emoji_text(&text[..s], start..start + s)?;
+                self.emoji_text(&text[..s], start..start + s);
             }
 
             let url = &text[s..e];
             log::debug!("Auto-linking URL: {}", url);
-            self.tag("a")?;
-            self.out.write_all(br#","auto":true,"href":"#)?;
-            self.string(url)?;
-            self.children_begin()?;
-            self.text(url, start + s..start + e)?;
-            self.tag_end()?;
+            self.tag("a");
+            self.out.extend_from_slice(br#","auto":true,"href":"#);
+            self.string(url);
+            self.children_begin();
+            self.text(url, start + s..start + e);
+            self.tag_end();
 
             text = &text[e..];
             start += e;
         }
 
         if !text.is_empty() {
-            self.emoji_text(text, start..end)?;
+            self.emoji_text(text, start..end);
         }
-
-        Ok(())
     }
 
-    fn events(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
+    fn events(&mut self, parser: Parser<'a, 'a>) {
         use Event::*;
 
         let mut events = parser.into_offset_iter().peekable();
         while let Some((event, range)) = events.next() {
             match event {
-                Start(tag) => self.start_tag(tag)?,
-                End(tag) => self.end_tag(tag)?,
-                Text(text) => self.autolink_text(&text, range)?,
+                Start(tag) => self.start_tag(tag),
+                End(tag) => self.end_tag(tag),
+                Text(text) => self.autolink_text(&text, range),
                 Code(text) => {
                     let pad = (range.len() - text.len()) / 2;
                     let inner_range = (range.start + pad)..(range.end - pad);
-                    self.tag("code")?;
-                    self.children_begin()?;
-                    self.text(&text, inner_range)?;
-                    self.tag_end()?;
+                    self.tag("code");
+                    self.children_begin();
+                    self.text(&text, inner_range);
+                    self.tag_end();
                 }
                 Html(html) => {
-                    self.tag("html")?;
-                    self.out.write_all(br#","raw":""#)?;
+                    self.tag("html");
+                    self.out.extend_from_slice(br#","raw":""#);
 
                     let mut encoder = StringContentEncoder(&mut self.out);
-                    self.sanitizer.clean(&mut encoder, &html)?;
+                    self.sanitizer.clean(&mut encoder, &html).unwrap();
 
                     // Collect all HTML events into one element object
                     while let Some((Html(html), _)) = events.peek() {
-                        self.sanitizer.clean(&mut encoder, html)?;
+                        self.sanitizer.clean(&mut encoder, html).unwrap();
                         events.next();
                     }
 
-                    self.out.write_all(br#""}"#)?;
+                    self.out.extend_from_slice(br#""}"#);
                 }
-                SoftBreak => self.text("\n", range)?,
+                SoftBreak => self.text("\n", range),
                 HardBreak => {
-                    self.tag("br")?;
-                    self.out.write_all(b"}")?;
+                    self.tag("br");
+                    self.out.push(b'}');
                 }
                 Rule => {
-                    self.tag("hr")?;
-                    self.out.write_all(b"}")?;
+                    self.tag("hr");
+                    self.out.push(b'}');
                 }
                 FootnoteReference(name) => {
-                    self.tag("fn-ref")?;
+                    self.tag("fn-ref");
                     let id = self.id(name);
-                    write!(self.out, r#","id":{}}}"#, id)?;
+                    let _ = write!(self.out, r#","id":{}}}"#, id);
                 }
                 TaskListMarker(checked) => {
-                    self.tag("checkbox")?;
-                    write!(self.out, r#","checked":{}}}"#, checked)?;
+                    self.tag("checkbox");
+                    let _ = write!(self.out, r#","checked":{}}}"#, checked);
                 }
                 Math(display, text) => {
-                    self.tag("math")?;
-                    write!(self.out, r#","inline":{},"expr":"#, display == MathDisplay::Inline)?;
-                    self.string(&text)?;
-                    self.out.write_all(b"}")?;
+                    self.tag("math");
+                    let _ =
+                        write!(self.out, r#","inline":{},"expr":"#, display == MathDisplay::Inline);
+                    self.string(&text);
+                    self.out.push(b'}');
                 }
             }
         }
-
-        Ok(())
     }
 
-    fn rebase_link(&mut self, dest: &str) -> Result<()> {
+    fn rebase_link(&mut self, dest: &str) {
         if !should_rebase_url(dest) {
-            return self.string(dest);
+            self.string(dest);
+            return;
         }
 
         // Rebase 'foo/bar/' with '/path/to/base' as '/path/to/base/foo/bar'
-        self.out.write_all(b"\"")?;
-        self.string_content(self.base_dir)?;
+        self.out.push(b'"');
+        self.string_content(self.base_dir);
         if !dest.starts_with('/') {
-            self.out.write_all(b"/")?;
+            self.out.push(b'/');
         }
-        self.string_content(dest)?;
-        self.out.write_all(b"\"")
+        self.string_content(dest);
+        self.out.push(b'"');
     }
 
-    fn children_begin(&mut self) -> Result<()> {
+    fn children_begin(&mut self) {
         self.is_start = true;
-        self.out.write_all(br#","c":["#)
+        self.out.extend_from_slice(br#","c":["#);
     }
 
-    fn tag_end(&mut self) -> Result<()> {
+    fn tag_end(&mut self) {
         self.is_start = false;
-        self.out.write_all(b"]}")
+        self.out.extend_from_slice(b"]}");
     }
 
-    fn start_tag(&mut self, tag: Tag<'a>) -> Result<()> {
+    fn start_tag(&mut self, tag: Tag<'a>) {
         use Tag::*;
         match tag {
             Paragraph => {
-                self.tag("p")?;
+                self.tag("p");
             }
             Heading(level, id, _) => {
-                self.tag("h")?;
+                self.tag("h");
 
                 let level: u8 = match level {
                     HeadingLevel::H1 => 1,
@@ -484,121 +486,121 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     HeadingLevel::H5 => 5,
                     HeadingLevel::H6 => 6,
                 };
-                write!(self.out, r#","level":{}"#, level)?;
+                let _ = write!(self.out, r#","level":{}"#, level);
 
                 if let Some(id) = id {
-                    self.out.write_all(br#","id":"#)?;
-                    self.string(id)?;
+                    self.out.extend_from_slice(br#","id":"#);
+                    self.string(id);
                 }
             }
             Table(alignments) => {
-                self.tag("table")?;
+                self.tag("table");
 
-                self.out.write_all(br#","align":["#)?;
+                self.out.extend_from_slice(br#","align":["#);
                 let mut alignments = alignments.into_iter();
                 if let Some(a) = alignments.next() {
-                    self.alignment(a)?;
+                    self.alignment(a);
                 }
                 for a in alignments {
-                    self.out.write_all(b",")?;
-                    self.alignment(a)?;
+                    self.out.push(b',');
+                    self.alignment(a);
                 }
-                self.out.write_all(b"]")?;
+                self.out.push(b']');
             }
             TableHead => {
                 self.table = TableState::Head;
-                self.tag("thead")?;
-                self.children_begin()?;
-                self.tag("tr")?;
+                self.tag("thead");
+                self.children_begin();
+                self.tag("tr");
             }
             TableRow => {
                 self.table = TableState::Row;
-                self.tag("tr")?;
+                self.tag("tr");
             }
             TableCell => {
                 let tag = match self.table {
                     TableState::Head => "th",
                     TableState::Row => "td",
                 };
-                self.tag(tag)?;
+                self.tag(tag);
             }
             BlockQuote => {
-                self.tag("blockquote")?;
+                self.tag("blockquote");
             }
             CodeBlock(info) => {
-                self.tag("pre")?;
-                self.children_begin()?;
-                self.tag("code")?;
+                self.tag("pre");
+                self.children_begin();
+                self.tag("code");
                 if let CodeBlockKind::Fenced(info) = info {
                     if let Some(lang) = info.split(' ').next() {
                         if !lang.is_empty() {
-                            self.out.write_all(br#","lang":"#)?;
-                            self.string(lang)?;
+                            self.out.extend_from_slice(br#","lang":"#);
+                            self.string(lang);
                         }
                     }
                 }
             }
-            List(Some(1)) => self.tag("ol")?,
+            List(Some(1)) => self.tag("ol"),
             List(Some(start)) => {
-                self.tag("ol")?;
-                write!(self.out, r#","start":{}"#, start)?;
+                self.tag("ol");
+                let _ = write!(self.out, r#","start":{}"#, start);
             }
-            List(None) => self.tag("ul")?,
-            Item => self.tag("li")?,
-            Emphasis => self.tag("em")?,
-            Strong => self.tag("strong")?,
-            Strikethrough => self.tag("del")?,
-            Link(LinkType::Autolink, _, _) => return Ok(()), // Ignore autolink since it is linked by `Autolinker`
+            List(None) => self.tag("ul"),
+            Item => self.tag("li"),
+            Emphasis => self.tag("em"),
+            Strong => self.tag("strong"),
+            Strikethrough => self.tag("del"),
+            Link(LinkType::Autolink, _, _) => return, // Ignore autolink since it is linked by `Autolinker`
             Link(link_type, dest, title) => {
-                self.tag("a")?;
+                self.tag("a");
 
-                self.out.write_all(br#","href":"#)?;
+                self.out.extend_from_slice(br#","href":"#);
                 match link_type {
                     LinkType::Email => {
                         let mut href = "mailto:".to_string();
                         href.push_str(&dest);
-                        self.string(&href)?;
+                        self.string(&href);
                     }
-                    _ => self.rebase_link(&dest)?,
+                    _ => self.rebase_link(&dest),
                 }
 
                 if !title.is_empty() {
-                    self.out.write_all(br#","title":"#)?;
-                    self.string(&title)?;
+                    self.out.extend_from_slice(br#","title":"#);
+                    self.string(&title);
                 }
             }
             Image(_link_type, dest, title) => {
-                self.tag("img")?;
+                self.tag("img");
 
                 if !title.is_empty() {
-                    self.out.write_all(br#","title":"#)?;
-                    self.string(&title)?;
+                    self.out.extend_from_slice(br#","title":"#);
+                    self.string(&title);
                 }
 
-                self.out.write_all(br#","src":"#)?;
-                self.rebase_link(&dest)?;
+                self.out.extend_from_slice(br#","src":"#);
+                self.rebase_link(&dest);
             }
             FootnoteDefinition(name) => {
-                self.tag("fn-def")?;
+                self.tag("fn-def");
 
                 if !name.is_empty() {
-                    self.out.write_all(br#","name":"#)?;
-                    self.string(&name)?;
+                    self.out.extend_from_slice(br#","name":"#);
+                    self.string(&name);
                 }
 
                 let id = self.id(name);
-                write!(self.out, r#","id":{}"#, id)?;
+                let _ = write!(self.out, r#","id":{}"#, id);
             }
         }
 
         // Tag element must have its children (maybe empty)
-        self.children_begin()
+        self.children_begin();
     }
 
-    fn end_tag(&mut self, tag: Tag<'a>) -> Result<()> {
+    fn end_tag(&mut self, tag: Tag<'a>) {
         use Tag::*;
         match tag {
-            Link(LinkType::Autolink, _, _) => Ok(()), // Ignore autolink since it is linked by `Autolinker`
+            Link(LinkType::Autolink, _, _) => {} // Ignore autolink since it is linked by `Autolinker`
             Paragraph
             | Heading(_, _, _)
             | TableRow
@@ -613,14 +615,14 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             | Image(_, _, _)
             | FootnoteDefinition(_) => self.tag_end(),
             Table(_) | CodeBlock(_) => {
-                self.tag_end()?;
-                self.tag_end()
+                self.tag_end();
+                self.tag_end();
             }
             TableHead => {
-                self.tag_end()?;
-                self.tag_end()?;
-                self.tag("tbody")?;
-                self.children_begin()
+                self.tag_end();
+                self.tag_end();
+                self.tag("tbody");
+                self.children_begin();
             }
         }
     }
