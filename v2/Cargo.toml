@@ -35,7 +35,7 @@ rfd = "0.10.0"
 serde = "1.0.147"
 serde_json = "1.0.87"
 serde_yaml = "0.9.14"
-wry = "0.22.0"
+wry = "0.23.1"
 
 [features]
 __bench = []
