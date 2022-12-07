@@ -6,6 +6,8 @@ use std::fs;
 
 #[cfg(debug_assertions)]
 const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
+#[cfg(debug_assertions)]
+const BUNDLE_JS_MAP: &[u8] = include_bytes!("assets/bundle.js.map");
 #[cfg(not(debug_assertions))]
 const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.min.js");
 const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
@@ -116,6 +118,8 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "svg"  => "image/svg+xml",
     "webp" => "image/webp",
     "tiff" => "image/tiff",
+    #[cfg(debug_assertions)]
+    "map"  => "text/plain;charset=UTF-8",
 };
 
 fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
@@ -191,6 +195,8 @@ impl Assets {
             "/github-markdown.css" => self.markdown_css.to_vec(),
             "/hljs-theme.css"      => self.hljs_css.into(),
             "/logo.png"            => LOGO_PNG.into(),
+            #[cfg(debug_assertions)]
+            "/bundle.js.map"       => BUNDLE_JS_MAP.into(),
             path                   => {
                 log::debug!("Dynamically loading external resource {:?}", path);
                 match fs::read(path) {

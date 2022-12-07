@@ -5,7 +5,7 @@ CSS := $(shell find -E src/assets -type f -regex .*\.css$ )
 node_modules:
 	npm install
 
-src/assets/bundle.js: node_modules $(TS_SRC)
+src/assets/bundle.js src/assets/bundle.js.map: node_modules $(TS_SRC)
 	npm run lint:ts
 	npm run bundle
 
