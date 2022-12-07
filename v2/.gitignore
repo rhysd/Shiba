@@ -1,6 +1,8 @@
 /node_modules
 /target
 /src/assets/*.js
+/src/assets/*.js.map
 /src/assets/**/*.css
+/src/assets/*.html
 /web/*.js
 /TODO.md
