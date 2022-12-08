@@ -105,17 +105,17 @@ impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
     }
 }
 
-// Note: Build raw JavaScript string literal to evaluate.
-// String built with this builder will be evaluated via JSON.parse like `receive(JSON.parse('{"kind":"render_tree",...}'))`.
+// Note: Build raw JavaScript expression which is evaluated to the render tree encoded as JSON value.
+// This expression will be evaluated via `receive(JSON.parse('{"kind":"render_tree",...}'))` by renderer.
 impl<'a, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, V, T> {
     type Output = V;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
         let mut enc =
             RenderTreeEncoder::new(writer, self.base_dir, self.offset, self.text_tokenizer);
-        enc.out.write_all(br#"'{"kind":"render_tree","tree":"#)?;
+        enc.out.write_all(br#"JSON.parse('{"kind":"render_tree","tree":"#)?;
         enc.push(self.parser)?;
-        enc.out.write_all(b"}'")?;
+        enc.out.write_all(b"}')")?;
         Ok(enc.text_visitor)
     }
 }
@@ -555,9 +555,9 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 self.out.write_all(br#","href":"#)?;
                 match link_type {
                     LinkType::Email => {
-                        let mut href = "mailto:".to_string();
-                        href.push_str(&dest);
-                        self.string(&href)?;
+                        self.out.write_all(b"\"mailto:")?;
+                        self.string_content(&dest)?;
+                        self.out.write_all(b"\"")?;
                     }
                     _ => self.rebase_link(&dest)?,
                 }
