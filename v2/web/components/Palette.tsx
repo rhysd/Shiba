@@ -93,28 +93,35 @@ export function Palette<T extends Item>({
                 onSelect(items[index]);
             }
         } else {
-            // Note: This `blur()` call is a workaround for Safari.
-            // Safari has a bug to scroll the page to the input element automatically.
-            // To prevent this issue, removing the focus before unmounting is needed.
-            // https://github.com/sweetalert2/sweetalert2/issues/2088
-            if (e.key === 'Escape') {
-                e.currentTarget.blur();
-            }
             return;
         }
         e.preventDefault();
     };
 
-    // If `disablePortal` is not set, closing dialog with Enter or Escape automatically scrolls the parent
-    // to the end.
+    // `keydown` event is not triggered on WKWebView only when Escape is pressed while focusing on <input>
+    const handleKeyup = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+
+            // Note: This `blur()` call is a workaround for Safari.
+            // Safari has a bug to scroll the page to the input element automatically.
+            // To prevent this issue, removing the focus before unmounting is needed.
+            // https://github.com/sweetalert2/sweetalert2/issues/2088
+            e.currentTarget.blur();
+
+            onClose();
+        }
+    };
+
     return (
-        <Dialog PaperProps={PAPER_PROPS} onClose={onClose} open scroll="paper" disablePortal>
+        <Dialog PaperProps={PAPER_PROPS} onClose={onClose} open scroll="paper">
             <DialogTitle>
                 <InputBase
                     inputProps={{
                         'aria-label': 'search outline',
                         onChange: handleInput,
                         onKeyDown: handleKeydown,
+                        onKeyUp: handleKeyup,
                         style: { padding: 0 },
                     }}
                     type="search"
