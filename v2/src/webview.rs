@@ -8,7 +8,6 @@ use crate::renderer::{
 };
 use anyhow::Result;
 use std::collections::HashMap;
-use std::path::PathBuf;
 use wry::application::accelerator::Accelerator;
 use wry::application::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use wry::application::event_loop::EventLoop;
@@ -243,8 +242,11 @@ fn create_webview(
                     url.push('.');
                 }
 
-                // TODO: This does not work on Windows since path separator is not /
-                let path = PathBuf::from(url);
+                #[cfg(not(target_os = "windows"))]
+                let path = url.into();
+                #[cfg(target_os = "windows")]
+                let path = url.replace('/', "\\").into();
+
                 log::debug!("Opening local path {:?}", path);
                 UserEvent::OpenLocalPath(path)
             } else {
