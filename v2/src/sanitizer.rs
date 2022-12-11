@@ -71,7 +71,7 @@ impl<'a> Sanitizer<'a> {
             let prefix = self.base_dir.to_string();
             let eval = Box::new(RebaseUrl { prefix });
             let mut builder = Builder::default();
-            builder.url_relative(UrlRelative::Custom(eval));
+            builder.add_generic_attributes(&["name", "id"]).url_relative(UrlRelative::Custom(eval));
             builder
         });
         cleaner.clean(html).write_to(out)

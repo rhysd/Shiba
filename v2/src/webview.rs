@@ -232,14 +232,13 @@ fn create_webview(
                     return true;
                 }
 
-                if let Some(idx) = url.rfind('/') {
-                    if url[idx + 1..].starts_with('#') {
-                        log::debug!("Allow navigating to hash link {}", url); // For footnotes
-                        return true;
-                    }
+                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
+
+                if url.starts_with("/index.html#") {
+                    log::debug!("Allow navigating to hash link {}", url);
+                    return true;
                 }
 
-                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
                 if url.is_empty() {
                     url.push('.');
                 }
