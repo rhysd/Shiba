@@ -38,7 +38,9 @@ serde_yaml = "0.9.14"
 wry = "0.23.1"
 
 [features]
+default = []
 __bench = []
+devtools = ["wry/devtools"]
 
 [workspace]
 members = ["bench"]

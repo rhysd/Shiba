@@ -277,6 +277,7 @@ fn create_webview(
                 .body(body)
                 .map_err(Into::into)
         })
+        .with_devtools(cfg!(any(debug_assertions, feature = "devtools")))
         .build()
         .map_err(Into::into)
 }
@@ -337,7 +338,7 @@ impl Renderer for Wry {
             webview.zoom(zoom_level.factor());
         }
 
-        #[cfg(debug_assertions)]
+        #[cfg(any(debug_assertions, feature = "devtools"))]
         if options.debug {
             webview.open_devtools(); // This method is defined in debug build only
             log::debug!("Opened DevTools for debugging");
