@@ -118,7 +118,6 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "svg"  => "image/svg+xml",
     "webp" => "image/webp",
     "tiff" => "image/tiff",
-    #[cfg(debug_assertions)]
     "map"  => "text/plain;charset=UTF-8",
 };
 

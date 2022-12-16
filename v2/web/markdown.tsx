@@ -1,9 +1,9 @@
 import React from 'react';
 import hljs from 'highlight.js';
+import Mathjax from 'react-mathjax-component';
 import type { RenderTreeElem, RenderTreeFootNoteDef, RenderTreeTableAlign } from './ipc';
 import * as log from './log';
 import { CodeBlock } from './components/CodeBlock';
-import { Mathjax } from './components/Mathjax';
 import { Mermaid } from './components/Mermaid';
 
 const FOOTNOTE_BACKREF_STYLE: React.CSSProperties = {
@@ -222,7 +222,9 @@ export class ReactMarkdownRenderer {
                         if (text !== null) {
                             const [content, modified] = text;
                             return this.maybeModified(
-                                <Mathjax key={key} expr={content} className="code-fence-math" />,
+                                <div className="code-fence-math" key={key}>
+                                    <Mathjax expr={content} />
+                                </div>,
                                 modified,
                                 key,
                             );
@@ -308,13 +310,19 @@ export class ReactMarkdownRenderer {
                 this.footNotes.push(elem);
                 return null; // Footnotes will be rendered at the bottom of page
             case 'math':
-                return (
-                    <Mathjax
-                        key={key}
-                        expr={elem.expr}
-                        className={elem.inline ? 'math-expr-inline' : 'math-expr-block'}
-                    />
-                );
+                if (elem.inline) {
+                    return (
+                        <span className="math-expr-inline" key={key}>
+                            <Mathjax expr={elem.expr} />
+                        </span>
+                    );
+                } else {
+                    return (
+                        <div className="math-expr-block" key={key}>
+                            <Mathjax expr={elem.expr} />
+                        </div>
+                    );
+                }
             case 'html': {
                 // XXX: This <span> element is necessary because React cannot render inner HTML under fragment
                 // https://github.com/reactjs/rfcs/pull/129
