@@ -18,6 +18,8 @@ use wry::application::menu::{MenuBar, MenuId, MenuItem, MenuItemAttributes};
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
+#[cfg(target_os = "windows")]
+use wry::webview::WebViewBuilderExtWindows;
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
 pub struct WryMenuIds(HashMap<MenuId, AppMenuItem>);
@@ -196,7 +198,8 @@ fn create_webview(
     let navigation_proxy = event_loop.create_proxy();
     let loader = Assets::new(config, window_theme(&window));
 
-    WebViewBuilder::new(window)?
+    #[allow(unused_mut)]
+    let mut builder = WebViewBuilder::new(window)?
         .with_url("shiba://localhost/index.html")?
         .with_ipc_handler(move |_w, s| {
             let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
@@ -277,9 +280,14 @@ fn create_webview(
                 .body(body)
                 .map_err(Into::into)
         })
-        .with_devtools(cfg!(any(debug_assertions, feature = "devtools")))
-        .build()
-        .map_err(Into::into)
+        .with_devtools(cfg!(any(debug_assertions, feature = "devtools")));
+
+    #[cfg(target_os = "windows")]
+    {
+        builder = builder.with_browser_accelerator_keys(false);
+    }
+
+    builder.build().map_err(Into::into)
 }
 
 pub struct Wry {
