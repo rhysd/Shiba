@@ -63,7 +63,7 @@ impl DataDir {
         let s = serde_json::to_string(data)
             .with_context(|| format!("Could not serialize persistent data to {path:?}"))?;
         log::debug!("Saved persistent data at {path:?}");
-        fs::write(&path, &s)
+        fs::write(&path, s)
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
     }
 

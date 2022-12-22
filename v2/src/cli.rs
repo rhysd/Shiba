@@ -17,6 +17,7 @@ pub struct Options {
 }
 
 impl Options {
+    #[allow(clippy::print_stdout)]
     pub fn from_args(iter: impl Iterator<Item = String>) -> Result<Option<Self>> {
         let mut opts = GetOpts::new();
         opts.optflag("h", "help", "print this help");

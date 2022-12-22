@@ -15,26 +15,26 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aho-corasick = "0.7.19"
+aho-corasick = "0.7.20"
 ammonia = "3.3.0"
-anyhow = "1.0.66"
+anyhow = "1.0.68"
 dirs = "4.0.0"
-emojis = "0.5.1"
-env_logger = "0.9.1"
+emojis = "0.5.2"
+env_logger = "0.10.0"
 getopts = "0.2.21"
 log = "0.4.17"
 memchr = "2.5.0"
 notify = "5.0.0"
 once_cell = "1.16.0"
-open = "3.0.3"
+open = "3.2.0"
 phf = { version = "0.11.1", features = ["macros"] }
 # https://github.com/raphlinus/pulldown-cmark/pull/622
 pulldown-cmark = { git = "https://github.com/rhysd/pulldown-cmark.git", branch="math", default-features = false, features = [] }
 regex = "1.7.0"
 rfd = "0.10.0"
-serde = "1.0.147"
-serde_json = "1.0.87"
-serde_yaml = "0.9.14"
+serde = "1.0.151"
+serde_json = "1.0.91"
+serde_yaml = "0.9.16"
 wry = "0.23.4"
 
 [features]
