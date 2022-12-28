@@ -344,6 +344,13 @@ where
         Ok(())
     }
 
+    fn toggle_always_on_top(&mut self) -> Result<()> {
+        let pinned = !self.renderer.always_on_top();
+        log::debug!("Toggle always-on-top (pinned={})", pinned);
+        self.renderer.set_always_on_top(pinned);
+        self.renderer.send_message(MessageToRenderer::AlwaysOnTop { pinned })
+    }
+
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<AppControl> {
         match message {
             MessageFromRenderer::Init => {
@@ -466,6 +473,7 @@ where
             MenuItem::ZoomIn => self.zoom(Zoom::In)?,
             MenuItem::ZoomOut => self.zoom(Zoom::Out)?,
             MenuItem::History => self.renderer.send_message(MessageToRenderer::History)?,
+            MenuItem::ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             MenuItem::Help => self.renderer.send_message(MessageToRenderer::Help)?,
             MenuItem::OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
         }

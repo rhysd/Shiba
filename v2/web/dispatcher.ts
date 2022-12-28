@@ -14,6 +14,7 @@ import {
     openHelp,
     notifyZoom,
     notifyReload,
+    notifyAlwaysOnTop,
     setRecentFiles,
     welcome,
 } from './reducer';
@@ -106,6 +107,9 @@ export class GlobalDispatcher {
                     break;
                 case 'reload':
                     this.dispatch(notifyReload());
+                    break;
+                case 'always_on_top':
+                    this.dispatch(notifyAlwaysOnTop(msg.pinned));
                     break;
                 case 'debug':
                     log.enableDebug();

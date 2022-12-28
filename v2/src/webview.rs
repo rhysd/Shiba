@@ -128,6 +128,8 @@ impl WryMenuIds {
         let mut window_menu = MenuBar::new();
         window_menu.add_native_item(MenuItem::Minimize);
         window_menu.add_native_item(MenuItem::Zoom);
+        let toggle_always_on_top =
+            window_menu.add_item(MenuItemAttributes::new("Pin/Unpin On Top"));
         root_menu.add_submenu("Window", true, window_menu);
 
         let mut help_menu = MenuBar::new();
@@ -142,22 +144,23 @@ impl WryMenuIds {
             use AppMenuItem::*;
 
             [
-                (open_file.id(),   OpenFile),
-                (watch_dir.id(),   WatchDir),
-                (quit.id(),        Quit),
-                (forward.id(),     Forward),
-                (back.id(),        Back),
-                (reload.id(),      Reload),
-                (search.id(),      Search),
-                (search_next.id(), SearchNext),
-                (search_prev.id(), SearchPrevious),
-                (outline.id(),     Outline),
-                (print.id(),       Print),
-                (zoom_in.id(),     ZoomIn),
-                (zoom_out.id(),    ZoomOut),
-                (history.id(),     History),
-                (guide.id(),       Help),
-                (open_repo.id(),   OpenRepo),
+                (open_file.id(),            OpenFile),
+                (watch_dir.id(),            WatchDir),
+                (quit.id(),                 Quit),
+                (forward.id(),              Forward),
+                (back.id(),                 Back),
+                (reload.id(),               Reload),
+                (search.id(),               Search),
+                (search_next.id(),          SearchNext),
+                (search_prev.id(),          SearchPrevious),
+                (outline.id(),              Outline),
+                (print.id(),                Print),
+                (zoom_in.id(),              ZoomIn),
+                (zoom_out.id(),             ZoomOut),
+                (history.id(),              History),
+                (toggle_always_on_top.id(), ToggleAlwaysOnTop),
+                (guide.id(),                Help),
+                (open_repo.id(),            OpenRepo),
             ]
         });
 
@@ -294,6 +297,7 @@ pub struct Wry {
     webview: WebView,
     menu_ids: WryMenuIds,
     zoom_level: ZoomLevel,
+    always_on_top: bool,
 }
 
 impl Renderer for Wry {
@@ -352,7 +356,8 @@ impl Renderer for Wry {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(Wry { webview, menu_ids, zoom_level })
+        let always_on_top = false;
+        Ok(Wry { webview, menu_ids, zoom_level, always_on_top })
     }
 
     fn menu(&self) -> &Self::Menu {
@@ -419,5 +424,16 @@ impl Renderer for Wry {
 
     fn zoom_level(&self) -> ZoomLevel {
         self.zoom_level
+    }
+
+    fn set_always_on_top(&mut self, enabled: bool) {
+        if self.always_on_top != enabled {
+            self.webview.window().set_always_on_top(enabled);
+            self.always_on_top = enabled;
+        }
+    }
+
+    fn always_on_top(&self) -> bool {
+        self.always_on_top
     }
 }

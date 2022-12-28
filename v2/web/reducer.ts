@@ -12,6 +12,10 @@ export type NotificationContent =
       }
     | {
           kind: 'reload';
+      }
+    | {
+          kind: 'alwaysOnTop';
+          pinned: boolean;
       };
 
 export interface State {
@@ -244,6 +248,10 @@ export function dismissNotification(): Action {
 
 export function notifyReload(): Action {
     return { kind: 'notification', notification: { kind: 'reload' } };
+}
+
+export function notifyAlwaysOnTop(pinned: boolean): Action {
+    return { kind: 'notification', notification: { kind: 'alwaysOnTop', pinned } };
 }
 
 export function setRecentFiles(paths: string[]): Action {

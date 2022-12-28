@@ -33,6 +33,9 @@ pub enum MessageToRenderer<'a> {
     },
     Reload,
     Debug,
+    AlwaysOnTop {
+        pinned: bool,
+    },
 }
 
 #[derive(Clone, Copy, Deserialize, Debug)]
@@ -86,6 +89,7 @@ pub enum MenuItem {
     History,
     Help,
     OpenRepo,
+    ToggleAlwaysOnTop,
 }
 
 pub trait MenuItems {
@@ -173,4 +177,6 @@ pub trait Renderer: Sized {
     fn print(&self) -> Result<()>;
     fn zoom(&mut self, level: ZoomLevel);
     fn zoom_level(&self) -> ZoomLevel;
+    fn set_always_on_top(&mut self, enabled: bool);
+    fn always_on_top(&self) -> bool;
 }

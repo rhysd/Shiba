@@ -69,6 +69,13 @@ export const Notification: React.FC<Props> = ({ open, content, dispatch }) => {
                 </Paper>
             );
             break;
+        case 'alwaysOnTop':
+            body = (
+                <Paper style={BODY_STYLE} variant="outlined">
+                    <span style={MESSAGE_STYLE}>{content.pinned ? 'Pinned' : 'Unpinned'}</span>
+                </Paper>
+            );
+            break;
         default: // Should be unreachable
             log.debug('Unknown notification kind:', content);
             return <></>;

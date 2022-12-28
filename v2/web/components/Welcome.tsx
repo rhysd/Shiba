@@ -25,7 +25,7 @@ function onClick(e: React.MouseEvent<HTMLElement>): void {
 export const Welcome: React.FC = () => {
     return (
         <div style={BODY_STYLE}>
-            <img src="/logo.png" style={LOGO_STYLE} onClick={onClick} />
+            <img alt="Open file with dialog" src="/logo.png" style={LOGO_STYLE} onClick={onClick} />
         </div>
     );
 };

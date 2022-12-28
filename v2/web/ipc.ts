@@ -230,6 +230,10 @@ export type MessageFromMain =
           kind: 'reload';
       }
     | {
+          kind: 'always_on_top';
+          pinned: boolean;
+      }
+    | {
           kind: 'debug';
       };
 export type MessageToMain =
