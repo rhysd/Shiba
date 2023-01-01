@@ -285,6 +285,12 @@ where
     }
 
     fn reload(&mut self) -> Result<()> {
+        if self.preview.content.is_empty() {
+            // When content is empty, we don't need to reload the page. This happens when 'welcome' page displays just
+            // after launching the app.
+            log::debug!("Skipped to reload empty content");
+            return Ok(());
+        }
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
             self.preview.show(path, &self.renderer, true)?;

@@ -79,6 +79,10 @@ impl MarkdownParseTarget {
                 (prev_len != new_len).then_some(cmp::min(prev_len, new_len))
             })
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.source.is_empty() && self.base_dir.is_empty()
+    }
 }
 
 pub struct MarkdownParser<'a, V: TextVisitor, T: TextTokenizer> {
