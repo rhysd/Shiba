@@ -156,8 +156,33 @@ impl Default for ZoomLevel {
     }
 }
 
+#[derive(Debug)]
+pub enum AppControl {
+    Continue,
+    Exit,
+}
+
+pub trait App<M: MenuItems> {
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl>;
+    fn handle_menu_event(&mut self, id: M::ItemId) -> Result<AppControl>;
+    fn handle_exit(&self) -> Result<()>;
+}
+
+pub trait EventChannel: 'static + Send {
+    fn send_event(&self, event: UserEvent);
+}
+
+pub trait EventLoop {
+    type Channel: EventChannel;
+    type Menu: MenuItems;
+    fn create_channel(&self) -> Self::Channel;
+    fn start<A>(self, app: A) -> !
+    where
+        A: App<Self::Menu> + 'static;
+}
+
 pub trait Renderer: Sized {
-    type EventLoop;
+    type EventLoop: EventLoop;
     type Menu: MenuItems;
 
     fn new(

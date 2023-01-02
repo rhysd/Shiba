@@ -1,12 +1,11 @@
 use crate::config::{FileExtensions, Watch as Config};
-use crate::renderer::UserEvent;
+use crate::renderer::{EventChannel, EventLoop, UserEvent};
 use anyhow::Result;
 use notify::event::{CreateKind, DataChange, EventKind as WatchEventKind, ModifyKind};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use wry::application::event_loop::{EventLoop, EventLoopProxy};
 
 pub struct PathFilter {
     extensions: FileExtensions,
@@ -51,41 +50,15 @@ impl PathFilter {
     }
 }
 
-pub trait WatchChannelCreator {
-    type Channel: 'static + Send;
-
-    fn create_channel(&self) -> Self::Channel;
-    fn on_files_changed(chan: &Self::Channel, paths: Result<Vec<PathBuf>>);
-}
-
-impl WatchChannelCreator for EventLoop<UserEvent> {
-    type Channel = EventLoopProxy<UserEvent>;
-
-    fn create_channel(&self) -> Self::Channel {
-        self.create_proxy()
-    }
-
-    fn on_files_changed(chan: &Self::Channel, paths: Result<Vec<PathBuf>>) {
-        log::debug!("Files change event from watcher: {:?}", paths);
-        let event = match paths {
-            Ok(paths) => UserEvent::WatchedFilesChanged(paths),
-            Err(err) => UserEvent::Error(err),
-        };
-        if let Err(err) = chan.send_event(event) {
-            log::error!("Could not send the file change event {}", err);
-        }
-    }
-}
-
 pub trait Watcher: Sized {
-    fn new<C: WatchChannelCreator>(creator: &C, filter: PathFilter) -> Result<Self>;
+    fn new<E: EventLoop>(event_loop: &E, filter: PathFilter) -> Result<Self>;
     fn watch(&mut self, path: &Path) -> Result<()>;
     fn unwatch(&mut self, path: &Path) -> Result<()>;
 }
 
 impl Watcher for RecommendedWatcher {
-    fn new<C: WatchChannelCreator>(creator: &C, mut filter: PathFilter) -> Result<Self> {
-        let channel = creator.create_channel();
+    fn new<E: EventLoop>(event_loop: &E, mut filter: PathFilter) -> Result<Self> {
+        let channel = event_loop.create_channel();
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) => match event.kind {
                 WatchEventKind::Create(CreateKind::File)
@@ -100,14 +73,18 @@ impl Watcher for RecommendedWatcher {
                     paths.retain(|p| filter.should_retain(p));
 
                     if !paths.is_empty() {
-                        C::on_files_changed(&channel, Ok(paths));
+                        log::debug!("Files change event from watcher: {:?}", paths);
+                        channel.send_event(UserEvent::WatchedFilesChanged(paths));
                     }
 
                     filter.cleanup_debouncer();
                 }
                 _ => {}
             },
-            Err(err) => C::on_files_changed(&channel, Err(err.into())),
+            Err(err) => {
+                log::error!("Error on watching file changes: {}", err);
+                channel.send_event(UserEvent::Error(err.into()));
+            }
         })?;
         Ok(watcher)
     }

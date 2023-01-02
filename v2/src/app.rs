@@ -5,10 +5,11 @@ use crate::markdown::{MarkdownParseTarget, MarkdownParser};
 use crate::opener::Opener;
 use crate::persistent::DataDir;
 use crate::renderer::{
-    MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer, UserEvent, Zoom,
+    App, AppControl, MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer,
+    UserEvent, Zoom,
 };
 use crate::search::Text;
-use crate::watcher::{PathFilter, WatchChannelCreator, Watcher};
+use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
 use std::collections::VecDeque;
 use std::env;
@@ -181,13 +182,7 @@ impl PreviewContent {
     }
 }
 
-#[derive(Debug)]
-pub enum AppControl {
-    Continue,
-    Exit,
-}
-
-pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
+pub struct Shiba<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     options: Options,
     renderer: R,
     opener: O,
@@ -199,13 +194,12 @@ pub struct App<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     _dialog: PhantomData<D>,
 }
 
-impl<R, O, W, D> App<R, O, W, D>
+impl<R, O, W, D> Shiba<R, O, W, D>
 where
     R: Renderer,
     O: Opener,
     W: Watcher,
     D: Dialog,
-    R::EventLoop: WatchChannelCreator,
 {
     pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         let config = if options.gen_config_file {
@@ -402,8 +396,17 @@ where
         }
         Ok(AppControl::Continue)
     }
+}
 
-    pub fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl> {
+impl<R, O, W, D> App<R::Menu> for Shiba<R, O, W, D>
+where
+    R: Renderer,
+    O: Opener,
+    W: Watcher,
+    D: Dialog,
+{
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl> {
+        log::debug!("Handling user event {:?}", event);
         match event {
             UserEvent::IpcMessage(msg) => return self.handle_ipc_message(msg),
             UserEvent::FileDrop(mut path) => {
@@ -459,7 +462,7 @@ where
         Ok(AppControl::Continue)
     }
 
-    pub fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
+    fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
         let kind = self.renderer.menu().item_from_id(id)?;
         log::debug!("Menu item was clicked: {:?}", kind);
         match kind {
@@ -486,7 +489,7 @@ where
         Ok(AppControl::Continue)
     }
 
-    pub fn handle_exit(&self) -> Result<()> {
+    fn handle_exit(&self) -> Result<()> {
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
                 self.data_dir.save(&state)?;
