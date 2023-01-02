@@ -4,18 +4,12 @@ use shiba_preview::{run, Options};
 use std::env;
 
 fn main() -> Result<()> {
-    let debug = env::var("SHIBA_DEBUG").is_ok();
-
+    let Some(options) = Options::from_args(env::args().skip(1))? else { return Ok(()) };
+    let level = if options.debug { LevelFilter::Debug } else { LevelFilter::Info };
     env_logger::builder()
-        .filter_level(if debug { LevelFilter::Debug } else { LevelFilter::Info })
+        .filter_level(level)
         .format_timestamp(None)
         .filter_module("html5ever", LevelFilter::Off)
         .init();
-
-    if let Some(mut options) = Options::from_args(env::args().skip(1))? {
-        options.debug = debug;
-        run(options)?;
-    }
-
-    Ok(())
+    run(options)
 }

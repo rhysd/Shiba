@@ -29,6 +29,7 @@ impl Options {
         );
         opts.optopt("", "config-dir", "custom config directory path", "PATH");
         opts.optopt("", "data-dir", "custom data directory path", "PATH");
+        opts.optflag("", "debug", "enable debug features");
 
         let matches = opts.parse(iter)?;
         if matches.opt_present("h") {
@@ -50,6 +51,7 @@ impl Options {
         let gen_config_file = matches.opt_present("generate-config-file");
         let config_dir = matches.opt_str("config-dir").map(PathBuf::from);
         let data_dir = matches.opt_str("data-dir").map(PathBuf::from);
+        let debug = matches.opt_present("debug");
 
         let mut init_file = None;
         let mut watch_dirs = vec![];
@@ -69,7 +71,7 @@ impl Options {
         }
 
         Ok(Some(Self {
-            debug: false,
+            debug,
             init_file,
             watch_dirs,
             theme,
