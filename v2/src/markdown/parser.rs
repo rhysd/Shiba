@@ -409,13 +409,18 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.out.write_all(br#","raw":""#)?;
 
                     let mut encoder = StringContentEncoder(&mut self.out);
-                    self.sanitizer.clean(&mut encoder, &html)?;
 
                     // Collect all HTML events into one element object
+                    let mut buf = html.into_string();
                     while let Some((Html(html), _)) = events.peek() {
-                        self.sanitizer.clean(&mut encoder, html)?;
+                        buf.push_str(html);
                         events.next();
                     }
+
+                    // TODO: Currently Parsed HTML is collected on heap memory in `buf` variable. Making `io::Read`
+                    // utility to collect HTML input from `events` is better to avoid the heap allocation.
+                    // https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.clean_from_reader
+                    self.sanitizer.clean(&mut encoder, &buf)?;
 
                     self.out.write_all(br#""}"#)?;
                 }
