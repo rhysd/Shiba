@@ -5,6 +5,8 @@
 [![Build Status](https://travis-ci.org/rhysd/Shiba.svg?branch=master)](https://travis-ci.org/rhysd/Shiba)
 [![dogs respected](https://img.shields.io/badge/dogs-respected-brightgreen.svg?longCache=true&style=flat)](https://github.com/rhysd/Shiba)
 
+**This application is being re-written from scratch in [v2 directory](./v2) using Rust, TypeScript and React**
+
 Shiba is a rich live markdown preview app with linter.  It watches markdown files in specific directory and automatically shows the preview and result of lint.
 Shiba is built on [Electron](https://github.com/atom/electron) and [Polymer](https://www.polymer-project.org/1.0/).
 
