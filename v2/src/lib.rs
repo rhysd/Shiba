@@ -23,6 +23,7 @@ pub use crate::renderer::RawMessageWriter;
 use crate::app::Shiba;
 use crate::opener::SystemOpener;
 use crate::renderer::EventLoop;
+use crate::watcher::NopWatcher;
 use crate::wry::{WryEventLoop, WryRenderer};
 use anyhow::Result;
 use notify::RecommendedWatcher;
@@ -30,9 +31,15 @@ use rfd::FileDialog;
 
 pub fn run(options: Options) -> Result<()> {
     let event_loop = WryEventLoop::with_user_event();
-    let app = Shiba::<WryRenderer, SystemOpener, RecommendedWatcher, FileDialog>::new(
-        options,
-        &event_loop,
-    )?;
-    event_loop.start(app)
+    if options.watch {
+        let app = Shiba::<WryRenderer, SystemOpener, RecommendedWatcher, FileDialog>::new(
+            options,
+            &event_loop,
+        )?;
+        event_loop.start(app)
+    } else {
+        let app =
+            Shiba::<WryRenderer, SystemOpener, NopWatcher, FileDialog>::new(options, &event_loop)?;
+        event_loop.start(app)
+    }
 }

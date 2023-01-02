@@ -10,6 +10,7 @@ pub struct Options {
     pub debug: bool,
     pub init_file: Option<PathBuf>,
     pub watch_dirs: Vec<PathBuf>,
+    pub watch: bool,
     pub theme: Option<WindowTheme>,
     pub gen_config_file: bool,
     pub config_dir: Option<PathBuf>,
@@ -22,6 +23,7 @@ impl Options {
         let mut opts = GetOpts::new();
         opts.optflag("h", "help", "print this help");
         opts.optopt("t", "theme", r#"window theme ("dark", "light" or "system")"#, "THEME");
+        opts.optflag("", "no-watch", "disable to watch file changes");
         opts.optflag(
             "",
             "generate-config-file",
@@ -48,6 +50,7 @@ impl Options {
             },
             None => None,
         };
+        let watch = !matches.opt_present("no-watch");
         let gen_config_file = matches.opt_present("generate-config-file");
         let config_dir = matches.opt_str("config-dir").map(PathBuf::from);
         let data_dir = matches.opt_str("data-dir").map(PathBuf::from);
@@ -74,6 +77,7 @@ impl Options {
             debug,
             init_file,
             watch_dirs,
+            watch,
             theme,
             gen_config_file,
             config_dir,

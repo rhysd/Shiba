@@ -101,3 +101,17 @@ impl Watcher for RecommendedWatcher {
         Ok(())
     }
 }
+
+pub struct NopWatcher;
+
+impl Watcher for NopWatcher {
+    fn new<E: EventLoop>(_event_loop: &E, _filter: PathFilter) -> Result<Self> {
+        Ok(Self)
+    }
+    fn watch(&mut self, _path: &Path) -> Result<()> {
+        Ok(())
+    }
+    fn unwatch(&mut self, _path: &Path) -> Result<()> {
+        Ok(())
+    }
+}
