@@ -128,6 +128,10 @@ export type RenderTreeElem =
           c: RenderTreeElem[];
       }
     | {
+          t: 'task-list';
+          c: RenderTreeElem[];
+      }
+    | {
           t: 'em';
           c: RenderTreeElem[];
       }

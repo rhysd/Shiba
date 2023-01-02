@@ -242,6 +242,12 @@ export class ReactMarkdownRenderer {
                 return <ul key={key}>{elem.c.map(this.render)}</ul>;
             case 'li':
                 return <li key={key}>{elem.c.map(this.render)}</li>;
+            case 'task-list':
+                return (
+                    <li key={key} className="task-list-item">
+                        {elem.c.map(this.render)}
+                    </li>
+                );
             case 'emoji':
                 return (
                     <span key={key} title={elem.name}>
@@ -290,7 +296,15 @@ export class ReactMarkdownRenderer {
                 }
                 return <td key={key}>{elem.c.map(this.render)}</td>;
             case 'checkbox': {
-                return <input key={key} type="checkbox" disabled checked={elem.checked} />;
+                return (
+                    <input
+                        key={key}
+                        type="checkbox"
+                        disabled
+                        checked={elem.checked}
+                        className="task-list-item-checkbox"
+                    />
+                );
             }
             case 'hr':
                 return <hr key={key} />;

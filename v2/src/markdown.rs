@@ -161,7 +161,7 @@ fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
 
     #[rustfmt::skip]
     const ESCAPE_TABLE: [u8; 256] = [
-        //   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+    //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
         XX, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
         XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 1
         __, __, DQ, __, __, __, __, SQ, __, __, __, __, __, __, __, __, // 2
@@ -390,7 +390,10 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         let mut events = parser.into_offset_iter().peekable();
         while let Some((event, range)) = events.next() {
             match event {
-                Start(tag) => self.start_tag(tag)?,
+                Start(tag) => {
+                    let next_event = events.peek().map(|(e, _)| e);
+                    self.start_tag(tag, next_event)?;
+                }
                 End(tag) => self.end_tag(tag)?,
                 Text(text) => self.autolink_text(&text, range)?,
                 Code(text) => {
@@ -471,7 +474,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         self.out.write_all(b"]}")
     }
 
-    fn start_tag(&mut self, tag: Tag<'a>) -> Result<()> {
+    fn start_tag(&mut self, tag: Tag<'a>, next: Option<&Event>) -> Result<()> {
         use Tag::*;
         match tag {
             Paragraph => {
@@ -548,7 +551,13 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 write!(self.out, r#","start":{}"#, start)?;
             }
             List(None) => self.tag("ul")?,
-            Item => self.tag("li")?,
+            Item => {
+                if let Some(Event::TaskListMarker(_)) = next {
+                    self.tag("task-list")?;
+                } else {
+                    self.tag("li")?;
+                }
+            }
             Emphasis => self.tag("em")?,
             Strong => self.tag("strong")?,
             Strikethrough => self.tag("del")?,
