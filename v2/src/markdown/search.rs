@@ -1,5 +1,5 @@
+use super::parser::{Range, TextTokenizer, TextVisitor, TokenKind};
 use crate::config::SearchMatcher;
-use crate::markdown::{Range, TextTokenizer, TextVisitor, TokenKind};
 use aho_corasick::{
     AhoCorasick, AhoCorasickBuilder, FindIter as AhoCorasickFindIter, Match as AhoCorasickMatch,
 };
@@ -64,23 +64,23 @@ impl Searcher for Regex {
 }
 
 #[derive(Default)]
-pub struct Text {
+pub struct DisplayText {
     text: String,
-    maps: Vec<Range>,
+    srcmap: Vec<Range>,
 }
 
-impl TextVisitor for Text {
+impl TextVisitor for DisplayText {
     fn visit(&mut self, text: &str, range: &Range) {
         self.text.push_str(text);
-        self.maps.push(range.clone());
+        self.srcmap.push(range.clone());
     }
 }
 
-impl Text {
+impl DisplayText {
     fn search_with<S: Searcher>(&self, query: &str, ignore_case: bool) -> Result<SearchMatches> {
         let searcher = S::new(query, ignore_case)?;
 
-        let Some(mut mapper) = SourceMapper::new(&self.maps) else {
+        let Some(mut mapper) = SourceMapper::new(&self.srcmap) else {
             return Ok(SearchMatches::default());
         };
         let mut matches = vec![];
@@ -122,8 +122,8 @@ struct SourceMapper<'a> {
 }
 
 impl<'a> SourceMapper<'a> {
-    fn new(maps: &'a [Range]) -> Option<Self> {
-        let (head, tail) = maps.split_first()?;
+    fn new(srcmap: &'a [Range]) -> Option<Self> {
+        let (head, tail) = srcmap.split_first()?;
         Some(Self { head, tail, offset: 0 })
     }
 

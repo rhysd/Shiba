@@ -1,5 +1,5 @@
+use super::sanitizer::{should_rebase_url, Sanitizer, SlashPath};
 use crate::renderer::RawMessageWriter;
-use crate::sanitizer::{should_rebase_url, Sanitizer, SlashPath};
 use aho_corasick::AhoCorasick;
 use emojis::Emoji;
 use memchr::{memchr_iter, Memchr};

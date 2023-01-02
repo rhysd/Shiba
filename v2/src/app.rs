@@ -1,14 +1,13 @@
 use crate::cli::Options;
 use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
-use crate::markdown::{MarkdownParseTarget, MarkdownParser};
+use crate::markdown::{DisplayText, MarkdownParseTarget, MarkdownParser};
 use crate::opener::Opener;
 use crate::persistent::DataDir;
 use crate::renderer::{
     App, AppControl, MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer,
     UserEvent, Zoom,
 };
-use crate::search::Text;
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
 use std::collections::VecDeque;
@@ -100,7 +99,7 @@ impl History {
 struct PreviewContent {
     home_dir: Option<PathBuf>,
     content: MarkdownParseTarget,
-    text: Text,
+    text: DisplayText,
 }
 
 impl Default for PreviewContent {
@@ -108,7 +107,7 @@ impl Default for PreviewContent {
         Self {
             home_dir: dirs::home_dir(),
             content: MarkdownParseTarget::default(),
-            text: Text::default(),
+            text: DisplayText::default(),
         }
     }
 }
