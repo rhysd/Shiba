@@ -47,3 +47,6 @@ members = ["bench"]
 
 [profile.bench]
 lto = "thin"
+
+[dev-dependencies]
+insta = { version = "1.23.0", features = ["json"] }

@@ -1,0 +1,98 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "align": [
+        "left",
+        null,
+        "right"
+      ],
+      "c": [
+        {
+          "c": [
+            {
+              "c": [
+                {
+                  "c": [
+                    "this"
+                  ],
+                  "t": "th"
+                },
+                {
+                  "c": [
+                    "is"
+                  ],
+                  "t": "th"
+                },
+                {
+                  "c": [
+                    "test"
+                  ],
+                  "t": "th"
+                }
+              ],
+              "t": "tr"
+            }
+          ],
+          "t": "thead"
+        },
+        {
+          "c": [
+            {
+              "c": [
+                {
+                  "c": [
+                    "cell 1"
+                  ],
+                  "t": "td"
+                },
+                {
+                  "c": [
+                    "cell 2"
+                  ],
+                  "t": "td"
+                },
+                {
+                  "c": [
+                    "cell 3"
+                  ],
+                  "t": "td"
+                }
+              ],
+              "t": "tr"
+            },
+            {
+              "c": [
+                {
+                  "c": [
+                    "cell 4"
+                  ],
+                  "t": "td"
+                },
+                {
+                  "c": [
+                    "cell 5"
+                  ],
+                  "t": "td"
+                },
+                {
+                  "c": [
+                    "cell 6"
+                  ],
+                  "t": "td"
+                }
+              ],
+              "t": "tr"
+            }
+          ],
+          "t": "tbody"
+        }
+      ],
+      "t": "table"
+    }
+  ]
+}

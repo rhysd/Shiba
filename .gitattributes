@@ -1,1 +1,5 @@
-/v2/bench/assets/* linguist-generated
+/v2/bench/assets/ linguist-generated
+/v2/src/test/snapshots/ linguist-generated
+/v2/src/test/testdata/ linguist-generated
+/v2/src/test/snapshots/ -text
+/v2/src/test/testdata/ -text

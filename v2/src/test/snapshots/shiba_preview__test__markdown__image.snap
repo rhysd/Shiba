@@ -1,0 +1,58 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "external image"
+          ],
+          "src": "https://example.com/img.jpg",
+          "t": "img"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "image with title"
+          ],
+          "src": "https://example.com/img.png",
+          "t": "img",
+          "title": "this is title"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "relative link image"
+          ],
+          "src": "/path/to/test.jpg",
+          "t": "img"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "reference link image"
+          ],
+          "src": "https://example.com/img.jpg",
+          "t": "img"
+        }
+      ],
+      "t": "p"
+    }
+  ]
+}

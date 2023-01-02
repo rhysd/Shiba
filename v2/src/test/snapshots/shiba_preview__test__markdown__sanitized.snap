@@ -1,0 +1,13 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "raw": "\n\n<div>hello</div>\n",
+      "t": "html"
+    }
+  ]
+}

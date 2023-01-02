@@ -1,0 +1,44 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "indented code block\n",
+            "indented code block\n",
+            "indented code block\n"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "fenced code block 1\nfenced code block 1\nfenced code block 1\n"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "fenced code block 2\nfenced code block 2\nfenced code block 2\n"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    }
+  ]
+}

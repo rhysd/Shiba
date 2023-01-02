@@ -1,0 +1,66 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "Code",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "println!(\"hello, world\");\n"
+          ],
+          "lang": "rust",
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        "Math",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "\\sqrt{3}\n"
+          ],
+          "lang": "math",
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        "Mermaid",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "flowchart LR\n\nA[Hard] -->|Text| B(Round)\n"
+          ],
+          "lang": "mermaid",
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    }
+  ]
+}

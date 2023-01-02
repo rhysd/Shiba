@@ -1,0 +1,34 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            {
+              "checked": true,
+              "t": "checkbox"
+            },
+            "this is checked"
+          ],
+          "t": "task-list"
+        },
+        {
+          "c": [
+            {
+              "checked": false,
+              "t": "checkbox"
+            },
+            "this is unchecked"
+          ],
+          "t": "task-list"
+        }
+      ],
+      "t": "ul"
+    }
+  ]
+}

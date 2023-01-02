@@ -1,0 +1,63 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "Here is a simple footnote",
+        {
+          "id": 1,
+          "t": "fn-ref"
+        },
+        ". With some additional text after it. ",
+        {
+          "id": 2,
+          "t": "fn-ref"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "My reference."
+          ],
+          "t": "p"
+        }
+      ],
+      "id": 1,
+      "name": "1",
+      "t": "fn-def"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "This is big note!"
+          ],
+          "t": "p"
+        },
+        {
+          "c": [
+            {
+              "c": [
+                "some text",
+                "\n",
+                "continues"
+              ],
+              "t": "p"
+            }
+          ],
+          "t": "blockquote"
+        }
+      ],
+      "id": 2,
+      "name": "big",
+      "t": "fn-def"
+    }
+  ]
+}

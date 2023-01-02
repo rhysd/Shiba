@@ -1,0 +1,34 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "Inline math",
+        ": ",
+        {
+          "expr": "e = mc^2",
+          "inline": true,
+          "t": "math"
+        },
+        "."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        "Block math",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "expr": "\\left( \\sum_{k=1}^n a_k b_k \\right)^2 \\leq \\left( \\sum_{k=1}^n a_k^2 \\right) \\left( \\sum_{k=1}^n b_k^2 \\right)",
+      "inline": false,
+      "t": "math"
+    }
+  ]
+}

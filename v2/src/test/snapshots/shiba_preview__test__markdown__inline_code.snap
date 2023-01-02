@@ -1,0 +1,28 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "this"
+          ],
+          "t": "code"
+        },
+        " is ",
+        {
+          "c": [
+            "inline code"
+          ],
+          "t": "code"
+        },
+        "."
+      ],
+      "t": "p"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+---
+source: src/test/markdown.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "external link"
+          ],
+          "href": "https://example.com",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "link with title"
+          ],
+          "href": "https://example.com",
+          "t": "a",
+          "title": "this is title"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "relative link"
+          ],
+          "href": "/path/to/test.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "reference link"
+          ],
+          "href": "https://example.com",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    }
+  ]
+}
