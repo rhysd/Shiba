@@ -134,6 +134,7 @@ pub struct WindowState {
     pub height: u32,
     pub fullscreen: bool,
     pub zoom_level: ZoomLevel,
+    pub always_on_top: bool,
 }
 
 impl PersistentData for WindowState {

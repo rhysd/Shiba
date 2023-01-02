@@ -154,7 +154,7 @@ impl Renderer for WryRenderer {
         let mut builder =
             WindowBuilder::new().with_title("Shiba").with_menu(menu).with_visible(false);
 
-        let zoom_level = if let Some(state) = window_state {
+        let (zoom_level, always_on_top) = if let Some(state) = window_state {
             log::debug!("Restoring window state {state:?}");
             let size = PhysicalSize { width: state.width, height: state.height };
             builder = builder.with_inner_size(Size::Physical(size));
@@ -163,9 +163,10 @@ impl Renderer for WryRenderer {
             if state.fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
-            state.zoom_level
+            builder = builder.with_always_on_top(state.always_on_top);
+            (state.zoom_level, state.always_on_top)
         } else {
-            ZoomLevel::default()
+            (ZoomLevel::default(), false)
         };
 
         match config.window().theme {
@@ -194,7 +195,6 @@ impl Renderer for WryRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        let always_on_top = false;
         Ok(WryRenderer { webview, menu_ids, zoom_level, always_on_top })
     }
 
@@ -235,7 +235,8 @@ impl Renderer for WryRenderer {
         let PhysicalSize { width, height } = w.inner_size();
         let fullscreen = w.fullscreen().is_some();
         let zoom_level = self.zoom_level;
-        Some(WindowState { width, height, x, y, fullscreen, zoom_level })
+        let always_on_top = self.always_on_top;
+        Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top })
     }
 
     fn theme(&self) -> RendererTheme {
