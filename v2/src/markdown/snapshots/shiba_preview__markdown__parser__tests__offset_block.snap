@@ -1,0 +1,36 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "this is paragraph."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "this i",
+            {
+              "t": "modified"
+            },
+            "s code block\n"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        "this is pragraph."
+      ],
+      "t": "p"
+    }
+  ]
+}

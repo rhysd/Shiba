@@ -1,0 +1,105 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "relative path without dot"
+          ],
+          "href": "/a/b/c/d/e/foo/bar.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "relative path with dot"
+          ],
+          "href": "/a/b/c/d/e/./foo/bar.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "relative path with slash"
+          ],
+          "href": "/a/b/c/d/e/foo/bar.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "relative path with parent"
+          ],
+          "href": "/a/b/c/d/e/../foo/bar.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "relative path with too much parents"
+          ],
+          "href": "/a/b/c/d/e/../../../../../../../../../../../foo/bar.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "schema relative"
+          ],
+          "href": "//example.com/foo.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "external link"
+          ],
+          "href": "https://example.com/foo.txt",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "hash link"
+          ],
+          "href": "#this-is-hash",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    }
+  ]
+}

@@ -836,12 +836,12 @@ mod tests {
     }
 
     macro_rules! snapshot_test {
-        ($name:ident) => {
+        ($name:ident, $offset:expr, $basedir:expr) => {
             #[test]
             fn $name() {
                 let source = load_data(stringify!($name));
-                let target = MarkdownParseTarget::new(source, None);
-                let parser = MarkdownParser::new(&target, None, ());
+                let target = MarkdownParseTarget::new(source, $basedir);
+                let parser = MarkdownParser::new(&target, $offset, ());
                 let mut buf = Vec::new();
                 let () = parser.write_to(&mut buf).unwrap();
                 let buf = String::from_utf8(buf).unwrap();
@@ -859,6 +859,12 @@ mod tests {
                 };
                 insta::assert_json_snapshot!(json);
             }
+        };
+        ($name:ident) => {
+            snapshot_test!($name, None, None);
+        };
+        ($name:ident, $offset:expr) => {
+            snapshot_test!($name, $offset, None);
         };
     }
 
@@ -881,4 +887,17 @@ mod tests {
     snapshot_test!(tasklist);
     snapshot_test!(footnotes);
     snapshot_test!(highlight);
+
+    // Offset
+    snapshot_test!(offset_block, Some(30));
+    snapshot_test!(offset_begin, Some(0));
+    snapshot_test!(offset_after_end, Some(10000000));
+    snapshot_test!(offset_in_emphasis, Some(10));
+
+    // Relative link resolutions
+    #[cfg(target_os = "windows")]
+    const BASE_DIR: &str = r#"\a\b\c\d\e"#;
+    #[cfg(not(target_os = "windows"))]
+    const BASE_DIR: &str = "/a/b/c/d/e";
+    snapshot_test!(relative_links, None, Some(Path::new(BASE_DIR)));
 }
