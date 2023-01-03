@@ -1,0 +1,65 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "heading level 1"
+      ],
+      "level": 1,
+      "t": "h"
+    },
+    {
+      "c": [
+        "heading level 2"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        "heading level 3"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        "heading level 4"
+      ],
+      "level": 4,
+      "t": "h"
+    },
+    {
+      "c": [
+        "heading level 5"
+      ],
+      "level": 5,
+      "t": "h"
+    },
+    {
+      "c": [
+        "heading level 6"
+      ],
+      "level": 6,
+      "t": "h"
+    },
+    {
+      "c": [
+        "Setext heading level 1"
+      ],
+      "level": 1,
+      "t": "h"
+    },
+    {
+      "c": [
+        "Setext heading level 2"
+      ],
+      "level": 2,
+      "t": "h"
+    }
+  ]
+}

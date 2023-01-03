@@ -1,0 +1,22 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "this ",
+        {
+          "c": [
+            "text is declined"
+          ],
+          "t": "del"
+        },
+        " is test"
+      ],
+      "t": "p"
+    }
+  ]
+}

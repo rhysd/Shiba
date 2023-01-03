@@ -12,9 +12,6 @@ mod renderer;
 mod watcher;
 mod wry;
 
-#[cfg(test)]
-mod test;
-
 pub use crate::cli::Options;
 #[cfg(feature = "__bench")]
 pub use crate::markdown::{MarkdownParseTarget, MarkdownParser};

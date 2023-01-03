@@ -1,0 +1,24 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "raw": "<div>\n    <img src=\"https://example.com/test.png\" width=\"100\" height=\"100\" alt=\"test\">\n</div>\n",
+      "t": "html"
+    },
+    {
+      "c": [
+        "This is ",
+        {
+          "raw": "<span>inline</span>",
+          "t": "html"
+        },
+        " HTML."
+      ],
+      "t": "p"
+    }
+  ]
+}

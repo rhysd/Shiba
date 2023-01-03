@@ -1,0 +1,48 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "Emoji ",
+        {
+          "c": [
+            "🐶"
+          ],
+          "name": "dog face",
+          "t": "emoji"
+        },
+        " and ",
+        {
+          "c": [
+            "🐱"
+          ],
+          "name": "cat face",
+          "t": "emoji"
+        },
+        " ",
+        {
+          "c": [
+            "❤️"
+          ],
+          "name": "red heart",
+          "t": "emoji"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        "this is single ",
+        ": colon",
+        "\n",
+        "this is also single",
+        ":colon"
+      ],
+      "t": "p"
+    }
+  ]
+}

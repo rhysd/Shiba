@@ -1,0 +1,47 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "emphasis"
+          ],
+          "t": "em"
+        },
+        " and ",
+        {
+          "c": [
+            "strong"
+          ],
+          "t": "strong"
+        },
+        " text 1."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "emphasis"
+          ],
+          "t": "em"
+        },
+        " and ",
+        {
+          "c": [
+            "strong"
+          ],
+          "t": "strong"
+        },
+        " text 2."
+      ],
+      "t": "p"
+    }
+  ]
+}
