@@ -9,7 +9,8 @@ use pulldown_cmark::{
 };
 use std::cmp;
 use std::collections::HashMap;
-use std::io::{Result, Write};
+use std::io::{Read, Result, Write};
+use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::path::Path;
 
@@ -131,19 +132,6 @@ enum TableState {
     Row,
 }
 
-struct RenderTreeEncoder<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
-    out: W,
-    base_dir: &'a SlashPath,
-    table: TableState,
-    is_start: bool,
-    ids: HashMap<CowStr<'a>, usize>,
-    modified: Option<usize>,
-    text_visitor: V,
-    text_tokenizer: T,
-    autolinker: Autolinker,
-    sanitizer: Sanitizer<'a>,
-}
-
 // Note: Be careful, this function is called in the hot loop on encoding texts
 #[inline]
 #[allow(clippy::just_underscores_and_digits)]
@@ -201,6 +189,73 @@ impl<W: Write> Write for StringContentEncoder<W> {
     fn flush(&mut self) -> Result<()> {
         self.0.flush()
     }
+}
+
+struct RawHtmlReader<'a, I: Iterator<Item = (Event<'a>, Range)>> {
+    current: CowStr<'a>,
+    index: usize,
+    events: Peekable<I>,
+    stack: usize,
+}
+
+impl<'a, I: Iterator<Item = (Event<'a>, Range)>> RawHtmlReader<'a, I> {
+    fn new(current: CowStr<'a>, events: Peekable<I>) -> Self {
+        Self { current, index: 0, events, stack: 1 }
+    }
+
+    fn read_byte(&mut self) -> Option<u8> {
+        // Current event was consumed. Fetch next event otherwise return `None`.
+        while self.current.len() <= self.index {
+            if !matches!(self.events.peek(), Some((Event::Html(_) | Event::Text(_), _)))
+                || self.stack == 0
+            {
+                return None;
+            }
+            self.current = match self.events.next().unwrap().0 {
+                Event::Html(html) => {
+                    if html.starts_with("</") {
+                        self.stack -= 1;
+                    } else {
+                        self.stack += 1;
+                    }
+                    html
+                }
+                Event::Text(text) => text,
+                _ => unreachable!(),
+            };
+            self.index = 0;
+        }
+
+        let b = self.current.as_bytes()[self.index];
+        self.index += 1;
+        Some(b)
+    }
+}
+
+impl<'a, I: Iterator<Item = (Event<'a>, Range)>> Read for RawHtmlReader<'a, I> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        for (i, dest) in buf.iter_mut().enumerate() {
+            if let Some(b) = self.read_byte() {
+                *dest = b;
+            } else {
+                return Ok(i);
+            }
+        }
+        Ok(buf.len())
+    }
+}
+
+struct RenderTreeEncoder<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
+    out: W,
+    base_dir: &'a SlashPath,
+    table: TableState,
+    is_start: bool,
+    ids: HashMap<CowStr<'a>, usize>,
+    modified: Option<usize>,
+    text_visitor: V,
+    text_tokenizer: T,
+    autolinker: Autolinker,
+    sanitizer: Sanitizer<'a>,
 }
 
 impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V, T> {
@@ -408,19 +463,10 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.tag("html")?;
                     self.out.write_all(br#","raw":""#)?;
 
-                    let mut encoder = StringContentEncoder(&mut self.out);
-
-                    // Collect all HTML events into one element object
-                    let mut buf = html.into_string();
-                    while let Some((Html(html), _)) = events.peek() {
-                        buf.push_str(html);
-                        events.next();
-                    }
-
-                    // TODO: Currently Parsed HTML is collected on heap memory in `buf` variable. Making `io::Read`
-                    // utility to collect HTML input from `events` is better to avoid the heap allocation.
-                    // https://docs.rs/ammonia/latest/ammonia/struct.Builder.html#method.clean_from_reader
-                    self.sanitizer.clean(&mut encoder, &buf)?;
+                    let mut dst = StringContentEncoder(&mut self.out);
+                    let mut src = RawHtmlReader::new(html, events);
+                    self.sanitizer.clean(&mut dst, &mut src)?;
+                    events = src.events;
 
                     self.out.write_all(br#""}"#)?;
                 }

@@ -13,12 +13,7 @@ expression: json
       "c": [
         "This is ",
         {
-          "raw": "<span></span>",
-          "t": "html"
-        },
-        "inline",
-        {
-          "raw": "",
+          "raw": "<span>inline</span>",
           "t": "html"
         },
         " HTML."

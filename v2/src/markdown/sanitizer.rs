@@ -1,7 +1,7 @@
 use ammonia::{Builder, UrlRelative, UrlRelativeEvaluate};
 use once_cell::unsync::OnceCell;
 use std::borrow::Cow;
-use std::io::{Result, Write};
+use std::io::{Read, Result, Write};
 use std::ops::Deref;
 use std::path::Path;
 
@@ -66,7 +66,7 @@ impl<'a> Sanitizer<'a> {
         Self { base_dir, cleaner: OnceCell::new() }
     }
 
-    pub fn clean<W: Write>(&self, out: W, html: &str) -> Result<()> {
+    pub fn clean<W: Write, R: Read>(&self, out: W, reader: R) -> Result<()> {
         let cleaner = self.cleaner.get_or_init(|| {
             let prefix = self.base_dir.to_string();
             let eval = Box::new(RebaseUrl { prefix });
@@ -74,6 +74,6 @@ impl<'a> Sanitizer<'a> {
             builder.add_generic_attributes(&["name", "id"]).url_relative(UrlRelative::Custom(eval));
             builder
         });
-        cleaner.clean(html).write_to(out)
+        cleaner.clean_from_reader(reader)?.write_to(out)
     }
 }
