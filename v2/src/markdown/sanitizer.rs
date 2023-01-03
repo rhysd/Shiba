@@ -56,6 +56,8 @@ impl UrlRelativeEvaluate for RebaseUrl {
     }
 }
 
+const ALLOWED_ATTRIBUTES: &[&str] = &["name", "id"];
+
 pub struct Sanitizer<'a> {
     base_dir: &'a SlashPath,
     cleaner: OnceCell<Builder<'a>>,
@@ -71,9 +73,137 @@ impl<'a> Sanitizer<'a> {
             let prefix = self.base_dir.to_string();
             let eval = Box::new(RebaseUrl { prefix });
             let mut builder = Builder::default();
-            builder.add_generic_attributes(&["name", "id"]).url_relative(UrlRelative::Custom(eval));
+            builder
+                .add_generic_attributes(ALLOWED_ATTRIBUTES)
+                .url_relative(UrlRelative::Custom(eval));
             builder
         });
         cleaner.clean_from_reader(reader)?.write_to(out)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_slash_path() {
+        for (input, want) in [
+            ("", ""),
+            (
+                #[cfg(target_os = "windows")]
+                r#"\a\b\c"#,
+                #[cfg(not(target_os = "windows"))]
+                "/a/b/c",
+                "/a/b/c",
+            ),
+            (
+                #[cfg(target_os = "windows")]
+                r#"\a\b\c\"#,
+                #[cfg(not(target_os = "windows"))]
+                "/a/b/c/",
+                "/a/b/c",
+            ),
+        ] {
+            let path = SlashPath::from(Path::new(input));
+            assert_eq!(path.deref(), want);
+        }
+    }
+
+    #[test]
+    fn rebase_relative_url() {
+        let rebase = RebaseUrl { prefix: "/foo/bar".to_string() };
+
+        for (url, want) in [
+            ("", "/foo/bar/"),
+            ("aaa", "/foo/bar/aaa"),
+            ("aaa/", "/foo/bar/aaa/"),
+            ("/aaa", "/foo/bar/aaa"),
+            ("..", "/foo/bar/.."),
+            ("./aaa", "/foo/bar/./aaa"),
+            ("http://example.com", "http://example.com"),
+            ("https://example.com", "https://example.com"),
+            ("//example.com", "//example.com"),
+            ("#hash", "#hash"),
+        ] {
+            let have = rebase.evaluate(url).unwrap();
+            assert_eq!(&have, want);
+        }
+    }
+
+    #[test]
+    fn sanitize_raw_html() {
+        #[cfg(target_os = "windows")]
+        const BASE_DIR: &str = r#"\a\b\c\d\e"#;
+        #[cfg(not(target_os = "windows"))]
+        const BASE_DIR: &str = "/a/b/c/d/e";
+        let base_dir = SlashPath::from(Path::new(BASE_DIR));
+        let sanitizer = Sanitizer::new(&base_dir);
+
+        for (input, want) in [
+            ("", ""),
+            ("foo", "foo"),
+            ("<div>foo</div>", "<div>foo</div>"),
+            (
+                "<div><span>aaa</span><span>bbb</span></div>",
+                "<div><span>aaa</span><span>bbb</span></div>",
+            ),
+            (
+                "<img src=\"https://example.com\" alt=\"hello\">",
+                "<img src=\"https://example.com\" alt=\"hello\">",
+            ),
+            ("<script>alert()</script>", ""),
+            ("<span><script>alert()</script>foo</span>", "<span>foo</span>"),
+            ("<div onclick=\"alert\">hello</div>", "<div>hello</div>"),
+            (
+                "<a href=\"javascript:alert()\">hello</a>",
+                "<a rel=\"noopener noreferrer\">hello</a>",
+            ),
+            (
+                "<a href=\"data:aGVsbG8sd29ybGQK\">hello</a>",
+                "<a rel=\"noopener noreferrer\">hello</a>",
+            ),
+            (
+                "<a href=\"https://example.com\">foo</a>",
+                "<a href=\"https://example.com\" rel=\"noopener noreferrer\">foo</a>",
+            ),
+            (
+                "<a href=\"http://example.com\">foo</a>",
+                "<a href=\"http://example.com\" rel=\"noopener noreferrer\">foo</a>",
+            ),
+            (
+                "<a href=\"//example.com\">foo</a>",
+                "<a href=\"//example.com\" rel=\"noopener noreferrer\">foo</a>",
+            ),
+            (
+                "<a href=\"foo/bar\">foo</a>",
+                "<a href=\"/a/b/c/d/e/foo/bar\" rel=\"noopener noreferrer\">foo</a>",
+            ),
+            (
+                "<a href=\"../foo/bar\">foo</a>",
+                "<a href=\"/a/b/c/d/e/../foo/bar\" rel=\"noopener noreferrer\">foo</a>",
+            ),
+            (
+                "<a href=\"#hash-link\">foo</a>",
+                "<a href=\"#hash-link\" rel=\"noopener noreferrer\">foo</a>",
+            ),
+            (
+                "<a name=\"hash-link\"></a>",
+                "<a name=\"hash-link\" rel=\"noopener noreferrer\"></a>",
+            ),
+            (
+                "<a id=\"hash-link-id\"></a>",
+                "<a id=\"hash-link-id\" rel=\"noopener noreferrer\"></a>",
+            ),
+            (
+                "<a href=\"hello&world\">hello</a>",
+                "<a href=\"/a/b/c/d/e/hello&amp;world\" rel=\"noopener noreferrer\">hello</a>",
+            ),
+        ] {
+            let mut have = Vec::new();
+            sanitizer.clean(&mut have, input.as_bytes()).unwrap();
+            let have = String::from_utf8(have).unwrap();
+            assert_eq!(&have, want);
+        }
     }
 }
