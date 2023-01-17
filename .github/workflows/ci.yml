@@ -12,6 +12,30 @@ defaults:
     working-directory: v2
 
 jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: v2 -> v2/target
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - run: npm install
+      - run: npm run bundle
+      - run: cargo test
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -39,5 +63,3 @@ jobs:
       - run: npm run lint:stylelint
       - run: cargo fmt --all --check
       - run: cargo clippy --all --benches -- -D warnings
-      # TODO: Separate a new job to run unit tests
-      - run: cargo test
