@@ -125,7 +125,13 @@ fn create_webview(
 
     #[cfg(target_os = "windows")]
     {
+        use wry::webview::Theme;
         builder = builder.with_browser_accelerator_keys(false);
+        match config.window().theme {
+            ThemeConfig::System => {}
+            ThemeConfig::Dark => builder = builder.with_theme(Theme::Dark),
+            ThemeConfig::Light => builder = builder.with_theme(Theme::Light),
+        }
     }
 
     builder.build().map_err(Into::into)

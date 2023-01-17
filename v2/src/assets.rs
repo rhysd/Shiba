@@ -183,7 +183,7 @@ impl Assets {
         Self { hljs_css, markdown_css }
     }
 
-    pub fn load(&self, path: &str) -> (Vec<u8>, &'static str) {
+    pub fn load(&self, path: &str) -> (Cow<'static, [u8]>, &'static str) {
         let mime = guess_mime(path);
 
         #[rustfmt::skip]
@@ -191,7 +191,7 @@ impl Assets {
             "/index.html"          => INDEX_HTML.into(),
             "/bundle.js"           => BUNDLE_JS.into(),
             "/style.css"           => STYLE_CSS.into(),
-            "/github-markdown.css" => self.markdown_css.to_vec(),
+            "/github-markdown.css" => self.markdown_css.clone(),
             "/hljs-theme.css"      => self.hljs_css.into(),
             "/logo.png"            => LOGO_PNG.into(),
             #[cfg(debug_assertions)]
@@ -199,10 +199,10 @@ impl Assets {
             path                   => {
                 log::debug!("Dynamically loading external resource {:?}", path);
                 match fs::read(path) {
-                    Ok(content) => content,
+                    Ok(content) => content.into(),
                     Err(err) => {
                         log::error!("Could not read external resource {:?}: {}", path, err);
-                        vec![]
+                        Cow::Owned(vec![])
                     }
                 }
             }
