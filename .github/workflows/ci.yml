@@ -33,7 +33,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
         if: ${{ matrix.os == 'ubuntu-latest' }}
-      - run: npm install
+      - run: npm ci
       - run: npm run bundle
       - run: cargo test
   lint:
@@ -55,7 +55,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
-      - run: npm install
+      - run: npm ci
       - run: npm run lint:ts
       - run: npm run bundle
       - run: npm run lint:prettier

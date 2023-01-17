@@ -27,7 +27,7 @@ await esbuild.build({
     entryPoints: [
         join('web', 'style.css'),
         join('node_modules', 'github-markdown-css', 'github-markdown.css'),
-        ...(await glob(join('node_modules', 'highlight.js', 'styles', '*.css'))),
+        ...(await glob('node_modules/highlight.js/styles/*.css')), // '/' is always a path separator for fast-glob
     ],
     outdir: join('src', 'assets'),
     platform: 'browser',

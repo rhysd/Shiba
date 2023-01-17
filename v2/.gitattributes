@@ -1,0 +1,5 @@
+/bench/assets/** linguist-generated
+/src/markdown/snapshots/** linguist-generated
+/src/markdown/testdata/** linguist-generated
+/src/markdown/snapshots/** -text
+/src/markdown/testdata/** -text
