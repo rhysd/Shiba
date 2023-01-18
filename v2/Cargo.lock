@@ -112,9 +112,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.11.1"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "572f695136211188308f16ad2ca5c851a712c464060ae6974944458eb83880ba"
+checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
 
 [[package]]
 name = "bytemuck"
@@ -1963,7 +1963,7 @@ dependencies = [
 [[package]]
 name = "pulldown-cmark"
 version = "0.9.2"
-source = "git+https://github.com/rhysd/pulldown-cmark.git?branch=math#cbcdf26d2a05a2bf05cf478325a95154882d80c0"
+source = "git+https://github.com/rhysd/pulldown-cmark.git?branch=math#b93890d42295638480d698fa3f86fd152ec2329e"
 dependencies = [
  "bitflags",
  "memchr",
