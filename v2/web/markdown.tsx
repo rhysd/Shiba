@@ -250,7 +250,7 @@ export class ReactMarkdownRenderer {
                 );
             case 'emoji':
                 return (
-                    <span key={key} title={elem.name}>
+                    <span key={key} title={elem.name} role="img" aria-label={`${elem.name} emoji`}>
                         {elem.c.map(this.render)}
                     </span>
                 );
