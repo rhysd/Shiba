@@ -172,7 +172,7 @@ fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
         __ => out.write_all(&[b]),
         BS => out.write_all(br#"\\\\"#), // Escape twice for JS and JSON (\\\\ → \\ → \)
         SQ => out.write_all(br#"\'"#), // JSON string will be put in '...' JS string. ' needs to be escaped
-        XX => write!(out, r#"\\u{:04x}"#, b),
+        XX => write!(out, r#"\\u{b:04x}"#),
         b => out.write_all(&[b'\\', b'\\', b]), // Escape \ itself: JSON.parse('\\n')
     }
 }
@@ -324,7 +324,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
 
     fn tag(&mut self, name: &str) -> Result<()> {
         self.comma()?;
-        write!(self.out, r#"{{"t":"{}""#, name)
+        write!(self.out, r#"{{"t":"{name}""#)
     }
 
     fn text_tokens(&mut self, mut input: &str, mut range: Range) -> Result<()> {
@@ -482,11 +482,11 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 FootnoteReference(name) => {
                     self.tag("fn-ref")?;
                     let id = self.id(name);
-                    write!(self.out, r#","id":{}}}"#, id)?;
+                    write!(self.out, r#","id":{id}}}"#)?;
                 }
                 TaskListMarker(checked) => {
                     self.tag("checkbox")?;
-                    write!(self.out, r#","checked":{}}}"#, checked)?;
+                    write!(self.out, r#","checked":{checked}}}"#)?;
                 }
                 Math(display, text) => {
                     self.tag("math")?;
@@ -542,7 +542,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     HeadingLevel::H5 => 5,
                     HeadingLevel::H6 => 6,
                 };
-                write!(self.out, r#","level":{}"#, level)?;
+                write!(self.out, r#","level":{level}"#)?;
 
                 if let Some(id) = id {
                     self.out.write_all(br#","id":"#)?;
@@ -599,7 +599,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             List(Some(1)) => self.tag("ol")?,
             List(Some(start)) => {
                 self.tag("ol")?;
-                write!(self.out, r#","start":{}"#, start)?;
+                write!(self.out, r#","start":{start}"#)?;
             }
             List(None) => self.tag("ul")?,
             Item => {
@@ -651,7 +651,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 }
 
                 let id = self.id(name);
-                write!(self.out, r#","id":{}"#, id)?;
+                write!(self.out, r#","id":{id}"#)?;
             }
         }
 
@@ -828,10 +828,10 @@ mod tests {
         let mut path = PathBuf::from("src");
         path.push("markdown");
         path.push("testdata");
-        path.push(format!("{}.md", name));
+        path.push(format!("{name}.md"));
         match fs::read_to_string(&path) {
             Ok(text) => text,
-            Err(err) => panic!("Could not find Markdown test data at {:?}: {}", path, err),
+            Err(err) => panic!("Could not find Markdown test data at {path:?}: {err}"),
         }
     }
 
