@@ -50,7 +50,7 @@ fn create_webview(
             }
         })
         .with_file_drop_handler(move |_w, e| {
-            if let FileDropEvent::Dropped(paths) = e {
+            if let FileDropEvent::Dropped { paths, .. } = e {
                 log::debug!("Files were dropped (the first one will be opened): {:?}", paths);
                 if let Some(path) = paths.into_iter().next() {
                     if let Err(e) = file_drop_proxy.send_event(UserEvent::FileDrop(path)) {
