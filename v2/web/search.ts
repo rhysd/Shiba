@@ -19,10 +19,6 @@ function scrollIntoView(elem: Element): void {
     });
 }
 
-export function countSearchMatches(): number {
-    return document.querySelectorAll('.search-text-start,.search-text-current-start').length;
-}
-
 export function findAllSearchMatchElems(): HTMLElement[] {
     const nodes: NodeListOf<HTMLElement> = document.querySelectorAll(
         '.search-text-start,.search-text-current-start,.search-text,.search-text-current',

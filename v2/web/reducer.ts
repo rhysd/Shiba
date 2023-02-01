@@ -34,7 +34,11 @@ export interface State {
 }
 
 export const INITIAL_STATE: State = {
-    previewTree: { root: null, lastModified: null },
+    previewTree: {
+        root: null,
+        lastModified: null,
+        matchCount: 0,
+    },
     searching: false,
     searchIndex: null,
     matcher: 'SmartCase',

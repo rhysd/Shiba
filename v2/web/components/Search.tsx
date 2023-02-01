@@ -9,7 +9,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import { MatcherSelect } from './MatcherSelect';
 import { type Dispatch, searchNext, searchPrevious, closeSearch } from '../reducer';
-import { countSearchMatches } from '../search';
 import { type SearchMatcher, sendMessage } from '../ipc';
 
 const DEBOUNCE_TIMEOUT = 100; // 100ms
@@ -41,22 +40,22 @@ const DIVIDER_STYLE: React.CSSProperties = {
 
 interface Props {
     index: number | null;
+    total: number;
     matcher: SearchMatcher;
     dispatch: Dispatch;
 }
 
-export const Search: React.FC<Props> = ({ index, matcher, dispatch }) => {
+export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => {
     const counterElem = useRef<HTMLDivElement | null>(null);
     const inputElem = useRef<HTMLInputElement | null>(null);
     const [debId, setDebId] = useState<number | null>(null);
 
     useEffect(() => {
         if (counterElem.current !== null) {
-            const nth = index !== null ? index + 1 : 0;
-            const total = countSearchMatches();
+            const nth = index !== null && index < total ? index + 1 : 0;
             counterElem.current.textContent = `${nth} / ${total}`;
         }
-    }, [index]);
+    }, [index, total]);
 
     const handlePrev = (): void => {
         dispatch(searchPrevious(index));

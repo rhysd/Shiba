@@ -15,6 +15,7 @@ const FOOTNOTE_BACKREF_STYLE: React.CSSProperties = {
 export interface MarkdownReactTree {
     root: React.ReactNode;
     lastModified: React.RefObject<HTMLSpanElement> | null;
+    matchCount: number;
 }
 
 function rawText(elem: RenderTreeElem): string {
@@ -75,11 +76,13 @@ export class ReactMarkdownRenderer {
     private table: TableState | null;
     private lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
     private readonly footNotes: RenderTreeFootNoteDef[];
+    private matchCount: number;
 
     constructor() {
         this.table = null;
         this.footNotes = [];
         this.lastModifiedRef = null;
+        this.matchCount = 0;
         this.render = this.render.bind(this);
     }
 
@@ -92,7 +95,11 @@ export class ReactMarkdownRenderer {
                 {this.renderFootnotes()}
             </>
         );
-        return { root, lastModified: this.lastModifiedRef };
+        return {
+            root,
+            lastModified: this.lastModifiedRef,
+            matchCount: this.matchCount,
+        };
     }
 
     private renderFootnotes(): React.ReactNode {
@@ -358,12 +365,14 @@ export class ReactMarkdownRenderer {
                     </span>
                 );
             case 'match-start':
+                this.matchCount++;
                 return (
                     <span key={key} className="search-text-start">
                         {elem.c.map(this.render)}
                     </span>
                 );
             case 'match-current-start':
+                this.matchCount++;
                 return (
                     <span key={key} className="search-text-current-start">
                         {elem.c.map(this.render)}

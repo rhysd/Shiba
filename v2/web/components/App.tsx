@@ -37,7 +37,9 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     let searchInput;
     if (searching && !welcome) {
-        searchInput = <Search index={searchIndex} matcher={matcher} dispatch={dispatch} />;
+        searchInput = (
+            <Search index={searchIndex} total={previewTree.matchCount} matcher={matcher} dispatch={dispatch} />
+        );
     }
 
     let welcomePage;
