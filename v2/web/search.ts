@@ -69,7 +69,7 @@ export function searchNextIndex(index: number | null): number | null {
 
     log.debug('Search next index:', index, next);
     if (index !== next) {
-        if (index !== null) {
+        if (index !== null && index < startIndices.length) {
             updateMatchClassNames('search-text', startIndices[index], all);
         }
         if (next !== null) {
@@ -113,7 +113,7 @@ export function searchPreviousIndex(index: number | null): number | null {
 
     log.debug('Search previous index:', index, next);
     if (index !== next) {
-        if (index !== null) {
+        if (index !== null && index < startIndices.length) {
             updateMatchClassNames('search-text', startIndices[index], all);
         }
         if (next !== null) {
