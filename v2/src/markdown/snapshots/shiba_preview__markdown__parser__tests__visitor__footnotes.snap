@@ -1,0 +1,37 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "Here is a simple footnote. With some additional text after it. My reference.This is big note!some text\ncontinues",
+    [
+        (
+            "Here is a simple footnote",
+            0..25,
+        ),
+        (
+            ". With some additional text after it. ",
+            29..67,
+        ),
+        (
+            "My reference.",
+            81..94,
+        ),
+        (
+            "This is big note!",
+            104..121,
+        ),
+        (
+            "some text",
+            124..133,
+        ),
+        (
+            "\n",
+            133..134,
+        ),
+        (
+            "continues",
+            136..145,
+        ),
+    ],
+)

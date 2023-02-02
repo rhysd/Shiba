@@ -900,4 +900,56 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     const BASE_DIR: &str = "/a/b/c/d/e";
     snapshot_test!(relative_links, None, Some(Path::new(BASE_DIR)));
+
+    mod visitor {
+        use super::*;
+        use crate::markdown::DisplayText;
+
+        macro_rules! snapshot_test {
+            ($name:ident) => {
+                #[test]
+                fn $name() {
+                    let source = load_data(stringify!($name));
+                    let target = MarkdownParseTarget::new(source, None);
+                    let parser = MarkdownParser::new(&target, None, ());
+                    let mut buf = Vec::new();
+                    let visitor: DisplayText = parser.write_to(&mut buf).unwrap();
+                    let text = &visitor.raw_text();
+                    let source = &target.source;
+                    let mut mapped = vec![];
+                    for map in visitor.sourcemap() {
+                        let slice = &source[map.clone()];
+                        assert!(
+                            source.contains(slice),
+                            "{:?} does not contain {:?}",
+                            source,
+                            text,
+                        );
+                        mapped.push((slice, map.clone()));
+                    }
+                    insta::assert_debug_snapshot!((text, mapped));
+                }
+            };
+        }
+
+        snapshot_test!(paragraph);
+        snapshot_test!(blockquote);
+        snapshot_test!(list);
+        snapshot_test!(headings);
+        snapshot_test!(codeblock);
+        snapshot_test!(link);
+        snapshot_test!(html);
+        snapshot_test!(sanitized);
+        snapshot_test!(inline_code);
+        snapshot_test!(emphasis);
+        snapshot_test!(image);
+        snapshot_test!(autolink);
+        snapshot_test!(emoji);
+        snapshot_test!(table);
+        snapshot_test!(math);
+        snapshot_test!(strikethrough);
+        snapshot_test!(tasklist);
+        snapshot_test!(footnotes);
+        snapshot_test!(highlight);
+    }
 }

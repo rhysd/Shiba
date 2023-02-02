@@ -1,0 +1,45 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore\net dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\naliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\ncillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in\nculpa qui officia deserunt mollit anim id est laborum.",
+    [
+        (
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore",
+            2..101,
+        ),
+        (
+            "\n",
+            101..102,
+        ),
+        (
+            "et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut",
+            104..202,
+        ),
+        (
+            "\n",
+            202..203,
+        ),
+        (
+            "aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse",
+            205..300,
+        ),
+        (
+            "\n",
+            300..301,
+        ),
+        (
+            "cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in",
+            303..398,
+        ),
+        (
+            "\n",
+            398..399,
+        ),
+        (
+            "culpa qui officia deserunt mollit anim id est laborum.",
+            401..455,
+        ),
+    ],
+)

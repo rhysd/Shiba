@@ -1,0 +1,25 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "external imageimage with titlerelative link imagereference link image",
+    [
+        (
+            "external image",
+            2..16,
+        ),
+        (
+            "image with title",
+            50..66,
+        ),
+        (
+            "relative link image",
+            116..135,
+        ),
+        (
+            "reference link image",
+            158..178,
+        ),
+    ],
+)

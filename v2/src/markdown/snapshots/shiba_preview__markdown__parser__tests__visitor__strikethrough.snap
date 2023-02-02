@@ -1,0 +1,21 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "this text is declined is test",
+    [
+        (
+            "this ",
+            0..5,
+        ),
+        (
+            "text is declined",
+            7..23,
+        ),
+        (
+            " is test",
+            25..33,
+        ),
+    ],
+)

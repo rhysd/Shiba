@@ -1,0 +1,45 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "thisistestcell 1cell 2cell 3cell 4cell 5cell 6",
+    [
+        (
+            "this",
+            2..6,
+        ),
+        (
+            "is",
+            11..13,
+        ),
+        (
+            "test",
+            20..24,
+        ),
+        (
+            "cell 1",
+            60..66,
+        ),
+        (
+            "cell 2",
+            69..75,
+        ),
+        (
+            "cell 3",
+            78..84,
+        ),
+        (
+            "cell 4",
+            89..95,
+        ),
+        (
+            "cell 5",
+            98..104,
+        ),
+        (
+            "cell 6",
+            107..113,
+        ),
+    ],
+)

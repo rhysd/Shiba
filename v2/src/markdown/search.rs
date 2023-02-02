@@ -113,6 +113,16 @@ impl DisplayText {
             CaseSensitiveRegex => self.search_with::<Regex>(query, ignore_case),
         }
     }
+
+    #[cfg(test)]
+    pub fn raw_text(&self) -> &'_ str {
+        &self.text
+    }
+
+    #[cfg(test)]
+    pub fn sourcemap(&self) -> &'_ [Range] {
+        &self.srcmap
+    }
 }
 
 struct SourceMapper<'a> {

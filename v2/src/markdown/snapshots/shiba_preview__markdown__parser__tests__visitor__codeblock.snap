@@ -1,0 +1,29 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "indented code block\nindented code block\nindented code block\nfenced code block 1\nfenced code block 1\nfenced code block 1\nfenced code block 2\nfenced code block 2\nfenced code block 2\n",
+    [
+        (
+            "indented code block\n",
+            4..24,
+        ),
+        (
+            "indented code block\n",
+            28..48,
+        ),
+        (
+            "indented code block\n",
+            52..72,
+        ),
+        (
+            "fenced code block 1\nfenced code block 1\nfenced code block 1\n",
+            77..137,
+        ),
+        (
+            "fenced code block 2\nfenced code block 2\nfenced code block 2\n",
+            146..206,
+        ),
+    ],
+)

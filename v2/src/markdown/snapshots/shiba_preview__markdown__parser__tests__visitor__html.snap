@@ -1,0 +1,17 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "This is  HTML.",
+    [
+        (
+            "This is ",
+            91..99,
+        ),
+        (
+            " HTML.",
+            118..124,
+        ),
+    ],
+)

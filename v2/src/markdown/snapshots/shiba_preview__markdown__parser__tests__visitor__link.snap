@@ -1,0 +1,25 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "external linklink with titlerelative linkreference link",
+    [
+        (
+            "external link",
+            1..14,
+        ),
+        (
+            "link with title",
+            39..54,
+        ),
+        (
+            "relative link",
+            95..108,
+        ),
+        (
+            "reference link",
+            130..144,
+        ),
+    ],
+)

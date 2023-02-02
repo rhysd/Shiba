@@ -1,0 +1,41 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "heading level 1heading level 2heading level 3heading level 4heading level 5heading level 6Setext heading level 1Setext heading level 2",
+    [
+        (
+            "heading level 1",
+            2..17,
+        ),
+        (
+            "heading level 2",
+            21..36,
+        ),
+        (
+            "heading level 3",
+            41..56,
+        ),
+        (
+            "heading level 4",
+            62..77,
+        ),
+        (
+            "heading level 5",
+            84..99,
+        ),
+        (
+            "heading level 6",
+            107..122,
+        ),
+        (
+            "Setext heading level 1",
+            124..146,
+        ),
+        (
+            "Setext heading level 2",
+            171..193,
+        ),
+    ],
+)

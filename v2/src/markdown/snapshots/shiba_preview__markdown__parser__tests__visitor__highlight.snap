@@ -1,0 +1,45 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "Code:println!(\"hello, world\");\nMath:\\sqrt{3}\nMermaid:flowchart LR\n\nA[Hard] -->|Text| B(Round)\n",
+    [
+        (
+            "Code",
+            0..4,
+        ),
+        (
+            ":",
+            4..5,
+        ),
+        (
+            "println!(\"hello, world\");\n",
+            15..41,
+        ),
+        (
+            "Math",
+            46..50,
+        ),
+        (
+            ":",
+            50..51,
+        ),
+        (
+            "\\sqrt{3}\n",
+            61..70,
+        ),
+        (
+            "Mermaid",
+            75..82,
+        ),
+        (
+            ":",
+            82..83,
+        ),
+        (
+            "flowchart LR\n\nA[Hard] -->|Text| B(Round)\n",
+            96..137,
+        ),
+    ],
+)

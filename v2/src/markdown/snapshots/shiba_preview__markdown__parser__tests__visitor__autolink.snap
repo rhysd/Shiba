@@ -1,0 +1,25 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "https://example.com is standard auto link.https://example.com is implicit auto link (GFM extention).",
+    [
+        (
+            "https://example.com",
+            1..20,
+        ),
+        (
+            " is standard auto link.",
+            21..44,
+        ),
+        (
+            "https://example.com",
+            46..65,
+        ),
+        (
+            " is implicit auto link (GFM extention).",
+            65..104,
+        ),
+    ],
+)

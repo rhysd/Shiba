@@ -1,0 +1,25 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "this is inline code.",
+    [
+        (
+            "this",
+            1..5,
+        ),
+        (
+            " is ",
+            6..10,
+        ),
+        (
+            "inline code",
+            11..22,
+        ),
+        (
+            ".",
+            23..24,
+        ),
+    ],
+)

@@ -1,0 +1,41 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "emphasis and strong text 1.emphasis and strong text 2.",
+    [
+        (
+            "emphasis",
+            1..9,
+        ),
+        (
+            " and ",
+            10..15,
+        ),
+        (
+            "strong",
+            17..23,
+        ),
+        (
+            " text 1.",
+            25..33,
+        ),
+        (
+            "emphasis",
+            36..44,
+        ),
+        (
+            " and ",
+            45..50,
+        ),
+        (
+            "strong",
+            52..58,
+        ),
+        (
+            " text 2.",
+            60..68,
+        ),
+    ],
+)
