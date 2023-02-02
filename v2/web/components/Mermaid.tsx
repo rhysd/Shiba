@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import mermaid from 'mermaid';
 import { useTheme } from '@mui/material/styles';
 import * as log from '../log';

@@ -1,4 +1,5 @@
-import React, { useMemo, useCallback } from 'react';
+import * as React from 'react';
+import { useMemo, useCallback } from 'react';
 import { Palette } from './Palette';
 import { type Dispatch, closeHistory } from '../reducer';
 import { sendMessage } from '../ipc';

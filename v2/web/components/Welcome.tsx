@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { sendMessage } from '../ipc';
 
 const BODY_STYLE: React.CSSProperties = {

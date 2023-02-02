@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';

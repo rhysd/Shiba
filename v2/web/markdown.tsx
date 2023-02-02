@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import hljs from 'highlight.js';
 import Mathjax from 'react-mathjax-component';
 import type { RenderTreeElem, RenderTreeFootNoteDef, RenderTreeTableAlign } from './ipc';

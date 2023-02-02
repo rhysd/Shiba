@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';

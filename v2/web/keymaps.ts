@@ -1,4 +1,4 @@
-import Mousetrap from 'mousetrap';
+import { bind as bindKey } from 'mousetrap';
 import { openOutline, openHistory, openHelp } from './reducer';
 import type { GlobalDispatcher } from './dispatcher';
 import { sendMessage, type KeyMaps, type KeyAction } from './ipc';
@@ -229,7 +229,7 @@ export class KeyMapping {
 
             const shortcut = KeyShortcuts[action];
             const method = shortcut.dispatch.bind(undefined, dispatcher);
-            Mousetrap.bind(keybind, event => {
+            bindKey(keybind, event => {
                 event.preventDefault();
                 event.stopPropagation();
                 log.debug('Triggered key shortcut:', action, keybind);

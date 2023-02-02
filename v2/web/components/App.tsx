@@ -1,4 +1,5 @@
-import React, { useReducer, useEffect } from 'react';
+import * as React from 'react';
+import { useReducer, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Preview } from './Preview';
 import { Search } from './Search';
