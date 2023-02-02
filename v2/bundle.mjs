@@ -10,20 +10,17 @@ console.log('Bundle options:', { watch, minify });
 const bundleDest = minify ? 'bundle.min.js' : 'bundle.js';
 const sourcemap = !minify;
 const logLevel = 'info';
-
-await esbuild.build({
+const buildTsOptions = {
     bundle: true,
     entryPoints: [join('web', 'index.tsx')],
     outfile: join('src', 'assets', bundleDest),
     platform: 'browser',
-    watch,
     minify,
     sourcemap,
     logLevel,
     color: true,
-});
-
-await esbuild.build({
+};
+const buildCssOptions = {
     entryPoints: [
         join('web', 'style.css'),
         join('node_modules', 'github-markdown-css', 'github-markdown.css'),
@@ -31,11 +28,20 @@ await esbuild.build({
     ],
     outdir: join('src', 'assets'),
     platform: 'browser',
-    watch,
     minify: true,
     sourcemap: false,
     logLevel,
     color: true,
-});
+};
 
 await fs.copyFile(join('web', 'index.html'), join('src', 'assets', 'index.html'));
+
+if (watch) {
+    const tsCtx = await esbuild.context(buildTsOptions);
+    await tsCtx.watch();
+    const cssCtx = await esbuild.context(buildCssOptions);
+    await cssCtx.watch();
+} else {
+    await esbuild.build(buildTsOptions);
+    await esbuild.build(buildCssOptions);
+}
