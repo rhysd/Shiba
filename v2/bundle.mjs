@@ -1,6 +1,6 @@
 import { join } from 'path';
 import esbuild from 'esbuild';
-import * as fs from 'fs/promises';
+import { copyFile } from 'fs/promises';
 import glob from 'fast-glob';
 
 const watch = process.argv.includes('--watch');
@@ -9,7 +9,6 @@ console.log('Bundle options:', { watch, minify });
 
 const bundleDest = minify ? 'bundle.min.js' : 'bundle.js';
 const sourcemap = !minify;
-const logLevel = 'info';
 const buildTsOptions = {
     bundle: true,
     entryPoints: [join('web', 'index.tsx')],
@@ -17,7 +16,7 @@ const buildTsOptions = {
     platform: 'browser',
     minify,
     sourcemap,
-    logLevel,
+    logLevel: 'info',
     color: true,
 };
 const buildCssOptions = {
@@ -30,11 +29,11 @@ const buildCssOptions = {
     platform: 'browser',
     minify: true,
     sourcemap: false,
-    logLevel,
+    logLevel: 'info',
     color: true,
 };
 
-await fs.copyFile(join('web', 'index.html'), join('src', 'assets', 'index.html'));
+await copyFile(join('web', 'index.html'), join('src', 'assets', 'index.html'));
 
 if (watch) {
     const tsCtx = await esbuild.context(buildTsOptions);

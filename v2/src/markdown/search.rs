@@ -244,3 +244,75 @@ impl<'a> TextTokenizer for MatchTokenizer<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn build_text(input: &str, maps: &[Range]) -> DisplayText {
+        let mut text = DisplayText::default();
+        for m in maps {
+            text.visit(&input[m.clone()], m);
+        }
+        text
+    }
+
+    #[test]
+    fn collect_text_with_maps() {
+        let input = "abcdefghijkl";
+        let maps = [0..2, 4..7, 7..12];
+        let text = build_text(input, &maps);
+        assert_eq!(text.raw_text(), "abefghijkl");
+        assert_eq!(text.sourcemap(), &maps);
+    }
+
+    #[test]
+    fn search_case_sensitive() {
+        //           ab  ef  JK  ab  Gh
+        let input = "abcdefghJKababefGh";
+        let text = build_text(input, &[0..2, 4..6, 8..10, 12..14, 16..18]);
+
+        let matches = text.search("ab", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[0..2, 12..14]);
+        let matches = text.search("ef", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[4..6]);
+        let matches = text.search("Gh", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[16..18]);
+        let matches = text.search("be", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[1..5]);
+        let matches = text.search("befJ", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[1..9]);
+        let matches = text.search("abefJKabGh", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[0..18]);
+        let matches = text.search("cd", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[]);
+        let matches = text.search("abefJKabGhab", SearchMatcher::CaseSensitive).unwrap();
+        assert_eq!(&matches.0, &[]);
+    }
+
+    #[test]
+    fn search_case_insensitive() {
+        //           ab  ef  JK  ab  Gh
+        let input = "abcdefghJKababefGh";
+        let text = build_text(input, &[0..2, 4..6, 8..10, 12..14, 16..18]);
+
+        let matches = text.search("AB", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[0..2, 12..14]);
+        let matches = text.search("EF", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[4..6]);
+        let matches = text.search("gh", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[16..18]);
+        let matches = text.search("GH", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[16..18]);
+        let matches = text.search("BE", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[1..5]);
+        let matches = text.search("BEFj", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[1..9]);
+        let matches = text.search("abefjkabgh", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[0..18]);
+        let matches = text.search("cd", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[]);
+        let matches = text.search("abefjkabghab", SearchMatcher::CaseInsensitive).unwrap();
+        assert_eq!(&matches.0, &[]);
+    }
+}
