@@ -18,24 +18,8 @@ expression: "(text, mapped)"
             21..22,
         ),
         (
-            "this is single ",
-            31..46,
-        ),
-        (
-            ": colon",
-            46..53,
-        ),
-        (
-            "\n",
-            53..54,
-        ),
-        (
-            "this is also single",
-            54..73,
-        ),
-        (
-            ":colon",
-            73..79,
+            "this is single : colon\nthis is also single:colon",
+            31..79,
         ),
     ],
 )

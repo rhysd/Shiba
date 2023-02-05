@@ -6,40 +6,8 @@ expression: "(text, mapped)"
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore\net dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\naliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\ncillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in\nculpa qui officia deserunt mollit anim id est laborum.",
     [
         (
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore",
-            0..99,
-        ),
-        (
-            "\n",
-            99..100,
-        ),
-        (
-            "et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut",
-            100..198,
-        ),
-        (
-            "\n",
-            198..199,
-        ),
-        (
-            "aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse",
-            199..294,
-        ),
-        (
-            "\n",
-            294..295,
-        ),
-        (
-            "cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in",
-            295..390,
-        ),
-        (
-            "\n",
-            390..391,
-        ),
-        (
-            "culpa qui officia deserunt mollit anim id est laborum.",
-            391..445,
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore\net dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\naliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\ncillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in\nculpa qui officia deserunt mollit anim id est laborum.",
+            0..445,
         ),
     ],
 )

@@ -72,7 +72,12 @@ pub struct DisplayText {
 impl TextVisitor for DisplayText {
     fn visit(&mut self, text: &str, range: &Range) {
         self.text.push_str(text);
-        self.srcmap.push(range.clone());
+        match self.srcmap.last_mut() {
+            Some(last) if last.end == range.start => {
+                last.end = range.end;
+            }
+            _ => self.srcmap.push(range.clone()),
+        }
     }
 }
 
@@ -259,11 +264,21 @@ mod tests {
 
     #[test]
     fn collect_text_with_maps() {
+        //           ab  ef hijkl ;
         let input = "abcdefghijkl";
-        let maps = [0..2, 4..7, 7..12];
+        let maps = [0..2, 4..6, 7..12];
         let text = build_text(input, &maps);
-        assert_eq!(text.raw_text(), "abefghijkl");
+        assert_eq!(text.raw_text(), "abefhijkl");
         assert_eq!(text.sourcemap(), &maps);
+    }
+
+    #[test]
+    fn merge_contiguous_mappings() {
+        let input = "abcdefghijkl";
+        let maps = [0..2, 2..4, 4..6, 6..7, 7..12];
+        let text = build_text(input, &maps);
+        assert_eq!(text.raw_text(), "abcdefghijkl");
+        assert_eq!(text.sourcemap(), [0..12]);
     }
 
     #[test]

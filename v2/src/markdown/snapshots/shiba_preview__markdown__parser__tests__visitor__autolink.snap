@@ -14,12 +14,8 @@ expression: "(text, mapped)"
             21..44,
         ),
         (
-            "https://example.com",
-            46..65,
-        ),
-        (
-            " is implicit auto link (GFM extention).",
-            65..104,
+            "https://example.com is implicit auto link (GFM extention).",
+            46..104,
         ),
     ],
 )

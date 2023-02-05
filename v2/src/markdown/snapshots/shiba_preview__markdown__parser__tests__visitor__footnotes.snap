@@ -22,12 +22,8 @@ expression: "(text, mapped)"
             104..121,
         ),
         (
-            "some text",
-            124..133,
-        ),
-        (
-            "\n",
-            133..134,
+            "some text\n",
+            124..134,
         ),
         (
             "continues",

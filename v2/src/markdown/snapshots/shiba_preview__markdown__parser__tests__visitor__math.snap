@@ -6,24 +6,16 @@ expression: "(text, mapped)"
     "Inline math: .Block math:",
     [
         (
-            "Inline math",
-            0..11,
-        ),
-        (
-            ": ",
-            11..13,
+            "Inline math: ",
+            0..13,
         ),
         (
             ".",
             23..24,
         ),
         (
-            "Block math",
-            26..36,
-        ),
-        (
-            ":",
-            36..37,
+            "Block math:",
+            26..37,
         ),
     ],
 )
