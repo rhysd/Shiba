@@ -263,7 +263,7 @@ mod tests {
     }
 
     #[test]
-    fn collect_text_with_maps() {
+    fn collect_text_with_source_maps() {
         //           ab  ef hijkl ;
         let input = "abcdefghijkl";
         let maps = [0..2, 4..6, 7..12];
@@ -329,5 +329,46 @@ mod tests {
         assert_eq!(&matches.0, &[]);
         let matches = text.search("abefjkabghab", SearchMatcher::CaseInsensitive).unwrap();
         assert_eq!(&matches.0, &[]);
+    }
+
+    #[test]
+    fn search_smart_case() {
+        let input = "ab aB Ab AB";
+        let text = build_text(input, &[0..2, 3..5, 6..8, 9..11]);
+
+        let matches = text.search("ab", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[0..2, 3..5, 6..8, 9..11]);
+        let matches = text.search("aB", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[3..5]);
+        let matches = text.search("Ab", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[6..8]);
+        let matches = text.search("AB", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[9..11]);
+
+        let matches = text.search("ba", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[1..4, 4..7, 7..10]);
+        let matches = text.search("BA", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[4..7]);
+        let matches = text.search("bA", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[7..10]);
+        let matches = text.search("Ba", SearchMatcher::SmartCase).unwrap();
+        assert_eq!(&matches.0, &[]);
+    }
+
+    #[test]
+    fn search_regex() {
+        let input = "fo foo fooo";
+        let text = build_text(input, &[0..2, 3..6, 7..11]);
+
+        let matches = text.search("foo+", SearchMatcher::CaseSensitiveRegex).unwrap();
+        assert_eq!(&matches.0, &[3..6, 7..11]);
+        let matches = text.search("foo?", SearchMatcher::CaseSensitiveRegex).unwrap();
+        assert_eq!(&matches.0, &[0..2, 3..6, 7..10]);
+        let matches = text.search("o+f", SearchMatcher::CaseSensitiveRegex).unwrap();
+        assert_eq!(&matches.0, &[1..4, 4..8]);
+        let matches = text.search("o?f", SearchMatcher::CaseSensitiveRegex).unwrap();
+        assert_eq!(&matches.0, &[0..1, 1..4, 5..8]);
+        let matches = text.search("(fo+)+", SearchMatcher::CaseSensitiveRegex).unwrap();
+        assert_eq!(&matches.0, &[0..11]);
     }
 }
