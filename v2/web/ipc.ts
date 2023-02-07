@@ -34,7 +34,7 @@ export type KeyAction =
     | 'ZoomOut'
     | 'Quit';
 
-export type KeyMaps = { [keybind: string]: KeyAction };
+export type KeyMaps = Record<string, KeyAction>;
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
 export type WindowTheme = 'Dark' | 'Light';
 

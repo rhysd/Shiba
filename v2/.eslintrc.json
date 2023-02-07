@@ -14,12 +14,6 @@
     ],
     "env": {
         "browser": true,
-        "es6": true,
-        "es2016": true,
-        "es2017": true,
-        "es2018": true,
-        "es2018": true,
-        "es2020": true,
         "es2021": true
     },
     "rules": {
@@ -87,6 +81,9 @@
           "error",
           {"fixStyle": "inline-type-imports"}
         ],
+        "@typescript-eslint/no-invalid-void-type": "error",
+        "@typescript-eslint/prefer-as-const": "error",
+        "@typescript-eslint/consistent-indexed-object-style": "error",
         "react-hooks/exhaustive-deps": "error",
         "react-hooks/rules-of-hooks": "error"
     }
