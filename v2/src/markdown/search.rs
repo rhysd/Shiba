@@ -226,7 +226,7 @@ impl<'a> MatchTokenizer<'a> {
 
 impl<'a> TextTokenizer for MatchTokenizer<'a> {
     fn tokenize<'t>(&mut self, text: &'t str, range: &Range) -> (TokenKind, &'t str) {
-        debug_assert_eq!(text.len(), range.len(), "text={text:?} range={range:?}");
+        debug_assert_eq!(text.len(), range.len(), "text={:?} range={:?}", text, range);
         let Range { start, end } = *range;
 
         while self.head.end <= start {
