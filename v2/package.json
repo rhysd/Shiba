@@ -20,7 +20,7 @@
     "lint:rs": "cargo clippy --color always --all --benches -- -D warnings",
     "lint:prettier": "prettier --check 'web/**/*.ts' 'web/**/*.tsx' bundle.mjs",
     "lint:rustfmt": "cargo fmt --all --check -- --color always",
-    "lint:eslint": "eslint 'web/**/*.ts' 'web/**/*.tsx'",
+    "lint:eslint": "eslint --max-warnings 0 'web/**/*.ts' 'web/**/*.tsx'",
     "lint:stylelint": "stylelint web/style.css",
     "test": "cargo test",
     "prepare": "cd .. && husky install"
@@ -51,6 +51,7 @@
     "eslint": "^8.33.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-security": "^1.7.1",
     "fast-glob": "^3.2.12",
     "husky": "^8.0.3",
     "prettier": "^2.8.3",
