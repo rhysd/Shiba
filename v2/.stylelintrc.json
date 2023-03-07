@@ -1,7 +1,6 @@
 {
   "extends": "stylelint-config-standard",
   "rules": {
-    "max-line-length": null,
     "property-no-vendor-prefix": null
   }
 }
