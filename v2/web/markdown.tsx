@@ -1,11 +1,11 @@
 import * as React from 'react';
+import type { ReactNode, ReactElement } from 'react';
 import hljs from 'highlight.js';
 import Mathjax from 'react-mathjax-component';
 import mermaid from 'mermaid';
-import type { RenderTreeElem, RenderTreeFootNoteDef, RenderTreeTableAlign } from './ipc';
+import type { RenderTreeElem, RenderTreeFootNoteDef, RenderTreeTableAlign, RenderTreeCodeFence } from './ipc';
 import type { Theme } from './reducer';
 import * as log from './log';
-import { CodeBlock } from './components/CodeBlock';
 import { Mermaid } from './components/Mermaid';
 
 export class MermaidRenderer {
@@ -33,11 +33,11 @@ export class MermaidRenderer {
         this.initialized = true;
     }
 
-    async render(content: string): Promise<React.ReactElement> {
+    async render(content: string, key?: number): Promise<ReactElement> {
         this.init();
         const id = this.id++;
         const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
-        return <Mermaid svg={svg} bindFn={bindFunctions} />;
+        return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
     }
 }
 
@@ -48,7 +48,7 @@ const FOOTNOTE_BACKREF_STYLE: React.CSSProperties = {
 };
 
 export interface MarkdownReactTree {
-    root: React.ReactNode;
+    root: ReactNode;
     lastModified: React.RefObject<HTMLSpanElement> | null;
     matchCount: number;
 }
@@ -79,11 +79,11 @@ function childrenText(children: RenderTreeElem[]): null | [string, boolean] {
     return [content, modified];
 }
 
-function isReactElement(node: React.ReactNode): node is React.ReactElement {
+function isReactElement(node: ReactNode): node is ReactElement {
     return node !== null && typeof node === 'object' && '$$typeof' in node;
 }
 
-function lastElementOf(nodes: React.ReactNode[]): React.ReactElement | null {
+function lastElementOf(nodes: ReactNode[]): ReactElement | null {
     if (nodes.length === 0) {
         return null;
     }
@@ -140,7 +140,7 @@ export class ReactMarkdownRenderer {
         };
     }
 
-    private async renderFootnotes(): Promise<React.ReactNode> {
+    private async renderFootnotes(): Promise<ReactNode> {
         if (this.footNotes.length === 0) {
             return null;
         }
@@ -178,29 +178,60 @@ export class ReactMarkdownRenderer {
         );
     }
 
-    private lastModified(key?: number): React.ReactNode {
+    private lastModified(key?: number): ReactNode {
         const ref = React.createRef<HTMLSpanElement>();
         this.lastModifiedRef = ref;
         return <span key={key} className="last-modified-marker" ref={ref} />;
     }
 
-    private maybeModified(elem: React.ReactElement, modified: boolean, key: number | undefined): React.ReactNode {
-        if (!modified) {
-            return elem;
-        }
-        return (
-            <React.Fragment key={key}>
-                {this.lastModified()}
-                {elem}
-            </React.Fragment>
-        );
-    }
-
-    private renderAll(elems: RenderTreeElem[]): Promise<React.ReactNode[]> {
+    private renderAll(elems: RenderTreeElem[]): Promise<ReactNode[]> {
         return Promise.all(elems.map((elem, idx) => this.render(elem, idx)));
     }
 
-    private async render(elem: RenderTreeElem, key?: number): Promise<React.ReactNode> {
+    private async renderSpecialFence(elem: RenderTreeCodeFence, key?: number): Promise<[ReactNode, boolean] | null> {
+        if (!elem.lang) {
+            return null;
+        }
+
+        if (hljs.getLanguage(elem.lang)) {
+            const text = childrenText(elem.c);
+            if (text === null) {
+                return null;
+            }
+            const [content, modified] = text;
+            const html = hljs.highlight(content, { language: elem.lang }).value;
+            const rendered = <code className={`language-${elem.lang}`} dangerouslySetInnerHTML={{ __html: html }} />; // eslint-disable-line @typescript-eslint/naming-convention
+            return [rendered, modified];
+        }
+
+        if (elem.lang === 'mermaid') {
+            const text = childrenText(elem.c);
+            if (text === null) {
+                return null;
+            }
+            const [content, modified] = text;
+            const rendered = await this.mermaid.render(content, key);
+            return [rendered, modified];
+        }
+
+        if (elem.lang === 'math') {
+            const text = childrenText(elem.c);
+            if (text === null) {
+                return null;
+            }
+            const [content, modified] = text;
+            return [
+                <div className="code-fence-math" key={key}>
+                    <Mathjax expr={content} />
+                </div>,
+                modified,
+            ];
+        }
+
+        return null;
+    }
+
+    private async render(elem: RenderTreeElem, key?: number): Promise<ReactNode> {
         if (typeof elem === 'string') {
             return elem;
         }
@@ -251,40 +282,22 @@ export class ReactMarkdownRenderer {
                 return <del key={key}>{await this.renderAll(elem.c)}</del>;
             case 'pre':
                 return <pre key={key}>{await this.renderAll(elem.c)}</pre>;
-            case 'code':
-                if (elem.lang) {
-                    if (hljs.getLanguage(elem.lang)) {
-                        const text = childrenText(elem.c);
-                        if (text !== null) {
-                            const [content, modified] = text;
-                            return this.maybeModified(
-                                <CodeBlock key={key} lang={elem.lang} code={content} />,
-                                modified,
-                                key,
-                            );
-                        }
-                    } else if (elem.lang === 'mermaid') {
-                        const text = childrenText(elem.c);
-                        if (text !== null) {
-                            const [content, modified] = text;
-                            const rendered = await this.mermaid.render(content);
-                            return this.maybeModified(rendered, modified, key);
-                        }
-                    } else if (elem.lang === 'math') {
-                        const text = childrenText(elem.c);
-                        if (text !== null) {
-                            const [content, modified] = text;
-                            return this.maybeModified(
-                                <div className="code-fence-math" key={key}>
-                                    <Mathjax expr={content} />
-                                </div>,
-                                modified,
-                                key,
-                            );
-                        }
-                    }
+            case 'code': {
+                const rendered = await this.renderSpecialFence(elem, key);
+                if (rendered === null) {
+                    return <code key={key}>{await this.renderAll(elem.c)}</code>;
                 }
-                return <code key={key}>{await this.renderAll(elem.c)}</code>;
+                const [node, modified] = rendered;
+                if (!modified) {
+                    return node;
+                }
+                return (
+                    <React.Fragment key={key}>
+                        {this.lastModified()}
+                        {node}
+                    </React.Fragment>
+                );
+            }
             case 'ol':
                 return (
                     <ol key={key} start={elem.start}>
