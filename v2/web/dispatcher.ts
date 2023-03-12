@@ -19,7 +19,7 @@ import {
     welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
-import { ReactMarkdownRenderer, FenceRenderer } from './markdown';
+import { ReactMarkdownRenderer } from './markdown';
 import { KeyMapping } from './keymaps';
 import * as log from './log';
 
@@ -29,7 +29,6 @@ export class GlobalDispatcher {
     public dispatch: Dispatch; // This prop will be updated by `App` component
     public state: State; // This prop will be updated by `App` component
     public readonly keymap: KeyMapping;
-    private readonly fence: FenceRenderer;
 
     constructor() {
         this.dispatch = () => {
@@ -37,13 +36,11 @@ export class GlobalDispatcher {
         };
         this.state = INITIAL_STATE;
         this.keymap = new KeyMapping();
-        this.fence = new FenceRenderer(this.state.theme);
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
         this.dispatch = dispatch;
         this.state = state;
-        this.fence.setTheme(state.theme);
     }
 
     openSearch(): void {
@@ -70,7 +67,7 @@ export class GlobalDispatcher {
         try {
             switch (msg.kind) {
                 case 'render_tree': {
-                    const renderer = new ReactMarkdownRenderer(this.fence);
+                    const renderer = new ReactMarkdownRenderer(this.state.theme);
                     const tree = await renderer.renderMarkdown(msg.tree);
                     this.dispatch(previewContent(tree));
                     break;

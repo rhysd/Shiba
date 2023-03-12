@@ -8,28 +8,23 @@ import type { Theme } from './reducer';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
 
-export class FenceRenderer {
-    theme: Theme;
-    mermaidInitialized = false;
-    mermaidId = 0;
+class FenceRenderer {
+    private readonly theme: Theme;
+    private static mermaidInitialized = false;
+    private mermaidId = 0;
 
     constructor(theme: Theme) {
         this.theme = theme;
     }
 
-    setTheme(theme: Theme): void {
-        this.theme = theme;
-        this.mermaidId = 0;
-    }
-
     private initMermaid(): void {
-        if (this.mermaidInitialized) {
+        if (FenceRenderer.mermaidInitialized) {
             return;
         }
         const theme = this.theme === 'light' ? 'default' : 'dark';
         mermaid.initialize({ startOnLoad: false, theme });
         log.debug('Initialized mermaid renderer', theme);
-        this.mermaidInitialized = true;
+        FenceRenderer.mermaidInitialized = true;
     }
 
     private async renderMermaid(content: string, key: number | undefined): Promise<ReactElement> {
@@ -84,39 +79,6 @@ export class FenceRenderer {
         }
 
         return null;
-    }
-}
-
-export class MermaidRenderer {
-    theme: Theme;
-    initialized: boolean;
-    id: number;
-
-    constructor(theme: Theme) {
-        this.theme = theme;
-        this.initialized = false;
-        this.id = 0;
-    }
-
-    setTheme(theme: Theme): void {
-        this.theme = theme;
-    }
-
-    private init(): void {
-        if (this.initialized) {
-            return;
-        }
-        const theme = this.theme === 'light' ? 'default' : 'dark';
-        mermaid.initialize({ startOnLoad: false, theme });
-        log.debug('Initialized mermaid renderer', theme);
-        this.initialized = true;
-    }
-
-    async render(content: string, key?: number): Promise<ReactElement> {
-        this.init();
-        const id = this.id++;
-        const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
-        return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
     }
 }
 
@@ -193,13 +155,13 @@ export class ReactMarkdownRenderer {
     private matchCount: number;
     private readonly fence: FenceRenderer;
 
-    constructor(fence: FenceRenderer) {
+    constructor(theme: Theme) {
         this.table = null;
         this.footNotes = [];
         this.lastModifiedRef = null;
         this.matchCount = 0;
         this.render = this.render.bind(this);
-        this.fence = fence;
+        this.fence = new FenceRenderer(theme);
     }
 
     async renderMarkdown(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
