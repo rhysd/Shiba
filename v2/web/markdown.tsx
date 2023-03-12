@@ -32,14 +32,14 @@ export class FenceRenderer {
         this.mermaidInitialized = true;
     }
 
-    private async renderMermaid(content: string, key?: number): Promise<ReactElement> {
+    private async renderMermaid(content: string, key: number | undefined): Promise<ReactElement> {
         this.initMermaid();
         const id = this.mermaidId++;
         const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
         return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
     }
 
-    private renderHljs(code: string, lang: string, key?: number): ReactElement {
+    private renderHljs(code: string, lang: string, key: number | undefined): ReactElement {
         const html = hljs.highlight(code, { language: lang }).value;
         return <code className={`language-${lang}`} dangerouslySetInnerHTML={{ __html: html }} key={key} />; // eslint-disable-line @typescript-eslint/naming-convention
     }
@@ -55,7 +55,7 @@ export class FenceRenderer {
                 return null;
             }
             const [content, modified] = text;
-            const rendered = this.renderHljs(content, elem.lang);
+            const rendered = this.renderHljs(content, elem.lang, key);
             return [rendered, modified];
         }
 
