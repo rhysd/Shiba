@@ -45,6 +45,11 @@ export interface RenderTreeFootNoteDef {
     id: number;
     c: RenderTreeElem[];
 }
+export interface RenderTreeCodeFence {
+    t: 'code';
+    lang?: string;
+    c: RenderTreeElem[];
+}
 // Note: 't' is abbreviation of 'tag', 'c' is abbreviation of 'children' for saving spaces
 export type RenderTreeElem =
     | string // Text node
@@ -109,11 +114,7 @@ export type RenderTreeElem =
           t: 'pre';
           c: RenderTreeElem[];
       }
-    | {
-          t: 'code';
-          lang?: string;
-          c: RenderTreeElem[];
-      }
+    | RenderTreeCodeFence
     | {
           t: 'ol';
           start?: number;

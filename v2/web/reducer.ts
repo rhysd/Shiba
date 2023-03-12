@@ -3,7 +3,7 @@ import type { SearchMatcher, WindowTheme } from './ipc';
 import { searchNextIndex, searchPreviousIndex } from './search';
 import type { MarkdownReactTree } from './markdown';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark';
 
 export type NotificationContent =
     | {
