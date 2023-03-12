@@ -8,6 +8,85 @@ import type { Theme } from './reducer';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
 
+export class FenceRenderer {
+    theme: Theme;
+    mermaidInitialized = false;
+    mermaidId = 0;
+
+    constructor(theme: Theme) {
+        this.theme = theme;
+    }
+
+    setTheme(theme: Theme): void {
+        this.theme = theme;
+        this.mermaidId = 0;
+    }
+
+    private initMermaid(): void {
+        if (this.mermaidInitialized) {
+            return;
+        }
+        const theme = this.theme === 'light' ? 'default' : 'dark';
+        mermaid.initialize({ startOnLoad: false, theme });
+        log.debug('Initialized mermaid renderer', theme);
+        this.mermaidInitialized = true;
+    }
+
+    private async renderMermaid(content: string, key?: number): Promise<ReactElement> {
+        this.initMermaid();
+        const id = this.mermaidId++;
+        const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
+        return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
+    }
+
+    private renderHljs(code: string, lang: string, key?: number): ReactElement {
+        const html = hljs.highlight(code, { language: lang }).value;
+        return <code className={`language-${lang}`} dangerouslySetInnerHTML={{ __html: html }} key={key} />; // eslint-disable-line @typescript-eslint/naming-convention
+    }
+
+    async render(elem: RenderTreeCodeFence, key?: number): Promise<[ReactElement, boolean] | null> {
+        if (!elem.lang) {
+            return null;
+        }
+
+        if (hljs.getLanguage(elem.lang)) {
+            const text = childrenText(elem.c);
+            if (text === null) {
+                return null;
+            }
+            const [content, modified] = text;
+            const rendered = this.renderHljs(content, elem.lang);
+            return [rendered, modified];
+        }
+
+        if (elem.lang === 'mermaid') {
+            const text = childrenText(elem.c);
+            if (text === null) {
+                return null;
+            }
+            const [content, modified] = text;
+            const rendered = await this.renderMermaid(content, key);
+            return [rendered, modified];
+        }
+
+        if (elem.lang === 'math') {
+            const text = childrenText(elem.c);
+            if (text === null) {
+                return null;
+            }
+            const [content, modified] = text;
+            return [
+                <div className="code-fence-math" key={key}>
+                    <Mathjax expr={content} />
+                </div>,
+                modified,
+            ];
+        }
+
+        return null;
+    }
+}
+
 export class MermaidRenderer {
     theme: Theme;
     initialized: boolean;
@@ -112,15 +191,15 @@ export class ReactMarkdownRenderer {
     private lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
     private readonly footNotes: RenderTreeFootNoteDef[];
     private matchCount: number;
-    private readonly mermaid: MermaidRenderer;
+    private readonly fence: FenceRenderer;
 
-    constructor(mermaid: MermaidRenderer) {
+    constructor(fence: FenceRenderer) {
         this.table = null;
         this.footNotes = [];
         this.lastModifiedRef = null;
         this.matchCount = 0;
         this.render = this.render.bind(this);
-        this.mermaid = mermaid;
+        this.fence = fence;
     }
 
     async renderMarkdown(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
@@ -188,49 +267,6 @@ export class ReactMarkdownRenderer {
         return Promise.all(elems.map((elem, idx) => this.render(elem, idx)));
     }
 
-    private async renderSpecialFence(elem: RenderTreeCodeFence, key?: number): Promise<[ReactNode, boolean] | null> {
-        if (!elem.lang) {
-            return null;
-        }
-
-        if (hljs.getLanguage(elem.lang)) {
-            const text = childrenText(elem.c);
-            if (text === null) {
-                return null;
-            }
-            const [content, modified] = text;
-            const html = hljs.highlight(content, { language: elem.lang }).value;
-            const rendered = <code className={`language-${elem.lang}`} dangerouslySetInnerHTML={{ __html: html }} />; // eslint-disable-line @typescript-eslint/naming-convention
-            return [rendered, modified];
-        }
-
-        if (elem.lang === 'mermaid') {
-            const text = childrenText(elem.c);
-            if (text === null) {
-                return null;
-            }
-            const [content, modified] = text;
-            const rendered = await this.mermaid.render(content, key);
-            return [rendered, modified];
-        }
-
-        if (elem.lang === 'math') {
-            const text = childrenText(elem.c);
-            if (text === null) {
-                return null;
-            }
-            const [content, modified] = text;
-            return [
-                <div className="code-fence-math" key={key}>
-                    <Mathjax expr={content} />
-                </div>,
-                modified,
-            ];
-        }
-
-        return null;
-    }
-
     private async render(elem: RenderTreeElem, key?: number): Promise<ReactNode> {
         if (typeof elem === 'string') {
             return elem;
@@ -283,7 +319,7 @@ export class ReactMarkdownRenderer {
             case 'pre':
                 return <pre key={key}>{await this.renderAll(elem.c)}</pre>;
             case 'code': {
-                const rendered = await this.renderSpecialFence(elem, key);
+                const rendered = await this.fence.render(elem, key);
                 if (rendered === null) {
                     return <code key={key}>{await this.renderAll(elem.c)}</code>;
                 }
