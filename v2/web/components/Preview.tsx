@@ -5,8 +5,8 @@ import * as log from '../log';
 
 function appearInViewport(elem: Element): boolean {
     const { top, left, bottom, right } = elem.getBoundingClientRect();
-    const height = window.innerHeight ?? document.documentElement.clientHeight;
-    const width = window.innerWidth ?? document.documentElement.clientWidth;
+    const height = window.innerHeight;
+    const width = window.innerWidth;
     const outside = bottom < 0 || height < top || right < 0 || width < left;
     return !outside;
 }

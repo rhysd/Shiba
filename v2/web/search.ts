@@ -2,8 +2,8 @@ import * as log from './log';
 
 function isInViewport(elem: Element): boolean {
     const rect = elem.getBoundingClientRect();
-    const height = window.innerHeight ?? document.documentElement.clientHeight;
-    const width = window.innerWidth ?? document.documentElement.clientWidth;
+    const height = window.innerHeight;
+    const width = window.innerWidth;
     return 0 <= rect.top && 0 <= rect.left && rect.bottom <= height && rect.right <= width;
 }
 
@@ -94,8 +94,7 @@ export function searchPreviousIndex(index: number | null): number | null {
         next = index > 0 ? index - 1 : startIndices.length - 1;
     } else {
         // Find the nearest previous item against current scroll position
-        const height = window.innerHeight ?? document.documentElement.clientHeight;
-        const y = window.scrollY + height;
+        const y = window.scrollY + window.innerHeight;
         for (const i of startIndices) {
             const e = all[i];
             const bottom = e.offsetTop + e.clientHeight;
