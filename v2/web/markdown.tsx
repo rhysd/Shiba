@@ -3,35 +3,56 @@ import type { ReactNode, ReactElement } from 'react';
 import hljs from 'highlight.js';
 import Mathjax from 'react-mathjax-component';
 import mermaid from 'mermaid';
-import type { RenderTreeElem, RenderTreeFootNoteDef, RenderTreeTableAlign, RenderTreeCodeFence } from './ipc';
-import type { Theme } from './reducer';
+import type {
+    RenderTreeElem,
+    RenderTreeFootNoteDef,
+    RenderTreeTableAlign,
+    RenderTreeCodeFence,
+    WindowTheme,
+} from './ipc';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
 
-class FenceRenderer {
-    private readonly theme: Theme;
-    private static mermaidInitialized = false;
-    private mermaidId = 0;
+class MermaidRenderer {
+    private theme: 'default' | 'dark' = 'default';
+    private initialized = false;
+    private id = 0;
 
-    constructor(theme: Theme) {
-        this.theme = theme;
+    setTheme(theme: WindowTheme): void {
+        const next = theme === 'Light' ? 'default' : 'dark';
+        if (this.theme !== next && this.initialized) {
+            this.initialized = false;
+            log.debug('Mermaid will be initialized again since the window theme was changed', this.theme, next, theme);
+        }
+        this.theme = next;
+    }
+
+    resetId(): void {
+        this.id = 0;
     }
 
     private initMermaid(): void {
-        if (FenceRenderer.mermaidInitialized) {
+        if (this.initialized) {
             return;
         }
-        const theme = this.theme === 'light' ? 'default' : 'dark';
-        mermaid.initialize({ startOnLoad: false, theme });
-        log.debug('Initialized mermaid renderer', theme);
-        FenceRenderer.mermaidInitialized = true;
+        mermaid.initialize({ startOnLoad: false, theme: this.theme });
+        log.debug('Initialized mermaid renderer', this.theme);
+        this.initialized = true;
     }
 
-    private async renderMermaid(content: string, key: number | undefined): Promise<ReactElement> {
+    async render(content: string, key: number | undefined): Promise<ReactElement> {
         this.initMermaid();
-        const id = this.mermaidId++;
+        const id = this.id++;
         const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
         return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
+    }
+}
+
+class FenceRenderer {
+    private readonly mermaid: MermaidRenderer;
+
+    constructor(mermaid: MermaidRenderer) {
+        this.mermaid = mermaid;
     }
 
     private renderHljs(code: string, lang: string, key: number | undefined): ReactElement {
@@ -60,7 +81,7 @@ class FenceRenderer {
                 return null;
             }
             const [content, modified] = text;
-            const rendered = await this.renderMermaid(content, key);
+            const rendered = await this.mermaid.render(content, key);
             return [rendered, modified];
         }
 
@@ -148,23 +169,23 @@ function tableAlignStyle({ aligns, index }: TableState): React.CSSProperties | n
     return { textAlign };
 }
 
-export class ReactMarkdownRenderer {
+class RenderTreeToReact {
     private table: TableState | null;
     private lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
     private readonly footNotes: RenderTreeFootNoteDef[];
     private matchCount: number;
     private readonly fence: FenceRenderer;
 
-    constructor(theme: Theme) {
+    constructor(mermaid: MermaidRenderer) {
         this.table = null;
         this.footNotes = [];
         this.lastModifiedRef = null;
         this.matchCount = 0;
         this.render = this.render.bind(this);
-        this.fence = new FenceRenderer(theme);
+        this.fence = new FenceRenderer(mermaid);
     }
 
-    async renderMarkdown(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
+    async run(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
         log.debug('Rendering preview tree', tree);
         const blocks = await this.renderAll(tree);
         const footNotes = await this.renderFootnotes();
@@ -439,5 +460,19 @@ export class ReactMarkdownRenderer {
                 log.error('Unknown render tree element:', JSON.stringify(elem));
                 return null;
         }
+    }
+}
+
+export class ReactMarkdownRenderer {
+    private readonly mermaid = new MermaidRenderer();
+
+    set theme(theme: WindowTheme) {
+        this.mermaid.setTheme(theme);
+    }
+
+    render(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
+        this.mermaid.resetId();
+        const renderer = new RenderTreeToReact(this.mermaid);
+        return renderer.run(tree);
     }
 }

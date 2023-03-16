@@ -29,6 +29,7 @@ export class GlobalDispatcher {
     public dispatch: Dispatch; // This prop will be updated by `App` component
     public state: State; // This prop will be updated by `App` component
     public readonly keymap: KeyMapping;
+    public readonly markdown: ReactMarkdownRenderer;
 
     constructor() {
         this.dispatch = () => {
@@ -36,6 +37,7 @@ export class GlobalDispatcher {
         };
         this.state = INITIAL_STATE;
         this.keymap = new KeyMapping();
+        this.markdown = new ReactMarkdownRenderer();
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
@@ -67,8 +69,7 @@ export class GlobalDispatcher {
         try {
             switch (msg.kind) {
                 case 'render_tree': {
-                    const renderer = new ReactMarkdownRenderer(this.state.theme);
-                    const tree = await renderer.renderMarkdown(msg.tree);
+                    const tree = await this.markdown.render(msg.tree);
                     this.dispatch(previewContent(tree));
                     break;
                 }
@@ -80,6 +81,13 @@ export class GlobalDispatcher {
                     this.dispatch(setTheme(msg.theme));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
+                    // `this.state.theme` is not available since it is updated *after* the first rendering of Markdown content.
+                    //   1. Receive `config` IPC message
+                    //   2. Dispatch `setTheme` action
+                    //   3. Receive `render_tree` IPC message
+                    //   4. Render the Markdown content (at this point, `this.state.theme` has not been changed yet)
+                    //   5. Dispatched `setTheme` action is handled and `this.state` is updated
+                    this.markdown.theme = msg.theme;
                     break;
                 case 'search':
                     this.openSearch();
