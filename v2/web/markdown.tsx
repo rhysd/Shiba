@@ -1,8 +1,17 @@
 import * as React from 'react';
 import type { ReactNode, ReactElement } from 'react';
 import hljs from 'highlight.js';
-import Mathjax from 'react-mathjax-component';
 import mermaid from 'mermaid';
+import { mathjax } from 'mathjax-full/js/mathjax';
+import type { MathDocument } from 'mathjax-full/js/core/MathDocument';
+import { TeX } from 'mathjax-full/js/input/tex';
+import { SVG } from 'mathjax-full/js/output/svg';
+import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
+import { liteAdaptor, type LiteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor';
+import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
+import type { LiteElement } from 'mathjax-full/js/adaptors/lite/Element';
+import type { LiteText } from 'mathjax-full/js/adaptors/lite/Text';
+import type { LiteDocument } from 'mathjax-full/js/adaptors/lite/Document';
 import type {
     RenderTreeElem,
     RenderTreeFootNoteDef,
@@ -48,11 +57,43 @@ class MermaidRenderer {
     }
 }
 
+type MathJaxDocument = MathDocument<LiteElement, LiteText, LiteDocument>;
+type MathJaxState = [MathJaxDocument, LiteAdaptor];
+type MathClassName = 'math-expr-block' | 'math-expr-inline' | 'code-fence-math';
+
+class MathJaxRenderer {
+    private state: MathJaxState | null = null;
+
+    private initMathJax(): MathJaxState {
+        if (this.state !== null) {
+            return this.state;
+        }
+
+        const adaptor = liteAdaptor();
+        RegisterHTMLHandler(adaptor);
+        const document = mathjax.document('', {
+            InputJax: new TeX({ packages: AllPackages }),
+            OutputJax: new SVG({ fontCache: 'local' }),
+        });
+        this.state = [document, adaptor];
+        return this.state;
+    }
+
+    render(expr: string, className: MathClassName, key: number | undefined): ReactElement {
+        const [document, adaptor] = this.initMathJax();
+        const node = document.convert(expr) as LiteElement;
+        const html = adaptor.innerHTML(node);
+        return <span className={className} dangerouslySetInnerHTML={{ __html: html }} key={key} />; // eslint-disable-line @typescript-eslint/naming-convention
+    }
+}
+
 class FenceRenderer {
     private readonly mermaid: MermaidRenderer;
+    private readonly mathjax: MathJaxRenderer;
 
-    constructor(mermaid: MermaidRenderer) {
+    constructor(mermaid: MermaidRenderer, mathjax: MathJaxRenderer) {
         this.mermaid = mermaid;
+        this.mathjax = mathjax;
     }
 
     private renderHljs(code: string, lang: string, key: number | undefined): ReactElement {
@@ -91,12 +132,8 @@ class FenceRenderer {
                 return null;
             }
             const [content, modified] = text;
-            return [
-                <div className="code-fence-math" key={key}>
-                    <Mathjax expr={content} />
-                </div>,
-                modified,
-            ];
+            const rendered = this.mathjax.render(content, 'code-fence-math', key);
+            return [rendered, modified];
         }
 
         return null;
@@ -175,14 +212,16 @@ class RenderTreeToReact {
     private readonly footNotes: RenderTreeFootNoteDef[];
     private matchCount: number;
     private readonly fence: FenceRenderer;
+    private readonly mathjax: MathJaxRenderer;
 
-    constructor(mermaid: MermaidRenderer) {
+    constructor(mermaid: MermaidRenderer, mathjax: MathJaxRenderer) {
         this.table = null;
         this.footNotes = [];
         this.lastModifiedRef = null;
         this.matchCount = 0;
         this.render = this.render.bind(this);
-        this.fence = new FenceRenderer(mermaid);
+        this.fence = new FenceRenderer(mermaid, mathjax);
+        this.mathjax = mathjax;
     }
 
     async run(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
@@ -408,20 +447,10 @@ class RenderTreeToReact {
             case 'fn-def':
                 this.footNotes.push(elem);
                 return null; // Footnotes will be rendered at the bottom of page
-            case 'math':
-                if (elem.inline) {
-                    return (
-                        <span className="math-expr-inline" key={key}>
-                            <Mathjax expr={elem.expr} />
-                        </span>
-                    );
-                } else {
-                    return (
-                        <div className="math-expr-block" key={key}>
-                            <Mathjax expr={elem.expr} />
-                        </div>
-                    );
-                }
+            case 'math': {
+                const className = elem.inline ? 'math-expr-inline' : 'math-expr-block';
+                return this.mathjax.render(elem.expr, className, key);
+            }
             case 'html': {
                 // XXX: This <span> element is necessary because React cannot render inner HTML under fragment
                 // https://github.com/reactjs/rfcs/pull/129
@@ -465,6 +494,7 @@ class RenderTreeToReact {
 
 export class ReactMarkdownRenderer {
     private readonly mermaid = new MermaidRenderer();
+    private readonly mathjax = new MathJaxRenderer();
 
     set theme(theme: WindowTheme) {
         this.mermaid.setTheme(theme);
@@ -472,7 +502,7 @@ export class ReactMarkdownRenderer {
 
     render(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
         this.mermaid.resetId();
-        const renderer = new RenderTreeToReact(this.mermaid);
+        const renderer = new RenderTreeToReact(this.mermaid, this.mathjax);
         return renderer.run(tree);
     }
 }
