@@ -14,6 +14,14 @@
       "options": {
         "trailingComma": "all"
       }
+    },
+    {
+      "files": ["*.css"],
+      "options": {
+        "tabWidth": 2,
+        "singleQuote": false,
+        "printWidth": 200
+      }
     }
   ]
 }
