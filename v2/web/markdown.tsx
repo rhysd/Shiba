@@ -179,7 +179,7 @@ function childrenText(children: RenderTreeElem[]): null | [string, boolean] {
 }
 
 function isReactElement(node: ReactNode): node is ReactElement {
-    return node !== null && typeof node === 'object' && '$$typeof' in node;
+    return node !== null && typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, '$$typeof');
 }
 
 function lastElementOf(nodes: ReactNode[]): ReactElement | null {
