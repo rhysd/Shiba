@@ -1011,4 +1011,36 @@ mod tests {
             assert_eq!(expected, actual, "input={:?}", input);
         }
     }
+
+    #[test]
+    fn auto_linker() {
+        for (input, url) in [
+            ("http://example.com", Some("http://example.com")),
+            ("https://example.com", Some("https://example.com")),
+            ("hello http://example.com world", Some("http://example.com")),
+            ("[foo](http://example.com)", Some("http://example.com")),
+            ("[http://example.com]", Some("http://example.com")),
+            ("Nice URL https://example.com!", Some("https://example.com")),
+            ("This is URL https://example.com.", Some("https://example.com")),
+            ("He said 'https://example.com'", Some("https://example.com")),
+            ("Open https://example.com, and click button", Some("https://example.com")),
+            ("https://example.com&", Some("https://example.com")),
+            ("file:///foo/bar", None),
+            ("", None),
+            ("hello, world", None),
+            ("http:", None),
+            ("http://", None),
+        ] {
+            let found = Autolinker::default().find_autolink(input);
+            assert_eq!(
+                url.is_some(),
+                found.is_some(),
+                "input={input:?}, found={found:?}, expected={url:?}",
+            );
+            if let Some(url) = url {
+                let (s, e) = found.unwrap();
+                assert_eq!(url, &input[s..e]);
+            }
+        }
+    }
 }
