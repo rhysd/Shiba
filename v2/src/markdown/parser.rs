@@ -952,4 +952,63 @@ mod tests {
         snapshot_test!(footnotes);
         snapshot_test!(highlight);
     }
+
+    #[test]
+    fn emoji_tokenizer() {
+        #[derive(PartialEq, Eq, Debug)]
+        enum Tok {
+            T(&'static str),
+            E(&'static str, usize),
+        }
+        for (input, expected) in [
+            (":dog:", &[Tok::E("dog face", 5)][..]),
+            (":nerd_face:", &[Tok::E("nerd face", 11)][..]),
+            (":+1:", &[Tok::E("thumbs up", 4)][..]),
+            (":-1:", &[Tok::E("thumbs down", 4)][..]),
+            (":dog::cat:", &[Tok::E("dog face", 5), Tok::E("cat face", 5)][..]),
+            (":dog: :cat:", &[Tok::E("dog face", 5), Tok::T(" "), Tok::E("cat face", 5)][..]),
+            (
+                " :dog: :cat: ",
+                &[
+                    Tok::T(" "),
+                    Tok::E("dog face", 5),
+                    Tok::T(" "),
+                    Tok::E("cat face", 5),
+                    Tok::T(" "),
+                ][..],
+            ),
+            (
+                "hello :dog: world :cat: nyan",
+                &[
+                    Tok::T("hello "),
+                    Tok::E("dog face", 5),
+                    Tok::T(" world "),
+                    Tok::E("cat face", 5),
+                    Tok::T(" nyan"),
+                ][..],
+            ),
+            ("hello, world", &[Tok::T("hello, world")][..]),
+            ("", &[][..]),
+            ("dog:", &[Tok::T("dog"), Tok::T(":")][..]),
+            (":dog", &[Tok::T(":dog")][..]),
+            (":this-is-not-an-emoji:", &[Tok::T(":this-is-not-an-emoji"), Tok::T(":")][..]),
+            (
+                ":not-emoji:not-emoji:dog:",
+                &[Tok::T(":not-emoji"), Tok::T(":not-emoji"), Tok::E("dog face", 5)][..],
+            ),
+            (
+                ":not-emoji:not-emoji:dog:",
+                &[Tok::T(":not-emoji"), Tok::T(":not-emoji"), Tok::E("dog face", 5)][..],
+            ),
+            ("::::", &[Tok::T(":"), Tok::T(":"), Tok::T(":"), Tok::T(":")][..]),
+        ] {
+            let actual = EmojiTokenizer::new(input)
+                .map(|tok| match tok {
+                    EmojiToken::Text(text) => Tok::T(text),
+                    EmojiToken::Emoji(emoji, len) => Tok::E(emoji.name(), len),
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(expected, actual, "input={:?}", input);
+        }
+    }
 }
