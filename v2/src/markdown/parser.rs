@@ -797,7 +797,7 @@ impl<'a> Iterator for EmojiTokenizer<'a> {
 
         if self.start == end {
             // Edge case: The initial input text starts with ':'
-            return Some(EmojiToken::Text(""));
+            return self.next();
         }
 
         if !self.text[self.start..].starts_with(':') {
