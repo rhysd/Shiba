@@ -20,15 +20,7 @@ expression: json
       "c": [
         {
           "c": [
-            {
-              "auto": true,
-              "c": [
-                "http://example.com"
-              ],
-              "href": "http://example.com",
-              "t": "a"
-            },
-            "\n"
+            "http://example.com\n"
           ],
           "t": "code"
         }
@@ -39,16 +31,7 @@ expression: json
       "c": [
         {
           "c": [
-            "println!(\"",
-            {
-              "auto": true,
-              "c": [
-                "http://example.com"
-              ],
-              "href": "http://example.com",
-              "t": "a"
-            },
-            "\");\n"
+            "println!(\"http://example.com\");\n"
           ],
           "lang": "rust",
           "t": "code"
@@ -85,16 +68,7 @@ expression: json
       "c": [
         {
           "c": [
-            "<a href=\"",
-            {
-              "auto": true,
-              "c": [
-                "http://example.com"
-              ],
-              "href": "http://example.com",
-              "t": "a"
-            },
-            "\">test</a>\n"
+            "<a href=\"http://example.com\">test</a>\n"
           ],
           "t": "code"
         }

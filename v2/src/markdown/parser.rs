@@ -256,6 +256,7 @@ struct RenderTreeEncoder<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
     text_tokenizer: T,
     autolinker: Autolinker,
     sanitizer: Sanitizer<'a>,
+    in_code_block: bool,
 }
 
 impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V, T> {
@@ -271,6 +272,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             text_tokenizer,
             autolinker: Autolinker::default(),
             sanitizer: Sanitizer::new(base_dir),
+            in_code_block: false,
         }
     }
 
@@ -450,6 +452,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.start_tag(tag, next_event)?;
                 }
                 End(tag) => self.end_tag(tag)?,
+                Text(text) if self.in_code_block => self.text(&text, range)?,
                 Text(text) => self.autolink_text(&text, range)?,
                 Code(text) => {
                     let pad = (range.len() - text.len()) / 2;
@@ -595,6 +598,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                         }
                     }
                 }
+                self.in_code_block = true;
             }
             List(Some(1)) => self.tag("ol")?,
             List(Some(start)) => {
@@ -676,7 +680,12 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             | Link(_, _, _)
             | Image(_, _, _)
             | FootnoteDefinition(_) => self.tag_end(),
-            Table(_) | CodeBlock(_) => {
+            CodeBlock(_) => {
+                self.in_code_block = false;
+                self.tag_end()?;
+                self.tag_end()
+            }
+            Table(_) => {
                 self.tag_end()?;
                 self.tag_end()
             }
