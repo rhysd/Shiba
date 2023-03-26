@@ -887,6 +887,7 @@ mod tests {
     snapshot_test!(tasklist);
     snapshot_test!(footnotes);
     snapshot_test!(highlight);
+    snapshot_test!(not_link);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
@@ -951,6 +952,7 @@ mod tests {
         snapshot_test!(tasklist);
         snapshot_test!(footnotes);
         snapshot_test!(highlight);
+        snapshot_test!(not_link);
     }
 
     #[test]

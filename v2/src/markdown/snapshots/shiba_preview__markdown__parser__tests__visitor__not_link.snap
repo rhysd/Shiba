@@ -1,0 +1,37 @@
+---
+source: src/markdown/parser.rs
+expression: "(text, mapped)"
+---
+(
+    "https://example.comhttp://example.com\nprintln!(\"http://example.com\");\nfile:///foo/bar.txthttps://<a href=\"http://example.com\">test</a><a href=\"http://example.com\">test</a>\n",
+    [
+        (
+            "https://example.com",
+            1..20,
+        ),
+        (
+            "http://example.com\n",
+            27..46,
+        ),
+        (
+            "println!(\"http://example.com\");\n",
+            59..91,
+        ),
+        (
+            "file:///foo/bar.txt",
+            96..115,
+        ),
+        (
+            "https://",
+            117..125,
+        ),
+        (
+            "<a href=\"http://example.com\">test</a>",
+            128..165,
+        ),
+        (
+            "<a href=\"http://example.com\">test</a>\n",
+            172..210,
+        ),
+    ],
+)

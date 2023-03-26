@@ -1,0 +1,105 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "https://example.com"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            {
+              "auto": true,
+              "c": [
+                "http://example.com"
+              ],
+              "href": "http://example.com",
+              "t": "a"
+            },
+            "\n"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "println!(\"",
+            {
+              "auto": true,
+              "c": [
+                "http://example.com"
+              ],
+              "href": "http://example.com",
+              "t": "a"
+            },
+            "\");\n"
+          ],
+          "lang": "rust",
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    },
+    {
+      "c": [
+        "file",
+        ":///foo/bar.txt"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        "https",
+        "://"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "<a href=\"http://example.com\">test</a>"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "<a href=\"",
+            {
+              "auto": true,
+              "c": [
+                "http://example.com"
+              ],
+              "href": "http://example.com",
+              "t": "a"
+            },
+            "\">test</a>\n"
+          ],
+          "t": "code"
+        }
+      ],
+      "t": "pre"
+    }
+  ]
+}
