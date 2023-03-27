@@ -1034,19 +1034,25 @@ mod tests {
         for (input, url) in [
             ("http://example.com", Some("http://example.com")),
             ("https://example.com", Some("https://example.com")),
+            ("http://example.com/foo", Some("http://example.com/foo")),
+            ("http://example.com/foo/", Some("http://example.com/foo/")),
+            ("http://example.com&foo=bar", Some("http://example.com&foo=bar")),
             ("hello http://example.com world", Some("http://example.com")),
             ("[foo](http://example.com)", Some("http://example.com")),
             ("[http://example.com]", Some("http://example.com")),
             ("Nice URL https://example.com!", Some("https://example.com")),
             ("This is URL https://example.com.", Some("https://example.com")),
+            ("Is this URL https://example.com?", Some("https://example.com")),
             ("He said 'https://example.com'", Some("https://example.com")),
             ("Open https://example.com, and click button", Some("https://example.com")),
             ("https://example.com&", Some("https://example.com")),
+            ("123http://aaa.com", Some("http://aaa.com")),
             ("file:///foo/bar", None),
             ("", None),
             ("hello, world", None),
             ("http:", None),
             ("http://", None),
+            ("foohttp://aaa.com", None),
         ] {
             let found = Autolinker::default().find_autolink(input);
             assert_eq!(
