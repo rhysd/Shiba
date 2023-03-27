@@ -742,6 +742,12 @@ impl Autolinker {
     fn find_autolink(&self, text: &str) -> Option<(usize, usize)> {
         for mat in self.0.find_iter(text) {
             let (start, scheme_end) = (mat.start(), mat.end());
+            if let Some(c) = text[..start].chars().next_back() {
+                if c.is_ascii_alphabetic() {
+                    // Note: "foohttp://example.com" is not URL but "123http://example.com" contains URL
+                    continue;
+                }
+            }
 
             let mut len = 0;
             for (i, c) in text[scheme_end..].char_indices() {
