@@ -226,8 +226,8 @@ where
 
         let filter = PathFilter::new(config.watch());
         let mut watcher = W::new(event_loop, filter)?;
-        for path in &options.watch_dirs {
-            log::debug!("Watching initial directory: {:?}", path);
+        for path in &options.watch_paths {
+            log::debug!("Watching initial path: {:?}", path);
             watcher.watch(path)?;
         }
 

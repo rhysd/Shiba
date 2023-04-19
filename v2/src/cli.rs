@@ -9,7 +9,7 @@ use std::path::PathBuf;
 pub struct Options {
     pub debug: bool,
     pub init_file: Option<PathBuf>,
-    pub watch_dirs: Vec<PathBuf>,
+    pub watch_paths: Vec<PathBuf>,
     pub watch: bool,
     pub theme: Option<WindowTheme>,
     pub gen_config_file: bool,
@@ -57,26 +57,22 @@ impl Options {
         let debug = matches.opt_present("debug");
 
         let mut init_file = None;
-        let mut watch_dirs = vec![];
+        let mut watch_paths = vec![];
         for arg in matches.free.into_iter() {
             let path = PathBuf::from(arg);
-            if path.is_dir() {
-                watch_dirs.push(path.canonicalize()?);
-            } else if let Some(f) = init_file {
-                anyhow::bail!("Only single file path can be specified ({:?} v.s. {:?})", f, path);
-            } else if path.exists() {
-                init_file = Some(path.canonicalize()?);
-            } else if path.is_absolute() {
-                init_file = Some(path);
+            let exists = path.exists();
+            let path = if exists { path.canonicalize()? } else { env::current_dir()?.join(path) };
+            if init_file.is_some() || path.is_dir() {
+                watch_paths.push(path);
             } else {
-                init_file = Some(env::current_dir()?.join(path));
+                init_file = Some(path);
             }
         }
 
         Ok(Some(Self {
             debug,
             init_file,
-            watch_dirs,
+            watch_paths,
             watch,
             theme,
             gen_config_file,
