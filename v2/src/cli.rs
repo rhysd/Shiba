@@ -35,7 +35,7 @@ impl Options {
 
         let matches = opts.parse(iter)?;
         if matches.opt_present("h") {
-            println!("{}", opts.usage("Usage: shiba [option] [FILE] [DIR...]"));
+            println!("{}", opts.usage("Usage: shiba [option] [PATH...]"));
             return Ok(None);
         }
         let theme = match matches.opt_str("t") {
