@@ -40,11 +40,11 @@ impl Options {
         }
         let theme = match matches.opt_str("t") {
             Some(theme) => match theme.as_str() {
-                "dark" => Some(WindowTheme::Dark),
-                "light" => Some(WindowTheme::Light),
-                "system" => Some(WindowTheme::System),
+                "dark" | "Dark" => Some(WindowTheme::Dark),
+                "light" | "Light" => Some(WindowTheme::Light),
+                "system" | "System" => Some(WindowTheme::System),
                 _ => anyhow::bail!(
-                    r#"Value for --theme must be one of "dark", "light" or "system" but got {:}"#,
+                    r#"Value for --theme must be one of "dark", "light" or "system" but got {:?}"#,
                     theme,
                 ),
             },
