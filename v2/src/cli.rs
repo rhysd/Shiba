@@ -18,7 +18,6 @@ pub struct Options {
 }
 
 impl Options {
-    #[allow(clippy::print_stdout)]
     pub fn from_args(iter: impl Iterator<Item = String>) -> Result<Option<Self>> {
         let mut opts = GetOpts::new();
         opts.optflag("h", "help", "print this help");
@@ -34,10 +33,13 @@ impl Options {
         opts.optflag("", "debug", "enable debug features");
 
         let matches = opts.parse(iter)?;
+
+        #[allow(clippy::print_stdout)]
         if matches.opt_present("h") {
             println!("{}", opts.usage("Usage: shiba [option] [PATH...]"));
             return Ok(None);
         }
+
         let theme = match matches.opt_str("t") {
             Some(theme) => match theme.as_str() {
                 "dark" | "Dark" => Some(WindowTheme::Dark),
