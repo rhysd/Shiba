@@ -139,4 +139,27 @@ mod tests {
             assert_eq!(&opts, want, "args={:?}", args);
         }
     }
+
+    #[test]
+    fn help_option() {
+        let args = [String::from("--help")];
+        let opts = Options::from_args(args.into_iter()).unwrap();
+        assert!(opts.is_none(), "{:?}", opts);
+    }
+
+    #[test]
+    fn parse_args_error() {
+        let args = [String::from("--foo")];
+        let err = Options::from_args(args.into_iter()).unwrap_err();
+        assert!(format!("{}", err).contains("Unrecognized option"), "{:?}", err);
+
+        let args = [String::from("--theme"), String::from("foo")];
+        let err = Options::from_args(args.into_iter()).unwrap_err();
+        let msg = format!("{}", err);
+        assert!(
+            msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
+            "{:?}",
+            err,
+        );
+    }
 }
