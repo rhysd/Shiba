@@ -5,7 +5,7 @@ use std::env;
 use std::path::PathBuf;
 
 #[non_exhaustive]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Options {
     pub debug: bool,
     pub init_file: Option<PathBuf>,
@@ -81,5 +81,62 @@ impl Options {
             config_dir,
             data_dir,
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_args_ok() {
+        let cur = env::current_dir().unwrap();
+        let tests = &[
+            (&[][..], Options { watch: true, ..Default::default() }),
+            (
+                &["some-file.txt"][..],
+                Options {
+                    watch: true,
+                    init_file: Some(cur.join("some-file.txt")),
+                    ..Default::default()
+                },
+            ),
+            (
+                &["some-file.txt", "other-file.txt"][..],
+                Options {
+                    watch: true,
+                    init_file: Some(cur.join("some-file.txt")),
+                    watch_paths: vec![cur.join("other-file.txt")],
+                    ..Default::default()
+                },
+            ),
+            (&["--no-watch"][..], Options::default()),
+            (&["--debug"][..], Options { watch: true, debug: true, ..Default::default() }),
+            (
+                &["--theme", "dark"][..],
+                Options { watch: true, theme: Some(WindowTheme::Dark), ..Default::default() },
+            ),
+            (
+                &["--config-dir", "some-dir"][..],
+                Options {
+                    watch: true,
+                    config_dir: Some(PathBuf::from("some-dir")),
+                    ..Default::default()
+                },
+            ),
+            (
+                &["--data-dir", "some-dir"][..],
+                Options {
+                    watch: true,
+                    data_dir: Some(PathBuf::from("some-dir")),
+                    ..Default::default()
+                },
+            ),
+        ];
+
+        for (args, want) in tests {
+            let opts = Options::from_args(args.iter().map(|&s| String::from(s))).unwrap().unwrap();
+            assert_eq!(&opts, want, "args={:?}", args);
+        }
     }
 }
