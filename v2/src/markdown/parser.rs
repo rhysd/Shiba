@@ -734,7 +734,7 @@ struct Autolinker(AhoCorasick);
 
 impl Default for Autolinker {
     fn default() -> Self {
-        Self(AhoCorasick::new(["https://", "http://"]))
+        Self(AhoCorasick::new(["https://", "http://"]).unwrap())
     }
 }
 

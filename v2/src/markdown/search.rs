@@ -40,10 +40,10 @@ trait Searcher: Sized {
 
 impl Searcher for AhoCorasick {
     type Match<'text> = AhoCorasickMatch;
-    type Iter<'me, 'text> = AhoCorasickFindIter<'me, 'text, usize>;
+    type Iter<'me, 'text> = AhoCorasickFindIter<'me, 'text>;
 
     fn new(query: &str, ignore_case: bool) -> Result<Self> {
-        Ok(AhoCorasickBuilder::new().ascii_case_insensitive(ignore_case).build([query]))
+        Ok(AhoCorasickBuilder::new().ascii_case_insensitive(ignore_case).build([query])?)
     }
 
     fn find_iter<'me, 'text>(&'me self, text: &'text str) -> Self::Iter<'me, 'text> {
@@ -287,22 +287,22 @@ mod tests {
         let input = "abcdefghJKababefGh";
         let text = build_text(input, &[0..2, 4..6, 8..10, 12..14, 16..18]);
 
-        let matches = text.search("ab", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[0..2, 12..14]);
-        let matches = text.search("ef", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[4..6]);
-        let matches = text.search("Gh", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[16..18]);
-        let matches = text.search("be", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[1..5]);
-        let matches = text.search("befJ", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[1..9]);
-        let matches = text.search("abefJKabGh", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[0..18]);
-        let matches = text.search("cd", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[]);
-        let matches = text.search("abefJKabGhab", SearchMatcher::CaseSensitive).unwrap();
-        assert_eq!(&matches.0, &[]);
+        let matches = text.search("ab", SearchMatcher::CaseSensitive).unwrap().0;
+        assert_eq!(&matches, &[0..2, 12..14]);
+        let matches = text.search("ef", SearchMatcher::CaseSensitive).unwrap().0;
+        assert_eq!(&matches, &[4..6]);
+        let matches = text.search("Gh", SearchMatcher::CaseSensitive).unwrap().0;
+        assert_eq!(&matches, &[16..18]);
+        let matches = text.search("be", SearchMatcher::CaseSensitive).unwrap().0;
+        assert_eq!(&matches, &[1..5]);
+        let matches = text.search("befJ", SearchMatcher::CaseSensitive).unwrap().0;
+        assert_eq!(&matches, &[1..9]);
+        let matches = text.search("abefJKabGh", SearchMatcher::CaseSensitive).unwrap().0;
+        assert_eq!(&matches, &[0..18]);
+        let matches = text.search("cd", SearchMatcher::CaseSensitive).unwrap().0;
+        assert!(matches.is_empty(), "{:?}", matches);
+        let matches = text.search("abefJKabGhab", SearchMatcher::CaseSensitive).unwrap().0;
+        assert!(matches.is_empty(), "{:?}", matches);
     }
 
     #[test]
@@ -311,24 +311,24 @@ mod tests {
         let input = "abcdefghJKababefGh";
         let text = build_text(input, &[0..2, 4..6, 8..10, 12..14, 16..18]);
 
-        let matches = text.search("AB", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[0..2, 12..14]);
-        let matches = text.search("EF", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[4..6]);
-        let matches = text.search("gh", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[16..18]);
-        let matches = text.search("GH", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[16..18]);
-        let matches = text.search("BE", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[1..5]);
-        let matches = text.search("BEFj", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[1..9]);
-        let matches = text.search("abefjkabgh", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[0..18]);
-        let matches = text.search("cd", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[]);
-        let matches = text.search("abefjkabghab", SearchMatcher::CaseInsensitive).unwrap();
-        assert_eq!(&matches.0, &[]);
+        let matches = text.search("AB", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[0..2, 12..14]);
+        let matches = text.search("EF", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[4..6]);
+        let matches = text.search("gh", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[16..18]);
+        let matches = text.search("GH", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[16..18]);
+        let matches = text.search("BE", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[1..5]);
+        let matches = text.search("BEFj", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[1..9]);
+        let matches = text.search("abefjkabgh", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert_eq!(&matches, &[0..18]);
+        let matches = text.search("cd", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert!(matches.is_empty(), "{:?}", matches);
+        let matches = text.search("abefjkabghab", SearchMatcher::CaseInsensitive).unwrap().0;
+        assert!(matches.is_empty(), "{:?}", matches);
     }
 
     #[test]
@@ -336,23 +336,23 @@ mod tests {
         let input = "ab aB Ab AB";
         let text = build_text(input, &[0..2, 3..5, 6..8, 9..11]);
 
-        let matches = text.search("ab", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[0..2, 3..5, 6..8, 9..11]);
-        let matches = text.search("aB", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[3..5]);
-        let matches = text.search("Ab", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[6..8]);
-        let matches = text.search("AB", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[9..11]);
+        let matches = text.search("ab", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[0..2, 3..5, 6..8, 9..11]);
+        let matches = text.search("aB", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[3..5]);
+        let matches = text.search("Ab", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[6..8]);
+        let matches = text.search("AB", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[9..11]);
 
-        let matches = text.search("ba", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[1..4, 4..7, 7..10]);
-        let matches = text.search("BA", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[4..7]);
-        let matches = text.search("bA", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[7..10]);
-        let matches = text.search("Ba", SearchMatcher::SmartCase).unwrap();
-        assert_eq!(&matches.0, &[]);
+        let matches = text.search("ba", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[1..4, 4..7, 7..10]);
+        let matches = text.search("BA", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[4..7]);
+        let matches = text.search("bA", SearchMatcher::SmartCase).unwrap().0;
+        assert_eq!(&matches, &[7..10]);
+        let matches = text.search("Ba", SearchMatcher::SmartCase).unwrap().0;
+        assert!(matches.is_empty(), "{:?}", matches);
     }
 
     #[test]
@@ -360,15 +360,15 @@ mod tests {
         let input = "fo foo fooo";
         let text = build_text(input, &[0..2, 3..6, 7..11]);
 
-        let matches = text.search("foo+", SearchMatcher::CaseSensitiveRegex).unwrap();
-        assert_eq!(&matches.0, &[3..6, 7..11]);
-        let matches = text.search("foo?", SearchMatcher::CaseSensitiveRegex).unwrap();
-        assert_eq!(&matches.0, &[0..2, 3..6, 7..10]);
-        let matches = text.search("o+f", SearchMatcher::CaseSensitiveRegex).unwrap();
-        assert_eq!(&matches.0, &[1..4, 4..8]);
-        let matches = text.search("o?f", SearchMatcher::CaseSensitiveRegex).unwrap();
-        assert_eq!(&matches.0, &[0..1, 1..4, 5..8]);
-        let matches = text.search("(fo+)+", SearchMatcher::CaseSensitiveRegex).unwrap();
-        assert_eq!(&matches.0, &[0..11]);
+        let matches = text.search("foo+", SearchMatcher::CaseSensitiveRegex).unwrap().0;
+        assert_eq!(&matches, &[3..6, 7..11]);
+        let matches = text.search("foo?", SearchMatcher::CaseSensitiveRegex).unwrap().0;
+        assert_eq!(&matches, &[0..2, 3..6, 7..10]);
+        let matches = text.search("o+f", SearchMatcher::CaseSensitiveRegex).unwrap().0;
+        assert_eq!(&matches, &[1..4, 4..8]);
+        let matches = text.search("o?f", SearchMatcher::CaseSensitiveRegex).unwrap().0;
+        assert_eq!(&matches, &[0..1, 1..4, 5..8]);
+        let matches = text.search("(fo+)+", SearchMatcher::CaseSensitiveRegex).unwrap().0;
+        assert_eq!(&matches, &[0..11]);
     }
 }
