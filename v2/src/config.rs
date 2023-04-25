@@ -37,11 +37,10 @@ pub enum KeyAction {
     Quit,
 }
 
-fn default_keymaps() -> HashMap<String, KeyAction> {
+#[rustfmt::skip]
+const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
     use KeyAction::*;
-
-    #[rustfmt::skip]
-    const DEFAULT_MAPPINGS: &[(&str, KeyAction)] = &[
+    &[
         ("j",         ScrollDown),
         ("k",         ScrollUp),
         ("h",         ScrollLeft),
@@ -62,14 +61,8 @@ fn default_keymaps() -> HashMap<String, KeyAction> {
         ("ctrl+j",    ScrollNextSection),
         ("ctrl+k",    ScrollPrevSection),
         ("?",         Help),
-    ];
-
-    let mut m = HashMap::new();
-    for (bind, action) in DEFAULT_MAPPINGS {
-        m.insert(bind.to_string(), *action);
-    }
-    m
-}
+    ]
+};
 
 #[repr(transparent)]
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -252,7 +245,7 @@ impl Default for ConfigData {
     fn default() -> Self {
         Self {
             watch: Watch::default(),
-            keymaps: default_keymaps(),
+            keymaps: DEFAULT_KEY_MAPPINGS.iter().map(|(b, a)| (b.to_string(), *a)).collect(),
             search: Search::default(),
             window: Window::default(),
             preview: Preview::default(),
@@ -379,5 +372,20 @@ mod tests {
     fn generated_default_config() {
         let cfg: ConfigData = serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap();
         assert_eq!(cfg, Config::default().data);
+    }
+
+    #[test]
+    fn default_key_mappings() {
+        let mut m = HashMap::new();
+        for (bind, a1) in DEFAULT_KEY_MAPPINGS {
+            if let Some(a2) = m.get(bind) {
+                panic!("default mapping {} conflicts: {:?} vs {:?}", bind, *a1, *a2);
+            }
+            if let Some(i) = bind.find('+') {
+                let modifier = &bind[..i];
+                assert!(matches!(modifier, "ctrl" | "alt"), "invalid modifier {:?}", modifier);
+            }
+            m.insert(*bind, *a1);
+        }
     }
 }

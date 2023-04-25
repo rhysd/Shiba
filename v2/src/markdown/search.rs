@@ -58,6 +58,7 @@ impl Searcher for Regex {
     fn new(query: &str, ignore_case: bool) -> Result<Self> {
         Ok(RegexBuilder::new(query).case_insensitive(ignore_case).build()?)
     }
+
     fn find_iter<'me, 'text>(&'me self, text: &'text str) -> Self::Iter<'me, 'text> {
         self.find_iter(text)
     }
