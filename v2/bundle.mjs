@@ -4,6 +4,17 @@ import { fileURLToPath } from 'url';
 import esbuild from 'esbuild';
 import glob from 'fast-glob';
 
+if (process.argv.includes('--help')) {
+    console.log(`node bundle.mjs [OPTIONS]
+
+Options:
+
+--watch  : Watch file changes and bundle changed files automatically
+--minify : Minify the bundled files
+`);
+    process.exit(0);
+}
+
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
 console.log('Bundle options:', { watch, minify });
