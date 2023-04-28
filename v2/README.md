@@ -2,7 +2,7 @@ Shiba v2
 ========
 [![CI for v2][ci-badge]][ci]
 
-<video alt="demo" src="https://github.com/rhysd/ss/raw/master/Shiba/demo.mp4"></video>
+https://user-images.githubusercontent.com/823277/235185829-28a9242f-016e-44a1-bf0b-8e96225f8be8.mp4
 
 :warning: WORK IN PROGRESS
 
