@@ -2,6 +2,8 @@ Shiba v2
 ========
 [![CI for v2][ci-badge]][ci]
 
+<video alt="demo" src="https://github.com/rhysd/ss/raw/master/Shiba/demo.mp4"></video>
+
 :warning: WORK IN PROGRESS
 
 [Shiba](https://github.com/rhysd/Shiba) v2 will be a complete rewrite of v1 and will drop several features to keep the application simple.
