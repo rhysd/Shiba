@@ -52,8 +52,12 @@ class MermaidRenderer {
     async render(content: string, key: number | undefined): Promise<ReactElement> {
         this.initMermaid();
         const id = this.id++;
-        const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
-        return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
+        try {
+            const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
+            return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
+        } catch (err) {
+            return <span key={key}>Diagram rendering error: {String(err)}</span>;
+        }
     }
 }
 
