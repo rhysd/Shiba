@@ -1,6 +1,6 @@
 use crate::config::{FileExtensions, Watch as Config};
 use crate::renderer::{EventChannel, EventLoop, UserEvent};
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use notify::event::{CreateKind, DataChange, EventKind as WatchEventKind, ModifyKind};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::collections::HashMap;
@@ -92,8 +92,9 @@ impl Watcher for RecommendedWatcher {
     fn watch(&mut self, path: &Path) -> Result<()> {
         let mode =
             if path.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
-        <RecommendedWatcher as NotifyWatcher>::watch(self, path, mode)?;
-        Ok(())
+        log::debug!("Watching path {:?} with mode={:?}", path, mode);
+        <RecommendedWatcher as NotifyWatcher>::watch(self, path, mode)
+            .context("Error while starting to watch a path. Note: Watching non-existing path is unsupported. Instead watch its parent directory")
     }
 
     fn unwatch(&mut self, path: &Path) -> Result<()> {
