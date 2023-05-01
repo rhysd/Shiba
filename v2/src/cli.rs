@@ -64,7 +64,7 @@ impl Options {
             let path = PathBuf::from(arg);
             let exists = path.exists();
             let path = if exists { path.canonicalize()? } else { env::current_dir()?.join(path) };
-            if init_file.is_some() || path.is_dir() {
+            if init_file.is_some() || path.is_dir() || !exists {
                 watch_paths.push(path);
             } else {
                 init_file = Some(path);
@@ -94,19 +94,28 @@ mod tests {
         let tests = &[
             (&[][..], Options { watch: true, ..Default::default() }),
             (
-                &["some-file.txt"][..],
+                &["README.md"][..],
                 Options {
                     watch: true,
-                    init_file: Some(cur.join("some-file.txt")),
+                    init_file: Some(cur.join("README.md")),
                     ..Default::default()
                 },
             ),
             (
-                &["some-file.txt", "other-file.txt"][..],
+                &["README.md", "src"][..],
                 Options {
                     watch: true,
-                    init_file: Some(cur.join("some-file.txt")),
-                    watch_paths: vec![cur.join("other-file.txt")],
+                    init_file: Some(cur.join("README.md")),
+                    watch_paths: vec![cur.join("src")],
+                    ..Default::default()
+                },
+            ),
+            (
+                &["file-not-existing.md"][..],
+                Options {
+                    watch: true,
+                    init_file: None,
+                    watch_paths: vec![cur.join("file-not-existing.md")],
                     ..Default::default()
                 },
             ),
