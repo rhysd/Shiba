@@ -56,6 +56,30 @@ pub trait Watcher: Sized {
     fn unwatch(&mut self, path: &Path) -> Result<()>;
 }
 
+fn find_path_to_watch(path: &Path) -> Result<(&Path, RecursiveMode)> {
+    if path.is_dir() {
+        Ok((path, RecursiveMode::Recursive))
+    } else if path.exists() {
+        Ok((path, RecursiveMode::NonRecursive))
+    } else {
+        let mut current = path;
+        let mut mode = RecursiveMode::NonRecursive;
+        while let Some(parent) = current.parent() {
+            if parent.exists() {
+                log::warn!(
+                    "Path {:?} does not exist. Watching its parent directory {:?} instead",
+                    path,
+                    parent,
+                );
+                return Ok((parent, mode));
+            }
+            current = parent;
+            mode = RecursiveMode::Recursive; // Recursive watch is necessary since depth is more than 1
+        }
+        anyhow::bail!("Could not watch path {:?} since it and all its parents don't exist", path)
+    }
+}
+
 impl Watcher for RecommendedWatcher {
     fn new<E: EventLoop>(event_loop: &E, mut filter: PathFilter) -> Result<Self> {
         let channel = event_loop.create_channel();
@@ -90,8 +114,7 @@ impl Watcher for RecommendedWatcher {
     }
 
     fn watch(&mut self, path: &Path) -> Result<()> {
-        let mode =
-            if path.is_dir() { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
+        let (path, mode) = find_path_to_watch(path)?;
         log::debug!("Watching path {:?} with mode={:?}", path, mode);
         <RecommendedWatcher as NotifyWatcher>::watch(self, path, mode)
             .context("Error while starting to watch a path. Note: Watching non-existing path is unsupported. Instead watch its parent directory")
