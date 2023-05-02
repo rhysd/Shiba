@@ -2,7 +2,7 @@ use crate::config::WindowTheme;
 use anyhow::Result;
 use getopts::Options as GetOpts;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[non_exhaustive]
 #[derive(Debug, Default, PartialEq)]
@@ -60,10 +60,24 @@ impl Options {
 
         let mut init_file = None;
         let mut watch_paths = vec![];
-        for arg in matches.free.into_iter() {
-            let path = PathBuf::from(arg);
+        let mut cwd: Option<PathBuf> = None;
+        for arg in matches.free.iter() {
+            let path = Path::new(arg);
             let exists = path.exists();
-            let path = if exists { path.canonicalize()? } else { env::current_dir()?.join(path) };
+
+            // `path.canonicalize()` returns an error when the path does not exist. Instead, create the absolute path
+            // using current directory as a parent
+            let path = if exists {
+                path.canonicalize()?
+            } else if let Some(dir) = &cwd {
+                dir.join(path)
+            } else {
+                let dir = env::current_dir()?.canonicalize()?;
+                let path = dir.join(path);
+                cwd = Some(dir);
+                path
+            };
+
             if init_file.is_some() || path.is_dir() || !exists {
                 watch_paths.push(path);
             } else {
