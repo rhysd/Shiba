@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn parse_args_ok() {
-        let cur = env::current_dir().unwrap();
+        let cur = env::current_dir().unwrap().canonicalize().unwrap();
         let tests = &[
             (&[][..], Options { watch: true, ..Default::default() }),
             (
