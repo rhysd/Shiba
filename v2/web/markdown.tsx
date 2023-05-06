@@ -49,15 +49,29 @@ class MermaidRenderer {
         this.initialized = true;
     }
 
+    private async validate(content: string): Promise<unknown | null> {
+        try {
+            const ok = await mermaid.parse(content);
+            if (!ok) {
+                return new Error('Parsing diagram failed');
+            }
+            return null;
+        } catch (err) {
+            return err;
+        }
+    }
+
     async render(content: string, key: number | undefined): Promise<ReactElement> {
         this.initMermaid();
-        const id = this.id++;
-        try {
-            const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
-            return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
-        } catch (err) {
+
+        const err = await this.validate(content);
+        if (err !== null) {
             return <span key={key}>Diagram rendering error: {String(err)}</span>;
         }
+
+        const id = this.id++;
+        const { svg, bindFunctions } = await mermaid.render(`graph-${id}`, content);
+        return <Mermaid svg={svg} bindFn={bindFunctions} key={key} />;
     }
 }
 
