@@ -49,23 +49,14 @@ class MermaidRenderer {
         this.initialized = true;
     }
 
-    private async validate(content: string): Promise<unknown | null> {
-        try {
-            const ok = await mermaid.parse(content);
-            if (!ok) {
-                return new Error('Parsing diagram failed');
-            }
-            return null;
-        } catch (err) {
-            return err;
-        }
-    }
-
     async render(content: string, key: number | undefined): Promise<ReactElement> {
         this.initMermaid();
 
-        const err = await this.validate(content);
-        if (err !== null) {
+        try {
+            // This throws an exception when parse error happens. The boolean return value is useless
+            // when `suppressErrors` is not set to `parseOptions` argument of `mermaid.parse`.
+            await mermaid.parse(content);
+        } catch (err) {
             return <span key={key}>Diagram rendering error: {String(err)}</span>;
         }
 
