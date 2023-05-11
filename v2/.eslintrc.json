@@ -91,6 +91,7 @@
       "error",
       { "allowConstantLoopConditions": true }
     ],
+    "@typescript-eslint/no-unsafe-enum-comparison": "error",
     "react-hooks/exhaustive-deps": "error",
     "react-hooks/rules-of-hooks": "error"
   }
