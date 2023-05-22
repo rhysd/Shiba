@@ -29,7 +29,7 @@ once_cell = "1.17.1"
 open = "4.1.0"
 phf = { version = "0.11.1", features = ["macros"] }
 # https://github.com/raphlinus/pulldown-cmark/pull/622
-pulldown-cmark = { git = "https://github.com/rhysd/pulldown-cmark.git", branch="math", default-features = false, features = [] }
+pulldown-cmark = { git = "https://github.com/rhysd/pulldown-cmark.git", branch="math-0.9.3", default-features = false, features = [] }
 regex = "1.8.1"
 rfd = "0.11.4"
 serde = "1.0.163"

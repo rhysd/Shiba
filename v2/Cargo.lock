@@ -328,9 +328,9 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.15.6"
+version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0525278dce688103060006713371cedbad27186c7d913f33d866b498da0f595"
+checksum = "c926e00cc70edefdc64d3a5ff31cc65bb97a3460097762bd23afb4d8145fccf8"
 dependencies = [
  "encode_unicode",
  "lazy_static",
@@ -2088,8 +2088,8 @@ dependencies = [
 
 [[package]]
 name = "pulldown-cmark"
-version = "0.9.2"
-source = "git+https://github.com/rhysd/pulldown-cmark.git?branch=math#61e4922f6bc9023e49fa220ff2a673e969ff3f9e"
+version = "0.9.3"
+source = "git+https://github.com/rhysd/pulldown-cmark.git?branch=math-0.9.3#aaeaea887afbe8545380d5e10cca4faece665cc2"
 dependencies = [
  "bitflags",
  "memchr",
