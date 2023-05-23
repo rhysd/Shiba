@@ -388,4 +388,20 @@ mod tests {
             m.insert(*bind, *a1);
         }
     }
+
+    #[test]
+    fn match_file_extensions() {
+        let exts = FileExtensions::default();
+        assert!(exts.matches(Path::new("foo.md")));
+        assert!(exts.matches(Path::new("foo.mkd")));
+        assert!(exts.matches(Path::new("foo.markdown")));
+        assert!(exts.matches(Path::new("/path/to/foo.md")));
+        assert!(exts.matches(Path::new("/path/to/foo.mkd")));
+        assert!(exts.matches(Path::new("/path/to/foo.markdown")));
+        assert!(!exts.matches(Path::new("")));
+        assert!(!exts.matches(Path::new("foo")));
+        assert!(!exts.matches(Path::new("foo.txt")));
+        assert!(!exts.matches(Path::new("/path/to/foo")));
+        assert!(!exts.matches(Path::new("/path/to/foo.txt")));
+    }
 }
