@@ -22,15 +22,15 @@ dirs = "5.0.1"
 emojis = "0.6.0"
 env_logger = "0.10.0"
 getopts = "0.2.21"
-log = "0.4.17"
+log = "0.4.18"
 memchr = "2.5.0"
 notify = "5.2.0"
-once_cell = "1.17.1"
+once_cell = "1.17.2"
 open = "4.1.0"
 phf = { version = "0.11.1", features = ["macros"] }
 # https://github.com/raphlinus/pulldown-cmark/pull/622
 pulldown-cmark = { git = "https://github.com/rhysd/pulldown-cmark.git", branch="math-0.9.3", default-features = false, features = [] }
-regex = "1.8.1"
+regex = "1.8.3"
 rfd = "0.11.4"
 serde = "1.0.163"
 serde_json = "1.0.96"
