@@ -15,27 +15,27 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aho-corasick = "1.0.1"
+aho-corasick = "1.0.2"
 ammonia = "3.3.0"
 anyhow = "1.0.71"
 dirs = "5.0.1"
 emojis = "0.6.0"
 env_logger = "0.10.0"
 getopts = "0.2.21"
-log = "0.4.18"
+log = "0.4.19"
 memchr = "2.5.0"
-notify = "5.2.0"
-once_cell = "1.17.2"
-open = "4.1.0"
-phf = { version = "0.11.1", features = ["macros"] }
+notify = "6.0.1"
+once_cell = "1.18.0"
+open = "5.0.0"
+phf = { version = "0.11.2", features = ["macros"] }
 # https://github.com/raphlinus/pulldown-cmark/pull/622
 pulldown-cmark = { git = "https://github.com/rhysd/pulldown-cmark.git", branch="math-0.9.3", default-features = false, features = [] }
-regex = "1.8.3"
+regex = "1.8.4"
 rfd = "0.11.4"
-serde = "1.0.163"
-serde_json = "1.0.96"
-serde_yaml = "0.9.21"
-wry = "0.28.3"
+serde = "1.0.164"
+serde_json = "1.0.99"
+serde_yaml = "0.9.22"
+wry = "0.29.0"
 
 [features]
 default = []
@@ -49,4 +49,4 @@ members = ["bench"]
 lto = "thin"
 
 [dev-dependencies]
-insta = { version = "1.29.0", features = ["json"] }
+insta = { version = "1.30.0", features = ["json"] }
