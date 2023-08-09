@@ -8,7 +8,7 @@ use crate::renderer::{
 };
 use crate::wry::menu::MenuIds;
 use anyhow::Result;
-use wry::application::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
+use wry::application::dpi::{PhysicalPosition, PhysicalSize};
 use wry::application::event_loop::EventLoop as WryEventLoop;
 use wry::application::menu::MenuBar;
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
@@ -163,15 +163,19 @@ impl Renderer for WryRenderer {
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
             log::debug!("Restoring window state {state:?}");
             let size = PhysicalSize { width: state.width, height: state.height };
-            builder = builder.with_inner_size(Size::Physical(size));
+            builder = builder.with_inner_size(size);
             let position = PhysicalPosition { x: state.x, y: state.y };
-            builder = builder.with_position(Position::Physical(position));
+            builder = builder.with_position(position);
             if state.fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
             builder = builder.with_always_on_top(state.always_on_top);
             (state.zoom_level, state.always_on_top)
         } else {
+            if let Some(size) = config.window().default_size {
+                let size = PhysicalSize { width: size.width, height: size.height };
+                builder = builder.with_inner_size(size);
+            }
             (ZoomLevel::default(), false)
         };
 

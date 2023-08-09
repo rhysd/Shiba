@@ -61,6 +61,17 @@ window:
   theme: System
   # Application window is always on top of other windows.
   always_on_top: false
+  # Default window size (width and height) in physical pixels. When `null` is set, the default window
+  # size 800x600 pixels is used. When `restore` is set to `true` and there is a saved window state,
+  # the window size in the state is used.
+  # The following example creates a window with 1000x2000 pixels.
+  #
+  # ```
+  # default_size:
+  #   width: 1000
+  #   height: 2000
+  # ```
+  default_size: null
 
 # Configuration related to Markdown preview content.
 preview:

@@ -145,12 +145,19 @@ impl Default for WindowTheme {
     }
 }
 
+#[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
+pub struct WindowSize {
+    pub width: u32,
+    pub height: u32,
+}
+
 #[non_exhaustive]
 #[derive(Default, Deserialize, Debug, PartialEq, Eq)]
 pub struct Window {
     pub restore: bool,
     pub theme: WindowTheme,
     pub always_on_top: bool,
+    pub default_size: Option<WindowSize>,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
