@@ -14,7 +14,7 @@ mod wry;
 
 pub use crate::cli::Options;
 #[cfg(feature = "__bench")]
-pub use crate::markdown::{MarkdownParseTarget, MarkdownParser};
+pub use crate::markdown::{MarkdownContent, MarkdownParser};
 #[cfg(feature = "__bench")]
 pub use crate::renderer::RawMessageWriter;
 

@@ -1,7 +1,7 @@
 use crate::cli::Options;
 use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
-use crate::markdown::{DisplayText, MarkdownParseTarget, MarkdownParser};
+use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::persistent::DataDir;
 use crate::renderer::{
@@ -40,8 +40,8 @@ impl History {
                 return; // Do not push the same path repeatedly
             }
         } else {
+            log::debug!("Push first history item: {:?}", item);
             self.items.push_back(item);
-            log::debug!("Push first history item: {:?}", self.items);
             return;
         }
 
@@ -55,8 +55,8 @@ impl History {
         }
 
         self.index += 1;
+        log::debug!("Push new history item at index {}: {:?}", self.index, item);
         self.items.push_back(item);
-        log::debug!("Push new history item at {}: {:?}", self.index, self.items);
     }
 
     fn forward(&mut self) {
@@ -98,7 +98,7 @@ impl History {
 
 struct PreviewContent {
     home_dir: Option<PathBuf>,
-    content: MarkdownParseTarget,
+    content: MarkdownContent,
     text: DisplayText,
 }
 
@@ -106,7 +106,7 @@ impl Default for PreviewContent {
     fn default() -> Self {
         Self {
             home_dir: dirs::home_dir(),
-            content: MarkdownParseTarget::default(),
+            content: MarkdownContent::default(),
             text: DisplayText::default(),
         }
     }
@@ -127,15 +127,15 @@ impl PreviewContent {
         let source = match fs::read_to_string(path) {
             Ok(source) => source,
             Err(err) => {
-                // Do not return error because 'no such file' because the file might be renamed and
-                // no longer exists. This can happen when saving files on Vim. In this case, a file
-                // create event will follow so the preview can be updated with the event.
+                // Do not return error 'no such file' because the file might be renamed and no longer
+                // exists. This can happen when saving files on Vim. In this case, a file create event
+                // will follow so the preview can be updated with the event.
                 log::debug!("Could not open {:?} due to error: {}", path, err);
                 return Ok(false);
             }
         };
 
-        let new_content = MarkdownParseTarget::new(source, path.parent());
+        let new_content = MarkdownContent::new(source, path.parent());
         let prev_content = std::mem::replace(&mut self.content, new_content);
         let offset = if reload { None } else { prev_content.modified_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);

@@ -56,12 +56,12 @@ impl TextTokenizer for () {
 }
 
 #[derive(Default)]
-pub struct MarkdownParseTarget {
+pub struct MarkdownContent {
     source: String,
     base_dir: SlashPath,
 }
 
-impl MarkdownParseTarget {
+impl MarkdownContent {
     pub fn new(source: String, base_dir: Option<&Path>) -> Self {
         let base_dir =
             if let Some(path) = base_dir { SlashPath::from(path) } else { SlashPath::default() };
@@ -95,7 +95,7 @@ pub struct MarkdownParser<'a, V: TextVisitor, T: TextTokenizer> {
 }
 
 impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
-    pub fn new(target: &'a MarkdownParseTarget, offset: Option<usize>, text_tokenizer: T) -> Self {
+    pub fn new(content: &'a MarkdownContent, offset: Option<usize>, text_tokenizer: T) -> Self {
         let mut options = Options::empty();
         options.insert(
             Options::ENABLE_STRIKETHROUGH
@@ -104,8 +104,8 @@ impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
                 | Options::ENABLE_TASKLISTS
                 | Options::ENABLE_MATH,
         );
-        let parser = Parser::new_ext(&target.source, options);
-        let base_dir = &target.base_dir;
+        let parser = Parser::new_ext(&content.source, options);
+        let base_dir = &content.base_dir;
         Self { parser, base_dir, offset, text_tokenizer, _phantom: PhantomData }
     }
 }
@@ -855,7 +855,7 @@ mod tests {
             #[test]
             fn $name() {
                 let source = load_data(stringify!($name));
-                let target = MarkdownParseTarget::new(source, $basedir);
+                let target = MarkdownContent::new(source, $basedir);
                 let parser = MarkdownParser::new(&target, $offset, ());
                 let mut buf = Vec::new();
                 let () = parser.write_to(&mut buf).unwrap();
@@ -926,12 +926,12 @@ mod tests {
                 #[test]
                 fn $name() {
                     let source = load_data(stringify!($name));
-                    let target = MarkdownParseTarget::new(source, None);
-                    let parser = MarkdownParser::new(&target, None, ());
+                    let content = MarkdownContent::new(source, None);
+                    let parser = MarkdownParser::new(&content, None, ());
                     let mut buf = Vec::new();
                     let visitor: DisplayText = parser.write_to(&mut buf).unwrap();
                     let text = &visitor.raw_text();
-                    let source = &target.source;
+                    let source = &content.source;
                     let mut mapped = vec![];
                     for map in visitor.sourcemap() {
                         let slice = &source[map.clone()];

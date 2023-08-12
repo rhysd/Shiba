@@ -1,10 +1,10 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use shiba_bench::asset;
-use shiba_preview::{MarkdownParseTarget, MarkdownParser, RawMessageWriter};
+use shiba_preview::{MarkdownContent, MarkdownParser, RawMessageWriter};
 
 #[inline]
 fn run(source: String, offset: Option<usize>) {
-    let target = MarkdownParseTarget::new(source, None);
+    let target = MarkdownContent::new(source, None);
     let parser = MarkdownParser::new(&target, offset, ());
     let mut buf = Vec::new();
     let () = parser.write_to(&mut buf).unwrap();
