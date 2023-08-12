@@ -1,5 +1,5 @@
 import { join, dirname } from 'path';
-import { copyFile } from 'fs/promises';
+import { copyFile, readFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import esbuild from 'esbuild';
 
@@ -16,16 +16,20 @@ Options:
 
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
-console.log('Bundle options:', { watch, minify });
+const absWorkingDir = dirname(fileURLToPath(import.meta.url));
+const {
+    compilerOptions: { target },
+} = JSON.parse(await readFile(join(absWorkingDir, 'tsconfig.json'), 'utf8'));
+console.log('Bundle options:', { watch, minify, target });
 
 const bundleDest = minify ? 'bundle.min.js' : 'bundle.js';
 const sourcemap = !minify;
-const absWorkingDir = dirname(fileURLToPath(import.meta.url));
 const buildTsOptions = {
     bundle: true,
     entryPoints: [join('web', 'index.tsx')],
     outfile: join('src', 'assets', bundleDest),
     platform: 'browser',
+    target,
     minify,
     sourcemap,
     logLevel: 'info',
@@ -55,6 +59,5 @@ if (watch) {
     const cssCtx = await esbuild.context(buildCssOptions);
     await cssCtx.watch();
 } else {
-    await esbuild.build(buildTsOptions);
-    await esbuild.build(buildCssOptions);
+    await Promise.all([esbuild.build(buildTsOptions), esbuild.build(buildCssOptions)]);
 }
