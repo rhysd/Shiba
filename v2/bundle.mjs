@@ -2,7 +2,6 @@ import { join, dirname } from 'path';
 import { copyFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import esbuild from 'esbuild';
-import glob from 'fast-glob';
 
 if (process.argv.includes('--help')) {
     console.log(`node bundle.mjs [OPTIONS]
@@ -37,7 +36,7 @@ const buildCssOptions = {
     entryPoints: [
         join('web', 'style.css'),
         join('node_modules', 'github-markdown-css', 'github-markdown.css'),
-        ...(await glob('node_modules/highlight.js/styles/*.css')), // '/' is always a path separator for fast-glob
+        join('node_modules', 'highlight.js', 'styles', '*.css'),
     ],
     outdir: join('src', 'assets'),
     platform: 'browser',

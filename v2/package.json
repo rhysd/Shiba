@@ -54,7 +54,6 @@
     "eslint-plugin-import": "^2.28.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-security": "^1.7.1",
-    "fast-glob": "^3.3.1",
     "husky": "^8.0.3",
     "prettier": "^3.0.1",
     "stylelint": "^15.10.2",
