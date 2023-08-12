@@ -3,6 +3,8 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:security/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -17,6 +19,12 @@
     "browser": true,
     "es2021": true
   },
+  "settings": {
+    "import/resolver": {
+      "typescript": true,
+      "node": true
+    }
+  },
   "rules": {
     "prefer-spread": "off",
     "no-unused-vars": "off",
@@ -25,6 +33,8 @@
     "eqeqeq": "error",
     "require-await": "error",
     "no-console": "error",
+    "import/no-default-export": "error",
+    "import/no-duplicates": "error",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/explicit-member-accessibility": "off",
@@ -71,7 +81,6 @@
         }
       }
     ],
-    "@typescript-eslint/no-duplicate-imports": "error",
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/no-confusing-void-expression": "error",
     "@typescript-eslint/non-nullable-type-assertion-style": "error",
