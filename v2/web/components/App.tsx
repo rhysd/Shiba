@@ -54,7 +54,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     }
 
     let historyDialog;
-    if (history && !welcome) {
+    if (history) {
         historyDialog = <History history={files} dispatch={dispatch} />;
     }
 
