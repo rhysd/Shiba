@@ -15,6 +15,8 @@ const LOGO_STYLE: React.CSSProperties = {
     height: 'auto',
     cursor: 'pointer',
     filter: 'grayscale(100%) opacity(0.4)',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
 };
 
 function onClick(e: React.MouseEvent<HTMLElement>): void {
@@ -25,7 +27,7 @@ function onClick(e: React.MouseEvent<HTMLElement>): void {
 export const Welcome: React.FC = () => {
     return (
         <div style={BODY_STYLE}>
-            <img alt="Open file with dialog" src="/logo.png" style={LOGO_STYLE} onClick={onClick} />
+            <img alt="Open file with dialog" src="/logo.png" style={LOGO_STYLE} onClick={onClick} draggable="false" />
         </div>
     );
 };
