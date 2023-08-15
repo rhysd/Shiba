@@ -50,3 +50,12 @@ lto = "thin"
 
 [dev-dependencies]
 insta = { version = "1.31.0", features = ["json"] }
+
+[package.metadata.bundle]
+name = "Shiba"
+identifier = "io.github.rhysd.shiba"
+icon = ["assets/icon_32x32.png", "assets/icon_64x64.png", "assets/icon_128x128.png", "assets/icon_256x256.png", "assets/icon_256x256@2x.png"]
+copyright = "Copyright (c) 2015 rhysd"
+category = "public.app-category.productivity"
+deb_depends = ["libwebkit2gtk-4.1-dev"]
+osx_url_schemes = ["shiba"]
