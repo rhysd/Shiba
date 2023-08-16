@@ -13,17 +13,17 @@ src/assets/bundle.min.js: node_modules $(TS_SRC)
 	npm run lint:tsc
 	npm run release
 
-target/debug/shiba: $(RS_SRC) src/assets/bundle.js web/index.html
+target/debug/shiba: $(RS_SRC) src/assets/bundle.js src/assets/index.html $(CSS)
 	cargo build
 
-target/release/shiba: $(RS_SRC) src/assets/bundle.min.js web/index.html
+target/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS)
 	cargo build --release
 
 .PHONY: build release bundle clean
 
 build: target/debug/shiba
 release: target/release/shiba
-bundle:
+bundle: target/release/shiba
 	cargo bundle --release
 clean:
 	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target
