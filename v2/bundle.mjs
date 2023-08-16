@@ -1,6 +1,6 @@
-import { join, dirname } from 'path';
-import { copyFile, readFile } from 'fs/promises';
-import { fileURLToPath } from 'url';
+import { join, dirname } from 'node:path';
+import { copyFile, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import esbuild from 'esbuild';
 
 if (process.argv.includes('--help')) {
