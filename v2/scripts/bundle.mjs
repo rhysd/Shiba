@@ -16,7 +16,7 @@ Options:
 
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
-const absWorkingDir = dirname(fileURLToPath(import.meta.url));
+const absWorkingDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const {
     compilerOptions: { target },
 } = JSON.parse(await readFile(join(absWorkingDir, 'tsconfig.json'), 'utf8'));
