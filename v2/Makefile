@@ -1,5 +1,5 @@
 TS_SRC := $(wildcard web/*.ts web/*.tsx web/components/*.tsx) web/style.css web/index.html
-RS_SRC := $(wildcard src/*.rs)
+RS_SRC := $(wildcard src/*.rs src/markdown/*.rs src/wry/*.rs) build.rs
 CSS := $(shell find -E src/assets -type f -regex .*\.css$ )
 
 node_modules:

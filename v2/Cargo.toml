@@ -51,6 +51,9 @@ lto = "thin"
 [dev-dependencies]
 insta = { version = "1.31.0", features = ["json"] }
 
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1.12"
+
 [package.metadata.bundle]
 name = "Shiba"
 identifier = "io.github.rhysd.shiba"
