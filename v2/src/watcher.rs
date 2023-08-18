@@ -1,7 +1,7 @@
 use crate::config::{FileExtensions, Watch as Config};
 use crate::renderer::{EventChannel, EventLoop, UserEvent};
 use anyhow::{Context as _, Result};
-use notify::event::{CreateKind, DataChange, EventKind as WatchEventKind, ModifyKind};
+use notify::event::{CreateKind, EventKind as WatchEventKind, ModifyKind};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -80,31 +80,47 @@ fn find_path_to_watch(path: &Path) -> Result<(&Path, RecursiveMode)> {
     }
 }
 
+#[cfg(not(windows))]
+fn should_handle_event(kind: WatchEventKind) -> bool {
+    use notify::event::DataChange;
+    matches!(
+        kind,
+        WatchEventKind::Create(CreateKind::File)
+            | WatchEventKind::Modify(ModifyKind::Data(DataChange::Content | DataChange::Any))
+    )
+}
+
+#[cfg(windows)]
+fn should_handle_event(kind: WatchEventKind) -> bool {
+    // ModifyKind::Data does not work on Windows because notify crate triggers all modify events
+    // with ModifyKind::Any on Windows.
+    matches!(
+        kind,
+        WatchEventKind::Create(CreateKind::File) | WatchEventKind::Modify(ModifyKind::Any)
+    )
+}
+
 impl Watcher for RecommendedWatcher {
     fn new<E: EventLoop>(event_loop: &E, mut filter: PathFilter) -> Result<Self> {
         let channel = event_loop.create_channel();
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
-            Ok(event) => match event.kind {
-                WatchEventKind::Create(CreateKind::File)
-                | WatchEventKind::Modify(ModifyKind::Data(DataChange::Content | DataChange::Any)) =>
-                {
-                    log::debug!("Caught filesystem event: {:?}", event.kind);
+            Ok(event) if should_handle_event(event.kind) => {
+                log::debug!("Caught filesystem event: {:?}", event);
 
-                    // XXX: Watcher sends the event at the first file-changed event durating debounce throttle.
-                    // If the content is updated multiple times within the duration, only the first change is
-                    // reflected to the preview.
-                    let mut paths = event.paths;
-                    paths.retain(|p| filter.should_retain(p));
+                // XXX: Watcher sends the event at the first file-changed event durating debounce throttle.
+                // If the content is updated multiple times within the duration, only the first change is
+                // reflected to the preview.
+                let mut paths = event.paths;
+                paths.retain(|p| filter.should_retain(p));
 
-                    if !paths.is_empty() {
-                        log::debug!("Files change event from watcher: {:?}", paths);
-                        channel.send_event(UserEvent::WatchedFilesChanged(paths));
-                    }
-
-                    filter.cleanup_debouncer();
+                if !paths.is_empty() {
+                    log::debug!("Files change event from watcher: {:?}", paths);
+                    channel.send_event(UserEvent::WatchedFilesChanged(paths));
                 }
-                _ => {}
-            },
+
+                filter.cleanup_debouncer();
+            }
+            Ok(event) => log::debug!("Ignored filesystem event: {:?}", event),
             Err(err) => {
                 log::error!("Error on watching file changes: {}", err);
                 channel.send_event(UserEvent::Error(err.into()));
