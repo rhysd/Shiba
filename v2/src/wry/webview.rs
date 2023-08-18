@@ -18,6 +18,9 @@ use wry::http::Response;
 use wry::webview::WebViewBuilderExtWindows;
 use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
 
+#[cfg(not(target_os = "macos"))]
+const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
+
 fn window_theme(window: &Window) -> RendererTheme {
     match window.theme() {
         Theme::Light => RendererTheme::Light,
@@ -187,6 +190,13 @@ impl Renderer for WryRenderer {
 
         if config.window().always_on_top {
             builder = builder.with_always_on_top(true);
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            use wry::application::window::Icon;
+            let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
+            builder = builder.with_window_icon(Some(icon));
         }
 
         let window = builder.build(event_loop)?;
