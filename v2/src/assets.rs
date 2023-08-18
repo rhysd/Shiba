@@ -119,6 +119,8 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "webp" => "image/webp",
     "tiff" => "image/tiff",
     "map"  => "text/plain;charset=UTF-8",
+    #[cfg(windows)]
+    "ico" => "image/vnd.microsoft.icon",
 };
 
 fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
@@ -196,6 +198,8 @@ impl Assets {
             "/logo.png"            => LOGO_PNG.into(),
             #[cfg(debug_assertions)]
             "/bundle.js.map"       => BUNDLE_JS_MAP.into(),
+            #[cfg(windows)]
+            "/favicon.ico"         => Cow::Owned(vec![]),
             path                   => {
                 log::debug!("Dynamically loading external resource {:?}", path);
                 match fs::read(path) {
