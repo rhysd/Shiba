@@ -13,7 +13,7 @@ impl<'a> From<&'a Path> for SlashPath {
         #[cfg(not(target_os = "windows"))]
         let mut path = path.to_string_lossy().into_owned();
         #[cfg(target_os = "windows")]
-        let mut path = path.to_string_lossy().replace("\\", "/");
+        let mut path = path.to_string_lossy().replace('\\', "/");
         if path.ends_with('/') {
             path.pop(); // Ensure the path does not end with /
         }
