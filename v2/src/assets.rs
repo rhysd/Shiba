@@ -119,7 +119,6 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "webp" => "image/webp",
     "tiff" => "image/tiff",
     "map"  => "text/plain;charset=UTF-8",
-    #[cfg(windows)]
     "ico" => "image/vnd.microsoft.icon",
 };
 

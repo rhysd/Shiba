@@ -10,6 +10,8 @@ mod opener;
 mod persistent;
 mod renderer;
 mod watcher;
+#[cfg(windows)]
+pub mod windows;
 mod wry;
 
 pub use crate::cli::Options;
