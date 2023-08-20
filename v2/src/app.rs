@@ -187,6 +187,7 @@ pub struct Shiba<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
     watcher: W,
     config: Config,
     preview: PreviewContent,
+    init_file: Option<PathBuf>,
     _dialog: PhantomData<D>,
 }
 
@@ -200,6 +201,7 @@ where
     pub fn new(mut options: Options, event_loop: &R::EventLoop) -> Result<Self> {
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
+        let init_file = mem::take(&mut options.init_file);
 
         let config = Config::load(options)?;
         log::debug!("Application config: {:?}", config);
@@ -227,6 +229,7 @@ where
             watcher,
             config,
             preview: PreviewContent::default(),
+            init_file,
             _dialog: PhantomData,
         })
     }
@@ -349,7 +352,7 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 self.renderer.show();
 
-                if let Some(path) = self.config.take_init_file() {
+                if let Some(path) = mem::take(&mut self.init_file) {
                     self.preview_new(path)?;
                 } else {
                     self.renderer.send_message(MessageToRenderer::Welcome)?;

@@ -8,8 +8,6 @@ use std::mem;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-const DEFAULT_CONFIG_FILE: &str = include_str!("default_config.yml");
-
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum KeyAction {
@@ -241,7 +239,7 @@ impl Dialog {
 
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
-pub struct ConfigData {
+pub struct UserConfig {
     watch: Watch,
     keymaps: HashMap<String, KeyAction>,
     search: Search,
@@ -250,7 +248,7 @@ pub struct ConfigData {
     dialog: Dialog,
 }
 
-impl Default for ConfigData {
+impl Default for UserConfig {
     fn default() -> Self {
         Self {
             watch: Watch::default(),
@@ -263,7 +261,9 @@ impl Default for ConfigData {
     }
 }
 
-impl ConfigData {
+impl UserConfig {
+    const DEFAULT_CONFIG_YAML: &str = include_str!("default_config.yml");
+
     fn load(path: impl Into<PathBuf>) -> Result<Self> {
         let mut path = path.into();
 
@@ -294,7 +294,7 @@ impl ConfigData {
         })?;
 
         let config_path = config_dir.join("config.yml");
-        fs::write(&config_path, DEFAULT_CONFIG_FILE)
+        fs::write(&config_path, Self::DEFAULT_CONFIG_YAML)
             .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
 
         log::info!("Generated the default config file at {:?}", config_path);
@@ -304,11 +304,10 @@ impl ConfigData {
 
 #[derive(Default, Debug)]
 pub struct Config {
-    data: ConfigData,
+    user_config: UserConfig,
     path: Option<PathBuf>,
     data_dir: DataDir,
     debug: bool,
-    init_file: Option<PathBuf>,
 }
 
 impl Config {
@@ -319,37 +318,31 @@ impl Config {
             Some(dir)
         });
 
-        let mut data = if options.gen_config_file {
+        let mut user_config = if options.gen_config_file {
             if let Some(dir) = &config_dir {
-                ConfigData::generate_default_config(dir)?;
+                UserConfig::generate_default_config(dir)?;
             } else {
                 anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
             }
-            ConfigData::default()
+            UserConfig::default()
         } else if let Some(dir) = &config_dir {
-            ConfigData::load(dir)?
+            UserConfig::load(dir)?
         } else {
             log::debug!("Config directory does not exist. Using the default config");
-            ConfigData::default()
+            UserConfig::default()
         };
 
         if let Some(theme) = options.theme {
-            data.window.theme = theme;
+            user_config.window.theme = theme; // CLI option has higher priority
         }
 
-        let data_dir = if let Some(dir) = &options.data_dir {
-            DataDir::custom_dir(dir)
+        let data_dir = if let Some(dir) = mem::take(&mut options.data_dir) {
+            DataDir::new(dir)
         } else {
-            DataDir::new()
+            DataDir::default()
         };
 
-        Ok(Self {
-            data,
-            path: config_dir,
-            data_dir,
-            debug: options.debug,
-            init_file: options.init_file,
-        })
+        Ok(Self { user_config, path: config_dir, data_dir, debug: options.debug })
     }
 
     pub fn config_file(&self) -> Option<&Path> {
@@ -361,39 +354,35 @@ impl Config {
     }
 
     pub fn watch(&self) -> &Watch {
-        &self.data.watch
+        &self.user_config.watch
     }
 
     pub fn keymaps(&self) -> &HashMap<String, KeyAction> {
-        &self.data.keymaps
+        &self.user_config.keymaps
     }
 
     pub fn search(&self) -> &Search {
-        &self.data.search
+        &self.user_config.search
     }
 
     pub fn window(&self) -> &Window {
-        &self.data.window
+        &self.user_config.window
     }
 
     pub fn preview(&self) -> &Preview {
-        &self.data.preview
+        &self.user_config.preview
     }
 
     pub fn dialog(&self) -> &Dialog {
-        &self.data.dialog
+        &self.user_config.dialog
     }
 
     pub fn max_recent_files(&self) -> usize {
-        self.data.preview.recent_files
+        self.user_config.preview.recent_files
     }
 
     pub fn debug(&self) -> bool {
         self.debug
-    }
-
-    pub fn take_init_file(&mut self) -> Option<PathBuf> {
-        mem::take(&mut self.init_file)
     }
 }
 
@@ -403,8 +392,8 @@ mod tests {
 
     #[test]
     fn generated_default_config() {
-        let cfg: ConfigData = serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap();
-        assert_eq!(cfg, ConfigData::default());
+        let cfg: UserConfig = serde_yaml::from_str(UserConfig::DEFAULT_CONFIG_YAML).unwrap();
+        assert_eq!(cfg, UserConfig::default());
     }
 
     #[test]

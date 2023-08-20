@@ -12,13 +12,13 @@ pub trait PersistentData {
     const FILE: &'static str;
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct DataDir {
     path: Option<PathBuf>,
 }
 
-impl DataDir {
-    pub fn new() -> Self {
+impl Default for DataDir {
+    fn default() -> Self {
         fn data_dir() -> Option<PathBuf> {
             let mut dir = dirs::data_dir()?;
             dir.push("Shiba");
@@ -28,8 +28,10 @@ impl DataDir {
         }
         Self { path: data_dir() }
     }
+}
 
-    pub fn custom_dir(dir: impl Into<PathBuf>) -> Self {
+impl DataDir {
+    pub fn new(dir: impl Into<PathBuf>) -> Self {
         let dir = dir.into();
         Self { path: dir.is_dir().then_some(dir) }
     }
@@ -152,9 +154,9 @@ mod tests {
 
     #[test]
     fn custom_dir() {
-        let dir = DataDir::custom_dir(Path::new("."));
+        let dir = DataDir::new(Path::new("."));
         assert!(dir.path.is_some());
-        let dir = DataDir::custom_dir(Path::new("this-directory-does-not-exist"));
+        let dir = DataDir::new(Path::new("this-directory-does-not-exist"));
         assert!(dir.path.is_none());
     }
 }
