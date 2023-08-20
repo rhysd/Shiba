@@ -15,7 +15,7 @@ use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 #[cfg(target_os = "windows")]
 use wry::webview::WebViewBuilderExtWindows;
-use wry::webview::{FileDropEvent, WebView, WebViewBuilder};
+use wry::webview::{FileDropEvent, WebContext, WebView, WebViewBuilder};
 
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -40,6 +40,10 @@ fn create_webview(
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
     let loader = Assets::new(config, window_theme(&window));
+
+    let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
+    log::debug!("WebView user data directory: {:?}", user_dir);
+    let mut context = WebContext::new(user_dir);
 
     #[allow(unused_mut)]
     let mut builder = WebViewBuilder::new(window)?
@@ -123,6 +127,7 @@ fn create_webview(
                 .body(body)
                 .map_err(Into::into)
         })
+        .with_web_context(&mut context)
         .with_devtools(cfg!(any(debug_assertions, feature = "devtools")));
 
     #[cfg(target_os = "windows")]

@@ -34,6 +34,10 @@ impl DataDir {
         Self { path: dir.is_dir().then_some(dir) }
     }
 
+    pub fn path(&self) -> Option<&Path> {
+        self.path.as_deref()
+    }
+
     pub fn load<D: PersistentData + DeserializeOwned>(&self) -> Option<D> {
         let path = self.path.as_deref()?.join(D::FILE);
         let bytes = match fs::read(&path) {
