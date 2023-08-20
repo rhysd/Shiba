@@ -1,8 +1,10 @@
 use crate::cli::Options;
+use crate::persistent::DataDir;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::fs;
+use std::mem;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -262,17 +264,41 @@ impl Default for ConfigData {
 }
 
 impl ConfigData {
-    fn load(path: &Path) -> Option<Result<Self>> {
-        match fs::read(path) {
-            Ok(bytes) => Some(
-                serde_yaml::from_slice(&bytes)
-                    .with_context(|| format!("Could not parse config file as YAML: {:?}. To reset config file, try --generate-config-file", path)),
-            ),
-            Err(err) => {
-                log::debug!("Could not read config file from {:?}: {}", path, err);
-                None
+    fn load(path: impl Into<PathBuf>) -> Result<Self> {
+        let mut path = path.into();
+
+        if path.is_dir() {
+            for file in ["config.yml", "config.yaml"] {
+                path.push(file);
+
+                match fs::read(&path) {
+                    Ok(bytes) =>
+                        return serde_yaml::from_slice(&bytes)
+                            .with_context(|| format!("Could not parse config file as YAML: {:?}. To reset config file, try --generate-config-file", path)),
+                    Err(err) => {
+                        log::debug!("Could not read config file from {:?}: {}", path, err);
+                    }
+                }
+
+                path.pop();
             }
         }
+
+        log::debug!("config.yml nor config.yaml was found in {path:?}. Using the default config");
+        Ok(Self::default())
+    }
+
+    fn generate_default_config(config_dir: &Path) -> Result<()> {
+        fs::create_dir_all(config_dir).with_context(|| {
+            format!("Could not create directory for generating config file at {:?}", config_dir)
+        })?;
+
+        let config_path = config_dir.join("config.yml");
+        fs::write(&config_path, DEFAULT_CONFIG_FILE)
+            .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
+
+        log::info!("Generated the default config file at {:?}", config_path);
+        Ok(())
     }
 }
 
@@ -280,66 +306,58 @@ impl ConfigData {
 pub struct Config {
     data: ConfigData,
     path: Option<PathBuf>,
+    data_dir: DataDir,
+    debug: bool,
+    init_file: Option<PathBuf>,
 }
 
 impl Config {
-    pub fn load_dir(path: impl Into<PathBuf>) -> Result<Self> {
-        let mut path = path.into();
-        if path.is_dir() {
-            for file in ["config.yml", "config.yaml"] {
-                path.push(file);
-                if let Some(data) = ConfigData::load(&path) {
-                    return Ok(Config { data: data?, path: Some(path) });
-                }
-                path.pop();
-            }
-        }
-        log::debug!("config.yml nor config.yaml was found in {path:?}. Using the default config");
-        Ok(Self::default())
-    }
+    pub fn load(mut options: Options) -> Result<Self> {
+        let config_dir = mem::take(&mut options.config_dir).or_else(|| {
+            let mut dir = dirs::config_dir()?;
+            dir.push("Shiba");
+            Some(dir)
+        });
 
-    pub fn load() -> Result<Self> {
-        if let Some(mut path) = dirs::config_dir() {
-            path.push("Shiba");
-            Self::load_dir(path)
+        let mut data = if options.gen_config_file {
+            if let Some(dir) = &config_dir {
+                ConfigData::generate_default_config(dir)?;
+            } else {
+                anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
+            }
+            ConfigData::default()
+        } else if let Some(dir) = &config_dir {
+            ConfigData::load(dir)?
         } else {
             log::debug!("Config directory does not exist. Using the default config");
-            Ok(Self::default())
-        }
-    }
-
-    pub fn generate_default_config_at(config_path: impl Into<PathBuf>) -> Result<Self> {
-        let mut config_path = config_path.into();
-
-        fs::create_dir_all(&config_path).with_context(|| {
-            format!("Could not create directory for generating config file at {:?}", &config_path)
-        })?;
-
-        config_path.push("config.yml");
-        fs::write(&config_path, DEFAULT_CONFIG_FILE)
-            .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
-
-        log::info!("Generated the default config file at {:?}", config_path);
-        Ok(Config { path: Some(config_path), ..Default::default() })
-    }
-
-    pub fn generate_default_config() -> Result<Self> {
-        let Some(mut config_path) = dirs::config_dir() else {
-            anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
+            ConfigData::default()
         };
-        config_path.push("Shiba");
-        Self::generate_default_config_at(config_path)
-    }
 
-    pub fn merge_options(mut self, options: &Options) -> Self {
         if let Some(theme) = options.theme {
-            self.data.window.theme = theme;
+            data.window.theme = theme;
         }
-        self
+
+        let data_dir = if let Some(dir) = &options.data_dir {
+            DataDir::custom_dir(dir)
+        } else {
+            DataDir::new()
+        };
+
+        Ok(Self {
+            data,
+            path: config_dir,
+            data_dir,
+            debug: options.debug,
+            init_file: options.init_file,
+        })
     }
 
     pub fn config_file(&self) -> Option<&Path> {
         self.path.as_deref()
+    }
+
+    pub fn data_dir(&self) -> &DataDir {
+        &self.data_dir
     }
 
     pub fn watch(&self) -> &Watch {
@@ -369,6 +387,14 @@ impl Config {
     pub fn max_recent_files(&self) -> usize {
         self.data.preview.recent_files
     }
+
+    pub fn debug(&self) -> bool {
+        self.debug
+    }
+
+    pub fn take_init_file(&mut self) -> Option<PathBuf> {
+        mem::take(&mut self.init_file)
+    }
 }
 
 #[cfg(test)]
@@ -378,7 +404,7 @@ mod tests {
     #[test]
     fn generated_default_config() {
         let cfg: ConfigData = serde_yaml::from_str(DEFAULT_CONFIG_FILE).unwrap();
-        assert_eq!(cfg, Config::default().data);
+        assert_eq!(cfg, ConfigData::default());
     }
 
     #[test]

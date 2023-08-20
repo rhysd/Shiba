@@ -12,6 +12,7 @@ pub trait PersistentData {
     const FILE: &'static str;
 }
 
+#[derive(Default, Debug)]
 pub struct DataDir {
     path: Option<PathBuf>,
 }

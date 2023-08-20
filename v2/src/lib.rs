@@ -11,7 +11,7 @@ mod persistent;
 mod renderer;
 mod watcher;
 #[cfg(windows)]
-pub mod windows;
+mod windows;
 mod wry;
 
 pub use crate::cli::Options;
@@ -19,6 +19,8 @@ pub use crate::cli::Options;
 pub use crate::markdown::{MarkdownContent, MarkdownParser};
 #[cfg(feature = "__bench")]
 pub use crate::renderer::RawMessageWriter;
+#[cfg(windows)]
+pub use windows::WindowsConsole;
 
 use crate::app::Shiba;
 use crate::opener::SystemOpener;

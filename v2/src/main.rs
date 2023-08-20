@@ -5,8 +5,6 @@
 
 use anyhow::Result;
 use log::LevelFilter;
-#[cfg(all(windows, not(debug_assertions), not(__bench)))]
-use shiba_preview::windows::WindowsConsole;
 use shiba_preview::{run, Options};
 use std::env;
 
@@ -14,7 +12,7 @@ fn main() -> Result<()> {
     // When windows_subsystem is set to "windows", console outputs are detached from the process and no longer printed
     // on terminal. However we still want to see the logger output for debugging by running this binary from terminal.
     #[cfg(all(windows, not(debug_assertions), not(__bench)))]
-    let _console = WindowsConsole::attach();
+    let _console = shiba_preview::WindowsConsole::attach();
 
     let Some(options) = Options::from_args(env::args().skip(1))? else { return Ok(()) };
     let level = if options.debug { LevelFilter::Debug } else { LevelFilter::Info };

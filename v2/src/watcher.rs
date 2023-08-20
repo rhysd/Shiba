@@ -93,7 +93,7 @@ fn should_handle_event(kind: WatchEventKind) -> bool {
 #[cfg(windows)]
 fn should_handle_event(kind: WatchEventKind) -> bool {
     // ModifyKind::Data does not work on Windows because notify crate triggers all modify events
-    // with ModifyKind::Any on Windows.
+    // as ModifyKind::Any on Windows.
     matches!(
         kind,
         WatchEventKind::Create(CreateKind::File) | WatchEventKind::Modify(ModifyKind::Any)

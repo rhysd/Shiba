@@ -1,5 +1,4 @@
 use crate::assets::Assets;
-use crate::cli::Options;
 use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
@@ -152,7 +151,6 @@ impl Renderer for WryRenderer {
     type Menu = MenuIds;
 
     fn new(
-        options: &Options,
         config: &Config,
         event_loop: &Self::EventLoop,
         window_state: Option<WindowState>,
@@ -203,14 +201,14 @@ impl Renderer for WryRenderer {
         log::debug!("Event loop and window were created successfully");
 
         let webview = create_webview(window, event_loop, config)?;
-        log::debug!("WebView was created successfully with options: {:?}", options);
+        log::debug!("WebView was created successfully");
 
         if zoom_level.factor() != 1.0 {
             webview.zoom(zoom_level.factor());
         }
 
         #[cfg(any(debug_assertions, feature = "devtools"))]
-        if options.debug {
+        if config.debug() {
             webview.open_devtools(); // This method is defined in debug build only
             log::debug!("Opened DevTools for debugging");
         }

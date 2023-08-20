@@ -3,7 +3,6 @@ use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
-use crate::persistent::DataDir;
 use crate::renderer::{
     App, AppControl, MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer,
     UserEvent, Zoom,
@@ -182,14 +181,12 @@ impl PreviewContent {
 }
 
 pub struct Shiba<R: Renderer, O: Opener, W: Watcher, D: Dialog> {
-    options: Options,
     renderer: R,
     opener: O,
     history: History,
     watcher: W,
     config: Config,
     preview: PreviewContent,
-    data_dir: DataDir,
     _dialog: PhantomData<D>,
 }
 
@@ -200,35 +197,22 @@ where
     W: Watcher,
     D: Dialog,
 {
-    pub fn new(options: Options, event_loop: &R::EventLoop) -> Result<Self> {
-        let config = if options.gen_config_file {
-            if let Some(dir) = &options.config_dir {
-                Config::generate_default_config_at(dir)?
-            } else {
-                Config::generate_default_config()?
-            }
-        } else if let Some(dir) = &options.config_dir {
-            Config::load_dir(dir)?
-        } else {
-            Config::load()?
-        };
-        let config = config.merge_options(&options);
+    pub fn new(mut options: Options, event_loop: &R::EventLoop) -> Result<Self> {
+        log::debug!("Application options: {:?}", options);
+        let watch_paths = mem::take(&mut options.watch_paths);
 
-        log::debug!("Application config: {:?}, options: {:?}", config, options);
+        let config = Config::load(options)?;
+        log::debug!("Application config: {:?}", config);
 
-        let data_dir = if let Some(dir) = &options.data_dir {
-            DataDir::custom_dir(dir)
-        } else {
-            DataDir::new()
-        };
+        let data_dir = config.data_dir();
         let window_state = if config.window().restore { data_dir.load() } else { None };
-        let renderer = R::new(&options, &config, event_loop, window_state)?;
+        let renderer = R::new(&config, event_loop, window_state)?;
 
         let filter = PathFilter::new(config.watch());
         let mut watcher = W::new(event_loop, filter)?;
-        for path in &options.watch_paths {
+        for path in watch_paths {
             log::debug!("Watching initial path: {:?}", path);
-            watcher.watch(path)?;
+            watcher.watch(&path)?;
         }
 
         let mut history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
@@ -237,14 +221,12 @@ where
         }
 
         Ok(Self {
-            options,
             renderer,
             opener: O::default(),
             history,
             watcher,
             config,
             preview: PreviewContent::default(),
-            data_dir,
             _dialog: PhantomData,
         })
     }
@@ -353,7 +335,7 @@ where
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<AppControl> {
         match message {
             MessageFromRenderer::Init => {
-                if self.options.debug {
+                if self.config.debug() {
                     self.renderer.send_message(MessageToRenderer::Debug)?;
                 }
 
@@ -367,7 +349,7 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 self.renderer.show();
 
-                if let Some(path) = mem::take(&mut self.options.init_file) {
+                if let Some(path) = self.config.take_init_file() {
                     self.preview_new(path)?;
                 } else {
                     self.renderer.send_message(MessageToRenderer::Welcome)?;
@@ -489,12 +471,13 @@ where
     }
 
     fn handle_exit(&self) -> Result<()> {
+        let data_dir = self.config.data_dir();
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
-                self.data_dir.save(&state)?;
+                data_dir.save(&state)?;
             }
         }
-        self.data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
+        data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
         Ok(())
     }
 }

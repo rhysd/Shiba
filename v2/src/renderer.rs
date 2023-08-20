@@ -1,4 +1,3 @@
-use crate::cli::Options;
 use crate::config::{Config, KeyAction, Search as SearchConfig, SearchMatcher};
 use crate::persistent::WindowState;
 use anyhow::{Error, Result};
@@ -186,7 +185,6 @@ pub trait Renderer: Sized {
     type Menu: MenuItems;
 
     fn new(
-        options: &Options,
         config: &Config,
         event_loop: &Self::EventLoop,
         window_state: Option<WindowState>,
