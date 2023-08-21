@@ -19,6 +19,9 @@ target/debug/shiba: $(RS_SRC) src/assets/bundle.js src/assets/index.html $(CSS)
 target/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS)
 	cargo build --release
 
+Shiba.app: target/release/shiba
+	bash ./scripts/gen_macos_app.bash
+
 .PHONY: build release bundle clean
 
 build: target/debug/shiba
