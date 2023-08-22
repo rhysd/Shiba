@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]'
+  workflow_dispatch:
+
+env:
+  TERM: xterm
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  RUST_BACKTRACE: 1
+
+defaults:
+  run:
+    working-directory: v2
+
+jobs:
+  release-mac:
+    name: Upload release binary
+    # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
+    runs-on: macos-11
+    outputs:
+      version: ${{ steps.info.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get version
+        id: get_ver
+        # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
+        run: |
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
+            ver="unreleased"
+          else
+            ver="${GITHUB_REF##refs/tags/}"
+          fi
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: make Shiba.app
+      - run: zip --symlinks Shiba.app_macos_x86_64.zip -r Shiba.app
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_ver.outputs.version }}
+          draft: false
+          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          files: v2/Shiba.app_macos_x86_64.zip

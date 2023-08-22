@@ -2,6 +2,11 @@
 
 set -e -o pipefail
 
+if [[ "$OSTYPE" != darwin* ]]; then
+    echo 'ERROR: This script must be run on macOS' 1>&2
+    exit 1
+fi
+
 if [ ! -d ../.git ]; then
     echo 'ERROR: This script must be run at v2 directory' 1>&2
     exit 1

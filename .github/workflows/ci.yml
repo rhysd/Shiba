@@ -3,8 +3,6 @@ on: [push, pull_request]
 env:
   TERM: xterm
   CARGO_TERM_COLOR: always
-  CARGO_TARGET_DIR: ./v2/target
-  CARGO_MANIFEST_DIR: ./v2
   RUSTFLAGS: -D warnings
   RUST_BACKTRACE: 1
 defaults:
