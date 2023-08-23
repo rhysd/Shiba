@@ -16,17 +16,23 @@ defaults:
   run:
     working-directory: v2
 
+permissions:
+  contents: write
+
 jobs:
-  release-mac:
-    name: Upload release binary
-    # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
-    runs-on: macos-11
-    outputs:
-      version: ${{ steps.info.outputs.version }}
+  release:
+    name: Upload release binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
+        os: [macos-11, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - name: Get version
         id: get_ver
+        shell: bash
         # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
         run: |
           if ${{ github.event_name == 'workflow_dispatch' }}; then
@@ -41,11 +47,24 @@ jobs:
           node-version: 'lts/*'
           cache: npm
           cache-dependency-path: v2/package-lock.json
-      - run: make Shiba.app
-      - run: zip --symlinks Shiba.app_macos_x86_64.zip -r Shiba.app
+      - name: Build package on macOS
+        run: |
+          make Shiba.app
+          zip --symlinks Shiba.app_macos_x86_64.zip -r Shiba.app
+        if: ${{ startsWith(matrix.os, 'macos-') }}
+      - name: Build package on Windows
+        run: |
+          npm ci
+          npm run release
+          cargo build --release
+          mv target/release/shiba.exe shiba.exe
+          7z a shiba.exe_windows_x86_64.zip shiba.exe
+        if: ${{ startsWith(matrix.os, 'windows-') }}
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_ver.outputs.version }}
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' }}
-          files: v2/Shiba.app_macos_x86_64.zip
+          files: |
+            v2/Shiba.app_macos_x86_64.zip
+            v2/shiba.exe_windows_x86_64.zip
