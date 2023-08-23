@@ -133,18 +133,18 @@ fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
 }
 
 fn load_user_css(config: &Config) -> Option<Vec<u8>> {
-    let config_path = config.config_file()?;
+    let config_dir = config.config_dir()?;
     let css_path = config.preview().css_path()?;
-    let css_path = config_path.parent()?.join(css_path);
+    let css_path = config_dir.join(css_path);
 
     log::debug!("Loading user CSS at {:?}", css_path);
     match fs::read(&css_path) {
         Ok(css) => Some(css),
         Err(err) => {
             log::error!(
-                "Could not load CSS file {:?} specified in config file {:?}: {}",
+                "Could not load CSS file {:?} specified in config file at {:?}: {}",
                 css_path,
-                config_path,
+                config_dir,
                 err,
             );
             None

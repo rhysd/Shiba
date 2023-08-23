@@ -345,7 +345,7 @@ impl Config {
         Ok(Self { user_config, path: config_dir, data_dir, debug: options.debug })
     }
 
-    pub fn config_file(&self) -> Option<&Path> {
+    pub fn config_dir(&self) -> Option<&Path> {
         self.path.as_deref()
     }
 
@@ -389,6 +389,33 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
+
+    const EXPECTED_CONFIG: &str = include_str!("testdata/config/Shiba/config.yml");
+    #[cfg(not(windows))]
+    const TEST_CONFIG_DIR: &str = "src/testdata/config/Shiba";
+    #[cfg(windows)]
+    const TEST_CONFIG_DIR: &str = r#"src\testdata\config\Shiba"#;
+
+    struct Env<'a>((&'a str, Option<String>));
+
+    impl<'a> Env<'a> {
+        #[allow(dead_code)]
+        fn new(name: &'a str, value: &str) -> Self {
+            let saved = env::var(name).ok();
+            env::set_var(name, value);
+            Self((name, saved))
+        }
+    }
+
+    impl<'a> Drop for Env<'a> {
+        fn drop(&mut self) {
+            let Self((name, saved)) = &self;
+            if let Some(saved) = saved {
+                env::set_var(name, saved);
+            }
+        }
+    }
 
     #[test]
     fn generated_default_config() {
@@ -425,5 +452,59 @@ mod tests {
         assert!(!exts.matches(Path::new("foo.txt")));
         assert!(!exts.matches(Path::new("/path/to/foo")));
         assert!(!exts.matches(Path::new("/path/to/foo.txt")));
+    }
+
+    #[test]
+    fn load_config_from_option_path() {
+        let expected: UserConfig = serde_yaml::from_str(EXPECTED_CONFIG).unwrap();
+        let dir = Path::new(TEST_CONFIG_DIR);
+        let opts = Options {
+            config_dir: Some(dir.to_path_buf()),
+            data_dir: Some(dir.to_path_buf()),
+            ..Default::default()
+        };
+
+        let cfg = Config::load(opts).unwrap();
+        assert!(!cfg.debug());
+        assert_eq!(cfg.data_dir().path(), Some(dir));
+        assert_eq!(cfg.config_dir(), Some(dir));
+        assert_eq!(expected, cfg.user_config);
+    }
+
+    // XDG directory environment variables are only referred on Linux
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn load_config_from_xdg_config_dir() {
+        let expected: UserConfig = serde_yaml::from_str(EXPECTED_CONFIG).unwrap();
+        // XDG environment variable must be absolute paths
+        let mut dir = env::current_dir().unwrap();
+        dir.push("src");
+        dir.push("testdata");
+        dir.push("config");
+
+        let _config_env = Env::new("XDG_CONFIG_HOME", &dir.to_string_lossy());
+        let _data_env = Env::new("XDG_DATA_HOME", &dir.to_string_lossy());
+
+        dir.push("Shiba");
+
+        let cfg = Config::load(Options::default()).unwrap();
+        assert_eq!(cfg.data_dir().path(), Some(dir.as_path()));
+        assert_eq!(cfg.config_dir(), Some(dir.as_path()));
+        assert_eq!(expected, cfg.user_config);
+    }
+
+    #[test]
+    fn reflect_option_in_config() {
+        let dir = Path::new(TEST_CONFIG_DIR);
+        let opts = Options {
+            debug: true,
+            theme: Some(WindowTheme::Light), // Theme in config is overwritten
+            config_dir: Some(dir.to_path_buf()),
+            data_dir: Some(dir.to_path_buf()),
+            ..Default::default()
+        };
+        let cfg = Config::load(opts).unwrap();
+        assert!(cfg.debug());
+        assert_eq!(cfg.window().theme, WindowTheme::Light);
     }
 }
