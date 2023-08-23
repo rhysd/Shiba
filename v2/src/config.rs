@@ -2,7 +2,9 @@ use crate::cli::{Options, ThemeOption};
 use crate::persistent::DataDir;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize};
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf};
@@ -224,6 +226,24 @@ pub struct Dialog {
 impl Dialog {
     pub fn default_dir(&self) -> Option<&Path> {
         self.default_dir.as_deref()
+    }
+
+    pub fn initial_dir(&self) -> Result<Cow<'_, Path>> {
+        if let Some(path) = self.default_dir.as_deref() {
+            return Ok(path.into());
+        }
+        let dir = env::current_dir().context("Error while opening a file dialog")?;
+
+        // When this app is started via Shiba.app, the current directory is `/` but it is not convenient as an initial
+        // directory for open dialog.
+        #[cfg(target_os = "macos")]
+        if dir.parent().is_none() {
+            if let Some(dir) = dirs::document_dir() {
+                return Ok(dir.into());
+            }
+        }
+
+        Ok(dir.into())
     }
 }
 

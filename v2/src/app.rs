@@ -279,12 +279,8 @@ where
 
     fn open_file(&mut self) -> Result<()> {
         let extensions = self.config.watch().file_extensions();
-        let file = if let Some(dir) = self.config.dialog().default_dir() {
-            D::pick_file(dir, extensions)
-        } else {
-            let dir = env::current_dir().context("Error while opening a file dialog")?;
-            D::pick_file(&dir, extensions)
-        };
+        let dir = self.config.dialog().initial_dir()?;
+        let file = D::pick_file(&dir, extensions);
 
         if let Some(file) = file {
             log::debug!("Previewing file chosen by dialog: {:?}", file);
