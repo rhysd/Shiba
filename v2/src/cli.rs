@@ -1,8 +1,14 @@
-use crate::config::WindowTheme;
 use anyhow::Result;
 use getopts::Options as GetOpts;
 use std::env;
 use std::path::{Path, PathBuf};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ThemeOption {
+    System,
+    Dark,
+    Light,
+}
 
 #[non_exhaustive]
 #[derive(Debug, Default, PartialEq)]
@@ -11,7 +17,7 @@ pub struct Options {
     pub init_file: Option<PathBuf>,
     pub watch_paths: Vec<PathBuf>,
     pub watch: bool,
-    pub theme: Option<WindowTheme>,
+    pub theme: Option<ThemeOption>,
     pub gen_config_file: bool,
     pub config_dir: Option<PathBuf>,
     pub data_dir: Option<PathBuf>,
@@ -42,9 +48,9 @@ impl Options {
 
         let theme = match matches.opt_str("t") {
             Some(theme) => match theme.as_str() {
-                "dark" | "Dark" => Some(WindowTheme::Dark),
-                "light" | "Light" => Some(WindowTheme::Light),
-                "system" | "System" => Some(WindowTheme::System),
+                "dark" | "Dark" => Some(ThemeOption::Dark),
+                "light" | "Light" => Some(ThemeOption::Light),
+                "system" | "System" => Some(ThemeOption::System),
                 _ => anyhow::bail!(
                     r#"Value for --theme must be one of "dark", "light" or "system" but got {:?}"#,
                     theme,
@@ -137,7 +143,7 @@ mod tests {
             (&["--debug"][..], Options { watch: true, debug: true, ..Default::default() }),
             (
                 &["--theme", "dark"][..],
-                Options { watch: true, theme: Some(WindowTheme::Dark), ..Default::default() },
+                Options { watch: true, theme: Some(ThemeOption::Dark), ..Default::default() },
             ),
             (
                 &["--config-dir", "some-dir"][..],

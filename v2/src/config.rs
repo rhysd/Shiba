@@ -1,4 +1,4 @@
-use crate::cli::Options;
+use crate::cli::{Options, ThemeOption};
 use crate::persistent::DataDir;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -112,37 +112,27 @@ impl Watch {
 }
 
 #[non_exhaustive]
-#[derive(Deserialize, Serialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SearchMatcher {
+    #[default]
     SmartCase,
     CaseSensitive,
     CaseInsensitive,
     CaseSensitiveRegex,
 }
 
-impl Default for SearchMatcher {
-    fn default() -> Self {
-        Self::SmartCase
-    }
-}
-
 #[non_exhaustive]
-#[derive(Default, Deserialize, Serialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Default, Debug, PartialEq, Eq)]
 pub struct Search {
     matcher: SearchMatcher,
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum WindowTheme {
+    #[default]
     System,
     Dark,
     Light,
-}
-
-impl Default for WindowTheme {
-    fn default() -> Self {
-        Self::System
-    }
 }
 
 #[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
@@ -333,7 +323,12 @@ impl Config {
         };
 
         if let Some(theme) = options.theme {
-            user_config.window.theme = theme; // CLI option has higher priority
+            // CLI option has higher priority
+            user_config.window.theme = match theme {
+                ThemeOption::System => WindowTheme::System,
+                ThemeOption::Dark => WindowTheme::Dark,
+                ThemeOption::Light => WindowTheme::Light,
+            };
         }
 
         let data_dir = if let Some(dir) = mem::take(&mut options.data_dir) {
@@ -498,7 +493,7 @@ mod tests {
         let dir = Path::new(TEST_CONFIG_DIR);
         let opts = Options {
             debug: true,
-            theme: Some(WindowTheme::Light), // Theme in config is overwritten
+            theme: Some(ThemeOption::Light), // Theme in config is overwritten
             config_dir: Some(dir.to_path_buf()),
             data_dir: Some(dir.to_path_buf()),
             ..Default::default()
