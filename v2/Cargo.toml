@@ -55,7 +55,7 @@ lto = "thin"
 insta = { version = "1.31.0", features = ["json"] }
 
 [target.'cfg(windows)'.build-dependencies]
-winres = "0.1.12"
+winresource = { version = "0.1.17", default-features = false }
 
 [package.metadata.bundle]
 name = "Shiba"
