@@ -20,14 +20,10 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Upload release binaries
-    strategy:
-      fail-fast: false
-      matrix:
-        # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
-        os: [macos-11, windows-latest]
-    runs-on: ${{ matrix.os }}
+  release-mac:
+    name: Build and upload macOS package
+    # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
+    runs-on: macos-11
     steps:
       - uses: actions/checkout@v3
       - name: Get version
@@ -36,9 +32,9 @@ jobs:
         # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
         run: |
           if ${{ github.event_name == 'workflow_dispatch' }}; then
-            ver="unreleased"
+            ver="0.0.0"
           else
-            ver="${GITHUB_REF##refs/tags/}"
+            ver="${GITHUB_REF##refs/tags/v}"
           fi
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
@@ -47,24 +43,60 @@ jobs:
           node-version: 'lts/*'
           cache: npm
           cache-dependency-path: v2/package-lock.json
-      - name: Build package on macOS
+      - name: Build package
         run: |
           make Shiba.app
-          zip --symlinks Shiba.app_macos_x86_64.zip -r Shiba.app
-        if: ${{ startsWith(matrix.os, 'macos-') }}
-      - name: Build package on Windows
-        run: |
-          npm ci
-          npm run release
-          cargo build --release
-          mv target/release/shiba.exe shiba.exe
-          7z a shiba.exe_windows_x86_64.zip shiba.exe
-        if: ${{ startsWith(matrix.os, 'windows-') }}
+          zip --symlinks Shiba.app_macos_x86_64_v${{ steps.get_ver.outputs.version }}.zip -r Shiba.app
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_ver.outputs.version }}
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' }}
           files: |
-            v2/Shiba.app_macos_x86_64.zip
-            v2/shiba.exe_windows_x86_64.zip
+            v2/Shiba.app_macos_x86_64_v${{ steps.get_ver.outputs.version }}.zip
+  release-win:
+    name: Build and upload Windows installer and executable
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get version
+        id: get_ver
+        shell: bash
+        # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
+        run: |
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
+            ver="0.0.0"
+          else
+            ver="${GITHUB_REF##refs/tags/v}"
+          fi
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - name: Install WiX
+        run: |
+          dotnet tool install --global wix
+          wix --version
+          wix extension add WixToolset.UI.wixext WixToolset.Util.wixext
+      - name: Build executable
+        run: |
+          npm ci
+          npm run release
+          cargo build --release
+          cp target/release/shiba.exe shiba.exe
+          7z a shiba_windows_x86_64_v${{ steps.get_ver.outputs.version }}.exe.zip shiba.exe
+      - name: Build .msi installer
+        run: |
+          wix --version
+          wix build -arch "x64" -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -out shiba_x64_v${{ steps.get_ver.outputs.version }}.msi assets/wix/shiba.wxs -define ShibaVersion=${{ steps.get_ver.outputs.version }}
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_ver.outputs.version }}
+          draft: false
+          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          files: |
+            v2/shiba_windows_x86_64_v${{ steps.get_ver.outputs.version }}.exe.zip
+            v2/shiba_x64_v${{ steps.get_ver.outputs.version }}.msi
