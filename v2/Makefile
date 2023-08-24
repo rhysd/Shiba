@@ -15,19 +15,25 @@ src/assets/bundle.min.js: node_modules $(TS_SRC)
 
 target/debug/shiba: $(RS_SRC) src/assets/bundle.js src/assets/index.html $(CSS)
 	cargo build
+target/debug/shiba.exe: $(RS_SRC) src/assets/bundle.js src/assets/index.html $(CSS) assets/icon.ico
+	cargo build
 
 target/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS)
+	cargo build --release
+target/release/shiba.exe: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS) assets/icon.ico
 	cargo build --release
 
 Shiba.app: target/release/shiba
 	bash ./scripts/gen_macos_app.bash
 
-.PHONY: build release bundle clean
+shiba.msi: target/release/shiba.exe
+	wix extension add WixToolset.UI.wixext WixToolset.Util.wixext
+	wix build -arch "x64" -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -out shiba.msi assets/wix/shiba.wxs -define ShibaVersion=(yq .package.version Cargo.toml)
+
+.PHONY: build release clean
 
 build: target/debug/shiba
 release: target/release/shiba
-bundle: target/release/shiba
-	cargo bundle --release
 clean:
 	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target
 
