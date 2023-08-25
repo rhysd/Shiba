@@ -27,7 +27,7 @@
         </DirectoryRef>
         <!-- Add to PATH -->
         <DirectoryRef Id="ShibaProgramFiles">
-            <Component Id="ModifyPathEnv" Guid="edf0b679-9eb6-46f7-a5d1-5160f30acb34" KeyPath="yes">
+            <Component Id="ModifyPathEnv" Guid="25144a43-f500-499c-9873-b3f664c2ebe6" KeyPath="yes">
                 <Environment Id="PathEnv" Value="[ShibaProgramFiles]" Name="PATH" Permanent="no" Part="first" Action="set" System="yes" />
             </Component>
         </DirectoryRef>
