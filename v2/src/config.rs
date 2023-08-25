@@ -224,11 +224,7 @@ pub struct Dialog {
 }
 
 impl Dialog {
-    pub fn default_dir(&self) -> Option<&Path> {
-        self.default_dir.as_deref()
-    }
-
-    pub fn initial_dir(&self) -> Result<Cow<'_, Path>> {
+    pub fn default_dir(&self) -> Result<Cow<'_, Path>> {
         if let Some(path) = self.default_dir.as_deref() {
             return Ok(path.into());
         }

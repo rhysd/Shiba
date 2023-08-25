@@ -10,7 +10,6 @@ use crate::renderer::{
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
 use std::collections::VecDeque;
-use std::env;
 use std::fs;
 use std::marker::PhantomData;
 use std::mem;
@@ -279,7 +278,7 @@ where
 
     fn open_file(&mut self) -> Result<()> {
         let extensions = self.config.watch().file_extensions();
-        let dir = self.config.dialog().initial_dir()?;
+        let dir = self.config.dialog().default_dir()?;
         let file = D::pick_file(&dir, extensions);
 
         if let Some(file) = file {
@@ -291,14 +290,9 @@ where
     }
 
     fn open_dir(&mut self) -> Result<()> {
-        let dir = if let Some(dir) = self.config.dialog().default_dir() {
-            D::pick_dir(dir)
-        } else {
-            let dir = env::current_dir().context("Error while opening a directory dialog")?;
-            D::pick_dir(&dir)
-        };
+        let dir = self.config.dialog().default_dir()?;
 
-        if let Some(dir) = dir {
+        if let Some(dir) = D::pick_dir(&dir) {
             log::debug!("Watching directory chosen by dialog: {:?}", dir);
             self.watcher.watch(&dir)?;
         }
