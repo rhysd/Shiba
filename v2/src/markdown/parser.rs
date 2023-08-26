@@ -170,9 +170,9 @@ fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
 
     match ESCAPE_TABLE[b as usize] {
         __ => out.write_all(&[b]),
-        BS => out.write_all(br#"\\\\"#), // Escape twice for JS and JSON (\\\\ → \\ → \)
-        SQ => out.write_all(br#"\'"#), // JSON string will be put in '...' JS string. ' needs to be escaped
-        XX => write!(out, r#"\\u{:04x}"#, b),
+        BS => out.write_all(br"\\\\"), // Escape twice for JS and JSON (\\\\ → \\ → \)
+        SQ => out.write_all(br"\'"), // JSON string will be put in '...' JS string. ' needs to be escaped
+        XX => write!(out, r"\\u{:04x}", b),
         b => out.write_all(&[b'\\', b'\\', b]), // Escape \ itself: JSON.parse('\\n')
     }
 }

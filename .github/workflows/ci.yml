@@ -60,5 +60,5 @@ jobs:
       - run: npm run lint:eslint
       - run: npm run lint:stylelint
       - run: cargo fmt --all --check
-      - run: cargo clippy --all --benches -- -D warnings
+      - run: cargo clippy --all --benches --tests -- -D warnings
       - run: shellcheck ./scripts/gen_macos_app.bash
