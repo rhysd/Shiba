@@ -54,7 +54,7 @@ jobs:
           prerelease: ${{ github.event_name == 'workflow_dispatch' }}
           files: |
             v2/Shiba.app_macos_x86_64_v${{ steps.get_ver.outputs.version }}.zip
-  release-win:
+  release-windows:
     name: Build and upload Windows installer and executable
     runs-on: windows-latest
     steps:
@@ -100,3 +100,41 @@ jobs:
           files: |
             v2/shiba_windows_x86_64_v${{ steps.get_ver.outputs.version }}.exe.zip
             v2/shiba_x64_v${{ steps.get_ver.outputs.version }}.msi
+  release-linux:
+    name: Build and upload Linux executable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get version
+        id: get_ver
+        shell: bash
+        # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
+        run: |
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
+            ver="0.0.0"
+          else
+            ver="${GITHUB_REF##refs/tags/v}"
+          fi
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev
+      - run: make target/release/shiba
+      - name: Archivfe executable
+        run: |
+          cp target/release/shiba ./shiba
+          zip --symlinks shiba_linux_x86_64_v${{ steps.get_ver.outputs.version }}.zip shiba
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_ver.outputs.version }}
+          draft: false
+          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          files: |
+            v2/shiba_linux_x86_64_v${{ steps.get_ver.outputs.version }}.zip
