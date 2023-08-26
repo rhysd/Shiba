@@ -20,23 +20,38 @@ permissions:
   contents: write
 
 jobs:
+  info:
+    name: Collect information for release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_info.outputs.version }}
+      tag: ${{ steps.get_info.outputs.tag }}
+      body: ${{ steps.get_info.outputs.body }}
+      prerelease: ${{ steps.get_info.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Collect information
+        id: get_info
+        shell: bash
+        # $GITHUB_REF will have a value like "refs/tags/v0.3.1"
+        run: |
+          if ${{ github.event_name == 'workflow_dispatch' }}; then
+            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
+            echo "tag=unreleased" >> "$GITHUB_OUTPUT"
+            echo "body=Pre-release assets for testing. Built at https://github.com/rhysd/Shiba/commit/$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF##refs/tags/v}" >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF##refs/tags/}" >> "$GITHUB_OUTPUT"
+            echo "body=" >> "$GITHUB_OUTPUT"
+          fi
+          echo "prerelease=${{ github.event_name == 'workflow_dispatch' }}" >> "$GITHUB_OUTPUT"
   release-mac:
     name: Build and upload macOS package
     # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
     runs-on: macos-11
+    needs: [info]
     steps:
       - uses: actions/checkout@v3
-      - name: Get version
-        id: get_ver
-        shell: bash
-        # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
-        run: |
-          if ${{ github.event_name == 'workflow_dispatch' }}; then
-            ver="0.0.0"
-          else
-            ver="${GITHUB_REF##refs/tags/v}"
-          fi
-          echo "version=${ver}" >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v3
         with:
@@ -46,30 +61,21 @@ jobs:
       - name: Build package
         run: |
           make Shiba.app
-          zip --symlinks Shiba.app_macos_x86_64_v${{ steps.get_ver.outputs.version }}.zip -r Shiba.app
+          zip --symlinks Shiba.app_macos_x86_64_v${{ needs.info.outputs.version }}.zip -r Shiba.app
       - uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.get_ver.outputs.version }}
+          tag_name: ${{ needs.info.outputs.tag }}
+          body: ${{ needs.info.outputs.body }}
           draft: false
-          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/Shiba.app_macos_x86_64_v${{ steps.get_ver.outputs.version }}.zip
+            v2/Shiba.app_macos_x86_64_v${{ needs.info.outputs.version }}.zip
   release-windows:
     name: Build and upload Windows installer and executable
     runs-on: windows-latest
+    needs: [info]
     steps:
       - uses: actions/checkout@v3
-      - name: Get version
-        id: get_ver
-        shell: bash
-        # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
-        run: |
-          if ${{ github.event_name == 'workflow_dispatch' }}; then
-            ver="0.0.0"
-          else
-            ver="${GITHUB_REF##refs/tags/v}"
-          fi
-          echo "version=${ver}" >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v3
         with:
@@ -87,35 +93,26 @@ jobs:
           npm run release
           cargo build --release
           cp target/release/shiba.exe shiba.exe
-          7z a shiba_windows_x86_64_v${{ steps.get_ver.outputs.version }}.exe.zip shiba.exe
+          7z a shiba_windows_x86_64_v${{ needs.info.outputs.version }}.exe.zip shiba.exe
       - name: Build .msi installer
         run: |
           wix --version
-          wix build -arch "x64" -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -out shiba_x64_v${{ steps.get_ver.outputs.version }}.msi assets/wix/shiba.wxs -define ShibaVersion=${{ steps.get_ver.outputs.version }}
+          wix build -arch "x64" -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -out shiba_x64_v${{ needs.info.outputs.version }}.msi assets/wix/shiba.wxs -define ShibaVersion=${{ needs.info.outputs.version }}
       - uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.get_ver.outputs.version }}
+          tag_name: ${{ needs.info.outputs.tag }}
+          body: ${{ needs.info.outputs.body }}
           draft: false
-          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/shiba_windows_x86_64_v${{ steps.get_ver.outputs.version }}.exe.zip
-            v2/shiba_x64_v${{ steps.get_ver.outputs.version }}.msi
+            v2/shiba_windows_x86_64_v${{ needs.info.outputs.version }}.exe.zip
+            v2/shiba_x64_v${{ needs.info.outputs.version }}.msi
   release-linux:
     name: Build and upload Linux executable
     runs-on: ubuntu-latest
+    needs: [info]
     steps:
       - uses: actions/checkout@v3
-      - name: Get version
-        id: get_ver
-        shell: bash
-        # $GITHUB_REF will have a value like "refs/tags/v0.3.1". Extract "v0.3.1" from it
-        run: |
-          if ${{ github.event_name == 'workflow_dispatch' }}; then
-            ver="0.0.0"
-          else
-            ver="${GITHUB_REF##refs/tags/v}"
-          fi
-          echo "version=${ver}" >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v3
         with:
@@ -130,11 +127,12 @@ jobs:
       - name: Archivfe executable
         run: |
           cp target/release/shiba ./shiba
-          zip --symlinks shiba_linux_x86_64_v${{ steps.get_ver.outputs.version }}.zip shiba
+          zip --symlinks shiba_linux_x86_64_v${{ needs.info.outputs.version }}.zip shiba
       - uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.get_ver.outputs.version }}
+          tag_name: ${{ needs.info.outputs.tag }}
+          body: ${{ needs.info.outputs.body }}
           draft: false
-          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+          prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/shiba_linux_x86_64_v${{ steps.get_ver.outputs.version }}.zip
+            v2/shiba_linux_x86_64_v${{ needs.info.outputs.version }}.zip
