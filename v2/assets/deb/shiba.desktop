@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Shiba
+Comment=Simple Markdown previewer
+Type=Application
+Exec=shiba
+Icon=shiba
+Terminal=false
+Categories=Office;TextTools;
