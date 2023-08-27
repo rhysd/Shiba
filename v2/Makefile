@@ -23,12 +23,15 @@ target/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $
 target/release/shiba.exe: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS) assets/icon.ico
 	cargo build --release
 
-Shiba.app: target/release/shiba
+Shiba.app: target/release/shiba assets/Shiba.app/Contents/Info.plist
 	bash ./scripts/gen_macos_app.bash
 
-shiba.msi: target/release/shiba.exe
+shiba.msi: target/release/shiba.exe assets/wix/shiba.wxs
 	wix extension add WixToolset.UI.wixext WixToolset.Util.wixext
 	wix build -arch "x64" -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -out shiba.msi assets/wix/shiba.wxs -define ShibaVersion=(yq .package.version Cargo.toml)
+
+target/debian/shiba_%_amd64.deb: target/release/shiba assets/deb/shiba.desktop
+	cargo deb --no-build --verbose
 
 .PHONY: build release clean
 

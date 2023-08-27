@@ -57,19 +57,17 @@ insta = { version = "1.31.0", features = ["json"] }
 [target.'cfg(windows)'.build-dependencies]
 winresource = { version = "0.1.17", default-features = false }
 
-[package.metadata.bundle]
-name = "Shiba"
-identifier = "io.github.rhysd.shiba"
-icon = [
-    "assets/icon.ico",
-    "assets/icon.icns",
-    "assets/icon.iconset/icon_32x32.png",
-    "assets/icon.iconset/icon_64x64.png",
-    "assets/icon.iconset/icon_128x128.png",
-    "assets/icon.iconset/icon_256x256.png",
-    "assets/icon.iconset/icon_256x256@2x.png",
-]
+[package.metadata.deb]
+name = "shiba"
 copyright = "Copyright (c) 2015 rhysd"
-category = "public.app-category.productivity"
-deb_depends = ["libwebkit2gtk-4.1-dev"]
-osx_url_schemes = ["shiba"]
+pre-depends = "libwebkit2gtk-4.1-dev"
+section = "doc"
+assets = [
+    ["target/release/shiba", "usr/bin/", "755"],
+    ["assets/deb/shiba.desktop", "usr/share/applications/", "644"],
+    ["assets/icon.iconset/icon_32x32.png", "usr/share/icons/hicolor/32x32/apps/shiba.png", "644"],
+    ["assets/icon.iconset/icon_64x64.png", "usr/share/icons/hicolor/64x64/apps/shiba.png", "644"],
+    ["assets/icon.iconset/icon_128x128.png", "usr/share/icons/hicolor/128x128/apps/shiba.png", "644"],
+    ["assets/icon.iconset/icon_256x256.png", "usr/share/icons/hicolor/256x256/apps/shiba.png", "644"],
+    ["assets/icon.iconset/icon_256x256@2x.png", "usr/share/icons/hicolor/512x512/apps/shiba.png", "644"],
+]
