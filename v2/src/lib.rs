@@ -1,4 +1,9 @@
-#![warn(clippy::dbg_macro, clippy::print_stdout, clippy::print_stderr)]
+#![warn(
+    clippy::dbg_macro,
+    clippy::print_stdout,
+    clippy::print_stderr,
+    clippy::undocumented_unsafe_blocks
+)]
 
 mod app;
 mod assets;

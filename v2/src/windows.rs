@@ -6,6 +6,8 @@ pub struct WindowsConsole {
 
 impl WindowsConsole {
     pub fn attach() -> Self {
+        // SAFETY: Using Windows C API is always unsafe. I confirmed the usage in official document.
+        // https://learn.microsoft.com/en-us/windows/console/attachconsole
         let success = unsafe { AttachConsole(ATTACH_PARENT_PROCESS) != 0 };
         Self { success }
     }
@@ -14,6 +16,8 @@ impl WindowsConsole {
 impl Drop for WindowsConsole {
     fn drop(&mut self) {
         if self.success {
+            // SAFETY: Using Windows C API is always unsafe. I confirmed the usage in official document.
+            // https://learn.microsoft.com/en-us/windows/console/freeconsole
             unsafe { FreeConsole() };
         }
     }
