@@ -92,14 +92,14 @@ mod tests {
             ("", ""),
             (
                 #[cfg(target_os = "windows")]
-                r#"\a\b\c"#,
+                r"\a\b\c",
                 #[cfg(not(target_os = "windows"))]
                 "/a/b/c",
                 "/a/b/c",
             ),
             (
                 #[cfg(target_os = "windows")]
-                r#"\a\b\c\"#,
+                r"\a\b\c\",
                 #[cfg(not(target_os = "windows"))]
                 "/a/b/c/",
                 "/a/b/c",
@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn sanitize_raw_html() {
         #[cfg(target_os = "windows")]
-        const BASE_DIR: &str = r#"\a\b\c\d\e"#;
+        const BASE_DIR: &str = r"\a\b\c\d\e";
         #[cfg(not(target_os = "windows"))]
         const BASE_DIR: &str = "/a/b/c/d/e";
         let base_dir = SlashPath::from(Path::new(BASE_DIR));

@@ -912,7 +912,7 @@ mod tests {
 
     // Relative link resolutions
     #[cfg(target_os = "windows")]
-    const BASE_DIR: &str = r#"\a\b\c\d\e"#;
+    const BASE_DIR: &str = r"\a\b\c\d\e";
     #[cfg(not(target_os = "windows"))]
     const BASE_DIR: &str = "/a/b/c/d/e";
     snapshot_test!(relative_links, None, Some(Path::new(BASE_DIR)));

@@ -406,7 +406,7 @@ mod tests {
     #[cfg(not(windows))]
     const TEST_CONFIG_DIR: &str = "src/testdata/config/Shiba";
     #[cfg(windows)]
-    const TEST_CONFIG_DIR: &str = r#"src\testdata\config\Shiba"#;
+    const TEST_CONFIG_DIR: &str = r"src\testdata\config\Shiba";
 
     struct Env<'a>((&'a str, Option<String>));
 
