@@ -33,11 +33,17 @@ cp -R ./assets/Shiba.app ./
 sed -E -i '' "s/\\{\\{VERSION}}/${version}/" ./Shiba.app/Contents/Info.plist
 
 echo "Copying 'shiba' release binary..."
-if [ ! -x ./target/release/shiba ]; then
-    echo "ERROR: ./target/release/shiba does not exist. Build it with 'cargo build --release'" 1>&2
+if [ ! -x ./target/x86_64-apple-darwin/release/shiba ]; then
+    echo "ERROR: x86_64 binary is not found. Build it with 'cargo build --release --target x86_64-apple-darwin'" 1>&2
+    exit 1
+fi
+if [ ! -x ./target/aarch64-apple-darwin/release/shiba ]; then
+    echo "ERROR: aarch64 binary is not found. Build it with 'cargo build --release --target aarch64-apple-darwin'" 1>&2
     exit 1
 fi
 mkdir -p ./Shiba.app/Contents/MacOS/
-cp ./target/release/shiba ./Shiba.app/Contents/MacOS/
+
+echo "Generating universal binary..."
+lipo ./target/x86_64-apple-darwin/release/shiba ./target/aarch64-apple-darwin/release/shiba -create -output ./Shiba.app/Contents/MacOS/shiba
 
 echo 'Done.'

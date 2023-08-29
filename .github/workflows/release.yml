@@ -53,6 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
       - uses: actions/setup-node@v3
         with:
           node-version: 'lts/*'
@@ -61,7 +63,7 @@ jobs:
       - name: Build package
         run: |
           make Shiba.app
-          zip --symlinks Shiba.app_macos_x86_64_v${{ needs.info.outputs.version }}.zip -r Shiba.app
+          zip --symlinks Shiba.app_universal_v${{ needs.info.outputs.version }}.zip -r Shiba.app
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.info.outputs.tag }}
@@ -69,7 +71,7 @@ jobs:
           draft: false
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/Shiba.app_macos_x86_64_v${{ needs.info.outputs.version }}.zip
+            v2/Shiba.app_universal_v${{ needs.info.outputs.version }}.zip
   release-windows:
     name: Build and upload Windows installer and executable
     runs-on: windows-latest

@@ -23,7 +23,11 @@ target/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $
 target/release/shiba.exe: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS) assets/icon.ico
 	cargo build --release
 
-Shiba.app: target/release/shiba assets/Shiba.app/Contents/Info.plist
+target/x86_64-apple-darwin/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS)
+	cargo build --release --target=x86_64-apple-darwin
+target/aarch64-apple-darwin/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS)
+	cargo build --release --target=aarch64-apple-darwin
+Shiba.app: target/x86_64-apple-darwin/release/shiba target/aarch64-apple-darwin/release/shiba assets/Shiba.app/Contents/Info.plist
 	bash ./scripts/gen_macos_app.bash
 
 shiba.msi: target/release/shiba.exe assets/wix/shiba.wxs
@@ -38,6 +42,6 @@ target/debian/shiba_%_amd64.deb: target/release/shiba assets/deb/shiba.desktop
 build: target/debug/shiba
 release: target/release/shiba
 clean:
-	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target
+	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target Shiba.app shiba.msi
 
 .DEFAULT_GOAL := build
