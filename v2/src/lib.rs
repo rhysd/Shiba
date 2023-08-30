@@ -37,7 +37,7 @@ use notify::RecommendedWatcher;
 use rfd::FileDialog;
 
 pub fn run(options: Options) -> Result<()> {
-    let event_loop = WryEventLoop::with_user_event();
+    let event_loop = WryEventLoop::new();
     if options.watch {
         let app = Shiba::<WryRenderer, SystemOpener, RecommendedWatcher, FileDialog>::new(
             options,

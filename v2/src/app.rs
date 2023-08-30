@@ -372,7 +372,7 @@ where
     }
 }
 
-impl<R, O, W, D> App<R::Menu> for Shiba<R, O, W, D>
+impl<R, O, W, D> App for Shiba<R, O, W, D>
 where
     R: Renderer,
     O: Opener,
@@ -436,11 +436,13 @@ where
         Ok(AppControl::Continue)
     }
 
-    fn handle_menu_event(&mut self, id: <R::Menu as MenuItems>::ItemId) -> Result<AppControl> {
-        let kind = self.renderer.menu().item_from_id(id)?;
+    fn handle_menu_event(&mut self) -> Result<Option<AppControl>> {
+        let Some(kind) = self.renderer.menu().receive_menu_event()? else {
+            return Ok(None);
+        };
         log::debug!("Menu item was clicked: {:?}", kind);
         match kind {
-            MenuItem::Quit => return Ok(AppControl::Exit),
+            MenuItem::Quit => return Ok(Some(AppControl::Exit)),
             MenuItem::Forward => self.forward()?,
             MenuItem::Back => self.back()?,
             MenuItem::Reload => self.reload()?,
@@ -460,7 +462,7 @@ where
             MenuItem::Help => self.renderer.send_message(MessageToRenderer::Help)?,
             MenuItem::OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
         }
-        Ok(AppControl::Continue)
+        Ok(Some(AppControl::Continue))
     }
 
     fn handle_exit(&self) -> Result<()> {

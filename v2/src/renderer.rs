@@ -93,7 +93,7 @@ pub enum MenuItem {
 
 pub trait MenuItems {
     type ItemId: fmt::Debug;
-    fn item_from_id(&self, id: Self::ItemId) -> Result<MenuItem>;
+    fn receive_menu_event(&self) -> Result<Option<MenuItem>>;
 }
 
 pub trait RawMessageWriter {
@@ -161,9 +161,9 @@ pub enum AppControl {
     Exit,
 }
 
-pub trait App<M: MenuItems> {
+pub trait App {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl>;
-    fn handle_menu_event(&mut self, id: M::ItemId) -> Result<AppControl>;
+    fn handle_menu_event(&mut self) -> Result<Option<AppControl>>;
     fn handle_exit(&self) -> Result<()>;
 }
 
@@ -173,11 +173,9 @@ pub trait EventChannel: 'static + Send {
 
 pub trait EventLoop {
     type Channel: EventChannel;
-    type Menu: MenuItems;
+    fn new() -> Self;
     fn create_channel(&self) -> Self::Channel;
-    fn start<A>(self, app: A) -> !
-    where
-        A: App<Self::Menu> + 'static;
+    fn start<A: App + 'static>(self, app: A) -> !;
 }
 
 pub trait Renderer: Sized {

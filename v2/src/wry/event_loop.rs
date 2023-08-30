@@ -1,8 +1,7 @@
 use crate::renderer::{App, AppControl, EventChannel, EventLoop, UserEvent};
-use crate::wry::menu::MenuIds;
 use anyhow::Error;
 use wry::application::event::{Event, StartCause, WindowEvent};
-use wry::application::event_loop::{ControlFlow, EventLoopProxy};
+use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
 pub type WryEventLoop = wry::application::event_loop::EventLoop<UserEvent>;
 
@@ -16,16 +15,16 @@ impl EventChannel for EventLoopProxy<UserEvent> {
 
 impl EventLoop for WryEventLoop {
     type Channel = EventLoopProxy<UserEvent>;
-    type Menu = MenuIds;
+
+    fn new() -> Self {
+        EventLoopBuilder::with_user_event().build()
+    }
 
     fn create_channel(&self) -> Self::Channel {
         self.create_proxy()
     }
 
-    fn start<A>(self, mut app: A) -> !
-    where
-        A: App<Self::Menu> + 'static,
-    {
+    fn start<A: App + 'static>(self, mut app: A) -> ! {
         fn log_causes(err: Error) {
             for err in err.chain() {
                 log::error!("  Caused by: {}", err);
@@ -33,7 +32,7 @@ impl EventLoop for WryEventLoop {
         }
 
         self.run(move |event, _, control_flow| {
-            let control = match event {
+            let mut control = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
                     AppControl::Continue
@@ -53,15 +52,16 @@ impl EventLoop for WryEventLoop {
                         }
                     }
                 }
-                Event::MenuEvent { menu_id, .. } => match app.handle_menu_event(menu_id) {
-                    Ok(control) => control,
-                    Err(err) => {
-                        log::error!("Could not handle menu event: {}", err);
-                        AppControl::Continue
-                    }
-                },
                 _ => AppControl::Continue,
             };
+
+            match app.handle_menu_event() {
+                Ok(None) => {}
+                Ok(Some(c)) => control = c,
+                Err(err) => {
+                    log::error!("Could not handle menu event: {}", err);
+                }
+            }
 
             match control {
                 AppControl::Continue => *control_flow = ControlFlow::Wait,

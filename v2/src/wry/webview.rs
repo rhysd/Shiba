@@ -5,11 +5,10 @@ use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
     UserEvent, ZoomLevel,
 };
-use crate::wry::menu::MenuIds;
+use crate::wry::menu::Menu;
 use anyhow::Result;
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
 use wry::application::event_loop::EventLoop as WryEventLoop;
-use wry::application::menu::MenuBar;
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
@@ -146,25 +145,21 @@ fn create_webview(
 
 pub struct WryRenderer {
     webview: WebView,
-    menu_ids: MenuIds,
+    menu: Menu,
     zoom_level: ZoomLevel,
     always_on_top: bool,
 }
 
 impl Renderer for WryRenderer {
     type EventLoop = WryEventLoop<UserEvent>;
-    type Menu = MenuIds;
+    type Menu = Menu;
 
     fn new(
         config: &Config,
         event_loop: &Self::EventLoop,
         window_state: Option<WindowState>,
     ) -> Result<Self> {
-        let mut menu = MenuBar::new();
-        let menu_ids = MenuIds::set_menu(&mut menu);
-
-        let mut builder =
-            WindowBuilder::new().with_title("Shiba").with_menu(menu).with_visible(false);
+        let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
 
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
             log::debug!("Restoring window state {state:?}");
@@ -203,13 +198,16 @@ impl Renderer for WryRenderer {
         }
 
         let window = builder.build(event_loop)?;
-        log::debug!("Event loop and window were created successfully");
+        let menu = Menu::new(&window)?;
+        log::debug!("Event loop, window, and menu were created successfully");
 
         let webview = create_webview(window, event_loop, config)?;
         log::debug!("WebView was created successfully");
 
-        if zoom_level.factor() != 1.0 {
-            webview.zoom(zoom_level.factor());
+        let zoom_factor = zoom_level.factor();
+        if zoom_factor != 1.0 {
+            webview.zoom(zoom_factor);
+            log::debug!("Zoom factor was set to {}", zoom_factor);
         }
 
         #[cfg(any(debug_assertions, feature = "devtools"))]
@@ -218,11 +216,11 @@ impl Renderer for WryRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(WryRenderer { webview, menu_ids, zoom_level, always_on_top })
+        Ok(WryRenderer { webview, menu, zoom_level, always_on_top })
     }
 
     fn menu(&self) -> &Self::Menu {
-        &self.menu_ids
+        &self.menu
     }
 
     fn send_message(&self, message: MessageToRenderer) -> Result<()> {
