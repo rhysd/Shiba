@@ -54,131 +54,138 @@ impl Menu {
         #[cfg(not(target_os = "macos"))]
         const MOD: Modifiers = Modifiers::CONTROL;
 
-        // Note: Some native menu items are not supported by Windows. Those items are actually not inserted into menu bar.
-
-        let cmd_q = Accelerator::new(Some(MOD), Code::KeyQ);
-        let quit = MenuItem::new("Quit", true, Some(cmd_q));
-        #[cfg(target_os = "macos")]
-        let app_menu = Submenu::with_items(
-            "Shiba",
+        // Custom menu items
+        let quit = MenuItem::new("Quit", true, Some(Accelerator::new(Some(MOD), Code::KeyQ)));
+        let open_file =
+            MenuItem::new("Open File…", true, Some(Accelerator::new(Some(MOD), Code::KeyO)));
+        let watch_dir = MenuItem::new(
+            "Watch Directory…",
             true,
-            &[
-                &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
-                &PredefinedMenuItem::separator(),
-                &PredefinedMenuItem::services(None),
-                &PredefinedMenuItem::separator(),
-                &PredefinedMenuItem::hide(None),
-                &PredefinedMenuItem::hide_others(None),
-                &PredefinedMenuItem::separator(),
-                &quit,
-            ],
-        )?;
-
-        let file_menu = Submenu::new("&File", true);
-        let cmd_o = Accelerator::new(Some(MOD), Code::KeyO);
-        let cmd_shift_o = Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyO);
-        let open_file = MenuItem::new("Open File…", true, Some(cmd_o));
-        let watch_dir = MenuItem::new("Watch Directory…", true, Some(cmd_shift_o));
+            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyO)),
+        );
         let print = MenuItem::new("Print…", true, None);
-        file_menu.append_items(&[
-            &open_file,
-            &watch_dir,
-            &PredefinedMenuItem::separator(),
-            &print,
-        ])?;
-        #[cfg(not(target_os = "macos"))]
-        file_menu.append_items(&[
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
-        ])?;
-        #[cfg(target_os = "linux")]
-        file_menu.append_items(&[
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::services(None),
-        ])?;
-        #[cfg(not(target_os = "macos"))]
-        file_menu.append_items(&[
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::hide(None),
-            &PredefinedMenuItem::hide_others(None),
-            &PredefinedMenuItem::show_all(None),
-            &PredefinedMenuItem::separator(),
-            &quit,
-        ])?;
-
-        let edit_menu = Submenu::new("&Edit", true);
-        let cmd_f = Accelerator::new(Some(MOD), Code::KeyF);
-        let cmd_g = Accelerator::new(Some(MOD), Code::KeyG);
-        let cmd_shift_g = Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyG);
-        let cmd_s = Accelerator::new(Some(MOD), Code::KeyS);
-        let search = MenuItem::new("Search…", true, Some(cmd_f));
-        let search_next = MenuItem::new("Search Next", true, Some(cmd_g));
-        let search_prev = MenuItem::new("Search Previous", true, Some(cmd_shift_g));
-        let outline = MenuItem::new("Section Outline…", true, Some(cmd_s));
-        edit_menu.append_items(&[
-            &PredefinedMenuItem::undo(None),
-            &PredefinedMenuItem::redo(None),
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::cut(None),
-            &PredefinedMenuItem::copy(None),
-            &PredefinedMenuItem::paste(None),
-            &PredefinedMenuItem::select_all(None),
-            &PredefinedMenuItem::separator(),
-            &search,
-            &search_next,
-            &search_prev,
-            &outline,
-        ])?;
-
-        let display_menu = Submenu::new("&Display", true);
-        let cmd_r = Accelerator::new(Some(MOD), Code::KeyR);
-        let reload = MenuItem::new("Reload", true, Some(cmd_r));
-        display_menu.append_items(&[&reload, &PredefinedMenuItem::separator()])?;
-        #[cfg(not(target_os = "windows"))]
-        display_menu.append_items(&[
-            &PredefinedMenuItem::fullscreen(None),
-            &PredefinedMenuItem::separator(),
-        ])?;
-        let cmd_plus = Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::Equal);
-        let cmd_minus = Accelerator::new(Some(MOD), Code::Minus);
-        let zoom_in = MenuItem::new("Zoom In", true, Some(cmd_plus));
-        let zoom_out = MenuItem::new("Zoom Out", true, Some(cmd_minus));
-        display_menu.append_items(&[&zoom_in, &zoom_out])?;
-
-        let history_menu = Submenu::new("History", true);
-        let cmd_left_bracket = Accelerator::new(Some(MOD), Code::BracketRight);
-        let cmd_right_bracket = Accelerator::new(Some(MOD), Code::BracketLeft);
-        let cmd_y = Accelerator::new(Some(MOD), Code::KeyY);
-        let forward = MenuItem::new("Forward", true, Some(cmd_left_bracket));
-        let back = MenuItem::new("Back", true, Some(cmd_right_bracket));
-        let history = MenuItem::new("History…", true, Some(cmd_y));
-        history_menu.append_items(&[
-            &forward,
-            &back,
-            &PredefinedMenuItem::separator(),
-            &history,
-        ])?;
-
-        let window_menu = Submenu::new("&Window", true);
+        let search = MenuItem::new("Search…", true, Some(Accelerator::new(Some(MOD), Code::KeyF)));
+        let search_next =
+            MenuItem::new("Search Next", true, Some(Accelerator::new(Some(MOD), Code::KeyG)));
+        let search_prev = MenuItem::new(
+            "Search Previous",
+            true,
+            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyG)),
+        );
+        let outline =
+            MenuItem::new("Section Outline…", true, Some(Accelerator::new(Some(MOD), Code::KeyS)));
+        let reload = MenuItem::new("Reload", true, Some(Accelerator::new(Some(MOD), Code::KeyR)));
+        let zoom_in = MenuItem::new(
+            "Zoom In",
+            true,
+            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::Equal)), // XXX: US keyboard only
+        );
+        let zoom_out =
+            MenuItem::new("Zoom Out", true, Some(Accelerator::new(Some(MOD), Code::Minus)));
+        let forward =
+            MenuItem::new("Forward", true, Some(Accelerator::new(Some(MOD), Code::BracketRight)));
+        let back =
+            MenuItem::new("Back", true, Some(Accelerator::new(Some(MOD), Code::BracketLeft)));
+        let history =
+            MenuItem::new("History…", true, Some(Accelerator::new(Some(MOD), Code::KeyY)));
         let always_on_top = MenuItem::new("Pin/Unpin On Top", true, None);
-        window_menu.append_items(&[
-            &PredefinedMenuItem::maximize(None),
-            &PredefinedMenuItem::minimize(None),
-            &always_on_top,
-        ])?;
-
-        let help_menu = Submenu::new("&Help", true);
         let guide = MenuItem::new("Show Guide…", true, None);
         let open_repo = MenuItem::new("Open Repository Page", true, None);
-        help_menu.append_items(&[&guide, &open_repo])?;
 
+        // Menu bar structure
+        let window_menu = Submenu::with_items(
+            "&Window",
+            true,
+            &[
+                &PredefinedMenuItem::minimize(None),
+                &PredefinedMenuItem::maximize(None),
+                &always_on_top,
+            ],
+        )?;
+        let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
         let menu_bar = MenuBar::with_items(&[
             #[cfg(target_os = "macos")]
-            &app_menu,
-            &file_menu,
-            &edit_menu,
-            &display_menu,
-            &history_menu,
+            &Submenu::with_items(
+                "Shiba",
+                true,
+                &[
+                    &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::services(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::hide(None),
+                    &PredefinedMenuItem::hide_others(None),
+                    &PredefinedMenuItem::separator(),
+                    &quit,
+                ],
+            )?,
+            &Submenu::with_items(
+                "&File",
+                true,
+                &[
+                    &open_file,
+                    &watch_dir,
+                    &PredefinedMenuItem::separator(),
+                    &print,
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    #[cfg(target_os = "linux")]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(target_os = "linux")]
+                    &PredefinedMenuItem::services(None),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::hide(None),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::hide_others(None),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::show_all(None),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "macos"))]
+                    &quit,
+                ],
+            )?,
+            &Submenu::with_items(
+                "&Edit",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(None),
+                    &PredefinedMenuItem::redo(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::cut(None),
+                    &PredefinedMenuItem::copy(None),
+                    &PredefinedMenuItem::paste(None),
+                    &PredefinedMenuItem::select_all(None),
+                    &PredefinedMenuItem::separator(),
+                    &search,
+                    &search_next,
+                    &search_prev,
+                    &outline,
+                ],
+            )?,
+            &Submenu::with_items(
+                "&Display",
+                true,
+                &[
+                    &reload,
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "windows"))]
+                    &PredefinedMenuItem::fullscreen(None),
+                    #[cfg(not(target_os = "windows"))]
+                    &PredefinedMenuItem::separator(),
+                    &zoom_in,
+                    &zoom_out,
+                ],
+            )?,
+            &Submenu::with_items(
+                "History",
+                true,
+                &[&forward, &back, &PredefinedMenuItem::separator(), &history],
+            )?,
             &window_menu,
             &help_menu,
         ])?;
