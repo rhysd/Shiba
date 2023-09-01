@@ -1,10 +1,9 @@
 use crate::renderer::{MenuItem as AppMenuItem, MenuItems};
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
-#[cfg(not(target_os = "windows"))]
-use muda::AboutMetadata;
 use muda::{
-    Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem, PredefinedMenuItem, Submenu,
+    AboutMetadata, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
+    PredefinedMenuItem, Submenu,
 };
 use std::collections::HashMap;
 #[cfg(target_os = "linux")]
@@ -12,6 +11,34 @@ use wry::application::platform::unix::WindowExtUnix as _;
 #[cfg(windows)]
 use wry::application::platform::windows::WindowExtWindows as _;
 use wry::application::window::Window;
+
+fn metadata() -> AboutMetadata {
+    let mut m = AboutMetadata {
+        name: Some("Shiba".into()),
+        version: Some(env!("CARGO_PKG_VERSION").into()),
+        copyright: Some("Copyright (c) 2015 rhysd".into()),
+        license: Some("The MIT License".into()),
+        website: Some("https://github.com/rhysd/Shiba".into()),
+        ..Default::default()
+    };
+
+    #[cfg(not(target_os = "darwin"))]
+    {
+        m.authors = Some(vec![env!("CARGO_PKG_AUTHORS").into()]);
+        m.comments = Some(env!("CARGO_PKG_DESCRIPTION").into());
+        m.license = Some(env!("CARGO_PKG_LICENSE").into());
+        m.website = Some(env!("CARGO_PKG_HOMEPAGE").into());
+    }
+
+    #[cfg(not(windows))]
+    {
+        use muda::Icon;
+        const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_256x256.rgba");
+        m.icon = Some(Icon::from_rgba(ICON_RGBA.into(), 256, 256).unwrap());
+    }
+
+    m
+}
 
 pub struct Menu {
     ids: HashMap<MenuId, AppMenuItem>,
@@ -27,19 +54,6 @@ impl Menu {
         #[cfg(not(target_os = "macos"))]
         const MOD: Modifiers = Modifiers::CONTROL;
 
-        // Windows / macOS / Android / iOS: The metadata is ignored on these platforms.
-        #[cfg(target_os = "linux")]
-        let metadata = AboutMetadata {
-            version: Some("2.0.0-alpha".into()),
-            authors: Some(vec!["rhysd <lin90162@yahoo.co.jp>".into()]),
-            copyright: Some("Copyright (c) 2015 rhysd".into()),
-            license: Some("MIT".into()),
-            website: Some("https://github.com/rhysd/Shiba".into()),
-            ..Default::default()
-        };
-        #[cfg(not(any(target_os = "linux", target_os = "windows")))]
-        let metadata = AboutMetadata::default();
-
         // Note: Some native menu items are not supported by Windows. Those items are actually not inserted into menu bar.
 
         let file_menu = Submenu::new("&File", true);
@@ -54,11 +68,11 @@ impl Menu {
             &PredefinedMenuItem::separator(),
             &print,
             &PredefinedMenuItem::separator(),
+            &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+            &PredefinedMenuItem::separator(),
         ])?;
         #[cfg(not(target_os = "windows"))]
         file_menu.append_items(&[
-            &PredefinedMenuItem::about(Some("Shiba"), Some(metadata)),
-            &PredefinedMenuItem::separator(),
             &PredefinedMenuItem::services(None),
             &PredefinedMenuItem::separator(),
         ])?;
@@ -126,11 +140,11 @@ impl Menu {
         ])?;
 
         let window_menu = Submenu::new("&Window", true);
-        let toggle_always_on_top = MenuItem::new("Pin/Unpin On Top", true, None);
+        let always_on_top = MenuItem::new("Pin/Unpin On Top", true, None);
         window_menu.append_items(&[
             &PredefinedMenuItem::maximize(None),
             &PredefinedMenuItem::minimize(None),
-            &toggle_always_on_top,
+            &always_on_top,
         ])?;
 
         let help_menu = Submenu::new("&Help", true);
@@ -169,23 +183,23 @@ impl Menu {
         let ids = HashMap::from_iter({
             use AppMenuItem::*;
             [
-                (open_file.into_id(),            OpenFile),
-                (watch_dir.into_id(),            WatchDir),
-                (quit.into_id(),                 Quit),
-                (forward.into_id(),              Forward),
-                (back.into_id(),                 Back),
-                (reload.into_id(),               Reload),
-                (search.into_id(),               Search),
-                (search_next.into_id(),          SearchNext),
-                (search_prev.into_id(),          SearchPrevious),
-                (outline.into_id(),              Outline),
-                (print.into_id(),                Print),
-                (zoom_in.into_id(),              ZoomIn),
-                (zoom_out.into_id(),             ZoomOut),
-                (history.into_id(),              History),
-                (toggle_always_on_top.into_id(), ToggleAlwaysOnTop),
-                (guide.into_id(),                Help),
-                (open_repo.into_id(),            OpenRepo),
+                (open_file.into_id(),     OpenFile),
+                (watch_dir.into_id(),     WatchDir),
+                (quit.into_id(),          Quit),
+                (forward.into_id(),       Forward),
+                (back.into_id(),          Back),
+                (reload.into_id(),        Reload),
+                (search.into_id(),        Search),
+                (search_next.into_id(),   SearchNext),
+                (search_prev.into_id(),   SearchPrevious),
+                (outline.into_id(),       Outline),
+                (print.into_id(),         Print),
+                (zoom_in.into_id(),       ZoomIn),
+                (zoom_out.into_id(),      ZoomOut),
+                (history.into_id(),       History),
+                (always_on_top.into_id(), ToggleAlwaysOnTop),
+                (guide.into_id(),         Help),
+                (open_repo.into_id(),     OpenRepo),
             ]
         });
         Ok(Self { ids, receiver: MenuEvent::receiver(), _menu_bar: menu_bar })

@@ -59,7 +59,8 @@ impl EventLoop for WryEventLoop {
                 Ok(None) => {}
                 Ok(Some(c)) => control = c,
                 Err(err) => {
-                    log::error!("Could not handle menu event: {}", err);
+                    log::error!("Could not handle menu event");
+                    log_causes(err);
                 }
             }
 
