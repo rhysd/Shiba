@@ -97,7 +97,9 @@ impl Menu {
             "&Window",
             true,
             &[
+                #[cfg(not(target_os = "linux"))]
                 &PredefinedMenuItem::minimize(None),
+                #[cfg(target_os = "windows")]
                 &PredefinedMenuItem::maximize(None),
                 &always_on_top,
             ],
@@ -131,18 +133,12 @@ impl Menu {
                     &PredefinedMenuItem::separator(),
                     #[cfg(not(target_os = "macos"))]
                     &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
-                    #[cfg(target_os = "linux")]
+                    #[cfg(target_os = "windows")]
                     &PredefinedMenuItem::separator(),
-                    #[cfg(target_os = "linux")]
-                    &PredefinedMenuItem::services(None),
-                    #[cfg(not(target_os = "macos"))]
-                    &PredefinedMenuItem::separator(),
-                    #[cfg(not(target_os = "macos"))]
+                    #[cfg(target_os = "windows")]
                     &PredefinedMenuItem::hide(None),
-                    #[cfg(not(target_os = "macos"))]
+                    #[cfg(target_os = "windows")]
                     &PredefinedMenuItem::hide_others(None),
-                    #[cfg(not(target_os = "macos"))]
-                    &PredefinedMenuItem::show_all(None),
                     #[cfg(not(target_os = "macos"))]
                     &PredefinedMenuItem::separator(),
                     #[cfg(not(target_os = "macos"))]
@@ -153,8 +149,11 @@ impl Menu {
                 "&Edit",
                 true,
                 &[
+                    #[cfg(target_os = "macos")]
                     &PredefinedMenuItem::undo(None),
+                    #[cfg(target_os = "macos")]
                     &PredefinedMenuItem::redo(None),
+                    #[cfg(target_os = "macos")]
                     &PredefinedMenuItem::separator(),
                     &PredefinedMenuItem::cut(None),
                     &PredefinedMenuItem::copy(None),
@@ -173,9 +172,9 @@ impl Menu {
                 &[
                     &reload,
                     &PredefinedMenuItem::separator(),
-                    #[cfg(not(target_os = "windows"))]
+                    #[cfg(target_os = "macos")]
                     &PredefinedMenuItem::fullscreen(None),
-                    #[cfg(not(target_os = "windows"))]
+                    #[cfg(target_os = "macos")]
                     &PredefinedMenuItem::separator(),
                     &zoom_in,
                     &zoom_out,
