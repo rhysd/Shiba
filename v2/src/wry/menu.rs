@@ -101,7 +101,12 @@ impl Menu {
                 &PredefinedMenuItem::minimize(None),
                 #[cfg(target_os = "windows")]
                 &PredefinedMenuItem::maximize(None),
+                #[cfg(target_os = "macos")]
+                &PredefinedMenuItem::fullscreen(None),
                 &always_on_top,
+                &PredefinedMenuItem::separator(),
+                &zoom_in,
+                &zoom_out,
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
@@ -127,6 +132,7 @@ impl Menu {
                 &[
                     &open_file,
                     &watch_dir,
+                    &reload,
                     &PredefinedMenuItem::separator(),
                     &print,
                     #[cfg(not(target_os = "macos"))]
@@ -164,20 +170,6 @@ impl Menu {
                     &search_next,
                     &search_prev,
                     &outline,
-                ],
-            )?,
-            &Submenu::with_items(
-                "&Display",
-                true,
-                &[
-                    &reload,
-                    &PredefinedMenuItem::separator(),
-                    #[cfg(target_os = "macos")]
-                    &PredefinedMenuItem::fullscreen(None),
-                    #[cfg(target_os = "macos")]
-                    &PredefinedMenuItem::separator(),
-                    &zoom_in,
-                    &zoom_out,
                 ],
             )?,
             &Submenu::with_items(
