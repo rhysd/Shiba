@@ -56,6 +56,24 @@ impl Menu {
 
         // Note: Some native menu items are not supported by Windows. Those items are actually not inserted into menu bar.
 
+        let cmd_q = Accelerator::new(Some(MOD), Code::KeyQ);
+        let quit = MenuItem::new("Quit", true, Some(cmd_q));
+        #[cfg(target_os = "macos")]
+        let app_menu = Submenu::with_items(
+            "Shiba",
+            true,
+            &[
+                &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                &PredefinedMenuItem::separator(),
+                &PredefinedMenuItem::services(None),
+                &PredefinedMenuItem::separator(),
+                &PredefinedMenuItem::hide(None),
+                &PredefinedMenuItem::hide_others(None),
+                &PredefinedMenuItem::separator(),
+                &quit,
+            ],
+        )?;
+
         let file_menu = Submenu::new("&File", true);
         let cmd_o = Accelerator::new(Some(MOD), Code::KeyO);
         let cmd_shift_o = Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyO);
@@ -67,18 +85,20 @@ impl Menu {
             &watch_dir,
             &PredefinedMenuItem::separator(),
             &print,
+        ])?;
+        #[cfg(not(target_os = "macos"))]
+        file_menu.append_items(&[
             &PredefinedMenuItem::separator(),
             &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
-            &PredefinedMenuItem::separator(),
         ])?;
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(target_os = "linux")]
         file_menu.append_items(&[
+            &PredefinedMenuItem::separator(),
             &PredefinedMenuItem::services(None),
-            &PredefinedMenuItem::separator(),
         ])?;
-        let cmd_q = Accelerator::new(Some(MOD), Code::KeyQ);
-        let quit = MenuItem::new("Quit", true, Some(cmd_q));
+        #[cfg(not(target_os = "macos"))]
         file_menu.append_items(&[
+            &PredefinedMenuItem::separator(),
             &PredefinedMenuItem::hide(None),
             &PredefinedMenuItem::hide_others(None),
             &PredefinedMenuItem::show_all(None),
@@ -153,6 +173,8 @@ impl Menu {
         help_menu.append_items(&[&guide, &open_repo])?;
 
         let menu_bar = MenuBar::with_items(&[
+            #[cfg(target_os = "macos")]
+            &app_menu,
             &file_menu,
             &edit_menu,
             &display_menu,
@@ -202,6 +224,7 @@ impl Menu {
                 (open_repo.into_id(),     OpenRepo),
             ]
         });
+        log::debug!("Registered menu items: {:?}", ids);
         Ok(Self { ids, receiver: MenuEvent::receiver(), _menu_bar: menu_bar })
     }
 }
