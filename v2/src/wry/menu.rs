@@ -1,166 +1,242 @@
 use crate::renderer::{MenuItem as AppMenuItem, MenuItems};
 use anyhow::Result;
+use muda::accelerator::{Accelerator, Code, Modifiers};
+use muda::{
+    AboutMetadata, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
+    PredefinedMenuItem, Submenu,
+};
 use std::collections::HashMap;
-use wry::application::accelerator::Accelerator;
-use wry::application::keyboard::{KeyCode, ModifiersState};
-#[cfg(not(target_os = "windows"))]
-use wry::application::menu::AboutMetadata;
-use wry::application::menu::{MenuBar, MenuId, MenuItem, MenuItemAttributes};
+#[cfg(target_os = "linux")]
+use wry::application::platform::unix::WindowExtUnix as _;
+#[cfg(windows)]
+use wry::application::platform::windows::WindowExtWindows as _;
+use wry::application::window::Window;
 
-pub struct MenuIds(HashMap<MenuId, AppMenuItem>);
+fn metadata() -> AboutMetadata {
+    let mut m = AboutMetadata {
+        name: Some("Shiba".into()),
+        version: Some(env!("CARGO_PKG_VERSION").into()),
+        copyright: Some("Copyright (c) 2015 rhysd".into()),
+        license: Some("The MIT License".into()),
+        website: Some("https://github.com/rhysd/Shiba".into()),
+        ..Default::default()
+    };
 
-impl MenuIds {
-    pub fn set_menu(root_menu: &mut MenuBar) -> Self {
+    #[cfg(not(target_os = "darwin"))]
+    {
+        m.authors = Some(vec![env!("CARGO_PKG_AUTHORS").into()]);
+        m.comments = Some(env!("CARGO_PKG_DESCRIPTION").into());
+        m.license = Some(env!("CARGO_PKG_LICENSE").into());
+        m.website = Some(env!("CARGO_PKG_HOMEPAGE").into());
+    }
+
+    #[cfg(not(windows))]
+    {
+        use muda::Icon;
+        const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_256x256.rgba");
+        m.icon = Some(Icon::from_rgba(ICON_RGBA.into(), 256, 256).unwrap());
+    }
+
+    m
+}
+
+pub struct Menu {
+    ids: HashMap<MenuId, AppMenuItem>,
+    receiver: &'static MenuEventReceiver,
+    // This instance must be kept since dropping this instance removes menu from application
+    _menu_bar: MenuBar,
+}
+
+impl Menu {
+    pub fn new(window: &Window) -> Result<Self> {
         #[cfg(target_os = "macos")]
-        const MOD: ModifiersState = ModifiersState::SUPER;
+        const MOD: Modifiers = Modifiers::SUPER;
         #[cfg(not(target_os = "macos"))]
-        const MOD: ModifiersState = ModifiersState::CONTROL;
+        const MOD: Modifiers = Modifiers::CONTROL;
 
-        // Windows / macOS / Android / iOS: The metadata is ignored on these platforms.
-        #[cfg(target_os = "linux")]
-        let metadata = AboutMetadata {
-            version: Some("2.0.0-alpha".into()),
-            authors: Some(vec!["rhysd <lin90162@yahoo.co.jp>".into()]),
-            copyright: Some("Copyright (c) 2015 rhysd".into()),
-            license: Some("MIT".into()),
-            website: Some("https://github.com/rhysd/Shiba".into()),
-            ..Default::default()
-        };
-        #[cfg(not(any(target_os = "linux", target_os = "windows")))]
-        let metadata = AboutMetadata::default();
-
-        // Note: Some native menu items are not supported by Windows. Those items are actually not inserted into menu bar.
-
-        let mut file_menu = MenuBar::new();
-        let cmd_o = Accelerator::new(Some(MOD), KeyCode::KeyO);
+        // Custom menu items
+        let quit = MenuItem::new("Quit", true, Some(Accelerator::new(Some(MOD), Code::KeyQ)));
         let open_file =
-            file_menu.add_item(MenuItemAttributes::new("Open File…").with_accelerators(&cmd_o));
-        let cmd_shift_o = Accelerator::new(Some(MOD | ModifiersState::SHIFT), KeyCode::KeyO);
-        let watch_dir = file_menu
-            .add_item(MenuItemAttributes::new("Watch Directory…").with_accelerators(&cmd_shift_o));
-        file_menu.add_native_item(MenuItem::Separator);
-        let print = file_menu.add_item(MenuItemAttributes::new("Print…"));
-        file_menu.add_native_item(MenuItem::Separator);
-        #[cfg(not(target_os = "windows"))]
-        {
-            file_menu.add_native_item(MenuItem::About("Shiba".to_string(), metadata));
-            file_menu.add_native_item(MenuItem::Separator);
-            file_menu.add_native_item(MenuItem::Services);
-            file_menu.add_native_item(MenuItem::Separator);
-        }
-        file_menu.add_native_item(MenuItem::Hide);
-        file_menu.add_native_item(MenuItem::HideOthers);
-        file_menu.add_native_item(MenuItem::ShowAll);
-        file_menu.add_native_item(MenuItem::Separator);
-        let cmd_q = Accelerator::new(Some(MOD), KeyCode::KeyQ);
-        let quit = file_menu.add_item(MenuItemAttributes::new("Quit").with_accelerators(&cmd_q));
-        root_menu.add_submenu("File", true, file_menu);
-
-        let mut edit_menu = MenuBar::new();
-        edit_menu.add_native_item(MenuItem::Undo);
-        edit_menu.add_native_item(MenuItem::Redo);
-        edit_menu.add_native_item(MenuItem::Separator);
-        edit_menu.add_native_item(MenuItem::Cut);
-        edit_menu.add_native_item(MenuItem::Copy);
-        edit_menu.add_native_item(MenuItem::Paste);
-        edit_menu.add_native_item(MenuItem::SelectAll);
-        edit_menu.add_native_item(MenuItem::Separator);
-        let cmd_f = Accelerator::new(Some(MOD), KeyCode::KeyF);
-        let search =
-            edit_menu.add_item(MenuItemAttributes::new("Search…").with_accelerators(&cmd_f));
-        let cmd_g = Accelerator::new(Some(MOD), KeyCode::KeyG);
+            MenuItem::new("Open File…", true, Some(Accelerator::new(Some(MOD), Code::KeyO)));
+        let watch_dir = MenuItem::new(
+            "Watch Directory…",
+            true,
+            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyO)),
+        );
+        let print = MenuItem::new("Print…", true, None);
+        let search = MenuItem::new("Search…", true, Some(Accelerator::new(Some(MOD), Code::KeyF)));
         let search_next =
-            edit_menu.add_item(MenuItemAttributes::new("Search Next").with_accelerators(&cmd_g));
-        let cmd_shift_g = Accelerator::new(Some(MOD | ModifiersState::SHIFT), KeyCode::KeyG);
-        let search_prev = edit_menu
-            .add_item(MenuItemAttributes::new("Search Previous").with_accelerators(&cmd_shift_g));
-        let cmd_s = Accelerator::new(Some(MOD), KeyCode::KeyS);
-        let outline = edit_menu
-            .add_item(MenuItemAttributes::new("Section Outline…").with_accelerators(&cmd_s));
-        root_menu.add_submenu("Edit", true, edit_menu);
-
-        let mut display_menu = MenuBar::new();
-        let cmd_r = Accelerator::new(Some(MOD), KeyCode::KeyR);
-        let reload =
-            display_menu.add_item(MenuItemAttributes::new("Reload").with_accelerators(&cmd_r));
-        display_menu.add_native_item(MenuItem::Separator);
-        #[cfg(not(target_os = "windows"))]
-        {
-            display_menu.add_native_item(MenuItem::EnterFullScreen);
-            display_menu.add_native_item(MenuItem::Separator);
-        }
-        let cmd_plus = Accelerator::new(Some(MOD), KeyCode::Plus);
-        let zoom_in =
-            display_menu.add_item(MenuItemAttributes::new("Zoom In").with_accelerators(&cmd_plus));
-        let cmd_minus = Accelerator::new(Some(MOD), KeyCode::Minus);
-        let zoom_out = display_menu
-            .add_item(MenuItemAttributes::new("Zoom Out").with_accelerators(&cmd_minus));
-        root_menu.add_submenu("Display", true, display_menu);
-
-        let mut history_menu = MenuBar::new();
-        let cmd_left_bracket = Accelerator::new(Some(MOD), KeyCode::BracketRight);
-        let forward = history_menu
-            .add_item(MenuItemAttributes::new("Forward").with_accelerators(&cmd_left_bracket));
-        let cmd_right_bracket = Accelerator::new(Some(MOD), KeyCode::BracketLeft);
-        let back = history_menu
-            .add_item(MenuItemAttributes::new("Back").with_accelerators(&cmd_right_bracket));
-        history_menu.add_native_item(MenuItem::Separator);
-        let cmd_y = Accelerator::new(Some(MOD), KeyCode::KeyY);
+            MenuItem::new("Search Next", true, Some(Accelerator::new(Some(MOD), Code::KeyG)));
+        let search_prev = MenuItem::new(
+            "Search Previous",
+            true,
+            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyG)),
+        );
+        let outline =
+            MenuItem::new("Section Outline…", true, Some(Accelerator::new(Some(MOD), Code::KeyS)));
+        let reload = MenuItem::new("Reload", true, Some(Accelerator::new(Some(MOD), Code::KeyR)));
+        let zoom_in = MenuItem::new(
+            "Zoom In",
+            true,
+            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::Equal)), // XXX: US keyboard only
+        );
+        let zoom_out =
+            MenuItem::new("Zoom Out", true, Some(Accelerator::new(Some(MOD), Code::Minus)));
+        let forward =
+            MenuItem::new("Forward", true, Some(Accelerator::new(Some(MOD), Code::BracketRight)));
+        let back =
+            MenuItem::new("Back", true, Some(Accelerator::new(Some(MOD), Code::BracketLeft)));
         let history =
-            history_menu.add_item(MenuItemAttributes::new("History…").with_accelerators(&cmd_y));
-        root_menu.add_submenu("History", true, history_menu);
+            MenuItem::new("History…", true, Some(Accelerator::new(Some(MOD), Code::KeyY)));
+        let always_on_top = MenuItem::new("Pin/Unpin On Top", true, None);
+        let guide = MenuItem::new("Show Guide…", true, None);
+        let open_repo = MenuItem::new("Open Repository Page", true, None);
 
-        let mut window_menu = MenuBar::new();
-        window_menu.add_native_item(MenuItem::Minimize);
-        window_menu.add_native_item(MenuItem::Zoom);
-        let toggle_always_on_top =
-            window_menu.add_item(MenuItemAttributes::new("Pin/Unpin On Top"));
-        root_menu.add_submenu("Window", true, window_menu);
+        // Menu bar structure
+        let window_menu = Submenu::with_items(
+            "&Window",
+            true,
+            &[
+                #[cfg(not(target_os = "linux"))]
+                &PredefinedMenuItem::minimize(None),
+                #[cfg(target_os = "windows")]
+                &PredefinedMenuItem::maximize(None),
+                #[cfg(target_os = "macos")]
+                &PredefinedMenuItem::fullscreen(None),
+                &always_on_top,
+                &PredefinedMenuItem::separator(),
+                &zoom_in,
+                &zoom_out,
+            ],
+        )?;
+        let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
+        let menu_bar = MenuBar::with_items(&[
+            #[cfg(target_os = "macos")]
+            &Submenu::with_items(
+                "Shiba",
+                true,
+                &[
+                    &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::services(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::hide(None),
+                    &PredefinedMenuItem::hide_others(None),
+                    &PredefinedMenuItem::separator(),
+                    &quit,
+                ],
+            )?,
+            &Submenu::with_items(
+                "&File",
+                true,
+                &[
+                    &open_file,
+                    &watch_dir,
+                    &reload,
+                    &PredefinedMenuItem::separator(),
+                    &print,
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    #[cfg(target_os = "windows")]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(target_os = "windows")]
+                    &PredefinedMenuItem::hide(None),
+                    #[cfg(target_os = "windows")]
+                    &PredefinedMenuItem::hide_others(None),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "macos"))]
+                    &quit,
+                ],
+            )?,
+            &Submenu::with_items(
+                "&Edit",
+                true,
+                &[
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::undo(None),
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::redo(None),
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::cut(None),
+                    &PredefinedMenuItem::copy(None),
+                    &PredefinedMenuItem::paste(None),
+                    &PredefinedMenuItem::select_all(None),
+                    &PredefinedMenuItem::separator(),
+                    &search,
+                    &search_next,
+                    &search_prev,
+                    &outline,
+                ],
+            )?,
+            &Submenu::with_items(
+                "History",
+                true,
+                &[&forward, &back, &PredefinedMenuItem::separator(), &history],
+            )?,
+            &window_menu,
+            &help_menu,
+        ])?;
 
-        let mut help_menu = MenuBar::new();
-        let guide = help_menu.add_item(MenuItemAttributes::new("Show Guide…"));
-        let open_repo = help_menu.add_item(MenuItemAttributes::new("Open Repository Page"));
-        root_menu.add_submenu("Help", true, help_menu);
+        #[cfg(target_os = "windows")]
+        {
+            menu_bar.init_for_hwnd(window.hwnd() as _)?;
+        }
+        #[cfg(target_os = "linux")]
+        {
+            menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
+        }
+        #[cfg(target_os = "macos")]
+        {
+            menu_bar.init_for_nsapp();
+            window_menu.set_as_windows_menu_for_nsapp();
+            help_menu.set_as_help_menu_for_nsapp();
+            let _ = window;
+        }
 
         log::debug!("Added menubar to window");
 
         #[rustfmt::skip]
         let ids = HashMap::from_iter({
             use AppMenuItem::*;
-
             [
-                (open_file.id(),            OpenFile),
-                (watch_dir.id(),            WatchDir),
-                (quit.id(),                 Quit),
-                (forward.id(),              Forward),
-                (back.id(),                 Back),
-                (reload.id(),               Reload),
-                (search.id(),               Search),
-                (search_next.id(),          SearchNext),
-                (search_prev.id(),          SearchPrevious),
-                (outline.id(),              Outline),
-                (print.id(),                Print),
-                (zoom_in.id(),              ZoomIn),
-                (zoom_out.id(),             ZoomOut),
-                (history.id(),              History),
-                (toggle_always_on_top.id(), ToggleAlwaysOnTop),
-                (guide.id(),                Help),
-                (open_repo.id(),            OpenRepo),
+                (open_file.into_id(),     OpenFile),
+                (watch_dir.into_id(),     WatchDir),
+                (quit.into_id(),          Quit),
+                (forward.into_id(),       Forward),
+                (back.into_id(),          Back),
+                (reload.into_id(),        Reload),
+                (search.into_id(),        Search),
+                (search_next.into_id(),   SearchNext),
+                (search_prev.into_id(),   SearchPrevious),
+                (outline.into_id(),       Outline),
+                (print.into_id(),         Print),
+                (zoom_in.into_id(),       ZoomIn),
+                (zoom_out.into_id(),      ZoomOut),
+                (history.into_id(),       History),
+                (always_on_top.into_id(), ToggleAlwaysOnTop),
+                (guide.into_id(),         Help),
+                (open_repo.into_id(),     OpenRepo),
             ]
         });
-
-        Self(ids)
+        log::debug!("Registered menu items: {:?}", ids);
+        Ok(Self { ids, receiver: MenuEvent::receiver(), _menu_bar: menu_bar })
     }
 }
 
-impl MenuItems for MenuIds {
+impl MenuItems for Menu {
     type ItemId = MenuId;
 
-    fn item_from_id(&self, id: Self::ItemId) -> Result<AppMenuItem> {
-        if let Some(item) = self.0.get(&id).copied() {
-            Ok(item)
-        } else {
-            Err(anyhow::anyhow!("Unknown menu item id: {:?}", id))
-        }
+    fn receive_menu_event(&self) -> Result<Option<AppMenuItem>> {
+        let Ok(event) = self.receiver.try_recv() else {
+            return Ok(None);
+        };
+        let Some(id) = self.ids.get(&event.id).copied() else {
+            anyhow::bail!("Unknown menu item id: {:?}", event);
+        };
+        Ok(Some(id))
     }
 }

@@ -26,10 +26,7 @@ jobs:
           node-version: 'lts/*'
           cache: npm
           cache-dependency-path: v2/package-lock.json
-      - name: Install apt dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev
+      - run: sudo bash ./scripts/install_apt_deps.bash
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: npm ci
       - run: npm run bundle
@@ -49,10 +46,7 @@ jobs:
           node-version: 'lts/*'
           cache: npm
           cache-dependency-path: v2/package-lock.json
-      - name: Install apt dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev
+      - run: sudo bash ./scripts/install_apt_deps.bash
       - run: npm ci
       - run: npm run lint:tsc
       - run: npm run bundle
