@@ -436,36 +436,35 @@ where
         Ok(AppControl::Continue)
     }
 
-    fn handle_menu_event(&mut self) -> Result<Option<AppControl>> {
-        let Some(kind) = self.renderer.menu().receive_menu_event()? else {
-            return Ok(None);
-        };
-        log::debug!("Menu item was clicked: {:?}", kind);
-        match kind {
-            MenuItem::Quit => return Ok(Some(AppControl::Exit)),
-            MenuItem::Forward => self.forward()?,
-            MenuItem::Back => self.back()?,
-            MenuItem::Reload => self.reload()?,
-            MenuItem::OpenFile => self.open_file()?,
-            MenuItem::WatchDir => self.open_dir()?,
-            MenuItem::Search => self.renderer.send_message(MessageToRenderer::Search)?,
-            MenuItem::SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
-            MenuItem::SearchPrevious => {
-                self.renderer.send_message(MessageToRenderer::SearchPrevious)?
+    fn handle_menu_event(&mut self) -> Result<AppControl> {
+        if let Some(kind) = self.renderer.menu().receive_menu_event()? {
+            log::debug!("Menu item was clicked: {:?}", kind);
+            use MenuItem::*;
+            match kind {
+                Quit => return Ok(AppControl::Exit),
+                Forward => self.forward()?,
+                Back => self.back()?,
+                Reload => self.reload()?,
+                OpenFile => self.open_file()?,
+                WatchDir => self.open_dir()?,
+                Search => self.renderer.send_message(MessageToRenderer::Search)?,
+                SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
+                SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,
+                Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
+                Print => self.renderer.print()?,
+                ZoomIn => self.zoom(Zoom::In)?,
+                ZoomOut => self.zoom(Zoom::Out)?,
+                History => self.renderer.send_message(MessageToRenderer::History)?,
+                ToggleAlwaysOnTop => self.toggle_always_on_top()?,
+                Help => self.renderer.send_message(MessageToRenderer::Help)?,
+                OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             }
-            MenuItem::Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
-            MenuItem::Print => self.renderer.print()?,
-            MenuItem::ZoomIn => self.zoom(Zoom::In)?,
-            MenuItem::ZoomOut => self.zoom(Zoom::Out)?,
-            MenuItem::History => self.renderer.send_message(MessageToRenderer::History)?,
-            MenuItem::ToggleAlwaysOnTop => self.toggle_always_on_top()?,
-            MenuItem::Help => self.renderer.send_message(MessageToRenderer::Help)?,
-            MenuItem::OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
         }
-        Ok(Some(AppControl::Continue))
+        Ok(AppControl::Continue)
     }
 
     fn handle_exit(&self) -> Result<()> {
+        log::debug!("Handling application exit");
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {

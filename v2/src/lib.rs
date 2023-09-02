@@ -27,7 +27,6 @@ pub use crate::renderer::RawMessageWriter;
 #[cfg(windows)]
 pub use windows::WindowsConsole;
 
-use crate::app::Shiba;
 use crate::opener::SystemOpener;
 use crate::renderer::EventLoop;
 use crate::watcher::NopWatcher;
@@ -37,16 +36,13 @@ use notify::RecommendedWatcher;
 use rfd::FileDialog;
 
 pub fn run(options: Options) -> Result<()> {
+    type Shiba<W> = app::Shiba<WryRenderer, SystemOpener, W, FileDialog>;
     let event_loop = WryEventLoop::new();
     if options.watch {
-        let app = Shiba::<WryRenderer, SystemOpener, RecommendedWatcher, FileDialog>::new(
-            options,
-            &event_loop,
-        )?;
+        let app = Shiba::<RecommendedWatcher>::new(options, &event_loop)?;
         event_loop.start(app)
     } else {
-        let app =
-            Shiba::<WryRenderer, SystemOpener, NopWatcher, FileDialog>::new(options, &event_loop)?;
+        let app = Shiba::<NopWatcher>::new(options, &event_loop)?;
         event_loop.start(app)
     }
 }

@@ -163,7 +163,7 @@ pub enum AppControl {
 
 pub trait App {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl>;
-    fn handle_menu_event(&mut self) -> Result<Option<AppControl>>;
+    fn handle_menu_event(&mut self) -> Result<AppControl>;
     fn handle_exit(&self) -> Result<()>;
 }
 

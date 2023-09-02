@@ -25,14 +25,14 @@ impl EventLoop for WryEventLoop {
     }
 
     fn start<A: App + 'static>(self, mut app: A) -> ! {
-        fn log_causes(err: Error) {
-            for err in err.chain() {
-                log::error!("  Caused by: {}", err);
-            }
-        }
-
         self.run(move |event, _, control_flow| {
-            let mut control = match event {
+            fn log_causes(err: Error) {
+                for err in err.chain() {
+                    log::error!("  Caused by: {}", err);
+                }
+            }
+
+            let control = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
                     AppControl::Continue
@@ -41,39 +41,29 @@ impl EventLoop for WryEventLoop {
                     log::debug!("Closing window was requested");
                     AppControl::Exit
                 }
-                Event::UserEvent(event) => {
-                    log::debug!("Handling user event {:?}", event);
-                    match app.handle_user_event(event) {
-                        Ok(control) => control,
-                        Err(err) => {
-                            log::error!("Could not handle user event");
-                            log_causes(err);
-                            AppControl::Continue
-                        }
-                    }
-                }
-                _ => AppControl::Continue,
-            };
-
-            match app.handle_menu_event() {
-                Ok(None) => {}
-                Ok(Some(c)) => control = c,
-                Err(err) => {
+                Event::UserEvent(event) => app.handle_user_event(event).unwrap_or_else(|err| {
+                    log::error!("Could not handle user event");
+                    log_causes(err);
+                    AppControl::Continue
+                }),
+                _ => app.handle_menu_event().unwrap_or_else(|err| {
                     log::error!("Could not handle menu event");
                     log_causes(err);
-                }
-            }
+                    AppControl::Continue
+                }),
+            };
 
-            match control {
-                AppControl::Continue => *control_flow = ControlFlow::Wait,
-                AppControl::Exit => {
-                    if let Err(err) = app.handle_exit() {
+            *control_flow = match control {
+                AppControl::Continue => ControlFlow::Wait,
+                AppControl::Exit => match app.handle_exit() {
+                    Ok(_) => ControlFlow::Exit,
+                    Err(err) => {
                         log::error!("Could not handle application exit correctly");
                         log_causes(err);
+                        ControlFlow::ExitWithCode(1)
                     }
-                    *control_flow = ControlFlow::Exit;
-                }
-            }
+                },
+            };
         })
     }
 }
