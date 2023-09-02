@@ -49,48 +49,36 @@ pub struct Menu {
 
 impl Menu {
     pub fn new(window: &Window) -> Result<Self> {
+        fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
+            MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
+        }
+        fn no_accel(text: &str) -> MenuItem {
+            MenuItem::new(text, true, None)
+        }
+
         #[cfg(target_os = "macos")]
         const MOD: Modifiers = Modifiers::SUPER;
         #[cfg(not(target_os = "macos"))]
         const MOD: Modifiers = Modifiers::CONTROL;
 
         // Custom menu items
-        let quit = MenuItem::new("Quit", true, Some(Accelerator::new(Some(MOD), Code::KeyQ)));
-        let open_file =
-            MenuItem::new("Open File…", true, Some(Accelerator::new(Some(MOD), Code::KeyO)));
-        let watch_dir = MenuItem::new(
-            "Watch Directory…",
-            true,
-            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyO)),
-        );
-        let print = MenuItem::new("Print…", true, None);
-        let search = MenuItem::new("Search…", true, Some(Accelerator::new(Some(MOD), Code::KeyF)));
-        let search_next =
-            MenuItem::new("Search Next", true, Some(Accelerator::new(Some(MOD), Code::KeyG)));
-        let search_prev = MenuItem::new(
-            "Search Previous",
-            true,
-            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::KeyG)),
-        );
-        let outline =
-            MenuItem::new("Section Outline…", true, Some(Accelerator::new(Some(MOD), Code::KeyS)));
-        let reload = MenuItem::new("Reload", true, Some(Accelerator::new(Some(MOD), Code::KeyR)));
-        let zoom_in = MenuItem::new(
-            "Zoom In",
-            true,
-            Some(Accelerator::new(Some(MOD | Modifiers::SHIFT), Code::Equal)), // XXX: US keyboard only
-        );
-        let zoom_out =
-            MenuItem::new("Zoom Out", true, Some(Accelerator::new(Some(MOD), Code::Minus)));
-        let forward =
-            MenuItem::new("Forward", true, Some(Accelerator::new(Some(MOD), Code::BracketRight)));
-        let back =
-            MenuItem::new("Back", true, Some(Accelerator::new(Some(MOD), Code::BracketLeft)));
-        let history =
-            MenuItem::new("History…", true, Some(Accelerator::new(Some(MOD), Code::KeyY)));
-        let always_on_top = MenuItem::new("Pin/Unpin On Top", true, None);
-        let guide = MenuItem::new("Show Guide…", true, None);
-        let open_repo = MenuItem::new("Open Repository Page", true, None);
+        let quit = accel("Quit", MOD, Code::KeyQ);
+        let open_file = accel("Open File…", MOD, Code::KeyO);
+        let watch_dir = accel("Watch Directory…", MOD | Modifiers::SHIFT, Code::KeyO);
+        let print = no_accel("Print…");
+        let search = accel("Search…", MOD, Code::KeyF);
+        let search_next = accel("Search Next", MOD, Code::KeyG);
+        let search_prev = accel("Search Previous", MOD | Modifiers::SHIFT, Code::KeyG);
+        let outline = accel("Section Outline…", MOD, Code::KeyS);
+        let reload = accel("Reload", MOD, Code::KeyR);
+        let zoom_in = accel("Zoom In", MOD | Modifiers::SHIFT, Code::Equal); // XXX: US keyboard only
+        let zoom_out = accel("Zoom Out", MOD, Code::Minus);
+        let forward = accel("Forward", MOD, Code::BracketRight);
+        let back = accel("Back", MOD, Code::BracketLeft);
+        let history = accel("History…", MOD, Code::KeyY);
+        let always_on_top = no_accel("Pin/Unpin On Top");
+        let guide = no_accel("Show Guide…");
+        let open_repo = no_accel("Open Repository Page");
 
         // Menu bar structure
         let window_menu = Submenu::with_items(
@@ -122,6 +110,7 @@ impl Menu {
                     &PredefinedMenuItem::separator(),
                     &PredefinedMenuItem::hide(None),
                     &PredefinedMenuItem::hide_others(None),
+                    &PredefinedMenuItem::show_all(None),
                     &PredefinedMenuItem::separator(),
                     &quit,
                 ],
