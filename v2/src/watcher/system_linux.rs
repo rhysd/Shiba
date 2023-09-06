@@ -106,3 +106,177 @@ impl Watcher for SystemWatcher {
         self.inner.watch(path, mode).context("Error while starting to watch a path")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    fn fullpath_fn() -> impl Fn(&str) -> PathBuf {
+        let mut p = env::current_dir().unwrap();
+        p.push("src/watcher/testdata");
+        move |path| p.join(path)
+    }
+
+    #[test]
+    fn paths_watch_files_then_dirs() {
+        let fullpath = fullpath_fn();
+        let foo_bar_b = fullpath("foo/bar/b.txt");
+        let foo_a = fullpath("foo/a.txt");
+        let foo_bar = fullpath("foo/bar");
+        let foo = fullpath("foo");
+
+        let mut watching = WatchingPaths::default();
+
+        let (p, m) = watching.watched_path(&foo_bar_b).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::NonRecursive);
+        assert_eq!(p, &foo_bar);
+
+        let (p, m) = watching.watched_path(&foo_a).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::NonRecursive);
+        assert_eq!(p, &foo);
+
+        assert!(watching.files.contains_key(&foo_bar));
+        assert!(watching.files.contains_key(&foo));
+        assert!(watching.dirs.is_empty());
+
+        assert!(watching.should_retain(&foo_bar_b));
+        assert!(watching.should_retain(&foo_a));
+
+        let (p, m) = watching.watched_path(&foo_bar).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo_bar);
+
+        // Since foo/bar contains foo/bar/b.txt, foo/bar/b.txt is no longer watched
+        assert!(!watching.files.contains_key(&foo_bar));
+        assert!(watching.files.contains_key(&foo));
+        assert!(watching.dirs.contains(&foo_bar));
+
+        assert!(watching.should_retain(&foo_bar_b));
+        assert!(watching.should_retain(&foo_a));
+
+        let (p, m) = watching.watched_path(&foo).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo);
+
+        // Since foo contains foo/a.txt, foo/a.txt is no longer watched
+        assert!(watching.files.is_empty());
+        assert!(watching.dirs.contains(&foo_bar));
+        assert!(watching.dirs.contains(&foo));
+
+        assert!(watching.should_retain(&foo_bar_b));
+        assert!(watching.should_retain(&foo_a));
+
+        let mut watching = WatchingPaths::default();
+        watching.watched_path(&foo_bar_b).unwrap().unwrap();
+        watching.watched_path(&foo_a).unwrap().unwrap();
+        watching.watched_path(&foo).unwrap().unwrap();
+
+        // Since foo contains both, only foo is watched as the result
+        assert!(watching.files.is_empty());
+        assert!(watching.dirs.contains(&foo));
+
+        assert!(watching.should_retain(&foo_bar_b));
+        assert!(watching.should_retain(&foo_a));
+    }
+
+    #[test]
+    fn paths_watch_dirs_then_files() {
+        let fullpath = fullpath_fn();
+        let foo_bar_b = fullpath("foo/bar/b.txt");
+        let foo_a = fullpath("foo/a.txt");
+        let foo_bar = fullpath("foo/bar");
+        let foo = fullpath("foo");
+
+        let mut watching = WatchingPaths::default();
+
+        let (p, m) = watching.watched_path(&foo_bar).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo_bar);
+
+        // foo/bar/b.txt is not watched because foo/bar is already watched
+        assert_eq!(watching.watched_path(&foo_bar_b).unwrap(), None);
+
+        // foo/a.txt is watched because foo/bar doesn't contain it
+        let (p, m) = watching.watched_path(&foo_a).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::NonRecursive);
+        assert_eq!(p, &foo);
+
+        assert!(!watching.files.contains_key(&foo_bar));
+        assert!(watching.files.contains_key(&foo));
+        assert!(watching.should_retain(&foo_bar_b));
+        assert!(watching.should_retain(&foo_a));
+
+        let mut watching = WatchingPaths::default();
+
+        let (p, m) = watching.watched_path(&foo).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo);
+
+        // foo/bar/b.txt and foo/a.txt are not watched because foo/bar is already watched
+        assert_eq!(watching.watched_path(&foo_bar_b).unwrap(), None);
+        assert_eq!(watching.watched_path(&foo_a).unwrap(), None);
+
+        assert!(watching.files.is_empty());
+        assert!(watching.should_retain(&foo_bar_b));
+        assert!(watching.should_retain(&foo_a));
+    }
+
+    #[test]
+    fn paths_should_retain() {
+        let fullpath = fullpath_fn();
+        let foo_bar_b = fullpath("foo/bar/b.txt");
+        let foo_a = fullpath("foo/a.txt");
+        let foo_bar_c = fullpath("foo/bar/c.txt");
+        let foo_d = fullpath("foo/d.txt");
+
+        let tests = [
+            (vec![], (true, true)),
+            (vec![&foo_a], (true, false)),
+            (vec![&foo_bar_b], (false, true)),
+            (vec![&foo_a, &foo_bar_b], (false, false)),
+        ];
+
+        for (paths, (expect_c, expect_d)) in tests {
+            let mut watching = WatchingPaths::default();
+            for path in paths.iter() {
+                watching.watched_path(path).unwrap().unwrap();
+            }
+            assert_eq!(
+                watching.should_retain(&foo_bar_c),
+                expect_c,
+                "{:?} and {:?}",
+                paths,
+                watching,
+            );
+            assert_eq!(watching.should_retain(&foo_d), expect_d, "{:?} and {:?}", paths, watching);
+        }
+    }
+
+    #[test]
+    fn paths_watch_not_existing_paths() {
+        let fullpath = fullpath_fn();
+        let foo_bar = fullpath("foo/bar");
+        let foo = fullpath("foo");
+
+        let file = fullpath("foo/bar/not-existing.txt");
+        let dir = fullpath("foo/not-existing/");
+        let nest = fullpath("foo/not-existing/not-existing.txt");
+
+        let mut watching = WatchingPaths::default();
+
+        let (p, m) = watching.watched_path(&file).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo_bar);
+
+        let (p, m) = watching.watched_path(&dir).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo);
+
+        let (p, m) = watching.watched_path(&nest).unwrap().unwrap();
+        assert_eq!(m, RecursiveMode::Recursive);
+        assert_eq!(p, &foo);
+
+        // Error case cannot be tested because '/' always exists
+    }
+}
