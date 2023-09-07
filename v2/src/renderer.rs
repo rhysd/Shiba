@@ -156,14 +156,14 @@ impl Default for ZoomLevel {
 }
 
 #[derive(Debug)]
-pub enum AppControl {
+pub enum EventLoopFlow {
     Continue,
-    Exit,
+    Break,
 }
 
-pub trait App {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<AppControl>;
-    fn handle_menu_event(&mut self) -> Result<AppControl>;
+pub trait EventLoopHandler {
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<EventLoopFlow>;
+    fn handle_menu_event(&mut self) -> Result<EventLoopFlow>;
     fn handle_exit(&self) -> Result<()>;
 }
 
@@ -175,7 +175,7 @@ pub trait EventLoop {
     type Channel: EventChannel;
     fn new() -> Self;
     fn create_channel(&self) -> Self::Channel;
-    fn start<A: App + 'static>(self, app: A) -> !;
+    fn start<H: EventLoopHandler + 'static>(self, handler: H) -> !;
 }
 
 pub trait Renderer: Sized {

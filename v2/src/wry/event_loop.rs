@@ -1,4 +1,4 @@
-use crate::renderer::{App, AppControl, EventChannel, EventLoop, UserEvent};
+use crate::renderer::{EventChannel, EventLoop, EventLoopFlow, EventLoopHandler, UserEvent};
 use anyhow::Error;
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -24,38 +24,41 @@ impl EventLoop for WryEventLoop {
         self.create_proxy()
     }
 
-    fn start<A: App + 'static>(self, mut app: A) -> ! {
-        self.run(move |event, _, control_flow| {
+    fn start<H>(self, mut handler: H) -> !
+    where
+        H: EventLoopHandler + 'static,
+    {
+        self.run(move |event, _, control| {
             fn log_causes(err: Error) {
                 for err in err.chain() {
                     log::error!("  Caused by: {}", err);
                 }
             }
 
-            let control = match event {
+            let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
-                    AppControl::Continue
+                    EventLoopFlow::Continue
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                     log::debug!("Closing window was requested");
-                    AppControl::Exit
+                    EventLoopFlow::Break
                 }
-                Event::UserEvent(event) => app.handle_user_event(event).unwrap_or_else(|err| {
+                Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
                     log::error!("Could not handle user event");
                     log_causes(err);
-                    AppControl::Continue
+                    EventLoopFlow::Continue
                 }),
-                _ => app.handle_menu_event().unwrap_or_else(|err| {
+                _ => handler.handle_menu_event().unwrap_or_else(|err| {
                     log::error!("Could not handle menu event");
                     log_causes(err);
-                    AppControl::Continue
+                    EventLoopFlow::Continue
                 }),
             };
 
-            *control_flow = match control {
-                AppControl::Continue => ControlFlow::Wait,
-                AppControl::Exit => match app.handle_exit() {
+            *control = match flow {
+                EventLoopFlow::Continue => ControlFlow::Wait,
+                EventLoopFlow::Break => match handler.handle_exit() {
                     Ok(_) => ControlFlow::Exit,
                     Err(err) => {
                         log::error!("Could not handle application exit correctly");
