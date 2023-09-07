@@ -27,15 +27,15 @@ pub use crate::renderer::RawMessageWriter;
 #[cfg(windows)]
 pub use windows::WindowsConsole;
 
+use crate::dialog::SystemDialog;
 use crate::opener::SystemOpener;
 use crate::renderer::EventLoop;
 use crate::watcher::{NopWatcher, SystemWatcher};
 use crate::wry::{WryEventLoop, WryRenderer};
 use anyhow::Result;
-use rfd::FileDialog;
 
 pub fn run(options: Options) -> Result<()> {
-    type Shiba<W> = app::Shiba<WryRenderer, SystemOpener, W, FileDialog>;
+    type Shiba<W> = app::Shiba<WryRenderer, SystemOpener, W, SystemDialog>;
     let event_loop = WryEventLoop::new();
     if options.watch {
         let app = Shiba::<SystemWatcher>::new(options, &event_loop)?;

@@ -11,7 +11,6 @@ use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
 use std::collections::VecDeque;
 use std::fs;
-use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
@@ -187,7 +186,7 @@ pub struct Shiba<R, O, W, D> {
     config: Config,
     preview: PreviewContent,
     init_file: Option<PathBuf>,
-    _dialog: PhantomData<D>,
+    dialog: D,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -229,7 +228,7 @@ where
             config,
             preview: PreviewContent::default(),
             init_file,
-            _dialog: PhantomData,
+            dialog: D::default(),
         })
     }
 
@@ -279,7 +278,7 @@ where
     fn open_file(&mut self) -> Result<()> {
         let extensions = self.config.watch().file_extensions();
         let dir = self.config.dialog().default_dir()?;
-        let file = D::pick_file(&dir, extensions);
+        let file = self.dialog.pick_file(&dir, extensions);
 
         if let Some(file) = file {
             log::debug!("Previewing file chosen by dialog: {:?}", file);
@@ -292,7 +291,7 @@ where
     fn open_dir(&mut self) -> Result<()> {
         let dir = self.config.dialog().default_dir()?;
 
-        if let Some(dir) = D::pick_dir(&dir) {
+        if let Some(dir) = self.dialog.pick_dir(&dir) {
             log::debug!("Watching directory chosen by dialog: {:?}", dir);
             self.watcher.watch(&dir)?;
         }
