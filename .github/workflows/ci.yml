@@ -18,6 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: v2 -> v2/target
@@ -30,14 +32,16 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: npm ci
       - run: npm run bundle
+      - run: cargo clippy --all --benches --tests -- -D warnings
       - run: cargo test
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      # Clippy runs on each platforms in `test` job
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: v2 -> v2/target
@@ -49,10 +53,8 @@ jobs:
       - run: sudo bash ./scripts/install_apt_deps.bash
       - run: npm ci
       - run: npm run lint:tsc
-      - run: npm run bundle
       - run: npm run lint:prettier
       - run: npm run lint:eslint
       - run: npm run lint:stylelint
       - run: cargo fmt --all --check
-      - run: cargo clippy --all --benches --tests -- -D warnings
-      - run: shellcheck ./scripts/gen_macos_app.bash
+      - run: shellcheck ./scripts/gen_macos_app.bash ./scripts/install_apt_deps.bash

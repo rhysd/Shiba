@@ -29,17 +29,16 @@ pub use windows::WindowsConsole;
 
 use crate::opener::SystemOpener;
 use crate::renderer::EventLoop;
-use crate::watcher::NopWatcher;
+use crate::watcher::{NopWatcher, SystemWatcher};
 use crate::wry::{WryEventLoop, WryRenderer};
 use anyhow::Result;
-use notify::RecommendedWatcher;
 use rfd::FileDialog;
 
 pub fn run(options: Options) -> Result<()> {
     type Shiba<W> = app::Shiba<WryRenderer, SystemOpener, W, FileDialog>;
     let event_loop = WryEventLoop::new();
     if options.watch {
-        let app = Shiba::<RecommendedWatcher>::new(options, &event_loop)?;
+        let app = Shiba::<SystemWatcher>::new(options, &event_loop)?;
         event_loop.start(app)
     } else {
         let app = Shiba::<NopWatcher>::new(options, &event_loop)?;
