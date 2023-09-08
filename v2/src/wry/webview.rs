@@ -72,7 +72,7 @@ fn create_webview(
             #[cfg(not(target_os = "windows"))]
             const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
             #[cfg(target_os = "windows")]
-            const CUSTOM_PROTOCOL_URL: &str = "https://shiba.localhost/";
+            const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
 
             let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
                 log::debug!("Navigating to custom protocol URL {}", url);
@@ -119,14 +119,19 @@ fn create_webview(
             let path = uri.path();
             let (body, mime) = loader.load(path);
             let status = if body.is_empty() { 404 } else { 200 };
-            // Response body of custom protocol handler requires `Vec<u8>`
-            Response::builder()
-                .status(status)
-                .header(CONTENT_TYPE, mime)
-                .body(body)
-                .map_err(Into::into)
+            Response::builder().status(status).header(CONTENT_TYPE, mime).body(body).unwrap_or_else(
+                |err| {
+                    log::error!("Could not build response for request {:?}: {:?}", uri, err);
+                    Response::builder()
+                        .status(404)
+                        .header(CONTENT_TYPE, "application/octet-stream")
+                        .body(vec![].into())
+                        .unwrap()
+                },
+            )
         })
         .with_web_context(&mut context)
+        .with_focused(true)
         .with_devtools(cfg!(any(debug_assertions, feature = "devtools")));
 
     #[cfg(target_os = "windows")]
