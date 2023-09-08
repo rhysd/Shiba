@@ -21,7 +21,9 @@ body {
 }
 
 .markdown-body {
-  padding: 8px 16px;
+  padding: 16px;
+  max-width: 1012px;
+  margin: 0 auto;
 }
 
 @media (prefers-color-scheme: light) {
