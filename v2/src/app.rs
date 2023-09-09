@@ -80,14 +80,6 @@ impl History {
         self.items.get(self.index)
     }
 
-    fn is_current(&self, path: &Path) -> bool {
-        if let Some(current) = self.current() {
-            current.as_path() == path
-        } else {
-            false
-        }
-    }
-
     fn iter(&self) -> impl Iterator<Item = &'_ Path> {
         self.items.iter().map(PathBuf::as_path)
     }
@@ -97,6 +89,7 @@ struct PreviewContent {
     home_dir: Option<PathBuf>,
     content: MarkdownContent,
     text: DisplayText,
+    title: String,
 }
 
 impl Default for PreviewContent {
@@ -105,6 +98,7 @@ impl Default for PreviewContent {
             home_dir: dirs::home_dir(),
             content: MarkdownContent::default(),
             text: DisplayText::default(),
+            title: String::new(),
         }
     }
 }
@@ -119,7 +113,7 @@ impl PreviewContent {
         format!("Shiba: {}", path.display())
     }
 
-    pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R, reload: bool) -> Result<bool> {
+    pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
         let source = match fs::read_to_string(path) {
             Ok(source) => source,
@@ -132,15 +126,18 @@ impl PreviewContent {
             }
         };
 
+        let title = self.title(path);
+        let is_new = self.title != title;
         let new_content = MarkdownContent::new(source, path.parent());
         let prev_content = std::mem::replace(&mut self.content, new_content);
-        let offset = if reload { None } else { prev_content.modified_offset(&self.content) };
+        let offset = if is_new { None } else { prev_content.modified_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);
 
         self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
 
-        if reload {
-            renderer.set_title(&self.title(path));
+        if is_new {
+            renderer.set_title(&title);
+            self.title = title;
         }
 
         Ok(true)
@@ -234,8 +231,7 @@ where
 
     fn preview_new(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
-        let is_current = self.history.is_current(&path);
-        if self.preview.show(&path, &self.renderer, !is_current)? {
+        if self.preview.show(&path, &self.renderer)? {
             self.renderer.send_message(MessageToRenderer::NewFile { path: &path })?;
             self.history.push(path);
         }
@@ -245,7 +241,7 @@ where
     fn forward(&mut self) -> Result<()> {
         if let Some(path) = self.history.next() {
             log::debug!("Forward to next preview page: {:?}", path);
-            self.preview.show(path, &self.renderer, true)?;
+            self.preview.show(path, &self.renderer)?;
             self.history.forward();
         }
         Ok(())
@@ -254,7 +250,7 @@ where
     fn back(&mut self) -> Result<()> {
         if let Some(path) = self.history.prev() {
             log::debug!("Back to previous preview page: {:?}", path);
-            self.preview.show(path, &self.renderer, true)?;
+            self.preview.show(path, &self.renderer)?;
             self.history.back();
         }
         Ok(())
@@ -269,7 +265,7 @@ where
         }
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
-            self.preview.show(path, &self.renderer, true)?;
+            self.preview.show(path, &self.renderer)?;
             self.renderer.send_message(MessageToRenderer::Reload)?;
         }
         Ok(())
@@ -357,7 +353,7 @@ where
             MessageFromRenderer::DirDialog => self.open_dir()?,
             MessageFromRenderer::OpenFile { path } => {
                 let path = PathBuf::from(path);
-                if self.preview.show(&path, &self.renderer, true)? {
+                if self.preview.show(&path, &self.renderer)? {
                     self.history.push(path);
                 }
             }
@@ -393,7 +389,7 @@ where
                 log::debug!("Files changed: {:?}", paths);
                 if let Some(current) = self.history.current() {
                     if paths.contains(current) {
-                        self.preview.show(current, &self.renderer, false)?;
+                        self.preview.show(current, &self.renderer)?;
                         return Ok(EventLoopFlow::Continue);
                     }
                 }
@@ -402,7 +398,7 @@ where
                     if !path.is_absolute() {
                         path = path.canonicalize()?;
                     }
-                    if self.preview.show(&path, &self.renderer, true)? {
+                    if self.preview.show(&path, &self.renderer)? {
                         self.renderer.send_message(MessageToRenderer::NewFile { path: &path })?;
                         self.history.push(path);
                     }
