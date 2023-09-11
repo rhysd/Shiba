@@ -96,3 +96,29 @@ impl Watcher for NopWatcher {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread::sleep;
+
+    #[test]
+    fn path_filter_debounce() {
+        let mut filter = PathFilter::new(&Config::default());
+        filter.debounce_throttle = Duration::from_millis(10);
+        assert!(filter.debounce(Path::new("/foo/bar.txt")));
+        assert!(!filter.debounce(Path::new("/foo/bar.txt")));
+        sleep(Duration::from_millis(20));
+        assert!(filter.debounce(Path::new("/foo/bar.txt")));
+        filter.cleanup_debouncer();
+    }
+
+    #[test]
+    fn path_filter_retain() {
+        let mut filter = PathFilter::new(&Config::default());
+        assert!(filter.should_retain(Path::new("README.md")));
+        assert!(!filter.should_retain(Path::new("README.md"))); // Debounced
+        assert!(!filter.should_retain(Path::new("Cargo.toml")));
+        assert!(!filter.should_retain(Path::new("this-file-does-not-exist.md")));
+    }
+}
