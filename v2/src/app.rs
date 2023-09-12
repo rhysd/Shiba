@@ -4,8 +4,8 @@ use crate::dialog::Dialog;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::renderer::{
-    EventHandler, MenuItem, MenuItems, MessageFromRenderer, MessageToRenderer, Renderer,
-    RendererFlow, RendererState, UserEvent, Zoom,
+    EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, RendererFlow,
+    RendererState, UserEvent, Zoom,
 };
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
@@ -429,29 +429,28 @@ where
         Ok(RendererFlow::Continue)
     }
 
-    fn handle_menu_event<M: MenuItems>(&mut self, menu: &M) -> Result<RendererFlow> {
-        if let Some(kind) = menu.receive_menu_event()? {
-            log::debug!("Menu item was clicked: {:?}", kind);
-            use MenuItem::*;
-            match kind {
-                Quit => return Ok(RendererFlow::Break),
-                Forward => self.forward()?,
-                Back => self.back()?,
-                Reload => self.reload()?,
-                OpenFile => self.open_file()?,
-                WatchDir => self.open_dir()?,
-                Search => self.renderer.send_message(MessageToRenderer::Search)?,
-                SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
-                SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,
-                Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
-                Print => self.renderer.print()?,
-                ZoomIn => self.zoom(Zoom::In)?,
-                ZoomOut => self.zoom(Zoom::Out)?,
-                History => self.renderer.send_message(MessageToRenderer::History)?,
-                ToggleAlwaysOnTop => self.toggle_always_on_top()?,
-                Help => self.renderer.send_message(MessageToRenderer::Help)?,
-                OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
-            }
+    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RendererFlow> {
+        use MenuItem::*;
+
+        log::debug!("Menu item was clicked: {:?}", item);
+        match item {
+            Quit => return Ok(RendererFlow::Break),
+            Forward => self.forward()?,
+            Back => self.back()?,
+            Reload => self.reload()?,
+            OpenFile => self.open_file()?,
+            WatchDir => self.open_dir()?,
+            Search => self.renderer.send_message(MessageToRenderer::Search)?,
+            SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
+            SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,
+            Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
+            Print => self.renderer.print()?,
+            ZoomIn => self.zoom(Zoom::In)?,
+            ZoomOut => self.zoom(Zoom::Out)?,
+            History => self.renderer.send_message(MessageToRenderer::History)?,
+            ToggleAlwaysOnTop => self.toggle_always_on_top()?,
+            Help => self.renderer.send_message(MessageToRenderer::Help)?,
+            OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
         }
         Ok(RendererFlow::Continue)
     }

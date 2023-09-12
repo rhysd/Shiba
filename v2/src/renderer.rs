@@ -3,7 +3,6 @@ use crate::persistent::WindowState;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -89,11 +88,6 @@ pub enum MenuItem {
     Help,
     OpenRepo,
     ToggleAlwaysOnTop,
-}
-
-pub trait MenuItems {
-    type ItemId: fmt::Debug;
-    fn receive_menu_event(&self) -> Result<Option<MenuItem>>;
 }
 
 pub trait RawMessageWriter {
@@ -192,6 +186,6 @@ pub trait RendererState {
 
 pub trait EventHandler {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<RendererFlow>;
-    fn handle_menu_event<M: MenuItems>(&mut self, menu: &M) -> Result<RendererFlow>;
+    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RendererFlow>;
     fn handle_exit(&self) -> Result<()>;
 }

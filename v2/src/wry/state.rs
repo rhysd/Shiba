@@ -86,11 +86,18 @@ impl RendererState for Wry {
                     log_causes(err);
                     RendererFlow::Continue
                 }),
-                _ => handler.handle_menu_event(&self.menu).unwrap_or_else(|err| {
-                    log::error!("Could not handle menu event");
-                    log_causes(err);
-                    RendererFlow::Continue
-                }),
+                _ => self
+                    .menu
+                    .try_receive_event()
+                    .and_then(|item| match item {
+                        Some(item) => handler.handle_menu_event(item),
+                        None => Ok(RendererFlow::Continue),
+                    })
+                    .unwrap_or_else(|err| {
+                        log::error!("Could not handle menu event");
+                        log_causes(err);
+                        RendererFlow::Continue
+                    }),
             };
 
             *control = match flow {

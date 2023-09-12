@@ -1,4 +1,4 @@
-use crate::renderer::{MenuItem as AppMenuItem, MenuItems};
+use crate::renderer::MenuItem as AppMenuItem;
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::{
@@ -224,12 +224,8 @@ impl Menu {
         log::debug!("Registered menu items: {:?}", self.ids);
         Ok(())
     }
-}
 
-impl MenuItems for Menu {
-    type ItemId = MenuId;
-
-    fn receive_menu_event(&self) -> Result<Option<AppMenuItem>> {
+    pub fn try_receive_event(&self) -> Result<Option<AppMenuItem>> {
         let Ok(event) = self.receiver.try_recv() else {
             return Ok(None);
         };
