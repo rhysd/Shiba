@@ -1,5 +1,5 @@
 use super::{find_watch_path_fallback, should_watch_event, PathFilter, Watcher};
-use crate::renderer::{EventChannel, EventLoop, UserEvent};
+use crate::renderer::{EventLoop, UserEvent, UserEventSender};
 use anyhow::{Context as _, Result};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::collections::{HashMap, HashSet};
@@ -66,7 +66,7 @@ pub struct SystemWatcher {
 
 impl Watcher for SystemWatcher {
     fn new<E: EventLoop>(event_loop: &E, mut filter: PathFilter) -> Result<Self> {
-        let channel = event_loop.create_channel();
+        let sender = event_loop.create_sender();
         let watching = Arc::new(Mutex::new(WatchingPaths::default()));
         let inner = {
             let watching = watching.clone();
@@ -82,7 +82,7 @@ impl Watcher for SystemWatcher {
 
                     if !paths.is_empty() {
                         log::debug!("Files change event from watcher: {:?}", paths);
-                        channel.send_event(UserEvent::WatchedFilesChanged(paths));
+                        sender.send(UserEvent::WatchedFilesChanged(paths));
                     }
 
                     filter.cleanup_debouncer();
@@ -90,7 +90,7 @@ impl Watcher for SystemWatcher {
                 Ok(event) => log::debug!("Ignored filesystem event: {:?}", event),
                 Err(err) => {
                     log::error!("Error on watching file changes: {}", err);
-                    channel.send_event(UserEvent::Error(err.into()));
+                    sender.send(UserEvent::Error(err.into()));
                 }
             })?
         };
@@ -103,7 +103,9 @@ impl Watcher for SystemWatcher {
             return Ok(());
         };
         log::debug!("Watching path {:?} with mode={:?}", path, mode);
-        self.inner.watch(path, mode).context("Error while starting to watch a path")
+        <RecommendedWatcher as NotifyWatcher>::watch(&mut self.inner, path, mode)
+            .context("Error while starting to watch a path")
+        // self.inner.watch(path, mode).context("Error while starting to watch a path")
     }
 }
 

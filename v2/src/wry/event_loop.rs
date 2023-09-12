@@ -1,4 +1,4 @@
-use crate::renderer::{EventChannel, EventLoop, EventLoopFlow, EventLoopHandler, UserEvent};
+use crate::renderer::{EventLoop, EventLoopFlow, EventLoopHandler, UserEvent, UserEventSender};
 use anyhow::Error;
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -22,8 +22,8 @@ impl WryEventLoop {
     }
 }
 
-impl EventChannel for EventLoopProxy<UserEvent> {
-    fn send_event(&self, event: UserEvent) {
+impl UserEventSender for EventLoopProxy<UserEvent> {
+    fn send(&self, event: UserEvent) {
         if let Err(err) = self.send_event(event) {
             log::error!("Could not send user event for message from WebView: {}", err);
         }
@@ -31,7 +31,7 @@ impl EventChannel for EventLoopProxy<UserEvent> {
 }
 
 impl EventLoop for WryEventLoop {
-    type Channel = EventLoopProxy<UserEvent>;
+    type UserEventSender = EventLoopProxy<UserEvent>;
 
     #[cfg(not(windows))]
     fn new() -> Self {
@@ -59,7 +59,7 @@ impl EventLoop for WryEventLoop {
         Self { inner, menu_bar }
     }
 
-    fn create_channel(&self) -> Self::Channel {
+    fn create_sender(&self) -> Self::UserEventSender {
         self.inner.create_proxy()
     }
 

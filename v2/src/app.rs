@@ -201,9 +201,7 @@ where
         let config = Config::load(options)?;
         log::debug!("Application config: {:?}", config);
 
-        let data_dir = config.data_dir();
-        let window_state = if config.window().restore { data_dir.load() } else { None };
-        let renderer = R::new(&config, event_loop, window_state)?;
+        let renderer = R::new(&config, event_loop)?;
 
         let filter = PathFilter::new(config.watch());
         let mut watcher = W::new(event_loop, filter)?;
@@ -213,7 +211,7 @@ where
         }
 
         let mut history = History::new(History::DEFAULT_MAX_HISTORY_SIZE);
-        for path in data_dir.load_recent_files(config.max_recent_files()) {
+        for path in config.data_dir().load_recent_files(config.max_recent_files()) {
             history.push(path);
         }
 

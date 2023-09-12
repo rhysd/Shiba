@@ -167,14 +167,15 @@ pub trait EventLoopHandler {
     fn handle_exit(&self) -> Result<()>;
 }
 
-pub trait EventChannel: 'static + Send {
-    fn send_event(&self, event: UserEvent);
+pub trait UserEventSender: 'static + Send {
+    fn send(&self, event: UserEvent);
 }
 
 pub trait EventLoop {
-    type Channel: EventChannel;
+    type UserEventSender: UserEventSender;
+
     fn new() -> Self;
-    fn create_channel(&self) -> Self::Channel;
+    fn create_sender(&self) -> Self::UserEventSender;
     fn start<H: EventLoopHandler + 'static>(self, handler: H) -> !;
 }
 
@@ -182,11 +183,7 @@ pub trait Renderer: Sized {
     type EventLoop: EventLoop;
     type Menu: MenuItems;
 
-    fn new(
-        config: &Config,
-        event_loop: &Self::EventLoop,
-        window_state: Option<WindowState>,
-    ) -> Result<Self>;
+    fn new(config: &Config, event_loop: &Self::EventLoop) -> Result<Self>;
     fn menu(&self) -> &Self::Menu;
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;

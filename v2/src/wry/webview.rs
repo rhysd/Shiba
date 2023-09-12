@@ -155,27 +155,25 @@ impl Renderer for WryRenderer {
     type EventLoop = WryEventLoop;
     type Menu = Menu;
 
-    fn new(
-        config: &Config,
-        event_loop: &Self::EventLoop,
-        window_state: Option<WindowState>,
-    ) -> Result<Self> {
+    fn new(config: &Config, event_loop: &Self::EventLoop) -> Result<Self> {
         #[cfg(windows)]
         let menu_bar = event_loop.menu_bar();
         let event_loop = event_loop.inner();
         let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
 
+        let window_state = if config.window().restore { config.data_dir().load() } else { None };
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
+            let WindowState { height, width, x, y, fullscreen, zoom_level, always_on_top } = state;
             log::debug!("Restoring window state {state:?}");
-            let size = PhysicalSize { width: state.width, height: state.height };
+            let size = PhysicalSize { width, height };
             builder = builder.with_inner_size(size);
-            let position = PhysicalPosition { x: state.x, y: state.y };
+            let position = PhysicalPosition { x, y };
             builder = builder.with_position(position);
-            if state.fullscreen {
+            if fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
-            builder = builder.with_always_on_top(state.always_on_top);
-            (state.zoom_level, state.always_on_top)
+            builder = builder.with_always_on_top(always_on_top);
+            (zoom_level, always_on_top)
         } else {
             if let Some(size) = config.window().default_size {
                 let size = PhysicalSize { width: size.width, height: size.height };
