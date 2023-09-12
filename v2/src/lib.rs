@@ -29,19 +29,19 @@ pub use windows::WindowsConsole;
 
 use crate::dialog::SystemDialog;
 use crate::opener::SystemOpener;
-use crate::renderer::EventLoop;
+use crate::renderer::RendererState as _;
 use crate::watcher::{NopWatcher, SystemWatcher};
-use crate::wry::{WryEventLoop, WryRenderer};
+use crate::wry::Wry;
 use anyhow::Result;
 
 pub fn run(options: Options) -> Result<()> {
-    type Shiba<W> = app::Shiba<WryRenderer, SystemOpener, W, SystemDialog>;
-    let event_loop = WryEventLoop::new();
+    type Shiba<W> = app::Shiba<Wry, SystemOpener, W, SystemDialog>;
+    let mut wry = Wry::new();
     if options.watch {
-        let app = Shiba::<SystemWatcher>::new(options, &event_loop)?;
-        event_loop.start(app)
+        let app = Shiba::<SystemWatcher>::new(options, &mut wry)?;
+        wry.start(app)
     } else {
-        let app = Shiba::<NopWatcher>::new(options, &event_loop)?;
-        event_loop.start(app)
+        let app = Shiba::<NopWatcher>::new(options, &mut wry)?;
+        wry.start(app)
     }
 }

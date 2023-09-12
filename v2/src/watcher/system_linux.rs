@@ -1,5 +1,5 @@
 use super::{find_watch_path_fallback, should_watch_event, PathFilter, Watcher};
-use crate::renderer::{EventLoop, UserEvent, UserEventSender};
+use crate::renderer::{UserEvent, UserEventSender};
 use anyhow::{Context as _, Result};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::collections::{HashMap, HashSet};
@@ -65,8 +65,7 @@ pub struct SystemWatcher {
 }
 
 impl Watcher for SystemWatcher {
-    fn new<E: EventLoop>(event_loop: &E, mut filter: PathFilter) -> Result<Self> {
-        let sender = event_loop.create_sender();
+    fn new<S: UserEventSender>(sender: S, mut filter: PathFilter) -> Result<Self> {
         let watching = Arc::new(Mutex::new(WatchingPaths::default()));
         let inner = {
             let watching = watching.clone();

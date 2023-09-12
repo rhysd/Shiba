@@ -1,6 +1,5 @@
-mod event_loop;
 mod menu;
+mod state;
 mod webview;
 
-pub use event_loop::WryEventLoop;
-pub use webview::WryRenderer;
+pub use state::Wry;

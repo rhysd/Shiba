@@ -156,35 +156,16 @@ impl Default for ZoomLevel {
 }
 
 #[derive(Debug)]
-pub enum EventLoopFlow {
+pub enum RendererFlow {
     Continue,
     Break,
-}
-
-pub trait EventLoopHandler {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<EventLoopFlow>;
-    fn handle_menu_event(&mut self) -> Result<EventLoopFlow>;
-    fn handle_exit(&self) -> Result<()>;
 }
 
 pub trait UserEventSender: 'static + Send {
     fn send(&self, event: UserEvent);
 }
 
-pub trait EventLoop {
-    type UserEventSender: UserEventSender;
-
-    fn new() -> Self;
-    fn create_sender(&self) -> Self::UserEventSender;
-    fn start<H: EventLoopHandler + 'static>(self, handler: H) -> !;
-}
-
 pub trait Renderer: Sized {
-    type EventLoop: EventLoop;
-    type Menu: MenuItems;
-
-    fn new(config: &Config, event_loop: &Self::EventLoop) -> Result<Self>;
-    fn menu(&self) -> &Self::Menu;
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
@@ -197,4 +178,20 @@ pub trait Renderer: Sized {
     fn zoom_level(&self) -> ZoomLevel;
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
+}
+
+pub trait RendererState {
+    type UserEventSender: UserEventSender;
+    type Renderer: Renderer;
+
+    fn new() -> Self;
+    fn create_sender(&self) -> Self::UserEventSender;
+    fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
+    fn start<H: EventHandler + 'static>(self, handler: H) -> !;
+}
+
+pub trait EventHandler {
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<RendererFlow>;
+    fn handle_menu_event<M: MenuItems>(&mut self, menu: &M) -> Result<RendererFlow>;
+    fn handle_exit(&self) -> Result<()>;
 }

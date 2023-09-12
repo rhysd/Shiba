@@ -1,25 +1,14 @@
-use crate::renderer::{EventLoop, EventLoopFlow, EventLoopHandler, UserEvent, UserEventSender};
-use anyhow::Error;
+use crate::config::Config;
+use crate::renderer::{EventHandler, RendererFlow, RendererState, UserEvent, UserEventSender};
+use crate::wry::menu::Menu;
+use crate::wry::webview::{EventLoop, WebViewRenderer};
+use anyhow::{Error, Result};
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
-pub type InnerEventLoop = wry::application::event_loop::EventLoop<UserEvent>;
-
-pub struct WryEventLoop {
-    inner: InnerEventLoop,
-    #[cfg(windows)]
-    menu_bar: muda::Menu,
-}
-
-impl WryEventLoop {
-    pub fn inner(&self) -> &InnerEventLoop {
-        &self.inner
-    }
-
-    #[cfg(windows)]
-    pub fn menu_bar(&self) -> muda::Menu {
-        self.menu_bar.clone()
-    }
+pub struct Wry {
+    event_loop: EventLoop,
+    menu: Menu,
 }
 
 impl UserEventSender for EventLoopProxy<UserEvent> {
@@ -30,25 +19,27 @@ impl UserEventSender for EventLoopProxy<UserEvent> {
     }
 }
 
-impl EventLoop for WryEventLoop {
+impl RendererState for Wry {
     type UserEventSender = EventLoopProxy<UserEvent>;
+    type Renderer = WebViewRenderer;
 
     #[cfg(not(windows))]
     fn new() -> Self {
-        Self { inner: EventLoopBuilder::with_user_event().build() }
+        Self { event_loop: EventLoopBuilder::with_user_event().build(), menu: Menu::new() }
     }
 
     #[cfg(windows)]
     fn new() -> Self {
         use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
         use wry::application::platform::windows::EventLoopBuilderExtWindows;
-        let menu_bar = muda::Menu::new();
-        let inner = {
-            let menu_bar = menu_bar.clone();
+
+        let menu = Menu::new();
+        let event_loop = {
+            let menu = menu.menu_bar().clone();
             EventLoopBuilder::with_user_event()
                 .with_msg_hook(move |msg| {
                     let msg = msg as *const MSG;
-                    let haccel = menu_bar.haccel();
+                    let haccel = menu.haccel();
                     // SAFETY: Win32 API usage is always unsafe
                     // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratorw
                     let translated = unsafe { TranslateAcceleratorW((*msg).hwnd, haccel, msg) };
@@ -56,18 +47,25 @@ impl EventLoop for WryEventLoop {
                 })
                 .build()
         };
-        Self { inner, menu_bar }
+
+        Self { event_loop, menu }
     }
 
     fn create_sender(&self) -> Self::UserEventSender {
-        self.inner.create_proxy()
+        self.event_loop.create_proxy()
+    }
+
+    fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer> {
+        let renderer = WebViewRenderer::new(config, &self.event_loop)?;
+        self.menu.setup(renderer.window())?;
+        Ok(renderer)
     }
 
     fn start<H>(self, mut handler: H) -> !
     where
-        H: EventLoopHandler + 'static,
+        H: EventHandler + 'static,
     {
-        self.inner.run(move |event, _, control| {
+        self.event_loop.run(move |event, _, control| {
             fn log_causes(err: Error) {
                 for err in err.chain() {
                     log::error!("  Caused by: {}", err);
@@ -77,27 +75,27 @@ impl EventLoop for WryEventLoop {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
-                    EventLoopFlow::Continue
+                    RendererFlow::Continue
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                     log::debug!("Closing window was requested");
-                    EventLoopFlow::Break
+                    RendererFlow::Break
                 }
                 Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
                     log::error!("Could not handle user event");
                     log_causes(err);
-                    EventLoopFlow::Continue
+                    RendererFlow::Continue
                 }),
-                _ => handler.handle_menu_event().unwrap_or_else(|err| {
+                _ => handler.handle_menu_event(&self.menu).unwrap_or_else(|err| {
                     log::error!("Could not handle menu event");
                     log_causes(err);
-                    EventLoopFlow::Continue
+                    RendererFlow::Continue
                 }),
             };
 
             *control = match flow {
-                EventLoopFlow::Continue => ControlFlow::Wait,
-                EventLoopFlow::Break => match handler.handle_exit() {
+                RendererFlow::Continue => ControlFlow::Wait,
+                RendererFlow::Break => match handler.handle_exit() {
                     Ok(_) => ControlFlow::Exit,
                     Err(err) => {
                         log::error!("Could not handle application exit correctly");

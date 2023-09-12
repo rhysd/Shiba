@@ -5,8 +5,6 @@ use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
     UserEvent, ZoomLevel,
 };
-use crate::wry::event_loop::{InnerEventLoop, WryEventLoop};
-use crate::wry::menu::Menu;
 use anyhow::Result;
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
@@ -15,6 +13,8 @@ use wry::http::Response;
 #[cfg(target_os = "windows")]
 use wry::webview::WebViewBuilderExtWindows;
 use wry::webview::{FileDropEvent, WebContext, WebView, WebViewBuilder};
+
+pub type EventLoop = wry::application::event_loop::EventLoop<UserEvent>;
 
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -30,7 +30,7 @@ fn window_theme(window: &Window) -> RendererTheme {
     }
 }
 
-fn create_webview(window: Window, event_loop: &InnerEventLoop, config: &Config) -> Result<WebView> {
+fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
@@ -144,21 +144,14 @@ fn create_webview(window: Window, event_loop: &InnerEventLoop, config: &Config) 
     builder.build().map_err(Into::into)
 }
 
-pub struct WryRenderer {
+pub struct WebViewRenderer {
     webview: WebView,
-    menu: Menu,
     zoom_level: ZoomLevel,
     always_on_top: bool,
 }
 
-impl Renderer for WryRenderer {
-    type EventLoop = WryEventLoop;
-    type Menu = Menu;
-
-    fn new(config: &Config, event_loop: &Self::EventLoop) -> Result<Self> {
-        #[cfg(windows)]
-        let menu_bar = event_loop.menu_bar();
-        let event_loop = event_loop.inner();
+impl WebViewRenderer {
+    pub fn new(config: &Config, event_loop: &EventLoop) -> Result<Self> {
         let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
@@ -199,14 +192,7 @@ impl Renderer for WryRenderer {
             builder = builder.with_window_icon(Some(icon));
         }
 
-        let window = builder.build(event_loop)?;
-        #[cfg(not(windows))]
-        let menu = Menu::new(&window)?;
-        #[cfg(windows)]
-        let menu = Menu::with_menu_bar(menu_bar, &window)?;
-        log::debug!("Event loop, window, and menu were created successfully");
-
-        let webview = create_webview(window, event_loop, config)?;
+        let webview = create_webview(builder.build(event_loop)?, event_loop, config)?;
         log::debug!("WebView was created successfully");
 
         let zoom_factor = zoom_level.factor();
@@ -221,13 +207,15 @@ impl Renderer for WryRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(WryRenderer { webview, menu, zoom_level, always_on_top })
+        Ok(WebViewRenderer { webview, zoom_level, always_on_top })
     }
 
-    fn menu(&self) -> &Self::Menu {
-        &self.menu
+    pub fn window(&self) -> &Window {
+        self.webview.window()
     }
+}
 
+impl Renderer for WebViewRenderer {
     fn send_message(&self, message: MessageToRenderer) -> Result<()> {
         let mut buf = b"window.postShibaMessageFromMain(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
