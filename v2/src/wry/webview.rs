@@ -5,10 +5,10 @@ use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
     UserEvent, ZoomLevel,
 };
+use crate::wry::event_loop::{InnerEventLoop, WryEventLoop};
 use crate::wry::menu::Menu;
 use anyhow::Result;
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
-use wry::application::event_loop::EventLoop as WryEventLoop;
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
@@ -30,11 +30,7 @@ fn window_theme(window: &Window) -> RendererTheme {
     }
 }
 
-fn create_webview(
-    window: Window,
-    event_loop: &WryEventLoop<UserEvent>,
-    config: &Config,
-) -> Result<WebView> {
+fn create_webview(window: Window, event_loop: &InnerEventLoop, config: &Config) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
@@ -156,7 +152,7 @@ pub struct WryRenderer {
 }
 
 impl Renderer for WryRenderer {
-    type EventLoop = WryEventLoop<UserEvent>;
+    type EventLoop = WryEventLoop;
     type Menu = Menu;
 
     fn new(
@@ -164,6 +160,9 @@ impl Renderer for WryRenderer {
         event_loop: &Self::EventLoop,
         window_state: Option<WindowState>,
     ) -> Result<Self> {
+        #[cfg(windows)]
+        let menu_bar = event_loop.menu_bar();
+        let event_loop = event_loop.inner();
         let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
 
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
@@ -203,7 +202,10 @@ impl Renderer for WryRenderer {
         }
 
         let window = builder.build(event_loop)?;
+        #[cfg(not(windows))]
         let menu = Menu::new(&window)?;
+        #[cfg(windows)]
+        let menu = Menu::with_menu_bar(menu_bar, &window)?;
         log::debug!("Event loop, window, and menu were created successfully");
 
         let webview = create_webview(window, event_loop, config)?;

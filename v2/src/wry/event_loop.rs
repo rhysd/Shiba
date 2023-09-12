@@ -3,7 +3,24 @@ use anyhow::Error;
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
-pub type WryEventLoop = wry::application::event_loop::EventLoop<UserEvent>;
+pub type InnerEventLoop = wry::application::event_loop::EventLoop<UserEvent>;
+
+pub struct WryEventLoop {
+    inner: InnerEventLoop,
+    #[cfg(windows)]
+    menu_bar: muda::Menu,
+}
+
+impl WryEventLoop {
+    pub fn inner(&self) -> &InnerEventLoop {
+        &self.inner
+    }
+
+    #[cfg(windows)]
+    pub fn menu_bar(&self) -> muda::Menu {
+        self.menu_bar.clone()
+    }
+}
 
 impl EventChannel for EventLoopProxy<UserEvent> {
     fn send_event(&self, event: UserEvent) {
@@ -16,19 +33,41 @@ impl EventChannel for EventLoopProxy<UserEvent> {
 impl EventLoop for WryEventLoop {
     type Channel = EventLoopProxy<UserEvent>;
 
+    #[cfg(not(windows))]
     fn new() -> Self {
-        EventLoopBuilder::with_user_event().build()
+        Self { inner: EventLoopBuilder::with_user_event().build() }
+    }
+
+    #[cfg(windows)]
+    fn new() -> Self {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
+        use wry::application::platform::windows::EventLoopBuilderExtWindows;
+        let menu_bar = muda::Menu::new();
+        let inner = {
+            let menu_bar = menu_bar.clone();
+            EventLoopBuilder::with_user_event()
+                .with_msg_hook(move |msg| {
+                    let msg = msg as *const MSG;
+                    let haccel = menu_bar.haccel();
+                    // SAFETY: Win32 API usage is always unsafe
+                    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratorw
+                    let translated = unsafe { TranslateAcceleratorW((*msg).hwnd, haccel, msg) };
+                    translated != 0
+                })
+                .build()
+        };
+        Self { inner, menu_bar }
     }
 
     fn create_channel(&self) -> Self::Channel {
-        self.create_proxy()
+        self.inner.create_proxy()
     }
 
     fn start<H>(self, mut handler: H) -> !
     where
         H: EventLoopHandler + 'static,
     {
-        self.run(move |event, _, control| {
+        self.inner.run(move |event, _, control| {
             fn log_causes(err: Error) {
                 for err in err.chain() {
                     log::error!("  Caused by: {}", err);

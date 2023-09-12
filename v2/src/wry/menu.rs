@@ -48,7 +48,12 @@ pub struct Menu {
 }
 
 impl Menu {
+    #[cfg_attr(windows, allow(dead_code))]
     pub fn new(window: &Window) -> Result<Self> {
+        Self::with_menu_bar(MenuBar::new(), window)
+    }
+
+    pub fn with_menu_bar(menu_bar: MenuBar, window: &Window) -> Result<Self> {
         fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
             MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
         }
@@ -98,7 +103,7 @@ impl Menu {
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
-        let menu_bar = MenuBar::with_items(&[
+        menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
                 "Shiba",
