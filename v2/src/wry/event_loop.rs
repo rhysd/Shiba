@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::renderer::{EventHandler, RendererFlow, RendererState, UserEvent, UserEventSender};
+use crate::renderer::{EventHandler, Rendering, RenderingFlow, UserEvent, UserEventSender};
 use crate::wry::menu::Menu;
 use crate::wry::webview::{EventLoop, WebViewRenderer};
 use anyhow::{Error, Result};
@@ -19,7 +19,7 @@ impl UserEventSender for EventLoopProxy<UserEvent> {
     }
 }
 
-impl RendererState for Wry {
+impl Rendering for Wry {
     type UserEventSender = EventLoopProxy<UserEvent>;
     type Renderer = WebViewRenderer;
 
@@ -75,35 +75,35 @@ impl RendererState for Wry {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
-                    RendererFlow::Continue
+                    RenderingFlow::Continue
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                     log::debug!("Closing window was requested");
-                    RendererFlow::Break
+                    RenderingFlow::Exit
                 }
                 Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
                     log::error!("Could not handle user event");
                     log_causes(err);
-                    RendererFlow::Continue
+                    RenderingFlow::Continue
                 }),
                 _ => self
                     .menu
                     .try_receive_event()
                     .and_then(|item| match item {
                         Some(item) => handler.handle_menu_event(item),
-                        None => Ok(RendererFlow::Continue),
+                        None => Ok(RenderingFlow::Continue),
                     })
                     .unwrap_or_else(|err| {
                         log::error!("Could not handle menu event");
                         log_causes(err);
-                        RendererFlow::Continue
+                        RenderingFlow::Continue
                     }),
             };
 
             *control = match flow {
-                RendererFlow::Continue => ControlFlow::Wait,
-                RendererFlow::Break => match handler.handle_exit() {
-                    Ok(_) => ControlFlow::Exit,
+                RenderingFlow::Continue => ControlFlow::Wait,
+                RenderingFlow::Exit => match handler.handle_exit() {
+                    Ok(()) => ControlFlow::Exit,
                     Err(err) => {
                         log::error!("Could not handle application exit correctly");
                         log_causes(err);

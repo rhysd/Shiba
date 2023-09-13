@@ -4,8 +4,8 @@ use crate::dialog::Dialog;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::renderer::{
-    EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, RendererFlow,
-    RendererState, UserEvent, Zoom,
+    EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
+    RenderingFlow, UserEvent, Zoom,
 };
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
@@ -175,8 +175,8 @@ impl PreviewContent {
     }
 }
 
-pub struct Shiba<S: RendererState, O, W, D> {
-    renderer: S::Renderer,
+pub struct Shiba<R: Rendering, O, W, D> {
+    renderer: R::Renderer,
     opener: O,
     history: History,
     watcher: W,
@@ -186,14 +186,14 @@ pub struct Shiba<S: RendererState, O, W, D> {
     dialog: D,
 }
 
-impl<S, O, W, D> Shiba<S, O, W, D>
+impl<R, O, W, D> Shiba<R, O, W, D>
 where
-    S: RendererState,
+    R: Rendering,
     O: Opener,
     W: Watcher,
     D: Dialog,
 {
-    pub fn new(mut options: Options, state: &mut S) -> Result<Self> {
+    pub fn new(mut options: Options, rendering: &mut R) -> Result<Self> {
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
         let init_file = mem::take(&mut options.init_file);
@@ -201,10 +201,10 @@ where
         let config = Config::load(options)?;
         log::debug!("Application config: {:?}", config);
 
-        let renderer = state.create_renderer(&config)?;
+        let renderer = rendering.create_renderer(&config)?;
 
         let filter = PathFilter::new(config.watch());
-        let mut watcher = W::new(state.create_sender(), filter)?;
+        let mut watcher = W::new(rendering.create_sender(), filter)?;
         for path in watch_paths {
             log::debug!("Watching initial path: {:?}", path);
             watcher.watch(&path)?;
@@ -318,7 +318,7 @@ where
         self.renderer.send_message(MessageToRenderer::AlwaysOnTop { pinned })
     }
 
-    fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<RendererFlow> {
+    fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<RenderingFlow> {
         match message {
             MessageFromRenderer::Init => {
                 if self.config.debug() {
@@ -329,7 +329,7 @@ where
                     keymaps: self.config.keymaps(),
                     search: self.config.search(),
                     theme: self.renderer.theme(),
-                    recent: self.history.iter().collect(),
+                    recent: &self.history.iter().collect::<Vec<_>>(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
@@ -356,23 +356,23 @@ where
                 }
             }
             MessageFromRenderer::Zoom { zoom } => self.zoom(zoom)?,
-            MessageFromRenderer::Quit => return Ok(RendererFlow::Break),
+            MessageFromRenderer::Quit => return Ok(RenderingFlow::Exit),
             MessageFromRenderer::Error { message } => {
                 anyhow::bail!("Error reported from renderer: {}", message)
             }
         }
-        Ok(RendererFlow::Continue)
+        Ok(RenderingFlow::Continue)
     }
 }
 
-impl<S, O, W, D> EventHandler for Shiba<S, O, W, D>
+impl<R, O, W, D> EventHandler for Shiba<R, O, W, D>
 where
-    S: RendererState,
+    R: Rendering,
     O: Opener,
     W: Watcher,
     D: Dialog,
 {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<RendererFlow> {
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow> {
         log::debug!("Handling user event {:?}", event);
         match event {
             UserEvent::IpcMessage(msg) => return self.handle_ipc_message(msg),
@@ -388,7 +388,7 @@ where
                 if let Some(current) = self.history.current() {
                     if paths.contains(current) {
                         self.preview.show(current, &self.renderer)?;
-                        return Ok(RendererFlow::Continue);
+                        return Ok(RenderingFlow::Continue);
                     }
                 }
                 // Choose the last one to preview if the current file is not included in `paths`
@@ -426,15 +426,15 @@ where
             }
             UserEvent::Error(err) => return Err(err),
         }
-        Ok(RendererFlow::Continue)
+        Ok(RenderingFlow::Continue)
     }
 
-    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RendererFlow> {
+    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow> {
         use MenuItem::*;
 
         log::debug!("Menu item was clicked: {:?}", item);
         match item {
-            Quit => return Ok(RendererFlow::Break),
+            Quit => return Ok(RenderingFlow::Exit),
             Forward => self.forward()?,
             Back => self.back()?,
             Reload => self.reload()?,
@@ -452,7 +452,7 @@ where
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
         }
-        Ok(RendererFlow::Continue)
+        Ok(RenderingFlow::Continue)
     }
 
     fn handle_exit(&self) -> Result<()> {

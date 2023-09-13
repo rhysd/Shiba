@@ -1,5 +1,5 @@
+mod event_loop;
 mod menu;
-mod state;
 mod webview;
 
-pub use state::Wry;
+pub use event_loop::Wry;

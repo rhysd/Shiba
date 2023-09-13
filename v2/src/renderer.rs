@@ -14,7 +14,7 @@ pub enum MessageToRenderer<'a> {
         keymaps: &'a HashMap<String, KeyAction>,
         search: &'a SearchConfig,
         theme: Theme,
-        recent: Vec<&'a Path>,
+        recent: &'a [&'a Path],
     },
     Search,
     SearchNext,
@@ -150,16 +150,19 @@ impl Default for ZoomLevel {
 }
 
 #[derive(Debug)]
-pub enum RendererFlow {
+pub enum RenderingFlow {
     Continue,
-    Break,
+    Exit,
 }
 
+/// Sender to send [`UserEvent`] accross threads. It is used to send the user events to the main thread
+/// from another worker thread.
 pub trait UserEventSender: 'static + Send {
     fn send(&self, event: UserEvent);
 }
 
-pub trait Renderer: Sized {
+/// Renderer is responsible for rendering the actual UI in the rendering context.
+pub trait Renderer {
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
@@ -174,18 +177,21 @@ pub trait Renderer: Sized {
     fn always_on_top(&self) -> bool;
 }
 
-pub trait RendererState {
+/// Context to execute rendering.
+pub trait Rendering {
     type UserEventSender: UserEventSender;
     type Renderer: Renderer;
 
     fn new() -> Self;
     fn create_sender(&self) -> Self::UserEventSender;
     fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
+    /// Starts the rendering execution and runs until the process exits.
     fn start<H: EventHandler + 'static>(self, handler: H) -> !;
 }
 
+/// Event handler which listens several rendering events.
 pub trait EventHandler {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<RendererFlow>;
-    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RendererFlow>;
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
+    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
     fn handle_exit(&self) -> Result<()>;
 }

@@ -29,7 +29,7 @@ pub use windows::WindowsConsole;
 
 use crate::dialog::SystemDialog;
 use crate::opener::SystemOpener;
-use crate::renderer::RendererState as _;
+use crate::renderer::Rendering as _;
 use crate::watcher::{NopWatcher, SystemWatcher};
 use crate::wry::Wry;
 use anyhow::Result;
