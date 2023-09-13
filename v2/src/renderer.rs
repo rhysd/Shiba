@@ -3,7 +3,6 @@ use crate::persistent::WindowState;
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -15,7 +14,7 @@ pub enum MessageToRenderer<'a> {
         keymaps: &'a HashMap<String, KeyAction>,
         search: &'a SearchConfig,
         theme: Theme,
-        recent: Vec<&'a Path>,
+        recent: &'a [&'a Path],
     },
     Search,
     SearchNext,
@@ -91,11 +90,6 @@ pub enum MenuItem {
     ToggleAlwaysOnTop,
 }
 
-pub trait MenuItems {
-    type ItemId: fmt::Debug;
-    fn receive_menu_event(&self) -> Result<Option<MenuItem>>;
-}
-
 pub trait RawMessageWriter {
     type Output;
     fn write_to(self, writer: impl io::Write) -> io::Result<Self::Output>;
@@ -156,38 +150,19 @@ impl Default for ZoomLevel {
 }
 
 #[derive(Debug)]
-pub enum EventLoopFlow {
+pub enum RenderingFlow {
     Continue,
-    Break,
+    Exit,
 }
 
-pub trait EventLoopHandler {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<EventLoopFlow>;
-    fn handle_menu_event(&mut self) -> Result<EventLoopFlow>;
-    fn handle_exit(&self) -> Result<()>;
+/// Sender to send [`UserEvent`] accross threads. It is used to send the user events to the main thread
+/// from another worker thread.
+pub trait UserEventSender: 'static + Send {
+    fn send(&self, event: UserEvent);
 }
 
-pub trait EventChannel: 'static + Send {
-    fn send_event(&self, event: UserEvent);
-}
-
-pub trait EventLoop {
-    type Channel: EventChannel;
-    fn new() -> Self;
-    fn create_channel(&self) -> Self::Channel;
-    fn start<H: EventLoopHandler + 'static>(self, handler: H) -> !;
-}
-
-pub trait Renderer: Sized {
-    type EventLoop: EventLoop;
-    type Menu: MenuItems;
-
-    fn new(
-        config: &Config,
-        event_loop: &Self::EventLoop,
-        window_state: Option<WindowState>,
-    ) -> Result<Self>;
-    fn menu(&self) -> &Self::Menu;
+/// Renderer is responsible for rendering the actual UI in the rendering context.
+pub trait Renderer {
     fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
@@ -200,4 +175,23 @@ pub trait Renderer: Sized {
     fn zoom_level(&self) -> ZoomLevel;
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
+}
+
+/// Context to execute rendering.
+pub trait Rendering {
+    type UserEventSender: UserEventSender;
+    type Renderer: Renderer;
+
+    fn new() -> Self;
+    fn create_sender(&self) -> Self::UserEventSender;
+    fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
+    /// Starts the rendering execution and runs until the process exits.
+    fn start<H: EventHandler + 'static>(self, handler: H) -> !;
+}
+
+/// Event handler which listens several rendering events.
+pub trait EventHandler {
+    fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
+    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
+    fn handle_exit(&self) -> Result<()>;
 }

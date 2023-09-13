@@ -1,4 +1,4 @@
-use crate::renderer::{MenuItem as AppMenuItem, MenuItems};
+use crate::renderer::MenuItem as AppMenuItem;
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::{
@@ -44,16 +44,20 @@ pub struct Menu {
     ids: HashMap<MenuId, AppMenuItem>,
     receiver: &'static MenuEventReceiver,
     // This instance must be kept since dropping this instance removes menu from application
-    _menu_bar: MenuBar,
+    menu_bar: MenuBar,
 }
 
 impl Menu {
-    #[cfg_attr(windows, allow(dead_code))]
-    pub fn new(window: &Window) -> Result<Self> {
-        Self::with_menu_bar(MenuBar::new(), window)
+    pub fn new() -> Self {
+        Self { ids: HashMap::new(), receiver: MenuEvent::receiver(), menu_bar: MenuBar::new() }
     }
 
-    pub fn with_menu_bar(menu_bar: MenuBar, window: &Window) -> Result<Self> {
+    #[cfg_attr(not(windows), allow(dead_code))]
+    pub fn menu_bar(&self) -> &MenuBar {
+        &self.menu_bar
+    }
+
+    pub fn setup(&mut self, window: &Window) -> Result<()> {
         fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
             MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
         }
@@ -103,7 +107,7 @@ impl Menu {
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
-        menu_bar.append_items(&[
+        self.menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
                 "Shiba",
@@ -177,15 +181,15 @@ impl Menu {
 
         #[cfg(target_os = "windows")]
         {
-            menu_bar.init_for_hwnd(window.hwnd() as _)?;
+            self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
         }
         #[cfg(target_os = "linux")]
         {
-            menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
+            self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
         }
         #[cfg(target_os = "macos")]
         {
-            menu_bar.init_for_nsapp();
+            self.menu_bar.init_for_nsapp();
             window_menu.set_as_windows_menu_for_nsapp();
             help_menu.set_as_help_menu_for_nsapp();
             let _ = window;
@@ -194,7 +198,7 @@ impl Menu {
         log::debug!("Added menubar to window");
 
         #[rustfmt::skip]
-        let ids = HashMap::from_iter({
+        self.ids.extend({
             use AppMenuItem::*;
             [
                 (open_file.into_id(),     OpenFile),
@@ -216,15 +220,12 @@ impl Menu {
                 (open_repo.into_id(),     OpenRepo),
             ]
         });
-        log::debug!("Registered menu items: {:?}", ids);
-        Ok(Self { ids, receiver: MenuEvent::receiver(), _menu_bar: menu_bar })
+
+        log::debug!("Registered menu items: {:?}", self.ids);
+        Ok(())
     }
-}
 
-impl MenuItems for Menu {
-    type ItemId = MenuId;
-
-    fn receive_menu_event(&self) -> Result<Option<AppMenuItem>> {
+    pub fn try_receive_event(&self) -> Result<Option<AppMenuItem>> {
         let Ok(event) = self.receiver.try_recv() else {
             return Ok(None);
         };
