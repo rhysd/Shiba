@@ -5,7 +5,6 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-mod app;
 mod assets;
 mod cli;
 mod config;
@@ -14,34 +13,31 @@ mod markdown;
 mod opener;
 mod persistent;
 mod renderer;
+mod shiba;
 mod watcher;
 #[cfg(windows)]
 mod windows;
 mod wry;
 
-pub use crate::cli::Options;
+pub use cli::Options;
 #[cfg(feature = "__bench")]
-pub use crate::markdown::{MarkdownContent, MarkdownParser};
+pub use markdown::{MarkdownContent, MarkdownParser};
 #[cfg(feature = "__bench")]
-pub use crate::renderer::RawMessageWriter;
+pub use renderer::RawMessageWriter;
 #[cfg(windows)]
 pub use windows::WindowsConsole;
 
-use crate::dialog::SystemDialog;
-use crate::opener::SystemOpener;
-use crate::renderer::Rendering as _;
-use crate::watcher::{NopWatcher, SystemWatcher};
-use crate::wry::Wry;
 use anyhow::Result;
+use dialog::SystemDialog;
+use opener::SystemOpener;
+use shiba::Shiba;
+use watcher::{NopWatcher, SystemWatcher};
+use wry::Wry;
 
 pub fn run(options: Options) -> Result<()> {
-    type Shiba<W> = app::Shiba<Wry, SystemOpener, W, SystemDialog>;
-    let mut wry = Wry::new();
     if options.watch {
-        let app = Shiba::<SystemWatcher>::new(options, &mut wry)?;
-        wry.start(app)
+        Shiba::<Wry, SystemOpener, SystemWatcher, SystemDialog>::run(options)
     } else {
-        let app = Shiba::<NopWatcher>::new(options, &mut wry)?;
-        wry.start(app)
+        Shiba::<Wry, SystemOpener, NopWatcher, SystemDialog>::run(options)
     }
 }

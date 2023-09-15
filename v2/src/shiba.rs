@@ -196,6 +196,15 @@ where
     W: Watcher,
     D: Dialog,
 {
+    pub fn run(options: Options) -> Result<()>
+    where
+        Self: 'static,
+    {
+        let mut rendering = R::new();
+        let dog = Self::new(options, &mut rendering)?;
+        rendering.start(dog)
+    }
+
     pub fn new(mut options: Options, rendering: &mut R) -> Result<Self> {
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
