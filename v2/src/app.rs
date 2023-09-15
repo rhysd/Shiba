@@ -94,8 +94,11 @@ struct PreviewContent {
 
 impl Default for PreviewContent {
     fn default() -> Self {
+        let home_dir = dirs::home_dir();
+        #[cfg(windows)]
+        let home_dir = home_dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
         Self {
-            home_dir: dirs::home_dir(),
+            home_dir,
             content: MarkdownContent::default(),
             text: DisplayText::default(),
             title: String::new(),
@@ -273,6 +276,8 @@ where
         let extensions = self.config.watch().file_extensions();
         let dir = self.config.dialog().default_dir()?;
         let file = self.dialog.pick_file(&dir, extensions);
+        #[cfg(windows)]
+        let file = file.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
 
         if let Some(file) = file {
             log::debug!("Previewing file chosen by dialog: {:?}", file);
@@ -284,8 +289,11 @@ where
 
     fn open_dir(&mut self) -> Result<()> {
         let dir = self.config.dialog().default_dir()?;
+        let dir = self.dialog.pick_dir(&dir);
+        #[cfg(windows)]
+        let dir = dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
 
-        if let Some(dir) = self.dialog.pick_dir(&dir) {
+        if let Some(dir) = dir {
             log::debug!("Watching directory chosen by dialog: {:?}", dir);
             self.watcher.watch(&dir)?;
         }
