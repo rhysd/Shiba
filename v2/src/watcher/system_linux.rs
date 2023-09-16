@@ -23,28 +23,29 @@ impl WatchingPaths {
         path: &'a Path,
     ) -> Result<Option<(&'a Path, RecursiveMode)>> {
         assert!(path.is_absolute(), "Path to watch must be an absolute path: {:?}", path);
-        if path.is_dir() {
-            self.files.retain(|p, _| !p.starts_with(path));
-            self.dirs.insert(path.into());
-            log::debug!("Watching the existing directory recursively: {:?}", path);
-            Ok(Some((path, RecursiveMode::Recursive)))
-        } else if path.exists() {
-            let (parent, file) = (path.parent().unwrap(), path.file_name().unwrap());
-            if self.dirs.iter().any(|dir| parent.starts_with(dir)) {
-                log::debug!("Some parent directory is already watched: {:?}/{:?}", parent, file,);
-                return Ok(None); // Its parent directory is already watched
+        match path.metadata() {
+            Ok(m) if m.is_dir() => {
+                self.files.retain(|p, _| !p.starts_with(path));
+                self.dirs.insert(path.into());
+                log::debug!("Watching the existing directory recursively: {:?}", path);
+                Ok(Some((path, RecursiveMode::Recursive)))
             }
+            Ok(_) => {
+                let (parent, file) = (path.parent().unwrap(), path.file_name().unwrap());
+                if self.dirs.iter().any(|dir| parent.starts_with(dir)) {
+                    log::debug!("Some parent directory is already watched: {:?}", path);
+                    return Ok(None); // Its parent directory is already watched
+                }
 
-            log::debug!(
-                "Watching the parent directory non-recursively for file {:?}: {:?}",
-                file,
-                parent,
-            );
-            let file_names = self.files.entry(parent.into()).or_insert_with(HashSet::new);
-            file_names.insert(file.to_os_string());
-            Ok(Some((parent, RecursiveMode::NonRecursive)))
-        } else {
-            Ok(Some((find_watch_path_fallback(path)?, RecursiveMode::Recursive)))
+                log::debug!("Watching the parent directory non-recursively for file {:?}", path);
+                let file_names = self.files.entry(parent.into()).or_insert_with(HashSet::new);
+                file_names.insert(file.to_os_string());
+                Ok(Some((parent, RecursiveMode::NonRecursive)))
+            }
+            Err(err) => {
+                log::debug!("Could not get metadata of {:?}: {}", path, err);
+                Ok(Some((find_watch_path_fallback(path)?, RecursiveMode::Recursive)))
+            }
         }
     }
 
@@ -102,9 +103,7 @@ impl Watcher for SystemWatcher {
             return Ok(());
         };
         log::debug!("Watching path {:?} with mode={:?}", path, mode);
-        <RecommendedWatcher as NotifyWatcher>::watch(&mut self.inner, path, mode)
-            .context("Error while starting to watch a path")
-        // self.inner.watch(path, mode).context("Error while starting to watch a path")
+        self.inner.watch(path, mode).context("Error while starting to watch a path")
     }
 }
 

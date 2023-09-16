@@ -4,16 +4,6 @@ use anyhow::{Context as _, Result};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::path::Path;
 
-fn find_path_to_watch(path: &Path) -> Result<(&Path, RecursiveMode)> {
-    if path.is_dir() {
-        Ok((path, RecursiveMode::Recursive))
-    } else if path.exists() {
-        Ok((path, RecursiveMode::NonRecursive))
-    } else {
-        Ok((find_watch_path_fallback(path)?, RecursiveMode::Recursive))
-    }
-}
-
 impl Watcher for RecommendedWatcher {
     fn new<S: UserEventSender>(sender: S, mut filter: PathFilter) -> Result<Self> {
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
@@ -40,7 +30,14 @@ impl Watcher for RecommendedWatcher {
     }
 
     fn watch(&mut self, path: &Path) -> Result<()> {
-        let (path, mode) = find_path_to_watch(path)?;
+        let (path, mode) = match path.metadata() {
+            Ok(m) if m.is_dir() => (path, RecursiveMode::Recursive),
+            Ok(_) => (path, RecursiveMode::NonRecursive),
+            Err(err) => {
+                log::debug!("Could not get metadata of {:?}: {}", path, err);
+                (find_watch_path_fallback(path)?, RecursiveMode::Recursive)
+            }
+        };
         log::debug!("Watching path {:?} with mode={:?}", path, mode);
         <Self as NotifyWatcher>::watch(self, path, mode)
             .context("Error while starting to watch a path")
