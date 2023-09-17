@@ -62,4 +62,4 @@ jobs:
       - run: npm run lint:stylelint
       - run: cargo fmt --all --check
       - run: shellcheck ./scripts/gen_macos_app.bash ./scripts/install_apt_deps.bash
-      - run: yamllint --strict ./src/default_config.yml
+      - run: yamllint --strict ./src/assets/default_config.yml
