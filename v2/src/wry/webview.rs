@@ -165,24 +165,23 @@ impl WebViewRenderer {
             if fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
-            builder = builder.with_always_on_top(always_on_top);
             (zoom_level, always_on_top)
         } else {
             if let Some(size) = config.window().default_size {
                 let size = PhysicalSize { width: size.width, height: size.height };
                 builder = builder.with_inner_size(size);
             }
-            (ZoomLevel::default(), false)
+            (ZoomLevel::default(), config.window().always_on_top)
         };
+
+        if always_on_top {
+            builder = builder.with_always_on_top(true);
+        }
 
         match config.window().theme {
             ThemeConfig::System => {}
             ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
             ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
-        }
-
-        if config.window().always_on_top {
-            builder = builder.with_always_on_top(true);
         }
 
         #[cfg(not(target_os = "macos"))]
