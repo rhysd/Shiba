@@ -7,6 +7,7 @@ import * as log from '../log';
 
 interface HistoryItem {
     text: string;
+    path: string;
 }
 
 export interface Props {
@@ -18,9 +19,16 @@ function renderHistoryItem(item: HistoryItem): React.ReactNode {
     return item.text;
 }
 
+function stripUncPath(path: string): string {
+    if (path.startsWith('\\\\?\\')) {
+        path = path.slice(4);
+    }
+    return path;
+}
+
 export const History: React.FC<Props> = ({ history, dispatch }) => {
     const items = useMemo(() => {
-        const items = history.map(path => ({ text: path }));
+        const items = history.map(path => ({ text: stripUncPath(path), path }));
         return items.reverse();
     }, [history]);
 
@@ -29,9 +37,9 @@ export const History: React.FC<Props> = ({ history, dispatch }) => {
     }, [dispatch]);
 
     const handleSelect = useCallback(
-        (item: HistoryItem) => {
-            log.debug('Opening file via history:', item.text);
-            sendMessage({ kind: 'open_file', path: item.text });
+        ({ path }: HistoryItem) => {
+            log.debug('Opening file via history:', path);
+            sendMessage({ kind: 'open_file', path: path });
             dispatch(closeHistory());
         },
         [dispatch],
