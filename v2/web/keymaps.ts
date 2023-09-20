@@ -27,6 +27,30 @@ function scrollTo(
     }
 }
 
+class ScrollTarget {
+    private readonly dialog: HTMLElement | null;
+
+    constructor() {
+        this.dialog = document.querySelector('.MuiDialogContent-root');
+    }
+
+    get elem(): HTMLElement | Window {
+        return this.dialog ?? window;
+    }
+
+    get height(): number {
+        return this.dialog?.clientHeight ?? window.innerHeight;
+    }
+
+    get width(): number {
+        return this.dialog?.clientWidth ?? window.innerWidth;
+    }
+
+    get scrollHeight(): number {
+        return this.dialog?.scrollHeight ?? document.body.scrollHeight;
+    }
+}
+
 export interface KeyShortcut {
     dispatch(dispatcher: GlobalDispatcher): void;
     description: string;
@@ -36,56 +60,63 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     ScrollDown: {
         description: 'Scroll down the page by half of window height.',
         dispatch(): void {
-            window.scrollBy(0, window.innerHeight / 2);
+            const t = new ScrollTarget();
+            t.elem.scrollBy(0, t.height / 2);
         },
     },
 
     ScrollUp: {
         description: 'Scroll up the page by half of window height.',
         dispatch(): void {
-            window.scrollBy(0, -window.innerHeight / 2);
+            const t = new ScrollTarget();
+            t.elem.scrollBy(0, -t.height / 2);
         },
     },
 
     ScrollLeft: {
         description: 'Scroll the page to the left by half of window width.',
         dispatch(): void {
-            window.scrollBy(-window.innerWidth / 2, 0);
+            const t = new ScrollTarget();
+            t.elem.scrollBy(-t.width / 2, 0);
         },
     },
 
     ScrollRight: {
         description: 'Scroll the page to the right by half of window width.',
         dispatch(): void {
-            window.scrollBy(window.innerWidth / 2, 0);
+            const t = new ScrollTarget();
+            t.elem.scrollBy(t.width / 2, 0);
         },
     },
 
     ScrollPageDown: {
         description: 'Scroll down the page by window height.',
         dispatch(): void {
-            window.scrollBy(0, window.innerHeight);
+            const t = new ScrollTarget();
+            t.elem.scrollBy(0, t.height);
         },
     },
 
     ScrollPageUp: {
         description: 'Scroll up the page by window height.',
         dispatch(): void {
-            window.scrollBy(0, -window.innerHeight);
+            const t = new ScrollTarget();
+            t.elem.scrollBy(0, -t.height);
         },
     },
 
     ScrollTop: {
         description: 'Scroll to the top of the page.',
         dispatch(): void {
-            window.scrollTo(0, 0);
+            new ScrollTarget().elem.scrollTo(0, 0);
         },
     },
 
     ScrollBottom: {
         description: 'Scroll to the bottom of the page.',
         dispatch(): void {
-            window.scrollTo(0, document.body.scrollHeight);
+            const t = new ScrollTarget();
+            t.elem.scrollTo(0, t.scrollHeight);
         },
     },
 
