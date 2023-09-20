@@ -15,6 +15,7 @@ pub enum MessageToRenderer<'a> {
         search: &'a SearchConfig,
         theme: Theme,
         recent: &'a [&'a Path],
+        home: Option<&'a Path>,
     },
     Search,
     SearchNext,

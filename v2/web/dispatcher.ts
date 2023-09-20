@@ -16,6 +16,7 @@ import {
     notifyReload,
     notifyAlwaysOnTop,
     setRecentFiles,
+    setHomeDir,
     welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
@@ -81,6 +82,7 @@ export class GlobalDispatcher {
                     this.dispatch(setTheme(msg.theme));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
+                    this.dispatch(setHomeDir(msg.home));
                     // `this.state.theme` is not available since it is updated *after* the first rendering of Markdown content.
                     //   1. Receive `config` IPC message
                     //   2. Dispatch `setTheme` action

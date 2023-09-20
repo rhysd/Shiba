@@ -205,6 +205,7 @@ export type MessageFromMain =
           };
           theme: WindowTheme;
           recent: string[];
+          home: string | null;
       }
     | {
           kind: 'search';

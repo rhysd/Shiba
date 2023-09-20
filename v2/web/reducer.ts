@@ -31,6 +31,7 @@ export interface State {
     notifying: boolean;
     notification: NotificationContent;
     welcome: boolean;
+    homeDir: string | null;
 }
 
 export const INITIAL_STATE: State = {
@@ -50,6 +51,7 @@ export const INITIAL_STATE: State = {
     notifying: false,
     notification: { kind: 'reload' },
     welcome: false,
+    homeDir: null,
 };
 
 const MAX_HISTORIES = 50;
@@ -104,6 +106,10 @@ type Action =
     | {
           kind: 'recent_files';
           paths: string[];
+      }
+    | {
+          kind: 'home_dir';
+          path: string | null;
       }
     | {
           kind: 'welcome';
@@ -170,6 +176,8 @@ export function reducer(state: State, action: Action): State {
             return { ...state, theme: action.theme };
         case 'recent_files':
             return { ...state, files: action.paths };
+        case 'home_dir':
+            return { ...state, homeDir: action.path };
         case 'welcome':
             return { ...state, welcome: true };
         default:
@@ -260,6 +268,10 @@ export function notifyAlwaysOnTop(pinned: boolean): Action {
 
 export function setRecentFiles(paths: string[]): Action {
     return { kind: 'recent_files', paths };
+}
+
+export function setHomeDir(path: string | null): Action {
+    return { kind: 'home_dir', path };
 }
 
 export function welcome(): Action {

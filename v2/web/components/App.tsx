@@ -34,6 +34,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         notifying,
         notification,
         welcome,
+        homeDir,
     } = state;
 
     let searchInput;
@@ -55,7 +56,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     let historyDialog;
     if (history) {
-        historyDialog = <History history={files} dispatch={dispatch} />;
+        historyDialog = <History history={files} homeDir={homeDir} dispatch={dispatch} />;
     }
 
     let guideDialog;

@@ -107,6 +107,10 @@ impl Default for PreviewContent {
 }
 
 impl PreviewContent {
+    fn home_dir(&self) -> Option<&'_ Path> {
+        self.home_dir.as_deref()
+    }
+
     fn title(&self, path: &Path) -> String {
         if let Some(home_dir) = &self.home_dir {
             if let Ok(path) = path.strip_prefix(home_dir) {
@@ -347,6 +351,7 @@ where
                     search: self.config.search(),
                     theme: self.renderer.theme(),
                     recent: &self.history.iter().collect::<Vec<_>>(),
+                    home: self.preview.home_dir(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.

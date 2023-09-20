@@ -12,6 +12,7 @@ interface HistoryItem {
 
 export interface Props {
     history: string[];
+    homeDir: string | null;
     dispatch: Dispatch;
 }
 
@@ -19,18 +20,21 @@ function renderHistoryItem(item: HistoryItem): React.ReactNode {
     return item.text;
 }
 
-function stripUncPath(path: string): string {
+function text(path: string, homeDir: string | null): string {
+    if (homeDir && path.startsWith(homeDir)) {
+        return `~${path.slice(homeDir.length)}`;
+    }
     if (path.startsWith('\\\\?\\')) {
-        path = path.slice(4);
+        return path.slice(4); // Strip UNC path
     }
     return path;
 }
 
-export const History: React.FC<Props> = ({ history, dispatch }) => {
+export const History: React.FC<Props> = ({ history, homeDir, dispatch }) => {
     const items = useMemo(() => {
-        const items = history.map(path => ({ text: stripUncPath(path), path }));
+        const items = history.map(path => ({ text: text(path, homeDir), path }));
         return items.reverse();
-    }, [history]);
+    }, [history, homeDir]);
 
     const handleClose = useCallback(() => {
         dispatch(closeHistory());
