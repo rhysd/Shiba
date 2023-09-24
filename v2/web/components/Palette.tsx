@@ -6,21 +6,49 @@ import DialogTitle from '@mui/material/DialogTitle';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import InputBase from '@mui/material/InputBase';
+import { useTheme, type Theme } from '@mui/material/styles';
 import type { PaperProps } from '@mui/material/Paper';
 
+const BACKGROUND_ALPHA = 0.8;
 const CONTENT_STYLE: React.CSSProperties = {
     padding: '8px 0',
 };
 
-const PAPER_PROPS: PaperProps = {
-    style: {
-        // Fix y-position on narrowing down
-        position: 'fixed',
-        margin: '32px auto',
-        top: '0',
-        minWidth: '60%',
-    },
-};
+function applyAlpha(color: string): string {
+    if (!color.startsWith('#')) {
+        return color;
+    }
+    switch (color.length) {
+        case 7: {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return `rgba(${r},${g},${b},${BACKGROUND_ALPHA})`;
+        }
+        case 4: {
+            const r = parseInt(color.charAt(1), 16) * 0x11;
+            const g = parseInt(color.charAt(2), 16) * 0x11;
+            const b = parseInt(color.charAt(3), 16) * 0x11;
+            return `rgba(${r},${g},${b},${BACKGROUND_ALPHA})`;
+        }
+        default:
+            throw new Error(`Unreachable: Invalid CSS color '${color}'`);
+    }
+}
+
+function bodyProps(theme: Theme): PaperProps {
+    return {
+        style: {
+            position: 'fixed', // Fix y-position on narrowing down
+            margin: '32px auto',
+            top: '0',
+            minWidth: '60%',
+            backgroundColor: applyAlpha(theme.palette.background.paper), // `opacity` is not available for `backdrop-filter`
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+        },
+    };
+}
 
 export interface Item {
     text: string;
@@ -41,6 +69,7 @@ export function Palette<T extends Item>({
     onSelect,
     renderItem,
 }: Props<T>): React.ReactElement {
+    const theme: Theme = useTheme();
     const [query, setQuery] = useState('');
     const [unadjustedIndex, setIndex] = useState(0);
     const focusedItemRef = useRef<HTMLDivElement | null>(null);
@@ -115,7 +144,7 @@ export function Palette<T extends Item>({
     };
 
     return (
-        <Dialog PaperProps={PAPER_PROPS} onClose={onClose} open scroll="paper">
+        <Dialog PaperProps={bodyProps(theme)} onClose={onClose} open scroll="paper">
             <DialogTitle>
                 <InputBase
                     inputProps={{
