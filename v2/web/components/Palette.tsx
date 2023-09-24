@@ -8,42 +8,25 @@ import ListItemButton from '@mui/material/ListItemButton';
 import InputBase from '@mui/material/InputBase';
 import { useTheme, type Theme } from '@mui/material/styles';
 import type { PaperProps } from '@mui/material/Paper';
+import { parseColor } from '../css';
 
-const BACKGROUND_ALPHA = 0.8;
 const CONTENT_STYLE: React.CSSProperties = {
     padding: '8px 0',
 };
 
-function applyAlpha(color: string): string {
-    if (!color.startsWith('#')) {
-        return color;
-    }
-    switch (color.length) {
-        case 7: {
-            const r = parseInt(color.slice(1, 3), 16);
-            const g = parseInt(color.slice(3, 5), 16);
-            const b = parseInt(color.slice(5, 7), 16);
-            return `rgba(${r},${g},${b},${BACKGROUND_ALPHA})`;
-        }
-        case 4: {
-            const r = parseInt(color.charAt(1), 16) * 0x11;
-            const g = parseInt(color.charAt(2), 16) * 0x11;
-            const b = parseInt(color.charAt(3), 16) * 0x11;
-            return `rgba(${r},${g},${b},${BACKGROUND_ALPHA})`;
-        }
-        default:
-            throw new Error(`Unreachable: Invalid CSS color '${color}'`);
-    }
-}
-
 function bodyProps(theme: Theme): PaperProps {
+    let color = theme.palette.background.paper;
+    const rgb = parseColor(color);
+    if (rgb !== null) {
+        color = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.8)`; // `opacity` is not available for `backdrop-filter`
+    }
     return {
         style: {
             position: 'fixed', // Fix y-position on narrowing down
             margin: '32px auto',
             top: '0',
             minWidth: '60%',
-            backgroundColor: applyAlpha(theme.palette.background.paper), // `opacity` is not available for `backdrop-filter`
+            backgroundColor: color,
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
         },

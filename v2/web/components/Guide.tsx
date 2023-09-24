@@ -14,9 +14,12 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
+import { useTheme, type Theme } from '@mui/material/styles';
+import type { PaperProps } from '@mui/material/Paper';
 import type { BoundShortcut } from '../keymaps';
 import type { GlobalDispatcher } from '../dispatcher';
 import { closeHelp } from '../reducer';
+import { parseColor } from '../css';
 
 const KEYBIND_ROW_STYLE: React.CSSProperties = {
     cursor: 'pointer',
@@ -32,8 +35,23 @@ const BOTTOM_DESC_STYLE: React.CSSProperties = {
     marginTop: '16px',
 };
 const BIND_CHIP_STYLE: React.CSSProperties = {
-    marginLeft: '4px',
+    margin: '4px',
 };
+
+function blurBackdropProps(theme: Theme): PaperProps {
+    let color = theme.palette.background.paper;
+    const rgb = parseColor(color);
+    if (rgb !== null) {
+        color = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.8)`; // `opacity` is not available for `backdrop-filter`
+    }
+    return {
+        style: {
+            backgroundColor: color,
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+        },
+    };
+}
 
 export interface Props {
     shortcuts: BoundShortcut[];
@@ -41,14 +59,16 @@ export interface Props {
 }
 
 export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
+    const theme = useTheme();
     const handleClose = (): void => {
         dispatcher.dispatch(closeHelp());
     };
+    const props = blurBackdropProps(theme);
 
     return (
-        <Dialog open scroll="paper" onClose={handleClose}>
+        <Dialog open scroll="paper" onClose={handleClose} PaperProps={props}>
             <DialogTitle style={TITLE_STYLE}>
-                Guide
+                Key Guide
                 <IconButton aria-label="close" style={CLOSE_BUTTON_STYLE} onClick={handleClose}>
                     <CloseIcon />
                 </IconButton>
@@ -74,13 +94,8 @@ export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
                                     style={KEYBIND_ROW_STYLE}
                                 >
                                     <TableCell>
-                                        {shortcut.binds.map((b, j) => (
-                                            <Chip
-                                                key={j}
-                                                size="small"
-                                                label={b}
-                                                style={j === 0 ? {} : BIND_CHIP_STYLE}
-                                            />
+                                        {shortcut.binds.map((label, key) => (
+                                            <Chip key={key} size="small" label={label} style={BIND_CHIP_STYLE} />
                                         ))}
                                     </TableCell>
                                     <TableCell>{shortcut.description}</TableCell>
