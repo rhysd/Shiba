@@ -88,6 +88,7 @@ impl Menu {
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
         let open_repo = no_accel("Open Repository Page");
+        let edit_config = no_accel("Edit Config");
 
         // Menu bar structure
         let window_menu = Submenu::with_items(
@@ -106,7 +107,7 @@ impl Menu {
                 &zoom_out,
             ],
         )?;
-        let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
+        let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo, &edit_config])?;
         self.menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
@@ -218,6 +219,7 @@ impl Menu {
                 (always_on_top.into_id(), ToggleAlwaysOnTop),
                 (guide.into_id(),         Help),
                 (open_repo.into_id(),     OpenRepo),
+                (edit_config.into_id(),   EditConfig),
             ]
         });
 

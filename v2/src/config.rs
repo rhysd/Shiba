@@ -66,6 +66,8 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
     ]
 };
 
+const CONFIG_FILE_NAMES: [&str; 2] = ["config.yml", "config.yaml"];
+
 #[repr(transparent)]
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct FileExtensions(Vec<String>);
@@ -274,7 +276,7 @@ impl UserConfig {
         let mut path = path.into();
 
         if path.is_dir() {
-            for file in ["config.yml", "config.yaml"] {
+            for file in CONFIG_FILE_NAMES {
                 path.push(file);
 
                 match fs::read(&path) {
@@ -358,6 +360,16 @@ impl Config {
 
     pub fn config_dir(&self) -> Option<&Path> {
         self.path.as_deref()
+    }
+
+    pub fn config_file(&self) -> Option<PathBuf> {
+        let Some(path) = self.config_dir() else {
+            return None;
+        };
+        CONFIG_FILE_NAMES.iter().find_map(|file| {
+            let path = path.join(file);
+            path.is_file().then_some(path)
+        })
     }
 
     pub fn data_dir(&self) -> &DataDir {

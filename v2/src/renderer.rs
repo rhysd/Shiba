@@ -89,6 +89,7 @@ pub enum MenuItem {
     Help,
     OpenRepo,
     ToggleAlwaysOnTop,
+    EditConfig,
 }
 
 pub trait RawMessageWriter {

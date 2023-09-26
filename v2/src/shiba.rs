@@ -339,6 +339,14 @@ where
         self.renderer.send_message(MessageToRenderer::AlwaysOnTop { pinned })
     }
 
+    fn open_config(&mut self) -> Result<()> {
+        if let Some(path) = self.config.config_file() {
+            self.opener.open(&path)
+        } else {
+            anyhow::bail!("Config directory does not exist yet. Please generate it by --generate-default-config");
+        }
+    }
+
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<RenderingFlow> {
         match message {
             MessageFromRenderer::Init => {
@@ -473,6 +481,7 @@ where
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
+            EditConfig => self.open_config()?,
         }
         Ok(RenderingFlow::Continue)
     }
