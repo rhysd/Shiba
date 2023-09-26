@@ -12,7 +12,6 @@ import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import { useTheme, type Theme } from '@mui/material/styles';
 import type { PaperProps } from '@mui/material/Paper';
@@ -30,9 +29,6 @@ const TITLE_STYLE: React.CSSProperties = {
 };
 const CLOSE_BUTTON_STYLE: React.CSSProperties = {
     marginLeft: 'auto',
-};
-const BOTTOM_DESC_STYLE: React.CSSProperties = {
-    marginTop: '16px',
 };
 const BIND_CHIP_STYLE: React.CSSProperties = {
     margin: '4px',
@@ -76,6 +72,12 @@ export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
             <DialogContent dividers>
                 <TableContainer component={Paper} variant="outlined">
                     <Table aria-label="key shortcut table">
+                        <caption>
+                            Visit{' '}
+                            <Link href="https://github.com/rhysd/Shiba/tree/main/docs">the document directory</Link> to
+                            know about the usage and customization. If you're seeing some bugs, report it by{' '}
+                            <Link href="https://github.com/rhysd/Shiba/issues">creating a new issue</Link>.
+                        </caption>
                         <TableHead>
                             <TableRow>
                                 <TableCell>Key mappings</TableCell>
@@ -104,11 +106,6 @@ export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                <Typography paragraph style={BOTTOM_DESC_STYLE}>
-                    Visit <Link href="https://github.com/rhysd/Shiba/tree/master/docs">the document directory</Link> to
-                    know about usage and customization. If you're seeing some bugs, report it by{' '}
-                    <Link href="https://github.com/rhysd/Shiba/issues">creating a new issue</Link>.
-                </Typography>
             </DialogContent>
         </Dialog>
     );
