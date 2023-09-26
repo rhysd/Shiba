@@ -33,6 +33,9 @@ const CLOSE_BUTTON_STYLE: React.CSSProperties = {
 const BIND_CHIP_STYLE: React.CSSProperties = {
     margin: '4px',
 };
+const TABLE_STYLE = {
+    boxSizing: 'border-box', // Prevent borders from causing the horizontal scroll bar on Windows
+};
 
 function blurBackdropProps(theme: Theme): PaperProps {
     let color = theme.palette.background.paper;
@@ -70,7 +73,7 @@ export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
                 </IconButton>
             </DialogTitle>
             <DialogContent dividers>
-                <TableContainer component={Paper} variant="outlined">
+                <TableContainer component={Paper} variant="outlined" sx={TABLE_STYLE}>
                     <Table aria-label="key shortcut table">
                         <caption>
                             Visit{' '}
