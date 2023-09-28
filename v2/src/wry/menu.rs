@@ -87,8 +87,8 @@ impl Menu {
         let history = accel("History…", MOD, Code::KeyY);
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
-        let open_repo = no_accel("Open Repository Page");
         let edit_config = no_accel("Edit Config");
+        let open_repo = no_accel("Open Repository Page");
 
         // Menu bar structure
         let window_menu = Submenu::with_items(
@@ -107,7 +107,7 @@ impl Menu {
                 &zoom_out,
             ],
         )?;
-        let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo, &edit_config])?;
+        let help_menu = Submenu::with_items("&Help", true, &[&guide, &edit_config, &open_repo])?;
         self.menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
