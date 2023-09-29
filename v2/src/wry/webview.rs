@@ -237,6 +237,7 @@ impl Renderer for WebViewRenderer {
     }
 
     fn window_state(&self) -> Option<WindowState> {
+        let PhysicalSize { width, height } = self.webview.inner_size(); // `self.webview.window().inner_size()` doesn't work
         let w = self.webview.window();
         let PhysicalPosition { x, y } = match w.inner_position() {
             Ok(position) => position,
@@ -245,7 +246,6 @@ impl Renderer for WebViewRenderer {
                 return None;
             }
         };
-        let PhysicalSize { width, height } = w.inner_size();
         let fullscreen = w.fullscreen().is_some();
         let zoom_level = self.zoom_level;
         let always_on_top = self.always_on_top;

@@ -489,6 +489,7 @@ where
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
+                log::debug!("Saving window state as persistent data: {:?}", state);
                 data_dir.save(&state)?;
             }
         }
