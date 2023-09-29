@@ -340,11 +340,9 @@ where
     }
 
     fn open_config(&mut self) -> Result<()> {
-        if let Some(path) = self.config.config_file() {
-            self.opener.open(&path)
-        } else {
-            anyhow::bail!("Config directory does not exist yet. Please generate it by --generate-default-config");
-        }
+        let path = self.config.config_file()?;
+        log::debug!("Opening config file via menu item: {:?}", path);
+        self.opener.open(&path)
     }
 
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<RenderingFlow> {

@@ -66,7 +66,8 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
     ]
 };
 
-const CONFIG_FILE_NAMES: [&str; 2] = ["config.yml", "config.yaml"];
+const DEFAULT_CONFIG_FILE_NAME: &str = "config.yml";
+const CONFIG_FILE_NAMES: [&str; 2] = [DEFAULT_CONFIG_FILE_NAME, "config.yaml"];
 
 #[repr(transparent)]
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -296,17 +297,17 @@ impl UserConfig {
         Ok(Self::default())
     }
 
-    fn generate_default_config(config_dir: &Path) -> Result<()> {
+    fn generate_default_config(config_dir: &Path) -> Result<PathBuf> {
         fs::create_dir_all(config_dir).with_context(|| {
             format!("Could not create directory for generating config file at {:?}", config_dir)
         })?;
 
-        let config_path = config_dir.join("config.yml");
+        let config_path = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(&config_path, Self::DEFAULT_CONFIG_YAML)
             .with_context(|| format!("Could not generate config file at {:?}", &config_path))?;
 
         log::info!("Generated the default config file at {:?}", config_path);
-        Ok(())
+        Ok(config_path)
     }
 }
 
@@ -362,14 +363,18 @@ impl Config {
         self.path.as_deref()
     }
 
-    pub fn config_file(&self) -> Option<PathBuf> {
-        let Some(path) = self.config_dir() else {
-            return None;
+    pub fn config_file(&self) -> Result<PathBuf> {
+        let Some(dir) = self.config_dir() else {
+            anyhow::bail!("Configuration directory cannot be determined. Try --config-dir");
         };
-        CONFIG_FILE_NAMES.iter().find_map(|file| {
-            let path = path.join(file);
+        if let Some(path) = CONFIG_FILE_NAMES.iter().find_map(|file| {
+            let path = dir.join(file);
             path.is_file().then_some(path)
-        })
+        }) {
+            Ok(path)
+        } else {
+            UserConfig::generate_default_config(dir)
+        }
     }
 
     pub fn data_dir(&self) -> &DataDir {
