@@ -15,7 +15,7 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aho-corasick = "1.0.5"
+aho-corasick = "1.1.1"
 ammonia = "3.3.0"
 anyhow = "1.0.75"
 dirs = "5.0.1"
@@ -24,7 +24,7 @@ env_logger = "0.10.0"
 getopts = "0.2.21"
 log = "0.4.20"
 memchr = "2.6.3"
-muda = "0.9.1"
+muda = "0.9.3"
 notify = "6.1.1"
 once_cell = "1.18.0"
 open = "5.0.0"
@@ -32,11 +32,11 @@ phf = { version = "0.11.2", features = ["macros"] }
 # https://github.com/raphlinus/pulldown-cmark/pull/622
 pulldown-cmark = { git = "https://github.com/rhysd/pulldown-cmark.git", branch="math-0.9.3", default-features = false, features = [] }
 regex = "1.9.5"
-rfd = "0.11.4"
+rfd = "0.11.4"  # 0.12.0 is incompatible with wry because of gtk-sys version
 serde = "1.0.188"
-serde_json = "1.0.105"
+serde_json = "1.0.107"
 serde_yaml = "0.9.25"
-wry = "0.32.0"
+wry = "0.33.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.48.0", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
@@ -53,7 +53,7 @@ members = ["bench"]
 lto = "thin"
 
 [dev-dependencies]
-insta = { version = "1.31.0", features = ["json"] }
+insta = { version = "1.33.0", features = ["json"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = { version = "0.1.17", default-features = false }
