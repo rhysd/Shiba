@@ -53,8 +53,8 @@ const HEADER_SX = {
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     textTransform: 'none',
-    typography: 'h6',
     color: 'text.primary',
+    fontWeight: 'h6',
 };
 
 interface Props {
