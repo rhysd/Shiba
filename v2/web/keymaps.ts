@@ -123,7 +123,7 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     ScrollNextSection: {
         description: 'Scroll to the next section header.',
         dispatch(): void {
-            const headings: NodeListOf<HTMLElement> = document.querySelectorAll('h1,h2,h3,h4,h5,h6');
+            const headings: NodeListOf<HTMLElement> = document.querySelectorAll('article > h1,h2,h3,h4,h5,h6');
             scrollTo(headings, (elem, windowTop) => elem.offsetTop > windowTop);
         },
     },
@@ -131,7 +131,7 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     ScrollPrevSection: {
         description: 'Scroll to the previous section header.',
         dispatch(): void {
-            const headings: HTMLElement[] = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+            const headings: HTMLElement[] = Array.from(document.querySelectorAll('article > h1,h2,h3,h4,h5,h6'));
             headings.reverse();
             scrollTo(headings, (elem, windowTop) => elem.offsetTop < windowTop);
         },

@@ -5,8 +5,10 @@ use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
     UserEvent, ZoomLevel,
 };
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
+#[cfg(target_os = "macos")]
+use wry::application::platform::macos::WindowBuilderExtMacOS as _;
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
@@ -141,7 +143,20 @@ fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Re
         }
     }
 
-    builder.build().map_err(Into::into)
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.with_transparent(true);
+    }
+
+    let webview = builder.build()?;
+
+    #[cfg(target_os = "macos")]
+    {
+        use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+        apply_vibrancy(webview.window(), NSVisualEffectMaterial::Sidebar, None, None)?;
+    }
+
+    Ok(webview)
 }
 
 pub struct WebViewRenderer {
@@ -189,6 +204,15 @@ impl WebViewRenderer {
             use wry::application::window::Icon;
             let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
             builder = builder.with_window_icon(Some(icon));
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            builder = builder
+                .with_transparent(true)
+                .with_fullsize_content_view(true)
+                .with_titlebar_transparent(true)
+                .with_title_hidden(true);
         }
 
         let webview = create_webview(builder.build(event_loop)?, event_loop, config)?;
@@ -287,5 +311,9 @@ impl Renderer for WebViewRenderer {
 
     fn always_on_top(&self) -> bool {
         self.always_on_top
+    }
+
+    fn drag_window(&self) -> Result<()> {
+        self.webview.window().drag_window().context("Could not start dragging the window")
     }
 }

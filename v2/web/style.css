@@ -1,29 +1,44 @@
 html {
   margin: 0;
-}
-
-@media (prefers-color-scheme: light) {
-  html {
-    background-color: white;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    background-color: rgb(13 17 23);
-  }
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
+  width: 100%;
+  height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   font-size: 14px;
 }
 
+#shiba-root {
+  width: 100%;
+  height: 100%;
+}
+
+main {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+nav {
+  height: 100%;
+  min-width:200px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* I'm not sure this is a correct way 🥺 */
+}
+
 .markdown-body {
   padding: 16px;
+  min-width: 600px;
   max-width: 1012px;
-  margin: 0 auto;
+  overflow: auto;
 }
 
 @media (prefers-color-scheme: light) {

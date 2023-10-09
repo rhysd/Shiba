@@ -9,7 +9,7 @@ import {
     setSearchMatcher,
     openOutline,
     setTheme,
-    newFile,
+    pathChanged,
     openHistory,
     openHelp,
     notifyZoom,
@@ -74,8 +74,8 @@ export class GlobalDispatcher {
                     this.dispatch(previewContent(tree));
                     break;
                 }
-                case 'new_file':
-                    this.dispatch(newFile(msg.path));
+                case 'path_changed':
+                    this.dispatch(pathChanged(msg.path));
                     break;
                 case 'config':
                     this.keymap.register(msg.keymaps, this);

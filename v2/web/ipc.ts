@@ -194,7 +194,7 @@ export type MessageFromMain =
           tree: RenderTreeElem[];
       }
     | {
-          kind: 'new_file';
+          kind: 'path_changed';
           path: string;
       }
     | {
@@ -277,6 +277,9 @@ export type MessageToMain =
     | {
           kind: 'zoom';
           zoom: 'In' | 'Out';
+      }
+    | {
+          kind: 'drag_window';
       }
     | {
           kind: 'error';

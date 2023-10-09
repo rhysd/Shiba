@@ -135,7 +135,7 @@ export function Palette<T extends Item>({
                         onChange: handleInput,
                         onKeyDown: handleKeydown,
                         onKeyUp: handleKeyup,
-                        style: { padding: 0 },
+                        style: { padding: '0' },
                     }}
                     type="search"
                     placeholder={placeholder}

@@ -35,6 +35,8 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         notification,
         welcome,
         homeDir,
+        headings,
+        currentPath,
     } = state;
 
     let searchInput;
@@ -73,7 +75,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     return (
         <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
-            <Preview tree={previewTree} />
+            <Preview tree={previewTree} headings={headings} path={currentPath} dispatch={dispatch} />
             {searchInput}
             {outlineDialog}
             {historyDialog}

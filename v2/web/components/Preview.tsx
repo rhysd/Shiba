@@ -1,59 +1,31 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import Divider from '@mui/material/Divider';
+import { WindowBar } from './WindowBar';
+import { SideBar } from './SideBar';
+import { Article } from './Article';
 import type { MarkdownReactTree } from '../markdown';
-import * as log from '../log';
-
-function appearInViewport(elem: Element): boolean {
-    const { top, left, bottom, right } = elem.getBoundingClientRect();
-    const height = window.innerHeight;
-    const width = window.innerWidth;
-    const outside = bottom < 0 || height < top || right < 0 || width < left;
-    return !outside;
-}
+import type { Dispatch, Heading } from '../reducer';
 
 export interface Props {
     tree: MarkdownReactTree;
+    headings: Heading[];
+    path: string | null;
+    dispatch: Dispatch;
 }
 
-export const Preview: React.FC<Props> = ({ tree }) => {
-    const { root, lastModified } = tree;
-    const ref = useRef<HTMLElement>(null);
-
-    useEffect(() => {
-        const elem = lastModified?.current;
-        if (!elem || appearInViewport(elem)) {
-            return;
-        }
-        log.debug('Scrolling to last modified element:', elem);
-        elem.scrollIntoView({
-            behavior: 'smooth', // This does not work on WKWebView
-            block: 'center',
-            inline: 'center',
-        });
-    }, [lastModified]);
-
-    useEffect(() => {
-        const article = ref.current;
-        if (article === null) {
-            return;
-        }
-
-        const bg = window.getComputedStyle(article, null).getPropertyValue('background-color');
-        if (!bg) {
-            return;
-        }
-
-        document.documentElement.style.backgroundColor = bg;
-    }, []);
-
-    let style;
-    if (root === null) {
-        style = { display: 'none' };
+export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
+    if (tree.root === null) {
+        return <></>;
     }
 
     return (
-        <article className="markdown-body" style={style} ref={ref}>
-            {root}
-        </article>
+        <main>
+            <nav aria-label="sections outline side bar">
+                <WindowBar />
+                <SideBar headings={headings} path={path} />
+            </nav>
+            <Divider orientation="vertical" />
+            <Article tree={tree} dispatch={dispatch} />
+        </main>
     );
 };

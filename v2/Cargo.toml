@@ -14,6 +14,17 @@ path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = ["bench"]
+
+[profile.bench]
+lto = "thin"
+
+[features]
+default = []
+__bench = []
+devtools = ["wry/devtools"]
+
 [dependencies]
 aho-corasick = "1.1.1"
 ammonia = "3.3.0"
@@ -36,21 +47,16 @@ rfd = "0.11.4"  # 0.12.0 is incompatible with wry because of gtk-sys version
 serde = "1.0.188"
 serde_json = "1.0.107"
 serde_yaml = "0.9.25"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+wry = { version = "0.33.0", features = ["transparent"] }
+window-vibrancy = "0.4.2"
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
 wry = "0.33.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.48.0", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
-
-[features]
-default = []
-__bench = []
-devtools = ["wry/devtools"]
-
-[workspace]
-members = ["bench"]
-
-[profile.bench]
-lto = "thin"
 
 [dev-dependencies]
 insta = { version = "1.33.0", features = ["json"] }

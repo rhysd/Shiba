@@ -22,7 +22,7 @@ pub enum MessageToRenderer<'a> {
     SearchPrevious,
     Welcome,
     Outline,
-    NewFile {
+    PathChanged {
         path: &'a Path,
     },
     History,
@@ -57,6 +57,7 @@ pub enum MessageFromRenderer {
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
     OpenFile { path: String },
     Zoom { zoom: Zoom },
+    DragWindow,
     Error { message: String },
 }
 
@@ -177,6 +178,7 @@ pub trait Renderer {
     fn zoom_level(&self) -> ZoomLevel;
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
+    fn drag_window(&self) -> Result<()>;
 }
 
 /// Context to execute rendering.
