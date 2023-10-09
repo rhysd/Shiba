@@ -38,7 +38,7 @@ impl WatchingPaths {
                 }
 
                 log::debug!("Watching the parent directory non-recursively for file {:?}", path);
-                let file_names = self.files.entry(parent.into()).or_insert_with(HashSet::new);
+                let file_names = self.files.entry(parent.into()).or_default();
                 file_names.insert(file.to_os_string());
                 Ok(Some((parent, RecursiveMode::NonRecursive)))
             }
