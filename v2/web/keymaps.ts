@@ -4,51 +4,43 @@ import type { GlobalDispatcher } from './dispatcher';
 import { sendMessage, type KeyMaps, type KeyAction } from './ipc';
 import * as log from './log';
 
-function scrollTo(
-    candidates: HTMLElement[] | NodeListOf<HTMLElement>,
-    pred: (e: HTMLElement, t: number) => boolean,
-): void {
+function scrollTo(candidates: HTMLElement[] | NodeListOf<HTMLElement>, pred: (e: number, s: number) => boolean): void {
     if (candidates.length === 0) {
         return;
     }
+    if (document.querySelector('.MuiDialogContent-root')) {
+        return; // Do nothing when some dialog is rendered
+    }
+
+    const article = document.querySelector('article');
+    if (!article) {
+        return;
+    }
+
     let scrolled = false;
-    const windowTop = window.scrollY;
+    const scrollTop = article.scrollTop;
     for (const elem of candidates) {
-        if (pred(elem, windowTop)) {
-            window.scrollTo(0, elem.offsetTop);
-            if (windowTop !== window.scrollY) {
+        const top = elem.offsetTop;
+        if (pred(top, scrollTop)) {
+            article.scrollTo(0, top);
+            if (scrollTop !== article.scrollTop) {
                 scrolled = true;
                 break;
             }
         }
     }
+
     if (!scrolled) {
-        window.scrollTo(0, candidates[0].offsetTop);
+        article.scrollTo(0, candidates[0].clientTop);
     }
 }
 
-class ScrollTarget {
-    private readonly dialog: HTMLElement | null;
-
-    constructor() {
-        this.dialog = document.querySelector('.MuiDialogContent-root');
-    }
-
-    get elem(): HTMLElement | Window {
-        return this.dialog ?? window;
-    }
-
-    get height(): number {
-        return this.dialog?.clientHeight ?? window.innerHeight;
-    }
-
-    get width(): number {
-        return this.dialog?.clientWidth ?? window.innerWidth;
-    }
-
-    get scrollHeight(): number {
-        return this.dialog?.scrollHeight ?? document.body.scrollHeight;
-    }
+function scrollTarget(): HTMLElement {
+    return (
+        document.querySelector('.MuiDialogContent-root') ??
+        document.querySelector('article') ??
+        document.documentElement
+    );
 }
 
 export interface KeyShortcut {
@@ -60,63 +52,63 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     ScrollDown: {
         description: 'Scroll down the page by half of window height.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollBy(0, t.height / 2);
+            const t = scrollTarget();
+            t.scrollBy(0, t.clientHeight / 2);
         },
     },
 
     ScrollUp: {
         description: 'Scroll up the page by half of window height.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollBy(0, -t.height / 2);
+            const t = scrollTarget();
+            t.scrollBy(0, -t.clientHeight / 2);
         },
     },
 
     ScrollLeft: {
         description: 'Scroll the page to the left by half of window width.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollBy(-t.width / 2, 0);
+            const t = scrollTarget();
+            t.scrollBy(-t.clientWidth / 2, 0);
         },
     },
 
     ScrollRight: {
         description: 'Scroll the page to the right by half of window width.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollBy(t.width / 2, 0);
+            const t = scrollTarget();
+            t.scrollBy(t.clientWidth / 2, 0);
         },
     },
 
     ScrollPageDown: {
         description: 'Scroll down the page by window height.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollBy(0, t.height);
+            const t = scrollTarget();
+            t.scrollBy(0, t.clientHeight);
         },
     },
 
     ScrollPageUp: {
         description: 'Scroll up the page by window height.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollBy(0, -t.height);
+            const t = scrollTarget();
+            t.scrollBy(0, -t.clientHeight);
         },
     },
 
     ScrollTop: {
         description: 'Scroll to the top of the page.',
         dispatch(): void {
-            new ScrollTarget().elem.scrollTo(0, 0);
+            scrollTarget().scrollTo(0, 0);
         },
     },
 
     ScrollBottom: {
         description: 'Scroll to the bottom of the page.',
         dispatch(): void {
-            const t = new ScrollTarget();
-            t.elem.scrollTo(0, t.scrollHeight);
+            const t = scrollTarget();
+            t.scrollTo(0, t.scrollHeight);
         },
     },
 
@@ -124,7 +116,7 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
         description: 'Scroll to the next section header.',
         dispatch(): void {
             const headings: NodeListOf<HTMLElement> = document.querySelectorAll('article > h1,h2,h3,h4,h5,h6');
-            scrollTo(headings, (elem, windowTop) => elem.offsetTop > windowTop);
+            scrollTo(headings, (e, s) => e > s);
         },
     },
 
@@ -133,7 +125,7 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
         dispatch(): void {
             const headings: HTMLElement[] = Array.from(document.querySelectorAll('article > h1,h2,h3,h4,h5,h6'));
             headings.reverse();
-            scrollTo(headings, (elem, windowTop) => elem.offsetTop < windowTop);
+            scrollTo(headings, (e, s) => e < s);
         },
     },
 

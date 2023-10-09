@@ -36,6 +36,7 @@ nav {
 
 article {
   height: 100%;
+  box-sizing: border-box;
   padding: 16px;
   min-width: 273px;
   overflow: auto;

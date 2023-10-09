@@ -2,13 +2,19 @@ import * as React from 'react';
 import { WindowBar } from './WindowBar';
 import { sendMessage } from '../ipc';
 
+const CONTAINER_STYLE: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    zIndex: 2,
+    display: 'flex',
+    flexDirection: 'column',
+};
 const BODY_STYLE: React.CSSProperties = {
+    flexGrow: 1,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    height: '100%',
-    zIndex: 2,
 };
 const LOGO_STYLE: React.CSSProperties = {
     display: 'block',
@@ -27,7 +33,7 @@ function onClick(e: React.MouseEvent<HTMLElement>): void {
 
 export const Welcome: React.FC = () => {
     return (
-        <>
+        <div style={CONTAINER_STYLE}>
             <WindowBar />
             <div style={BODY_STYLE}>
                 <img
@@ -38,6 +44,6 @@ export const Welcome: React.FC = () => {
                     draggable="false"
                 />
             </div>
-        </>
+        </div>
     );
 };
