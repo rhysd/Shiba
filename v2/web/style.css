@@ -27,18 +27,19 @@ main {
 
 nav {
   height: 100%;
-  min-width:200px;
+  min-width: 200px;
   align-self: stretch;
   display: flex;
   flex-direction: column;
-  flex-grow: 1; /* I'm not sure this is a correct way 🥺 */
+  flex-grow: 1;
 }
 
-.markdown-body {
+article {
+  height: 100%;
   padding: 16px;
-  min-width: 600px;
-  max-width: 1012px;
+  min-width: 273px;
   overflow: auto;
+  flex-grow: 7;
 }
 
 @media (prefers-color-scheme: light) {

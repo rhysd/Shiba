@@ -2,6 +2,7 @@ import * as React from 'react';
 import { sendMessage } from '../ipc';
 
 const STYLE: React.CSSProperties = {
+    minWidth: '70px',
     width: '100%',
     height: '30px',
 };
