@@ -29,6 +29,8 @@ target/aarch64-apple-darwin/release/shiba: $(RS_SRC) src/assets/bundle.min.js sr
 	cargo build --release --target=aarch64-apple-darwin
 Shiba.app: target/x86_64-apple-darwin/release/shiba target/aarch64-apple-darwin/release/shiba assets/Shiba.app/Contents/Info.plist
 	bash ./scripts/gen_macos_app.bash
+Shiba.dmg: Shiba.app README.md LICENSE
+	bash ./scripts/gen_macos_dmg.bash
 
 shiba.msi: target/release/shiba.exe assets/wix/shiba.wxs
 	wix extension add WixToolset.UI.wixext WixToolset.Util.wixext

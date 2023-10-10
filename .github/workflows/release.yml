@@ -62,8 +62,8 @@ jobs:
           cache-dependency-path: v2/package-lock.json
       - name: Build package
         run: |
-          make Shiba.app
-          zip --symlinks Shiba.app_universal_v${{ needs.info.outputs.version }}.zip -r Shiba.app
+          make Shiba.dmg
+          mv Shiba.dmg Shiba_v${{ needs.info.outputs.version }}.dmg
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.info.outputs.tag }}
@@ -71,7 +71,7 @@ jobs:
           draft: false
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/Shiba.app_universal_v${{ needs.info.outputs.version }}.zip
+            v2/Shiba_v${{ needs.info.outputs.version }}.dmg
   release-windows:
     name: Build and upload Windows installer and executable
     runs-on: windows-latest
