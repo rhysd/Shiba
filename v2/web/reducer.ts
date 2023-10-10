@@ -25,13 +25,19 @@ export interface Heading {
     current?: boolean;
 }
 
+export interface Appearance {
+    theme: Theme;
+    hasTitle: boolean;
+    vibrant: boolean;
+}
+
 export interface State {
     previewTree: MarkdownReactTree;
     searching: boolean;
     searchIndex: number | null;
     matcher: SearchMatcher;
     outline: boolean;
-    theme: Theme;
+    appearance: Appearance;
     history: boolean;
     files: string[];
     help: boolean;
@@ -53,7 +59,11 @@ export const INITIAL_STATE: State = {
     searchIndex: null,
     matcher: 'SmartCase',
     outline: false,
-    theme: 'light',
+    appearance: {
+        theme: 'light',
+        hasTitle: true,
+        vibrant: false,
+    },
     history: false,
     files: [],
     help: false,
@@ -95,8 +105,8 @@ type Action =
           open: boolean;
       }
     | {
-          kind: 'theme';
-          theme: Theme;
+          kind: 'appearance';
+          appearance: Appearance;
       }
     | {
           kind: 'history';
@@ -161,6 +171,8 @@ export function reducer(state: State, action: Action): State {
                 };
             }
         }
+        case 'headings':
+            return { ...state, headings: action.headings };
         case 'open_search':
             if (state.searching) {
                 return state;
@@ -190,14 +202,12 @@ export function reducer(state: State, action: Action): State {
             } else {
                 return { ...state, notifying: true, notification: action.notification };
             }
-        case 'theme':
-            return { ...state, theme: action.theme };
+        case 'appearance':
+            return { ...state, appearance: action.appearance };
         case 'recent_files':
             return { ...state, files: action.paths };
         case 'home_dir':
             return { ...state, homeDir: action.path };
-        case 'headings':
-            return { ...state, headings: action.headings };
         case 'welcome':
             return { ...state, welcome: true };
         default:
@@ -241,13 +251,6 @@ export function openOutline(): Action {
 
 export function closeOutline(): Action {
     return { kind: 'outline', open: false };
-}
-
-export function setTheme(theme: WindowTheme): Action {
-    return {
-        kind: 'theme',
-        theme: theme === 'Dark' ? 'dark' : 'light',
-    };
 }
 
 export function openHistory(): Action {
@@ -300,4 +303,15 @@ export function welcome(): Action {
 
 export function updateHeadings(headings: Heading[]): Action {
     return { kind: 'headings', headings };
+}
+
+export function setAppearance(theme: WindowTheme, hasTitle: boolean, vibrant: boolean): Action {
+    return {
+        kind: 'appearance',
+        appearance: {
+            theme: theme === 'Dark' ? 'dark' : 'light',
+            hasTitle,
+            vibrant,
+        },
+    };
 }

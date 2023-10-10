@@ -5,7 +5,7 @@ use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::renderer::{
     EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow, UserEvent, Zoom,
+    RenderingFlow, UserEvent, WindowAppearance, Zoom,
 };
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
@@ -358,6 +358,7 @@ where
                     theme: self.renderer.theme(),
                     recent: &self.history.iter().collect::<Vec<_>>(),
                     home: self.preview.home_dir(),
+                    window: WindowAppearance::default(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.

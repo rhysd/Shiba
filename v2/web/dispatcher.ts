@@ -8,7 +8,6 @@ import {
     searchPrevious,
     setSearchMatcher,
     openOutline,
-    setTheme,
     pathChanged,
     openHistory,
     openHelp,
@@ -17,6 +16,7 @@ import {
     notifyAlwaysOnTop,
     setRecentFiles,
     setHomeDir,
+    setAppearance,
     welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
@@ -79,7 +79,7 @@ export class GlobalDispatcher {
                     break;
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
-                    this.dispatch(setTheme(msg.theme));
+                    this.dispatch(setAppearance(msg.theme, msg.window.title, msg.window.vibrancy));
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
                     this.dispatch(setHomeDir(msg.home));

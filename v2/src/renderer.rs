@@ -6,6 +6,27 @@ use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
 
+#[derive(Clone, Copy, Serialize, Debug)]
+pub struct WindowAppearance {
+    title: bool,
+    vibrancy: bool,
+}
+
+impl Default for WindowAppearance {
+    #[cfg(target_os = "macos")]
+    fn default() -> Self {
+        Self { title: false, vibrancy: true }
+    }
+    #[cfg(target_os = "windows")]
+    fn default() -> Self {
+        Self { title: true, vibrancy: false }
+    }
+    #[cfg(target_os = "linux")]
+    fn default() -> Self {
+        Self { title: true, vibrancy: false }
+    }
+}
+
 #[derive(Serialize)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
@@ -16,6 +37,7 @@ pub enum MessageToRenderer<'a> {
         theme: Theme,
         recent: &'a [&'a Path],
         home: Option<&'a Path>,
+        window: WindowAppearance,
     },
     Search,
     SearchNext,

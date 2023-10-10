@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { Resizable } from 're-resizable';
 import { WindowBar } from './WindowBar';
@@ -23,26 +24,33 @@ const NAV_DEFAULT_SIZE = {
     height: '100%',
 };
 
+const SX_NON_VIBRANT = {
+    bgColor: 'background.paper',
+};
+
 export interface Props {
     tree: MarkdownReactTree;
     headings: Heading[];
     path: string | null;
+    titleBar: boolean;
+    vibrant: boolean;
     dispatch: Dispatch;
 }
 
-export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
+export const Preview: React.FC<Props> = ({ tree, headings, path, titleBar, vibrant, dispatch }) => {
     if (tree.root === null) {
         return <></>;
     }
 
+    const sx = vibrant ? {} : SX_NON_VIBRANT;
     return (
-        <main>
+        <Box component="main" sx={sx}>
             <Resizable defaultSize={NAV_DEFAULT_SIZE} minWidth="200px" enable={NAV_RESIZE_DIRECTION} as="nav">
-                <WindowBar />
+                {titleBar && <WindowBar />}
                 <SideBar headings={headings} path={path} />
             </Resizable>
             <Divider orientation="vertical" />
             <Article tree={tree} dispatch={dispatch} />
-        </main>
+        </Box>
     );
 };

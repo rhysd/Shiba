@@ -27,7 +27,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         searchIndex,
         matcher,
         outline,
-        theme,
+        appearance,
         history,
         files,
         help,
@@ -38,6 +38,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         headings,
         currentPath,
     } = state;
+    const { theme, hasTitle, vibrant } = appearance;
 
     let searchInput;
     if (searching && !welcome) {
@@ -48,7 +49,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     let welcomePage;
     if (welcome) {
-        welcomePage = <Welcome />;
+        welcomePage = <Welcome titleBar={!hasTitle} />;
     }
 
     let outlineDialog;
@@ -75,7 +76,14 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     return (
         <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
-            <Preview tree={previewTree} headings={headings} path={currentPath} dispatch={dispatch} />
+            <Preview
+                tree={previewTree}
+                headings={headings}
+                path={currentPath}
+                titleBar={!hasTitle}
+                vibrant={vibrant}
+                dispatch={dispatch}
+            />
             {searchInput}
             {outlineDialog}
             {historyDialog}

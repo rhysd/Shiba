@@ -31,10 +31,14 @@ function onClick(e: React.MouseEvent<HTMLElement>): void {
     sendMessage({ kind: 'file_dialog' });
 }
 
-export const Welcome: React.FC = () => {
+interface Props {
+    titleBar: boolean;
+}
+
+export const Welcome: React.FC<Props> = ({ titleBar }) => {
     return (
         <div style={CONTAINER_STYLE}>
-            <WindowBar />
+            {titleBar && <WindowBar />}
             <div style={BODY_STYLE}>
                 <img
                     alt="Open file with dialog"
