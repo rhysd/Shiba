@@ -121,7 +121,6 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
             <List sx={LIST_SX} ref={listRef}>
                 {children}
             </List>
-            ;
         </>
     );
 };

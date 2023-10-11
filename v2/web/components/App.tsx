@@ -12,6 +12,8 @@ import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
 
+// Note: `CssBaseline` is not available since it sets `background-color` and prevents vibrant window.
+
 const LIGHT_THEME = createTheme({ palette: { mode: 'light' } });
 const DARK_THEME = createTheme({ palette: { mode: 'dark' } });
 

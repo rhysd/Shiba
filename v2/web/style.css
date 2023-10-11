@@ -43,32 +43,6 @@ article {
   flex-grow: 7;
 }
 
-@media (prefers-color-scheme: light) {
-  .search-text-start,
-  .search-text {
-    background-color: #fffe54;
-  }
-
-  .search-text-current-start,
-  .search-text-current {
-    background-color: #ef9a4a;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .search-text-start,
-  .search-text {
-    color: #fff;
-    background-color: #926821;
-  }
-
-  .search-text-current-start,
-  .search-text-current {
-    color: #fff;
-    background-color: #ad531f;
-  }
-}
-
 /* Both <pre> from github-markdown.css and <code> from highlight.js are trying to add 1em padding. */
 pre code.hljs {
   padding: 0;
@@ -97,4 +71,38 @@ pre code.hljs {
 .last-modified-marker {
   width: 0;
   height: 0;
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    color-scheme: light;
+  }
+
+  .search-text-start,
+  .search-text {
+    background-color: #fffe54;
+  }
+
+  .search-text-current-start,
+  .search-text-current {
+    background-color: #ef9a4a;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: dark;
+  }
+
+  .search-text-start,
+  .search-text {
+    color: #fff;
+    background-color: #926821;
+  }
+
+  .search-text-current-start,
+  .search-text-current {
+    color: #fff;
+    background-color: #ad531f;
+  }
 }

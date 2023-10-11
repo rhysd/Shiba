@@ -25,7 +25,7 @@ const NAV_DEFAULT_SIZE = {
 };
 
 const SX_NON_VIBRANT = {
-    bgColor: 'background.paper',
+    bgcolor: 'background.paper',
 };
 
 export interface Props {
