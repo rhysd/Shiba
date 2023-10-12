@@ -1,5 +1,5 @@
 import * as log from './log';
-import type { SearchMatcher, WindowTheme } from './ipc';
+import type { SearchMatcher } from './ipc';
 import { searchNextIndex, searchPreviousIndex } from './search';
 import type { MarkdownReactTree } from './markdown';
 
@@ -25,11 +25,12 @@ export interface Heading {
     current?: boolean;
 }
 
-export interface Appearance {
+export interface Config {
     theme: Theme;
-    hasTitle: boolean;
+    titleBar: boolean;
     vibrant: boolean;
     hideScrollBar: boolean;
+    homeDir: string | null;
 }
 
 export interface State {
@@ -38,17 +39,24 @@ export interface State {
     searchIndex: number | null;
     matcher: SearchMatcher;
     outline: boolean;
-    appearance: Appearance;
+    config: Config;
     history: boolean;
     files: string[];
     help: boolean;
     notifying: boolean;
     notification: NotificationContent;
     welcome: boolean;
-    homeDir: string | null;
     headings: Heading[];
     currentPath: string | null;
 }
+
+export const INITIAL_CONFIG: Config = {
+    theme: 'light',
+    titleBar: true,
+    vibrant: false,
+    hideScrollBar: false,
+    homeDir: null,
+};
 
 export const INITIAL_STATE: State = {
     previewTree: {
@@ -60,19 +68,13 @@ export const INITIAL_STATE: State = {
     searchIndex: null,
     matcher: 'SmartCase',
     outline: false,
-    appearance: {
-        theme: 'light',
-        hasTitle: true,
-        vibrant: false,
-        hideScrollBar: false,
-    },
+    config: INITIAL_CONFIG,
     history: false,
     files: [],
     help: false,
     notifying: false,
     notification: { kind: 'reload' },
     welcome: false,
-    homeDir: null,
     headings: [],
     currentPath: null,
 };
@@ -107,10 +109,6 @@ type Action =
           open: boolean;
       }
     | {
-          kind: 'appearance';
-          appearance: Appearance;
-      }
-    | {
           kind: 'history';
           open: boolean;
       }
@@ -131,8 +129,8 @@ type Action =
           paths: string[];
       }
     | {
-          kind: 'home_dir';
-          path: string | null;
+          kind: 'init';
+          config: Config;
       }
     | {
           kind: 'headings';
@@ -204,12 +202,10 @@ export function reducer(state: State, action: Action): State {
             } else {
                 return { ...state, notifying: true, notification: action.notification };
             }
-        case 'appearance':
-            return { ...state, appearance: action.appearance };
+        case 'init':
+            return { ...state, config: action.config };
         case 'recent_files':
             return { ...state, files: action.paths };
-        case 'home_dir':
-            return { ...state, homeDir: action.path };
         case 'welcome':
             return { ...state, welcome: true };
         default:
@@ -295,10 +291,6 @@ export function setRecentFiles(paths: string[]): Action {
     return { kind: 'recent_files', paths };
 }
 
-export function setHomeDir(path: string | null): Action {
-    return { kind: 'home_dir', path };
-}
-
 export function welcome(): Action {
     return { kind: 'welcome' };
 }
@@ -307,14 +299,9 @@ export function updateHeadings(headings: Heading[]): Action {
     return { kind: 'headings', headings };
 }
 
-export function setAppearance(theme: WindowTheme, hasTitle: boolean, vibrant: boolean, hideScrollBar: boolean): Action {
+export function initConfig(config: Config): Action {
     return {
-        kind: 'appearance',
-        appearance: {
-            theme: theme === 'Dark' ? 'dark' : 'light',
-            hasTitle,
-            vibrant,
-            hideScrollBar,
-        },
+        kind: 'init',
+        config,
     };
 }

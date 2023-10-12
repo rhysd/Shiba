@@ -1,5 +1,7 @@
 import * as React from 'react';
+import { useContext } from 'react';
 import { WindowBar } from './WindowBar';
+import { ConfigContext } from './ConfigContext';
 import { sendMessage } from '../ipc';
 
 const CONTAINER_STYLE: React.CSSProperties = {
@@ -31,11 +33,8 @@ function onClick(e: React.MouseEvent<HTMLElement>): void {
     sendMessage({ kind: 'file_dialog' });
 }
 
-interface Props {
-    titleBar: boolean;
-}
-
-export const Welcome: React.FC<Props> = ({ titleBar }) => {
+export const Welcome: React.FC = () => {
+    const { titleBar } = useContext(ConfigContext);
     return (
         <div style={CONTAINER_STYLE}>
             {titleBar && <WindowBar />}

@@ -2,21 +2,20 @@ import {
     type Dispatch,
     type State,
     INITIAL_STATE,
-    previewContent,
+    initConfig,
+    notifyAlwaysOnTop,
+    notifyReload,
+    notifyZoom,
+    openHelp,
+    openHistory,
+    openOutline,
     openSearch,
+    pathChanged,
+    previewContent,
     searchNext,
     searchPrevious,
-    setSearchMatcher,
-    openOutline,
-    pathChanged,
-    openHistory,
-    openHelp,
-    notifyZoom,
-    notifyReload,
-    notifyAlwaysOnTop,
     setRecentFiles,
-    setHomeDir,
-    setAppearance,
+    setSearchMatcher,
     welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
@@ -80,11 +79,16 @@ export class GlobalDispatcher {
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
                     this.dispatch(
-                        setAppearance(msg.theme, msg.window.title, msg.window.vibrancy, !msg.window.scrollbar),
+                        initConfig({
+                            theme: msg.theme === 'Dark' ? 'dark' : 'light',
+                            titleBar: !msg.window.title,
+                            vibrant: msg.window.vibrancy,
+                            hideScrollBar: !msg.window.scrollbar,
+                            homeDir: msg.home,
+                        }),
                     );
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
-                    this.dispatch(setHomeDir(msg.home));
                     // `this.state.theme` is not available since it is updated *after* the first rendering of Markdown content.
                     //   1. Receive `config` IPC message
                     //   2. Dispatch `setTheme` action

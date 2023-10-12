@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useContext } from 'react';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 import ArticleIcon from '@mui/icons-material/Article';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
+import { ConfigContext } from './ConfigContext';
 import type { Heading } from '../reducer';
 import { sendMessage } from '../ipc';
 
@@ -60,10 +61,11 @@ const HEADER_SX = {
 interface Props {
     headings: Heading[];
     path: string | null;
-    hideScrollBar: boolean;
 }
 
-export const SideBar: React.FC<Props> = ({ headings, path, hideScrollBar }) => {
+export const SideBar: React.FC<Props> = ({ headings, path }) => {
+    const { hideScrollBar } = useContext(ConfigContext);
+
     const focusedRef = useRef<HTMLLIElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
 

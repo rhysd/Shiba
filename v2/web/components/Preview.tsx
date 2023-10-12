@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { useContext } from 'react';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { Resizable } from 're-resizable';
 import { WindowBar } from './WindowBar';
 import { SideBar } from './SideBar';
 import { Article } from './Article';
+import { ConfigContext } from './ConfigContext';
 import type { MarkdownReactTree } from '../markdown';
 import type { Dispatch, Heading } from '../reducer';
 
@@ -32,13 +34,12 @@ export interface Props {
     tree: MarkdownReactTree;
     headings: Heading[];
     path: string | null;
-    titleBar: boolean;
-    vibrant: boolean;
-    hideScrollBar: boolean;
     dispatch: Dispatch;
 }
 
-export const Preview: React.FC<Props> = ({ tree, headings, path, titleBar, vibrant, hideScrollBar, dispatch }) => {
+export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
+    const { titleBar, vibrant } = useContext(ConfigContext);
+
     if (tree.root === null) {
         return <></>;
     }
@@ -48,7 +49,7 @@ export const Preview: React.FC<Props> = ({ tree, headings, path, titleBar, vibra
         <Box component="main" sx={sx}>
             <Resizable defaultSize={NAV_DEFAULT_SIZE} minWidth="200px" enable={NAV_RESIZE_DIRECTION} as="nav">
                 {titleBar && <WindowBar />}
-                <SideBar headings={headings} path={path} hideScrollBar={hideScrollBar} />
+                <SideBar headings={headings} path={path} />
             </Resizable>
             <Divider orientation="vertical" />
             <Article tree={tree} dispatch={dispatch} />
