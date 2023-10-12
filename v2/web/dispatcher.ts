@@ -79,7 +79,9 @@ export class GlobalDispatcher {
                     break;
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
-                    this.dispatch(setAppearance(msg.theme, msg.window.title, msg.window.vibrancy));
+                    this.dispatch(
+                        setAppearance(msg.theme, msg.window.title, msg.window.vibrancy, !msg.window.scrollbar),
+                    );
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
                     this.dispatch(setHomeDir(msg.home));

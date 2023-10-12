@@ -29,6 +29,7 @@ export interface Appearance {
     theme: Theme;
     hasTitle: boolean;
     vibrant: boolean;
+    hideScrollBar: boolean;
 }
 
 export interface State {
@@ -63,6 +64,7 @@ export const INITIAL_STATE: State = {
         theme: 'light',
         hasTitle: true,
         vibrant: false,
+        hideScrollBar: false,
     },
     history: false,
     files: [],
@@ -305,13 +307,14 @@ export function updateHeadings(headings: Heading[]): Action {
     return { kind: 'headings', headings };
 }
 
-export function setAppearance(theme: WindowTheme, hasTitle: boolean, vibrant: boolean): Action {
+export function setAppearance(theme: WindowTheme, hasTitle: boolean, vibrant: boolean, hideScrollBar: boolean): Action {
     return {
         kind: 'appearance',
         appearance: {
             theme: theme === 'Dark' ? 'dark' : 'light',
             hasTitle,
             vibrant,
+            hideScrollBar,
         },
     };
 }

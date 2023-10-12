@@ -34,10 +34,11 @@ export interface Props {
     path: string | null;
     titleBar: boolean;
     vibrant: boolean;
+    hideScrollBar: boolean;
     dispatch: Dispatch;
 }
 
-export const Preview: React.FC<Props> = ({ tree, headings, path, titleBar, vibrant, dispatch }) => {
+export const Preview: React.FC<Props> = ({ tree, headings, path, titleBar, vibrant, hideScrollBar, dispatch }) => {
     if (tree.root === null) {
         return <></>;
     }
@@ -47,7 +48,7 @@ export const Preview: React.FC<Props> = ({ tree, headings, path, titleBar, vibra
         <Box component="main" sx={sx}>
             <Resizable defaultSize={NAV_DEFAULT_SIZE} minWidth="200px" enable={NAV_RESIZE_DIRECTION} as="nav">
                 {titleBar && <WindowBar />}
-                <SideBar headings={headings} path={path} />
+                <SideBar headings={headings} path={path} hideScrollBar={hideScrollBar} />
             </Resizable>
             <Divider orientation="vertical" />
             <Article tree={tree} dispatch={dispatch} />

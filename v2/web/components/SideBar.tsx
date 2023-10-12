@@ -60,16 +60,29 @@ const HEADER_SX = {
 interface Props {
     headings: Heading[];
     path: string | null;
+    hideScrollBar: boolean;
 }
 
-export const SideBar: React.FC<Props> = ({ headings, path }) => {
+export const SideBar: React.FC<Props> = ({ headings, path, hideScrollBar }) => {
     const focusedRef = useRef<HTMLLIElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
+
     useEffect(() => {
         if (focusedRef.current && listRef.current) {
             scrollIntoSideBar(focusedRef.current, listRef.current);
         }
     }, [headings]);
+
+    useEffect(() => {
+        if (!hideScrollBar || !listRef.current) {
+            return;
+        }
+        const callback = (): void => {
+            listRef.current?.classList.toggle('hide-scrollbar');
+        };
+        listRef.current.addEventListener('mouseenter', callback);
+        listRef.current.addEventListener('mouseleave', callback);
+    }, [hideScrollBar]);
 
     const children = headings.map((h, key) => {
         const selected = !!h.current;
@@ -103,6 +116,8 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
         );
     });
 
+    const className = hideScrollBar ? 'hide-scrollbar' : '';
+
     return (
         <>
             <Tooltip title={path} arrow>
@@ -118,7 +133,7 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
                 </Button>
             </Tooltip>
             <Divider />
-            <List sx={LIST_SX} ref={listRef}>
+            <List className={className} sx={LIST_SX} ref={listRef}>
                 {children}
             </List>
         </>

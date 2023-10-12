@@ -40,7 +40,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         headings,
         currentPath,
     } = state;
-    const { theme, hasTitle, vibrant } = appearance;
+    const { theme, hasTitle, vibrant, hideScrollBar } = appearance;
 
     let searchInput;
     if (searching && !welcome) {
@@ -84,6 +84,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
                 path={currentPath}
                 titleBar={!hasTitle}
                 vibrant={vibrant}
+                hideScrollBar={hideScrollBar}
                 dispatch={dispatch}
             />
             {searchInput}

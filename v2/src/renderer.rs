@@ -10,20 +10,21 @@ use std::path::{Path, PathBuf};
 pub struct WindowAppearance {
     title: bool,
     vibrancy: bool,
+    scrollbar: bool,
 }
 
 impl Default for WindowAppearance {
     #[cfg(target_os = "macos")]
     fn default() -> Self {
-        Self { title: false, vibrancy: true }
+        Self { title: false, vibrancy: true, scrollbar: true }
     }
     #[cfg(target_os = "windows")]
     fn default() -> Self {
-        Self { title: true, vibrancy: false }
+        Self { title: true, vibrancy: false, scrollbar: false }
     }
     #[cfg(target_os = "linux")]
     fn default() -> Self {
-        Self { title: true, vibrancy: false }
+        Self { title: true, vibrancy: false, scrollbar: false }
     }
 }
 

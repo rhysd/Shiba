@@ -210,6 +210,7 @@ export type MessageFromMain =
           window: {
               title: boolean;
               vibrancy: boolean;
+              scrollbar: boolean;
           };
       }
     | {

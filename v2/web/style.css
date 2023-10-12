@@ -106,3 +106,7 @@ pre code.hljs {
     background-color: #ad531f;
   }
 }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
