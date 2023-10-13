@@ -64,6 +64,18 @@ jobs:
         run: |
           make Shiba.dmg
           mv Shiba.dmg Shiba_v${{ needs.info.outputs.version }}.dmg
+      - name: Make binary zip for x86_64
+        run: |
+          make target/x86_64-apple-darwin/release/shiba
+          cp target/x86_64-apple-darwin/release/shiba shiba
+          zip shiba_macos_x86_64_v${{ needs.info.outputs.version }}.zip shiba
+          rm shiba
+      - name: Make binary zip for aarch64
+        run: |
+          make target/aarch64-apple-darwin/release/shiba
+          cp target/aarch64-apple-darwin/release/shiba shiba
+          zip shiba_macos_aarch64_v${{ needs.info.outputs.version }}.zip shiba
+          rm shiba
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.info.outputs.tag }}
@@ -72,6 +84,8 @@ jobs:
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
             v2/Shiba_v${{ needs.info.outputs.version }}.dmg
+            v2/shiba_macos_x86_64_v${{ needs.info.outputs.version }}.zip
+            v2/shiba_macos_aarch64_v${{ needs.info.outputs.version }}.zip
   release-windows:
     name: Build and upload Windows installer and executable
     runs-on: windows-latest
