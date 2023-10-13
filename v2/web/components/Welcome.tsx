@@ -1,16 +1,18 @@
 import * as React from 'react';
 import { useContext } from 'react';
+import Box from '@mui/material/Box';
 import { WindowBar } from './WindowBar';
 import { ConfigContext } from './ConfigContext';
 import { sendMessage } from '../ipc';
 
-const CONTAINER_STYLE: React.CSSProperties = {
+const VIBRANT_BODY_SX = {
     width: '100%',
     height: '100%',
     zIndex: 2,
     display: 'flex',
     flexDirection: 'column',
 };
+const NON_VIBRANT_BODY_SX = { bgcolor: 'background.paper', ...VIBRANT_BODY_SX };
 const BODY_STYLE: React.CSSProperties = {
     flexGrow: 1,
     display: 'flex',
@@ -34,9 +36,10 @@ function onClick(e: React.MouseEvent<HTMLElement>): void {
 }
 
 export const Welcome: React.FC = () => {
-    const { titleBar } = useContext(ConfigContext);
+    const { titleBar, vibrant } = useContext(ConfigContext);
+    const sx = vibrant ? VIBRANT_BODY_SX : NON_VIBRANT_BODY_SX;
     return (
-        <div style={CONTAINER_STYLE}>
+        <Box sx={sx}>
             {titleBar && <WindowBar />}
             <div style={BODY_STYLE}>
                 <img
@@ -47,6 +50,6 @@ export const Welcome: React.FC = () => {
                     draggable="false"
                 />
             </div>
-        </div>
+        </Box>
     );
 };
