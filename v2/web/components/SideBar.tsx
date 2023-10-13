@@ -117,8 +117,11 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
             </ListItem>
         );
     });
-
     const className = hideScrollBar ? 'hide-scrollbar' : '';
+
+    if (path !== null && path.startsWith('\\\\?\\')) {
+        path = path.slice(4); // Strip UNC path
+    }
 
     return (
         <>
