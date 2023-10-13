@@ -8,24 +8,9 @@ use std::path::{Path, PathBuf};
 
 #[derive(Clone, Copy, Serialize, Debug)]
 pub struct WindowAppearance {
-    title: bool,
-    vibrancy: bool,
-    scrollbar: bool,
-}
-
-impl Default for WindowAppearance {
-    #[cfg(target_os = "macos")]
-    fn default() -> Self {
-        Self { title: false, vibrancy: true, scrollbar: true }
-    }
-    #[cfg(target_os = "windows")]
-    fn default() -> Self {
-        Self { title: true, vibrancy: false, scrollbar: false }
-    }
-    #[cfg(target_os = "linux")]
-    fn default() -> Self {
-        Self { title: true, vibrancy: false, scrollbar: false }
-    }
+    pub title: bool,
+    pub vibrancy: bool,
+    pub scrollbar: bool,
 }
 
 #[derive(Serialize)]
@@ -202,6 +187,7 @@ pub trait Renderer {
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
     fn drag_window(&self) -> Result<()>;
+    fn window_appearance(&self) -> WindowAppearance;
 }
 
 /// Context to execute rendering.

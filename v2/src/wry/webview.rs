@@ -3,7 +3,7 @@ use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
-    UserEvent, ZoomLevel,
+    UserEvent, WindowAppearance, ZoomLevel,
 };
 use anyhow::{Context as _, Result};
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
@@ -255,10 +255,13 @@ impl Renderer for WebViewRenderer {
         Ok(result)
     }
 
+    #[cfg(not(target_os = "macos"))]
     fn set_title(&self, title: &str) {
         log::debug!("Set window title: {}", title);
         self.webview.window().set_title(title);
     }
+    #[cfg(target_os = "macos")]
+    fn set_title(&self, _title: &str) {} // On macOS, the title bar is hidden
 
     fn window_state(&self) -> Option<WindowState> {
         let PhysicalSize { width, height } = self.webview.inner_size(); // `self.webview.window().inner_size()` doesn't work
@@ -315,5 +318,13 @@ impl Renderer for WebViewRenderer {
 
     fn drag_window(&self) -> Result<()> {
         self.webview.window().drag_window().context("Could not start dragging the window")
+    }
+
+    fn window_appearance(&self) -> WindowAppearance {
+        WindowAppearance {
+            title: cfg!(not(target_os = "macos")),
+            vibrancy: cfg!(target_os = "macos"),
+            scrollbar: cfg!(target_os = "macos"),
+        }
     }
 }
