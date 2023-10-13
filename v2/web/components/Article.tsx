@@ -36,16 +36,8 @@ function collectHeadings(root: HTMLElement): Heading[] {
 
 let currentId: number | null = null;
 function dispatchHeadings(root: HTMLElement, dispatch: Dispatch): void {
-    // Note: `requestIdleCallback` is not implemented on WebKit
-    // https://caniuse.com/requestidlecallback
-
     if (currentId !== null) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (window.cancelIdleCallback) {
-            window.cancelIdleCallback(currentId);
-        } else {
-            clearTimeout(currentId);
-        }
+        clearTimeout(currentId);
         currentId = null;
     }
 
@@ -55,11 +47,7 @@ function dispatchHeadings(root: HTMLElement, dispatch: Dispatch): void {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (window.requestIdleCallback) {
-        currentId = window.requestIdleCallback(callback);
-    } else {
-        currentId = setTimeout(callback, 100);
-    }
+    currentId = setTimeout(callback, 100);
 }
 
 export interface Props {
