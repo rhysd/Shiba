@@ -12,11 +12,26 @@ function appearInViewport(elem: Element): boolean {
     return !outside;
 }
 
+function getTitle(elem: HTMLElement): string {
+    const text = elem.textContent;
+    if (text) {
+        return text;
+    }
+
+    type AltElem = HTMLElement & { alt: string };
+    const alt = (elem.querySelector('*[alt]') as AltElem | null)?.alt;
+    if (alt) {
+        return alt;
+    }
+
+    return '(empty title)';
+}
+
 function collectHeadings(root: HTMLElement): Heading[] {
     const headings: Heading[] = [];
     for (const elem of root.querySelectorAll('article > h1,h2,h3,h4,h5,h6') as NodeListOf<HTMLHeadingElement>) {
         const level = parseInt(elem.tagName.slice(1), 10);
-        const text = elem.textContent ?? '';
+        const text = getTitle(elem);
         headings.push({ level, text, elem });
     }
 
