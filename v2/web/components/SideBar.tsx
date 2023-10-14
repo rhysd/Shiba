@@ -5,7 +5,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Button from '@mui/material/Button';
-import ArticleIcon from '@mui/icons-material/Article';
+import PetsIcon from '@mui/icons-material/Pets';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
 import { ConfigContext } from './ConfigContext';
@@ -43,19 +43,43 @@ function onHeaderClick(e: React.MouseEvent<HTMLElement>): void {
     sendMessage({ kind: 'file_dialog' });
 }
 
-const LIST_SX = {
-    height: '100%',
-    overflowY: 'auto',
-    overscrollBehavior: 'none',
-};
-
-const HEADER_SX = {
+const LIST_HEADER_SX = {
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     textTransform: 'none',
     color: 'text.primary',
     fontWeight: 'h6',
+};
+
+interface ListHeaderProps {
+    path: string | null;
+}
+
+const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
+    if (path !== null && path.startsWith('\\\\?\\')) {
+        path = path.slice(4); // Strip UNC path
+    }
+    return (
+        <Tooltip title={path} arrow>
+            <Button
+                variant="text"
+                fullWidth
+                disableFocusRipple
+                startIcon={<PetsIcon />}
+                sx={LIST_HEADER_SX}
+                onClick={onHeaderClick}
+            >
+                {fileName(path)}
+            </Button>
+        </Tooltip>
+    );
+};
+
+const LIST_SX = {
+    height: '100%',
+    overflowY: 'auto',
+    overscrollBehavior: 'none',
 };
 
 interface Props {
@@ -119,24 +143,9 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
     });
     const className = hideScrollBar ? 'hide-scrollbar' : '';
 
-    if (path !== null && path.startsWith('\\\\?\\')) {
-        path = path.slice(4); // Strip UNC path
-    }
-
     return (
         <>
-            <Tooltip title={path} arrow>
-                <Button
-                    variant="text"
-                    fullWidth
-                    disableFocusRipple
-                    startIcon={<ArticleIcon />}
-                    sx={HEADER_SX}
-                    onClick={onHeaderClick}
-                >
-                    {fileName(path)}
-                </Button>
-            </Tooltip>
+            <ListHeader path={path} />
             <Divider />
             <List className={className} sx={LIST_SX} ref={listRef}>
                 {children}
