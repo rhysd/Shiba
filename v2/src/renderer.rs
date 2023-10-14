@@ -6,6 +6,13 @@ use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
 
+#[derive(Clone, Copy, Serialize, Debug)]
+pub struct WindowAppearance {
+    pub title: bool,
+    pub vibrancy: bool,
+    pub scrollbar: bool,
+}
+
 #[derive(Serialize)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
@@ -16,13 +23,14 @@ pub enum MessageToRenderer<'a> {
         theme: Theme,
         recent: &'a [&'a Path],
         home: Option<&'a Path>,
+        window: WindowAppearance,
     },
     Search,
     SearchNext,
     SearchPrevious,
     Welcome,
     Outline,
-    NewFile {
+    PathChanged {
         path: &'a Path,
     },
     History,
@@ -57,6 +65,7 @@ pub enum MessageFromRenderer {
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
     OpenFile { path: String },
     Zoom { zoom: Zoom },
+    DragWindow,
     Error { message: String },
 }
 
@@ -177,6 +186,8 @@ pub trait Renderer {
     fn zoom_level(&self) -> ZoomLevel;
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
+    fn drag_window(&self) -> Result<()>;
+    fn window_appearance(&self) -> WindowAppearance;
 }
 
 /// Context to execute rendering.

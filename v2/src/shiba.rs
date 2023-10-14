@@ -145,6 +145,7 @@ impl PreviewContent {
         if is_new {
             renderer.set_title(&title);
             self.title = title;
+            renderer.send_message(MessageToRenderer::PathChanged { path })?;
         }
 
         Ok(true)
@@ -246,7 +247,6 @@ where
     fn preview_new(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         if self.preview.show(&path, &self.renderer)? {
-            self.renderer.send_message(MessageToRenderer::NewFile { path: &path })?;
             self.history.push(path);
         }
         Ok(())
@@ -358,6 +358,7 @@ where
                     theme: self.renderer.theme(),
                     recent: &self.history.iter().collect::<Vec<_>>(),
                     home: self.preview.home_dir(),
+                    window: self.renderer.window_appearance(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
@@ -384,6 +385,7 @@ where
                 }
             }
             MessageFromRenderer::Zoom { zoom } => self.zoom(zoom)?,
+            MessageFromRenderer::DragWindow => self.renderer.drag_window()?,
             MessageFromRenderer::Quit => return Ok(RenderingFlow::Exit),
             MessageFromRenderer::Error { message } => {
                 anyhow::bail!("Error reported from renderer: {}", message)
@@ -425,7 +427,6 @@ where
                         path = path.canonicalize()?;
                     }
                     if self.preview.show(&path, &self.renderer)? {
-                        self.renderer.send_message(MessageToRenderer::NewFile { path: &path })?;
                         self.history.push(path);
                     }
                 }

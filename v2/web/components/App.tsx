@@ -8,9 +8,12 @@ import { Outline } from './Outline';
 import { History } from './History';
 import { Guide } from './Guide';
 import { Notification } from './Notification';
+import { ConfigContext } from './ConfigContext';
 import { sendMessage } from '../ipc';
 import { INITIAL_STATE, reducer } from '../reducer';
 import type { GlobalDispatcher } from '../dispatcher';
+
+// Note: `CssBaseline` is not available since it sets `background-color` and prevents vibrant window.
 
 const LIGHT_THEME = createTheme({ palette: { mode: 'light' } });
 const DARK_THEME = createTheme({ palette: { mode: 'dark' } });
@@ -27,14 +30,15 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         searchIndex,
         matcher,
         outline,
-        theme,
+        config,
         history,
         files,
         help,
         notifying,
         notification,
         welcome,
-        homeDir,
+        headings,
+        currentPath,
     } = state;
 
     let searchInput;
@@ -56,7 +60,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
 
     let historyDialog;
     if (history) {
-        historyDialog = <History history={files} homeDir={homeDir} dispatch={dispatch} />;
+        historyDialog = <History history={files} dispatch={dispatch} />;
     }
 
     let guideDialog;
@@ -72,14 +76,16 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     }, []); // Run only when component was mounted
 
     return (
-        <ThemeProvider theme={theme === 'light' ? LIGHT_THEME : DARK_THEME}>
-            <Preview tree={previewTree} />
-            {searchInput}
-            {outlineDialog}
-            {historyDialog}
-            {guideDialog}
-            {welcomePage}
-            <Notification open={notifying} content={notification} dispatch={dispatch} />
+        <ThemeProvider theme={config.theme === 'light' ? LIGHT_THEME : DARK_THEME}>
+            <ConfigContext.Provider value={config}>
+                <Preview tree={previewTree} headings={headings} path={currentPath} dispatch={dispatch} />
+                {searchInput}
+                {outlineDialog}
+                {historyDialog}
+                {guideDialog}
+                {welcomePage}
+                <Notification open={notifying} content={notification} dispatch={dispatch} />
+            </ConfigContext.Provider>
         </ThemeProvider>
     );
 };

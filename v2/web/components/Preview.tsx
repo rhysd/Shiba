@@ -1,59 +1,58 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useContext } from 'react';
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
+import { Resizable } from 're-resizable';
+import { WindowBar } from './WindowBar';
+import { SideBar } from './SideBar';
+import { Article } from './Article';
+import { ConfigContext } from './ConfigContext';
 import type { MarkdownReactTree } from '../markdown';
-import * as log from '../log';
+import type { Dispatch, Heading } from '../reducer';
 
-function appearInViewport(elem: Element): boolean {
-    const { top, left, bottom, right } = elem.getBoundingClientRect();
-    const height = window.innerHeight;
-    const width = window.innerWidth;
-    const outside = bottom < 0 || height < top || right < 0 || width < left;
-    return !outside;
-}
+const NAV_RESIZE_DIRECTION = {
+    top: false,
+    right: true,
+    bottom: false,
+    left: false,
+    topRight: false,
+    bottomRight: false,
+    bottomLeft: false,
+    topLeft: false,
+};
+
+const NAV_DEFAULT_SIZE = {
+    width: '20%',
+    height: '100%',
+};
+
+const SX_NON_VIBRANT = {
+    bgcolor: 'background.paper',
+};
 
 export interface Props {
     tree: MarkdownReactTree;
+    headings: Heading[];
+    path: string | null;
+    dispatch: Dispatch;
 }
 
-export const Preview: React.FC<Props> = ({ tree }) => {
-    const { root, lastModified } = tree;
-    const ref = useRef<HTMLElement>(null);
+export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
+    const { titleBar, vibrant } = useContext(ConfigContext);
 
-    useEffect(() => {
-        const elem = lastModified?.current;
-        if (!elem || appearInViewport(elem)) {
-            return;
-        }
-        log.debug('Scrolling to last modified element:', elem);
-        elem.scrollIntoView({
-            behavior: 'smooth', // This does not work on WKWebView
-            block: 'center',
-            inline: 'center',
-        });
-    }, [lastModified]);
-
-    useEffect(() => {
-        const article = ref.current;
-        if (article === null) {
-            return;
-        }
-
-        const bg = window.getComputedStyle(article, null).getPropertyValue('background-color');
-        if (!bg) {
-            return;
-        }
-
-        document.documentElement.style.backgroundColor = bg;
-    }, []);
-
-    let style;
-    if (root === null) {
-        style = { display: 'none' };
+    if (tree.root === null) {
+        return <></>;
     }
 
+    const sx = vibrant ? {} : SX_NON_VIBRANT;
     return (
-        <article className="markdown-body" style={style} ref={ref}>
-            {root}
-        </article>
+        <Box component="main" sx={sx}>
+            <Resizable defaultSize={NAV_DEFAULT_SIZE} minWidth="200px" enable={NAV_RESIZE_DIRECTION} as="nav">
+                {titleBar && <WindowBar />}
+                <SideBar headings={headings} path={path} />
+            </Resizable>
+            <Divider orientation="vertical" />
+            <Article tree={tree} dispatch={dispatch} />
+        </Box>
     );
 };

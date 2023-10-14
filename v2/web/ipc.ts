@@ -37,6 +37,7 @@ export type KeyAction =
 export type KeyMaps = Record<string, KeyAction>;
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
 export type WindowTheme = 'Dark' | 'Light';
+export type Platform = 'Mac' | 'Windows' | 'Linux';
 
 export type RenderTreeTableAlign = 'left' | 'center' | 'right' | null;
 export interface RenderTreeFootNoteDef {
@@ -194,7 +195,7 @@ export type MessageFromMain =
           tree: RenderTreeElem[];
       }
     | {
-          kind: 'new_file';
+          kind: 'path_changed';
           path: string;
       }
     | {
@@ -206,6 +207,11 @@ export type MessageFromMain =
           theme: WindowTheme;
           recent: string[];
           home: string | null;
+          window: {
+              title: boolean;
+              vibrancy: boolean;
+              scrollbar: boolean;
+          };
       }
     | {
           kind: 'search';
@@ -277,6 +283,9 @@ export type MessageToMain =
     | {
           kind: 'zoom';
           zoom: 'In' | 'Out';
+      }
+    | {
+          kind: 'drag_window';
       }
     | {
           kind: 'error';

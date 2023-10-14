@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useContext } from 'react';
 import { Palette } from './Palette';
+import { ConfigContext } from './ConfigContext';
 import { type Dispatch, closeHistory } from '../reducer';
 import { sendMessage } from '../ipc';
 import * as log from '../log';
@@ -12,7 +13,6 @@ interface HistoryItem {
 
 export interface Props {
     history: string[];
-    homeDir: string | null;
     dispatch: Dispatch;
 }
 
@@ -30,7 +30,8 @@ function text(path: string, homeDir: string | null): string {
     return path;
 }
 
-export const History: React.FC<Props> = ({ history, homeDir, dispatch }) => {
+export const History: React.FC<Props> = ({ history, dispatch }) => {
+    const { homeDir } = useContext(ConfigContext);
     const items = useMemo(() => {
         const items = history.map(path => ({ text: text(path, homeDir), path }));
         return items.reverse();

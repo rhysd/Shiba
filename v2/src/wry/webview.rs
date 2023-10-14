@@ -3,10 +3,12 @@ use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
-    UserEvent, ZoomLevel,
+    UserEvent, WindowAppearance, ZoomLevel,
 };
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
+#[cfg(target_os = "macos")]
+use wry::application::platform::macos::WindowBuilderExtMacOS as _;
 use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
@@ -141,13 +143,28 @@ fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Re
         }
     }
 
-    builder.build().map_err(Into::into)
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.with_transparent(true);
+    }
+
+    let webview = builder.build()?;
+
+    #[cfg(target_os = "macos")]
+    {
+        use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+        apply_vibrancy(webview.window(), NSVisualEffectMaterial::Sidebar, None, None)?;
+    }
+
+    Ok(webview)
 }
 
 pub struct WebViewRenderer {
     webview: WebView,
     zoom_level: ZoomLevel,
     always_on_top: bool,
+    #[cfg(target_os = "linux")]
+    theme: ThemeConfig,
 }
 
 impl WebViewRenderer {
@@ -178,7 +195,8 @@ impl WebViewRenderer {
             builder = builder.with_always_on_top(true);
         }
 
-        match config.window().theme {
+        let theme = config.window().theme;
+        match theme {
             ThemeConfig::System => {}
             ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
             ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
@@ -189,6 +207,15 @@ impl WebViewRenderer {
             use wry::application::window::Icon;
             let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
             builder = builder.with_window_icon(Some(icon));
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            builder = builder
+                .with_transparent(true)
+                .with_fullsize_content_view(true)
+                .with_titlebar_transparent(true)
+                .with_title_hidden(true);
         }
 
         let webview = create_webview(builder.build(event_loop)?, event_loop, config)?;
@@ -206,7 +233,13 @@ impl WebViewRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(WebViewRenderer { webview, zoom_level, always_on_top })
+        Ok(WebViewRenderer {
+            webview,
+            zoom_level,
+            always_on_top,
+            #[cfg(target_os = "linux")]
+            theme,
+        })
     }
 
     pub fn window(&self) -> &Window {
@@ -231,10 +264,13 @@ impl Renderer for WebViewRenderer {
         Ok(result)
     }
 
+    #[cfg(not(target_os = "macos"))]
     fn set_title(&self, title: &str) {
         log::debug!("Set window title: {}", title);
         self.webview.window().set_title(title);
     }
+    #[cfg(target_os = "macos")]
+    fn set_title(&self, _title: &str) {} // On macOS, the title bar is hidden
 
     fn window_state(&self) -> Option<WindowState> {
         let PhysicalSize { width, height } = self.webview.inner_size(); // `self.webview.window().inner_size()` doesn't work
@@ -252,6 +288,18 @@ impl Renderer for WebViewRenderer {
         Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top })
     }
 
+    // On Linux, `Window::theme` does not return the theme set when building window. For the workaround,
+    // remember the theme config and respect it.
+    // https://github.com/tauri-apps/tao/issues/799
+    #[cfg(target_os = "linux")]
+    fn theme(&self) -> RendererTheme {
+        match self.theme {
+            ThemeConfig::Light => RendererTheme::Light,
+            ThemeConfig::Dark => RendererTheme::Dark,
+            ThemeConfig::System => window_theme(self.webview.window()),
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
     fn theme(&self) -> RendererTheme {
         window_theme(self.webview.window())
     }
@@ -287,5 +335,17 @@ impl Renderer for WebViewRenderer {
 
     fn always_on_top(&self) -> bool {
         self.always_on_top
+    }
+
+    fn drag_window(&self) -> Result<()> {
+        self.webview.window().drag_window().context("Could not start dragging the window")
+    }
+
+    fn window_appearance(&self) -> WindowAppearance {
+        WindowAppearance {
+            title: cfg!(not(target_os = "macos")),
+            vibrancy: cfg!(target_os = "macos"),
+            scrollbar: cfg!(target_os = "macos"),
+        }
     }
 }

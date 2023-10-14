@@ -30,13 +30,14 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.14.7",
+    "@mui/icons-material": "^5.14.12",
     "@mui/material": "^5.14.7",
     "github-markdown-css": "^5.2.0",
     "highlight.js": "^11.8.0",
     "mathjax-full": "^3.2.2",
     "mermaid": "^10.4.0",
     "mousetrap": "^1.6.5",
+    "re-resizable": "^6.9.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

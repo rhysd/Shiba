@@ -3,6 +3,7 @@
 /src/assets/*.js
 /src/assets/*.js.map
 /src/assets/**/*.css
+/src/assets/**/*.css.map
 /src/assets/*.html
 /web/*.js
 /Shiba.app

@@ -2,21 +2,20 @@ import {
     type Dispatch,
     type State,
     INITIAL_STATE,
-    previewContent,
+    initConfig,
+    notifyAlwaysOnTop,
+    notifyReload,
+    notifyZoom,
+    openHelp,
+    openHistory,
+    openOutline,
     openSearch,
+    pathChanged,
+    previewContent,
     searchNext,
     searchPrevious,
-    setSearchMatcher,
-    openOutline,
-    setTheme,
-    newFile,
-    openHistory,
-    openHelp,
-    notifyZoom,
-    notifyReload,
-    notifyAlwaysOnTop,
     setRecentFiles,
-    setHomeDir,
+    setSearchMatcher,
     welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
@@ -74,15 +73,22 @@ export class GlobalDispatcher {
                     this.dispatch(previewContent(tree));
                     break;
                 }
-                case 'new_file':
-                    this.dispatch(newFile(msg.path));
+                case 'path_changed':
+                    this.dispatch(pathChanged(msg.path));
                     break;
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
-                    this.dispatch(setTheme(msg.theme));
+                    this.dispatch(
+                        initConfig({
+                            theme: msg.theme === 'Dark' ? 'dark' : 'light',
+                            titleBar: !msg.window.title,
+                            vibrant: msg.window.vibrancy,
+                            hideScrollBar: !msg.window.scrollbar,
+                            homeDir: msg.home,
+                        }),
+                    );
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
-                    this.dispatch(setHomeDir(msg.home));
                     // `this.state.theme` is not available since it is updated *after* the first rendering of Markdown content.
                     //   1. Receive `config` IPC message
                     //   2. Dispatch `setTheme` action
