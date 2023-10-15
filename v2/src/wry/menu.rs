@@ -106,7 +106,7 @@ impl Menu {
         let history = accel("History…", MOD, Code::KeyY);
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
-        let edit_config = no_accel("Edit Config");
+        let settings = no_accel("Settings…");
         let open_repo = no_accel("Open Repository Page");
 
         // Menu bar structure
@@ -126,7 +126,7 @@ impl Menu {
                 &zoom_out,
             ],
         )?;
-        let help_menu = Submenu::with_items("&Help", true, &[&guide, &edit_config, &open_repo])?;
+        let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
         menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
@@ -134,6 +134,8 @@ impl Menu {
                 true,
                 &[
                     &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    &PredefinedMenuItem::separator(),
+                    &settings,
                     &PredefinedMenuItem::separator(),
                     &PredefinedMenuItem::services(None),
                     &PredefinedMenuItem::separator(),
@@ -163,6 +165,10 @@ impl Menu {
                     &PredefinedMenuItem::hide(None),
                     #[cfg(target_os = "windows")]
                     &PredefinedMenuItem::hide_others(None),
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::separator(),
+                    #[cfg(not(target_os = "macos"))]
+                    &settings,
                     #[cfg(not(target_os = "macos"))]
                     &PredefinedMenuItem::separator(),
                     #[cfg(not(target_os = "macos"))]
@@ -220,7 +226,7 @@ impl Menu {
                 (always_on_top.into_id(), ToggleAlwaysOnTop),
                 (guide.into_id(),         Help),
                 (open_repo.into_id(),     OpenRepo),
-                (edit_config.into_id(),   EditConfig),
+                (settings.into_id(),      EditConfig),
             ]
         });
 
