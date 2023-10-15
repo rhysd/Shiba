@@ -288,6 +288,10 @@ export type MessageToMain =
           kind: 'drag_window';
       }
     | {
+          kind: 'open_menu';
+          position?: [number, number];
+      }
+    | {
           kind: 'error';
           message: string;
       };

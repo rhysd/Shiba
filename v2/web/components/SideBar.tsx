@@ -8,6 +8,9 @@ import Button from '@mui/material/Button';
 import PetsIcon from '@mui/icons-material/Pets';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { ConfigContext } from './ConfigContext';
 import type { Heading } from '../reducer';
 import { sendMessage } from '../ipc';
@@ -43,13 +46,25 @@ function onHeaderClick(e: React.MouseEvent<HTMLElement>): void {
     sendMessage({ kind: 'file_dialog' });
 }
 
-const LIST_HEADER_SX = {
+function onMoreButtonClick(e: React.MouseEvent<HTMLElement>): void {
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const x = rect.x + rect.width;
+    const y = rect.y;
+    sendMessage({ kind: 'open_menu', position: [x, y] });
+}
+
+const LIST_HEADER_BUTTON_SX = {
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     textTransform: 'none',
     color: 'text.primary',
     fontWeight: 'h6',
+};
+
+const LIST_HEADER_SX = {
+    display: 'flex',
+    flexDirection: 'row',
 };
 
 interface ListHeaderProps {
@@ -61,18 +76,23 @@ const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
         path = path.slice(4); // Strip UNC path
     }
     return (
-        <Tooltip title={path} arrow>
-            <Button
-                variant="text"
-                fullWidth
-                disableFocusRipple
-                startIcon={<PetsIcon />}
-                sx={LIST_HEADER_SX}
-                onClick={onHeaderClick}
-            >
-                {fileName(path)}
-            </Button>
-        </Tooltip>
+        <Box component="header" sx={LIST_HEADER_SX}>
+            <Tooltip title={path} arrow>
+                <Button
+                    variant="text"
+                    fullWidth
+                    disableFocusRipple
+                    startIcon={<PetsIcon />}
+                    sx={LIST_HEADER_BUTTON_SX}
+                    onClick={onHeaderClick}
+                >
+                    {fileName(path)}
+                </Button>
+            </Tooltip>
+            <IconButton onClick={onMoreButtonClick} size="small" disableFocusRipple>
+                <MoreVertIcon />
+            </IconButton>
+        </Box>
     );
 };
 

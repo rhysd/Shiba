@@ -2,13 +2,15 @@ use crate::renderer::MenuItem as AppMenuItem;
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::{
-    AboutMetadata, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
-    PredefinedMenuItem, Submenu,
+    AboutMetadata, ContextMenu, LogicalPosition, Menu as MenuBar, MenuEvent, MenuEventReceiver,
+    MenuId, MenuItem, Position, PredefinedMenuItem, Submenu,
 };
 use std::collections::HashMap;
+#[cfg(target_os = "macos")]
+use wry::application::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]
 use wry::application::platform::unix::WindowExtUnix as _;
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 use wry::application::platform::windows::WindowExtWindows as _;
 use wry::application::window::Window;
 
@@ -40,24 +42,39 @@ fn metadata() -> AboutMetadata {
     m
 }
 
-pub struct Menu {
+pub struct MenuEvents {
     ids: HashMap<MenuId, AppMenuItem>,
     receiver: &'static MenuEventReceiver,
+}
+
+impl MenuEvents {
+    pub fn new() -> Self {
+        Self { ids: HashMap::new(), receiver: MenuEvent::receiver() }
+    }
+
+    pub fn try_receive(&self) -> Result<Option<AppMenuItem>> {
+        let Ok(event) = self.receiver.try_recv() else {
+            return Ok(None);
+        };
+        let Some(id) = self.ids.get(&event.id).copied() else {
+            anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids);
+        };
+        Ok(Some(id))
+    }
+}
+
+#[derive(Clone)]
+pub struct Menu {
     // This instance must be kept since dropping this instance removes menu from application
     menu_bar: MenuBar,
+    #[cfg(target_os = "macos")]
+    window_menu: Submenu,
+    #[cfg(target_os = "macos")]
+    help_menu: Submenu,
 }
 
 impl Menu {
-    pub fn new() -> Self {
-        Self { ids: HashMap::new(), receiver: MenuEvent::receiver(), menu_bar: MenuBar::new() }
-    }
-
-    #[cfg_attr(not(windows), allow(dead_code))]
-    pub fn menu_bar(&self) -> &MenuBar {
-        &self.menu_bar
-    }
-
-    pub fn setup(&mut self, window: &Window) -> Result<()> {
+    pub fn new(events: &mut MenuEvents) -> Result<Self> {
         fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
             MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
         }
@@ -69,6 +86,8 @@ impl Menu {
         const MOD: Modifiers = Modifiers::SUPER;
         #[cfg(not(target_os = "macos"))]
         const MOD: Modifiers = Modifiers::CONTROL;
+
+        let menu_bar = MenuBar::new();
 
         // Custom menu items
         let quit = accel("Quit", MOD, Code::KeyQ);
@@ -108,7 +127,7 @@ impl Menu {
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &edit_config, &open_repo])?;
-        self.menu_bar.append_items(&[
+        menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
                 "Shiba",
@@ -180,26 +199,8 @@ impl Menu {
             &help_menu,
         ])?;
 
-        #[cfg(target_os = "windows")]
-        {
-            self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
-        }
-        #[cfg(target_os = "linux")]
-        {
-            self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
-        }
-        #[cfg(target_os = "macos")]
-        {
-            self.menu_bar.init_for_nsapp();
-            window_menu.set_as_windows_menu_for_nsapp();
-            help_menu.set_as_help_menu_for_nsapp();
-            let _ = window;
-        }
-
-        log::debug!("Added menubar to window");
-
         #[rustfmt::skip]
-        self.ids.extend({
+        events.ids.extend({
             use AppMenuItem::*;
             [
                 (open_file.into_id(),     OpenFile),
@@ -223,17 +224,49 @@ impl Menu {
             ]
         });
 
-        log::debug!("Registered menu items: {:?}", self.ids);
+        log::debug!("Registered menu items: {:?}", events.ids);
+        Ok(Self {
+            menu_bar,
+            #[cfg(target_os = "macos")]
+            window_menu,
+            #[cfg(target_os = "macos")]
+            help_menu,
+        })
+    }
+
+    #[cfg_attr(not(windows), allow(dead_code))]
+    pub fn menu_bar(&self) -> &MenuBar {
+        &self.menu_bar
+    }
+
+    pub fn set_to_window(&self, window: &Window) -> Result<()> {
+        #[cfg(target_os = "windows")]
+        {
+            self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
+        }
+        #[cfg(target_os = "linux")]
+        {
+            self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
+        }
+        #[cfg(target_os = "macos")]
+        {
+            self.menu_bar.init_for_nsapp();
+            self.window_menu.set_as_windows_menu_for_nsapp();
+            self.help_menu.set_as_help_menu_for_nsapp();
+            let _ = window;
+        }
+        log::debug!("Added menubar to window");
         Ok(())
     }
 
-    pub fn try_receive_event(&self) -> Result<Option<AppMenuItem>> {
-        let Ok(event) = self.receiver.try_recv() else {
-            return Ok(None);
-        };
-        let Some(id) = self.ids.get(&event.id).copied() else {
-            anyhow::bail!("Unknown menu item id: {:?}", event);
-        };
-        Ok(Some(id))
+    pub fn show_at(&self, position: Option<(f64, f64)>, window: &Window) {
+        let position = position.map(|(x, y)| Position::Logical(LogicalPosition { x, y }));
+        log::debug!("Showing context menu at {:?}", position);
+        #[cfg(target_os = "windows")]
+        self.menu_bar.show_context_menu_for_hwnd(window.hwnd() as _, position);
+        #[cfg(target_os = "linux")]
+        self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window(), position);
+        #[cfg(target_os = "macos")]
+        self.menu_bar.show_context_menu_for_nsview(window.ns_view() as _, position);
     }
 }

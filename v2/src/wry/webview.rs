@@ -5,6 +5,7 @@ use crate::renderer::{
     MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
     UserEvent, WindowAppearance, ZoomLevel,
 };
+use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
 use wry::application::dpi::{PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
@@ -163,12 +164,13 @@ pub struct WebViewRenderer {
     webview: WebView,
     zoom_level: ZoomLevel,
     always_on_top: bool,
+    menu: Menu,
     #[cfg(target_os = "linux")]
     theme: ThemeConfig,
 }
 
 impl WebViewRenderer {
-    pub fn new(config: &Config, event_loop: &EventLoop) -> Result<Self> {
+    pub fn new(config: &Config, event_loop: &EventLoop, menu: Menu) -> Result<Self> {
         let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
@@ -218,7 +220,10 @@ impl WebViewRenderer {
                 .with_title_hidden(true);
         }
 
-        let webview = create_webview(builder.build(event_loop)?, event_loop, config)?;
+        let window = builder.build(event_loop)?;
+        menu.set_to_window(&window)?;
+
+        let webview = create_webview(window, event_loop, config)?;
         log::debug!("WebView was created successfully");
 
         let zoom_factor = zoom_level.factor();
@@ -237,13 +242,10 @@ impl WebViewRenderer {
             webview,
             zoom_level,
             always_on_top,
+            menu,
             #[cfg(target_os = "linux")]
             theme,
         })
-    }
-
-    pub fn window(&self) -> &Window {
-        self.webview.window()
     }
 }
 
@@ -347,5 +349,9 @@ impl Renderer for WebViewRenderer {
             vibrancy: cfg!(target_os = "macos"),
             scrollbar: cfg!(target_os = "macos"),
         }
+    }
+
+    fn show_menu_at(&self, position: Option<(f64, f64)>) {
+        self.menu.show_at(position, self.webview.window());
     }
 }

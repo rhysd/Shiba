@@ -66,6 +66,7 @@ pub enum MessageFromRenderer {
     OpenFile { path: String },
     Zoom { zoom: Zoom },
     DragWindow,
+    OpenMenu { position: Option<(f64, f64)> },
     Error { message: String },
 }
 
@@ -188,14 +189,15 @@ pub trait Renderer {
     fn always_on_top(&self) -> bool;
     fn drag_window(&self) -> Result<()>;
     fn window_appearance(&self) -> WindowAppearance;
+    fn show_menu_at(&self, position: Option<(f64, f64)>);
 }
 
 /// Context to execute rendering.
-pub trait Rendering {
+pub trait Rendering: Sized {
     type UserEventSender: UserEventSender;
     type Renderer: Renderer;
 
-    fn new() -> Self;
+    fn new() -> Result<Self>;
     fn create_sender(&self) -> Self::UserEventSender;
     fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
     /// Starts the rendering execution and runs until the process exits.

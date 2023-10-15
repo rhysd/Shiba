@@ -205,7 +205,7 @@ where
     where
         Self: 'static,
     {
-        let mut rendering = R::new();
+        let mut rendering = R::new()?;
         let dog = Self::new(options, &mut rendering)?;
         rendering.start(dog)
     }
@@ -346,8 +346,9 @@ where
     }
 
     fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<RenderingFlow> {
+        use MessageFromRenderer::*;
         match message {
-            MessageFromRenderer::Init => {
+            Init => {
                 if self.config.debug() {
                     self.renderer.send_message(MessageToRenderer::Debug)?;
                 }
@@ -370,26 +371,25 @@ where
                     self.renderer.send_message(MessageToRenderer::Welcome)?;
                 }
             }
-            MessageFromRenderer::Search { query, index, matcher } => {
-                self.preview.search(&self.renderer, &query, index, matcher)?
+            Search { query, index, matcher } => {
+                self.preview.search(&self.renderer, &query, index, matcher)?;
             }
-            MessageFromRenderer::Forward => self.forward()?,
-            MessageFromRenderer::Back => self.back()?,
-            MessageFromRenderer::Reload => self.reload()?,
-            MessageFromRenderer::FileDialog => self.open_file()?,
-            MessageFromRenderer::DirDialog => self.open_dir()?,
-            MessageFromRenderer::OpenFile { path } => {
+            Forward => self.forward()?,
+            Back => self.back()?,
+            Reload => self.reload()?,
+            FileDialog => self.open_file()?,
+            DirDialog => self.open_dir()?,
+            OpenFile { path } => {
                 let path = PathBuf::from(path);
                 if self.preview.show(&path, &self.renderer)? {
                     self.history.push(path);
                 }
             }
-            MessageFromRenderer::Zoom { zoom } => self.zoom(zoom)?,
-            MessageFromRenderer::DragWindow => self.renderer.drag_window()?,
-            MessageFromRenderer::Quit => return Ok(RenderingFlow::Exit),
-            MessageFromRenderer::Error { message } => {
-                anyhow::bail!("Error reported from renderer: {}", message)
-            }
+            Zoom { zoom } => self.zoom(zoom)?,
+            DragWindow => self.renderer.drag_window()?,
+            Quit => return Ok(RenderingFlow::Exit),
+            OpenMenu { position } => self.renderer.show_menu_at(position),
+            Error { message } => anyhow::bail!("Error reported from renderer: {}", message),
         }
         Ok(RenderingFlow::Continue)
     }
