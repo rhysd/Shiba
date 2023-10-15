@@ -32,6 +32,7 @@ export type KeyAction =
     | 'Help'
     | 'ZoomIn'
     | 'ZoomOut'
+    | 'ShowMenu'
     | 'Quit';
 
 export type KeyMaps = Record<string, KeyAction>;

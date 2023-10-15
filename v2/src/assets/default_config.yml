@@ -36,6 +36,7 @@ keymaps:
   ctrl+up: ScrollTop
   ctrl+j: ScrollNextSection
   ctrl+k: ScrollPrevSection
+  alt: ShowMenu
   ?: Help
 
 # Configuration related to text search.

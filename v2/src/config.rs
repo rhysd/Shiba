@@ -36,6 +36,7 @@ pub enum KeyAction {
     Help,
     ZoomIn,
     ZoomOut,
+    ShowMenu,
     Quit,
 }
 
@@ -62,6 +63,7 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
         ("ctrl+up",   ScrollTop),
         ("ctrl+j",    ScrollNextSection),
         ("ctrl+k",    ScrollPrevSection),
+        ("alt",       ShowMenu),
         ("?",         Help),
     ]
 };

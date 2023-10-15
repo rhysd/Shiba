@@ -89,7 +89,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
                     {fileName(path)}
                 </Button>
             </Tooltip>
-            <IconButton onClick={onMoreButtonClick} size="small" disableFocusRipple>
+            <IconButton id="shiba-menu-button" onClick={onMoreButtonClick} size="small" disableFocusRipple>
                 <MoreVertIcon />
             </IconButton>
         </Box>

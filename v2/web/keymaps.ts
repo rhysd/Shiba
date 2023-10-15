@@ -220,6 +220,18 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
         },
     },
 
+    ShowMenu: {
+        description: 'Show the application menu.',
+        dispatch(): void {
+            const button = document.getElementById('shiba-menu-button');
+            if (button) {
+                button.click();
+            } else {
+                sendMessage({ kind: 'open_menu' }); // Fallback
+            }
+        },
+    },
+
     Quit: {
         description: 'Quit the application.',
         dispatch(): void {
