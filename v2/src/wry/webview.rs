@@ -221,7 +221,9 @@ impl WebViewRenderer {
         }
 
         let window = builder.build(event_loop)?;
-        menu.set_to_window(&window)?;
+        if cfg!(target_os = "macos") || config.window().menu {
+            menu.set_to_window(&window)?;
+        }
 
         let webview = create_webview(window, event_loop, config)?;
         log::debug!("WebView was created successfully");

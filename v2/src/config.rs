@@ -153,6 +153,7 @@ pub struct Window {
     pub theme: WindowTheme,
     pub always_on_top: bool,
     pub default_size: Option<WindowSize>,
+    pub menu: bool,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
