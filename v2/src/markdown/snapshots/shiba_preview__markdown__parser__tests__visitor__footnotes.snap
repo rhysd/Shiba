@@ -3,7 +3,7 @@ source: src/markdown/parser.rs
 expression: "(text, mapped)"
 ---
 (
-    "Here is a simple footnote. With some additional text after it. My reference.This is big note!some text\ncontinues",
+    "Here is a simple footnote. With some additional text after it. My reference.This is big note!some text continues",
     [
         (
             "Here is a simple footnote",

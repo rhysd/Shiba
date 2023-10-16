@@ -1,0 +1,31 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "Hello, soft break.",
+        " ",
+        "Bye, soft break."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        "This is hard break.",
+        {
+          "t": "br"
+        },
+        "And this is also hard break.",
+        {
+          "t": "br"
+        },
+        "End."
+      ],
+      "t": "p"
+    }
+  ]
+}

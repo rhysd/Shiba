@@ -474,8 +474,10 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.out.write_all(br#""}"#)?;
                 }
                 SoftBreak => {
-                    let newline = if range.len() == 2 { "\r\n" } else { "\n" };
-                    self.text(newline, range)?
+                    // Soft break consists of \n or \r\n so the length is 1 or 2
+                    let range = if range.len() == 1 { range } else { (range.end - 1)..range.end };
+                    // Soft break is rendered as a single white space in Markdown. Do not pass through \n or \r\n
+                    self.text(" ", range)?
                 }
                 HardBreak => {
                     self.tag("br")?;
@@ -906,6 +908,7 @@ mod tests {
     snapshot_test!(footnotes);
     snapshot_test!(highlight);
     snapshot_test!(not_link);
+    snapshot_test!(soft_and_hard_break);
 
     // Offset
     snapshot_test!(offset_block, Some(30));

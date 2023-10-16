@@ -38,7 +38,7 @@ expression: json
       "c": [
         "this is single ",
         ": colon",
-        "\n",
+        " ",
         "this is also single",
         ":colon"
       ],

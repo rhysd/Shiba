@@ -46,7 +46,7 @@ expression: json
             {
               "c": [
                 "some text",
-                "\n",
+                " ",
                 "continues"
               ],
               "t": "p"
