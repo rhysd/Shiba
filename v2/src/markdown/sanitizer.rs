@@ -8,12 +8,35 @@ use std::path::Path;
 #[derive(Default)]
 pub struct SlashPath(String);
 
+#[cfg(target_os = "windows")]
+fn to_slash_path(path: &Path) -> String {
+    use std::path::Component::*;
+
+    // Remove UNC path prefix and drive letter since WebView2 does not allow loading local resources directly
+    // by the absolute path.
+    //   e.g. '\\?\C:\Users\rhysd\foo.md' -> '/Users/rhysd/foo.md'
+    let mut slash = String::new();
+    for component in path.components() {
+        match component {
+            RootDir => slash.push('/'),
+            ParentDir => slash.push_str("../"),
+            Normal(s) => {
+                slash.push_str(&s.to_string_lossy());
+                slash.push('/');
+            }
+            _ => {}
+        }
+    }
+
+    slash
+}
+
 impl<'a> From<&'a Path> for SlashPath {
     fn from(path: &'a Path) -> Self {
         #[cfg(not(target_os = "windows"))]
         let mut path = path.to_string_lossy().into_owned();
         #[cfg(target_os = "windows")]
-        let mut path = path.to_string_lossy().replace('\\', "/");
+        let mut path = to_slash_path(path);
         if path.ends_with('/') {
             path.pop(); // Ensure the path does not end with /
         }
@@ -87,23 +110,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_slash_path() {
+    #[cfg(not(target_os = "windows"))]
+    fn create_slash_path_non_windows() {
+        for (input, want) in [("", ""), ("/a/b/c", "/a/b/c"), ("/a/b/c/", "/a/b/c"), ("/", "")] {
+            let path = SlashPath::from(Path::new(input));
+            assert_eq!(path.deref(), want);
+        }
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn create_slash_path_windows() {
         for (input, want) in [
             ("", ""),
-            (
-                #[cfg(target_os = "windows")]
-                r"\a\b\c",
-                #[cfg(not(target_os = "windows"))]
-                "/a/b/c",
-                "/a/b/c",
-            ),
-            (
-                #[cfg(target_os = "windows")]
-                r"\a\b\c\",
-                #[cfg(not(target_os = "windows"))]
-                "/a/b/c/",
-                "/a/b/c",
-            ),
+            (r"\\?\C:\a\b\c", "/a/b/c"),
+            (r"\\?\C:\a\b\c\", "/a/b/c"),
+            (r"C:\a\b\c", "/a/b/c"),
+            (r"C:\a\b\c\", "/a/b/c"),
+            (r"\a\b\c", "/a/b/c"),
+            (r"\a\b\c\", "/a/b/c"),
+            (r"\\?\C:\", ""),
+            (r"C:\", ""),
+            (r"\", ""),
+            (r"\\?\C:\a\.\b\.\c", "/a/b/c"),
+            (r"\\?\C:\a\b\d\..\c", "/a/b/d/../c"),
         ] {
             let path = SlashPath::from(Path::new(input));
             assert_eq!(path.deref(), want);
