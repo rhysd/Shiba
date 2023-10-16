@@ -473,7 +473,10 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
 
                     self.out.write_all(br#""}"#)?;
                 }
-                SoftBreak => self.text("\n", range)?,
+                SoftBreak => {
+                    let newline = if range.len() == 2 { "\r\n" } else { "\n" };
+                    self.text(newline, range)?
+                }
                 HardBreak => {
                     self.tag("br")?;
                     self.out.write_all(b"}")?;
