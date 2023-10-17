@@ -102,6 +102,8 @@ pub enum MenuItem {
     OpenRepo,
     ToggleAlwaysOnTop,
     EditConfig,
+    #[cfg(not(target_os = "macos"))]
+    ToggleMenuBar,
 }
 
 pub trait RawMessageWriter {
@@ -192,6 +194,7 @@ pub trait Renderer {
     fn drag_window(&self) -> Result<()>;
     fn window_appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
+    fn toggle_menu(&mut self) -> Result<()>;
 }
 
 /// Context to execute rendering.

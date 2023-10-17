@@ -476,6 +476,8 @@ where
             Print => self.renderer.print()?,
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,
+            #[cfg(not(target_os = "macos"))]
+            ToggleMenuBar => self.renderer.toggle_menu()?,
             History => self.renderer.send_message(MessageToRenderer::History)?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             Help => self.renderer.send_message(MessageToRenderer::Help)?,

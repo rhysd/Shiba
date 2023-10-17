@@ -170,7 +170,7 @@ pub struct WebViewRenderer {
 }
 
 impl WebViewRenderer {
-    pub fn new(config: &Config, event_loop: &EventLoop, menu: Menu) -> Result<Self> {
+    pub fn new(config: &Config, event_loop: &EventLoop, mut menu: Menu) -> Result<Self> {
         let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
@@ -222,7 +222,7 @@ impl WebViewRenderer {
 
         let window = builder.build(event_loop)?;
         if cfg!(target_os = "macos") || config.window().menu {
-            menu.set_to_window(&window)?;
+            menu.toggle(&window)?;
         }
 
         let webview = create_webview(window, event_loop, config)?;
@@ -356,5 +356,9 @@ impl Renderer for WebViewRenderer {
 
     fn show_menu_at(&self, position: Option<(f64, f64)>) {
         self.menu.show_at(position, self.webview.window());
+    }
+
+    fn toggle_menu(&mut self) -> Result<()> {
+        self.menu.toggle(self.webview.window())
     }
 }

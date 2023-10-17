@@ -5,6 +5,7 @@ use muda::{
     AboutMetadata, ContextMenu, LogicalPosition, Menu as MenuBar, MenuEvent, MenuEventReceiver,
     MenuId, MenuItem, Position, PredefinedMenuItem, Submenu,
 };
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 #[cfg(target_os = "macos")]
 use wry::application::platform::macos::WindowExtMacOS as _;
@@ -12,7 +13,7 @@ use wry::application::platform::macos::WindowExtMacOS as _;
 use wry::application::platform::unix::WindowExtUnix as _;
 #[cfg(target_os = "windows")]
 use wry::application::platform::windows::WindowExtWindows as _;
-use wry::application::window::Window;
+use wry::application::window::{Window, WindowId};
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
@@ -67,6 +68,7 @@ impl MenuEvents {
 pub struct Menu {
     // This instance must be kept since dropping this instance removes menu from application
     menu_bar: MenuBar,
+    visibility: HashMap<WindowId, bool>,
     #[cfg(target_os = "macos")]
     window_menu: Submenu,
     #[cfg(target_os = "macos")]
@@ -90,6 +92,7 @@ impl Menu {
         let menu_bar = MenuBar::new();
 
         // Custom menu items
+        let settings = no_accel("Settings…");
         let quit = accel("Quit", MOD, Code::KeyQ);
         let open_file = accel("Open File…", MOD, Code::KeyO);
         let watch_dir = accel("Watch Directory…", MOD | Modifiers::SHIFT, Code::KeyO);
@@ -101,12 +104,13 @@ impl Menu {
         let reload = accel("Reload", MOD, Code::KeyR);
         let zoom_in = accel("Zoom In", MOD | Modifiers::SHIFT, Code::Equal); // XXX: US keyboard only
         let zoom_out = accel("Zoom Out", MOD, Code::Minus);
+        #[cfg(not(target_os = "macos"))]
+        let toggle_menu_bar = no_accel("Toggle Menu Bar");
         let forward = accel("Forward", MOD, Code::BracketRight);
         let back = accel("Back", MOD, Code::BracketLeft);
         let history = accel("History…", MOD, Code::KeyY);
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
-        let settings = no_accel("Settings…");
         let open_repo = no_accel("Open Repository Page");
 
         // Menu bar structure
@@ -124,6 +128,10 @@ impl Menu {
                 &PredefinedMenuItem::separator(),
                 &zoom_in,
                 &zoom_out,
+                #[cfg(not(target_os = "macos"))]
+                &PredefinedMenuItem::separator(),
+                #[cfg(not(target_os = "macos"))]
+                &toggle_menu_bar,
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
@@ -227,12 +235,15 @@ impl Menu {
                 (guide.into_id(),         Help),
                 (open_repo.into_id(),     OpenRepo),
                 (settings.into_id(),      EditConfig),
+                #[cfg(not(target_os = "macos"))]
+                (toggle_menu_bar.into_id(),   ToggleMenuBar),
             ]
         });
 
         log::debug!("Registered menu items: {:?}", events.ids);
         Ok(Self {
             menu_bar,
+            visibility: HashMap::new(),
             #[cfg(target_os = "macos")]
             window_menu,
             #[cfg(target_os = "macos")]
@@ -245,24 +256,46 @@ impl Menu {
         &self.menu_bar
     }
 
-    pub fn set_to_window(&self, window: &Window) -> Result<()> {
-        #[cfg(target_os = "windows")]
-        {
-            self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
+    pub fn toggle(&mut self, window: &Window) -> Result<()> {
+        let id = window.id();
+        match self.visibility.entry(id) {
+            Entry::Vacant(entry) => {
+                #[cfg(target_os = "windows")]
+                self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
+                #[cfg(target_os = "linux")]
+                self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
+                #[cfg(target_os = "macos")]
+                {
+                    self.menu_bar.init_for_nsapp();
+                    self.window_menu.set_as_windows_menu_for_nsapp();
+                    self.help_menu.set_as_help_menu_for_nsapp();
+                }
+                entry.insert(true);
+                log::debug!("Initialized menubar for window (id={:?})", id);
+                Ok(())
+            }
+            #[cfg(target_os = "macos")]
+            Entry::Occupied(_) => Ok(()), // On macOS, menu bar is always visible
+            #[cfg(not(target_os = "macos"))]
+            Entry::Occupied(entry) => {
+                let visible = entry.into_mut();
+                if *visible {
+                    #[cfg(target_os = "windows")]
+                    self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
+                    #[cfg(target_os = "linux")]
+                    self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
+                    log::debug!("Hide menu on window (id={:?})", id);
+                } else {
+                    #[cfg(target_os = "windows")]
+                    self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
+                    #[cfg(target_os = "linux")]
+                    self.menu_bar.show_for_gtk_window(window.gtk_window())?;
+                    log::debug!("Show menu on window (id={:?})", id);
+                }
+                *visible = !*visible;
+                Ok(())
+            }
         }
-        #[cfg(target_os = "linux")]
-        {
-            self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
-        }
-        #[cfg(target_os = "macos")]
-        {
-            self.menu_bar.init_for_nsapp();
-            self.window_menu.set_as_windows_menu_for_nsapp();
-            self.help_menu.set_as_help_menu_for_nsapp();
-            let _ = window;
-        }
-        log::debug!("Added menubar to window");
-        Ok(())
     }
 
     pub fn show_at(&self, position: Option<(f64, f64)>, window: &Window) {
