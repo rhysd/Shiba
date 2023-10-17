@@ -30,6 +30,7 @@ export interface Config {
     titleBar: boolean;
     vibrant: boolean;
     hideScrollBar: boolean;
+    borderTop: boolean;
     homeDir: string | null;
 }
 
@@ -55,6 +56,7 @@ export const INITIAL_CONFIG: Config = {
     titleBar: true,
     vibrant: false,
     hideScrollBar: false,
+    borderTop: false,
     homeDir: null,
 };
 

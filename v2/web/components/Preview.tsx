@@ -26,10 +26,6 @@ const NAV_DEFAULT_SIZE = {
     height: '100%',
 };
 
-const SX_NON_VIBRANT = {
-    bgcolor: 'background.paper',
-};
-
 export interface Props {
     tree: MarkdownReactTree;
     headings: Heading[];
@@ -38,13 +34,28 @@ export interface Props {
 }
 
 export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
-    const { titleBar, vibrant } = useContext(ConfigContext);
+    const { titleBar, vibrant, borderTop } = useContext(ConfigContext);
 
     if (tree.root === null) {
         return <></>;
     }
 
-    const sx = vibrant ? {} : SX_NON_VIBRANT;
+    // Note: `SxProps` type is useless here
+    const sx: {
+        bgcolor?: string;
+        borderTop?: number;
+        borderColor?: string;
+        boxSizing?: string;
+    } = {};
+    if (!vibrant) {
+        sx.bgcolor = 'background.paper';
+    }
+    if (borderTop) {
+        sx.borderTop = 1;
+        sx.borderColor = 'divider';
+        sx.boxSizing = 'border-box';
+    }
+
     return (
         <Box component="main" sx={sx}>
             <Resizable defaultSize={NAV_DEFAULT_SIZE} minWidth="200px" enable={NAV_RESIZE_DIRECTION} as="nav">

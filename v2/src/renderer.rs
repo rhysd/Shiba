@@ -7,10 +7,12 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Copy, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct WindowAppearance {
     pub title: bool,
     pub vibrancy: bool,
-    pub scrollbar: bool,
+    pub scroll_bar: bool,
+    pub border_top: bool,
 }
 
 #[derive(Serialize)]

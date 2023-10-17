@@ -349,7 +349,8 @@ impl Renderer for WebViewRenderer {
         WindowAppearance {
             title: cfg!(not(target_os = "macos")),
             vibrancy: cfg!(target_os = "macos"),
-            scrollbar: cfg!(target_os = "macos"),
+            scroll_bar: cfg!(target_os = "macos"),
+            border_top: cfg!(target_os = "windows"),
         }
     }
 

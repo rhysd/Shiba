@@ -83,7 +83,8 @@ export class GlobalDispatcher {
                             theme: msg.theme === 'Dark' ? 'dark' : 'light',
                             titleBar: !msg.window.title,
                             vibrant: msg.window.vibrancy,
-                            hideScrollBar: !msg.window.scrollbar,
+                            hideScrollBar: !msg.window.scrollBar,
+                            borderTop: msg.window.borderTop,
                             homeDir: msg.home,
                         }),
                     );
