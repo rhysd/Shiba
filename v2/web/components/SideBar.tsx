@@ -100,6 +100,10 @@ const LIST_SX = {
     height: '100%',
     overflowY: 'auto',
     overscrollBehavior: 'none',
+    fontSize: '0.875rem',
+};
+const LIST_ITEM_SX = {
+    padding: '0 8px',
 };
 
 interface Props {
@@ -151,12 +155,12 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
                     });
                 }}
                 disablePadding
-                style={{ padding: '0 8px' }}
+                sx={LIST_ITEM_SX}
                 ref={ref}
                 key={key}
             >
                 <ListItemButton style={style} disableGutters>
-                    <ListItemText primary={h.text} sx={sx} />
+                    <ListItemText primary={h.text} disableTypography sx={sx} />
                 </ListItemButton>
             </ListItem>
         );
