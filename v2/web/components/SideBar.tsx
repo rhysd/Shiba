@@ -9,9 +9,8 @@ import PetsIcon from '@mui/icons-material/Pets';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { ConfigContext } from './ConfigContext';
+import { MenuButton } from './MenuButton';
 import type { Heading } from '../reducer';
 import { sendMessage } from '../ipc';
 
@@ -46,13 +45,6 @@ function onHeaderClick(e: React.MouseEvent<HTMLElement>): void {
     sendMessage({ kind: 'file_dialog' });
 }
 
-function onMoreButtonClick(e: React.MouseEvent<HTMLElement>): void {
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const x = rect.x + rect.width;
-    const y = rect.y;
-    sendMessage({ kind: 'open_menu', position: [x, y] });
-}
-
 const LIST_HEADER_BUTTON_SX = {
     overflow: 'hidden',
     whiteSpace: 'nowrap',
@@ -66,6 +58,8 @@ const LIST_HEADER_SX = {
     display: 'flex',
     flexDirection: 'row',
 };
+
+const MENU_BUTTON_STYLE = { margin: 'auto 0' };
 
 interface ListHeaderProps {
     path: string | null;
@@ -89,9 +83,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
                     {fileName(path)}
                 </Button>
             </Tooltip>
-            <IconButton id="shiba-menu-button" onClick={onMoreButtonClick} size="small" disableFocusRipple>
-                <MoreVertIcon />
-            </IconButton>
+            <MenuButton style={MENU_BUTTON_STYLE} />
         </Box>
     );
 };

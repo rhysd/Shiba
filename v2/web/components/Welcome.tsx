@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useContext } from 'react';
 import Box from '@mui/material/Box';
 import { WindowBar } from './WindowBar';
+import { MenuButton } from './MenuButton';
 import { ConfigContext } from './ConfigContext';
 import { sendMessage } from '../ipc';
 
@@ -29,6 +30,12 @@ const LOGO_STYLE: React.CSSProperties = {
     userSelect: 'none',
     WebkitUserSelect: 'none',
 };
+const MENU_STYLE: React.CSSProperties = {
+    margin: '16px',
+    position: 'fixed',
+    top: 0,
+    right: 0,
+};
 
 function onClick(e: React.MouseEvent<HTMLElement>): void {
     e.preventDefault();
@@ -41,6 +48,7 @@ export const Welcome: React.FC = () => {
     return (
         <Box sx={sx}>
             {titleBar && <WindowBar />}
+            <MenuButton style={MENU_STYLE} />
             <div style={BODY_STYLE}>
                 <img
                     alt="Open file with dialog"
