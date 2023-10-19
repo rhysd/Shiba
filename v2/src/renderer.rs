@@ -37,7 +37,7 @@ pub enum MessageToRenderer<'a> {
     },
     History,
     Help,
-    Zoom {
+    Zoomed {
         percent: u16,
     },
     Reload,
@@ -69,6 +69,7 @@ pub enum MessageFromRenderer {
     Zoom { zoom: Zoom },
     DragWindow,
     OpenMenu { position: Option<(f64, f64)> },
+    ToggleMenuBar,
     Error { message: String },
 }
 

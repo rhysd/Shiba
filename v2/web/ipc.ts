@@ -33,6 +33,7 @@ export type KeyAction =
     | 'ZoomIn'
     | 'ZoomOut'
     | 'ShowMenu'
+    | 'ToggleMenuBar'
     | 'Quit';
 
 export type KeyMaps = Record<string, KeyAction>;
@@ -237,7 +238,7 @@ export type MessageFromMain =
           kind: 'help';
       }
     | {
-          kind: 'zoom';
+          kind: 'zoomed';
           percent: number;
       }
     | {
@@ -292,6 +293,9 @@ export type MessageToMain =
     | {
           kind: 'open_menu';
           position?: [number, number];
+      }
+    | {
+          kind: 'toggle_menu_bar';
       }
     | {
           kind: 'error';

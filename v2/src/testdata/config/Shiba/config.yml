@@ -16,7 +16,7 @@ window:
   default_size:
     width: 100
     height: 200
-  menu: true
+  menu_bar: true
 
 preview:
   highlight:

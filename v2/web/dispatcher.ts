@@ -119,7 +119,7 @@ export class GlobalDispatcher {
                 case 'help':
                     this.dispatch(openHelp());
                     break;
-                case 'zoom':
+                case 'zoomed':
                     this.dispatch(notifyZoom(msg.percent));
                     break;
                 case 'reload':

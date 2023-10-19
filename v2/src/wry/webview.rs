@@ -221,7 +221,7 @@ impl WebViewRenderer {
         }
 
         let window = builder.build(event_loop)?;
-        if cfg!(target_os = "macos") || config.window().menu {
+        if cfg!(target_os = "macos") || config.window().menu_bar {
             menu.toggle(&window)?;
         }
 

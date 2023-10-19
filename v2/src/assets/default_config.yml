@@ -74,7 +74,7 @@ window:
   default_size: null
   # Setting `true` shows a menu bar at the top of application window. Setting `false` hides the menu bar.
   # This configuration is effective only on Linux and Windows. On macOS, the menu bar is always set.
-  menu: false
+  menu_bar: false
 
 # Configuration related to Markdown preview content.
 preview:

@@ -232,6 +232,13 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
         },
     },
 
+    ToggleMenuBar: {
+        description: 'Toggle menu bar at the top of window.',
+        dispatch(): void {
+            sendMessage({ kind: 'toggle_menu_bar' });
+        },
+    },
+
     Quit: {
         description: 'Quit the application.',
         dispatch(): void {

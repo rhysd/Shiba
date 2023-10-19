@@ -327,7 +327,7 @@ where
         self.renderer.zoom(level);
         let percent = level.percent();
         log::debug!("Changed zoom factor: {}%", percent);
-        self.renderer.send_message(MessageToRenderer::Zoom { percent })?;
+        self.renderer.send_message(MessageToRenderer::Zoomed { percent })?;
 
         Ok(())
     }
@@ -389,6 +389,7 @@ where
             DragWindow => self.renderer.drag_window()?,
             Quit => return Ok(RenderingFlow::Exit),
             OpenMenu { position } => self.renderer.show_menu_at(position),
+            ToggleMenuBar => self.renderer.toggle_menu()?,
             Error { message } => anyhow::bail!("Error reported from renderer: {}", message),
         }
         Ok(RenderingFlow::Continue)
