@@ -5,7 +5,7 @@ use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::renderer::{
     EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow, UserEvent, Zoom,
+    RenderingFlow, UserEvent,
 };
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
@@ -13,6 +13,11 @@ use std::collections::VecDeque;
 use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
+
+enum Zoom {
+    In,
+    Out,
+}
 
 struct History {
     max_items: usize,
@@ -385,7 +390,8 @@ where
                     self.history.push(path);
                 }
             }
-            Zoom { zoom } => self.zoom(zoom)?,
+            ZoomIn => self.zoom(Zoom::In)?,
+            ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
             Quit => return Ok(RenderingFlow::Exit),
             OpenMenu { position } => self.renderer.show_menu_at(position),

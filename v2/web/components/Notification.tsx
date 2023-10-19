@@ -29,11 +29,11 @@ const MESSAGE_STYLE: React.CSSProperties = {
 };
 
 function zoomIn(): void {
-    sendMessage({ kind: 'zoom', zoom: 'In' });
+    sendMessage({ kind: 'zoom_in' });
 }
 
 function zoomOut(): void {
-    sendMessage({ kind: 'zoom', zoom: 'Out' });
+    sendMessage({ kind: 'zoom_out' });
 }
 
 export interface Props {

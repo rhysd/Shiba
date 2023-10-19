@@ -209,14 +209,14 @@ const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
     ZoomIn: {
         description: 'Zoom in on the page.',
         dispatch(): void {
-            sendMessage({ kind: 'zoom', zoom: 'In' });
+            sendMessage({ kind: 'zoom_in' });
         },
     },
 
     ZoomOut: {
         description: 'Zoom out on the page.',
         dispatch(): void {
-            sendMessage({ kind: 'zoom', zoom: 'Out' });
+            sendMessage({ kind: 'zoom_out' });
         },
     },
 

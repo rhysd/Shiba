@@ -284,8 +284,10 @@ export type MessageToMain =
           path: string;
       }
     | {
-          kind: 'zoom';
-          zoom: 'In' | 'Out';
+          kind: 'zoom_in';
+      }
+    | {
+          kind: 'zoom_out';
       }
     | {
           kind: 'drag_window';
