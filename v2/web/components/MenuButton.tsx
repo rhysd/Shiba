@@ -5,8 +5,8 @@ import { sendMessage } from '../ipc';
 
 function onClick(e: React.MouseEvent<HTMLElement>): void {
     const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const x = rect.x + rect.width;
-    const y = rect.y + rect.height;
+    const x = rect.x + rect.width + 4.0;
+    const y = rect.y + rect.height + 4.0;
     sendMessage({ kind: 'open_menu', position: [x, y] });
 }
 

@@ -9,6 +9,7 @@ import PetsIcon from '@mui/icons-material/Pets';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { ConfigContext } from './ConfigContext';
 import { MenuButton } from './MenuButton';
 import type { Heading } from '../reducer';
@@ -61,6 +62,7 @@ const BUTTON_LABEL_STYLE = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
 };
+const TOOLTIP_SLOT_PROPS = { tooltip: { style: { maxWidth: 'none', padding: '0.5rem' } } };
 const MENU_BUTTON_STYLE = { margin: 'auto 0' };
 
 interface ListHeaderProps {
@@ -71,9 +73,10 @@ const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
     if (path !== null && path.startsWith('\\\\?\\')) {
         path = path.slice(4); // Strip UNC path
     }
+    const title = <Typography variant="body2">{path}</Typography>;
     return (
         <Box component="header" sx={LIST_HEADER_SX}>
-            <Tooltip title={path} arrow>
+            <Tooltip title={title} arrow slotProps={TOOLTIP_SLOT_PROPS}>
                 <Button
                     variant="text"
                     color="inherit"

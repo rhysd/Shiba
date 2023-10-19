@@ -13,9 +13,11 @@ It is designed for simplicity, performance, keyboard-friendliness.
 Features:
 
 - [GitHub-flavored Markdown][gfm] support; Emoji, Table, Math expressions with [Mathjax][mathjax], Diagrams with [mermaid.js][mermaid]
-- Automatically update preview when the file is updated by efficiently watching files using OS-specific filesystem events (FSEvents, inotify, ...)
+- Automatically update preview when the file is updated by efficiently watching files or directories using OS-specific filesystem
+  events (FSEvents, inotify, ...)
 - Automatically scroll to the last modified position
-- All features can be accessed via keyboard shortcuts (scroll the article, search text, jump to section, ...). Type `?` to know all shortcuts
+- All features can be accessed via keyboard shortcuts (scroll the article, search text, jump to section, ...). Type `?` to know
+  all shortcuts
 - Sections outline in side navigation bar. The current section is automatically focused
 - Both CLI and GUI friendly; Available as a single binary executable as well as a desktop application installed to your system
 - Performance critical part (parsing Markdown text, searching Markdown AST, calculating the last modified position, ...) and
