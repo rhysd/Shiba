@@ -53,12 +53,14 @@ const LIST_HEADER_BUTTON_SX = {
     color: 'text.primary',
     fontWeight: 'h6',
 };
-
 const LIST_HEADER_SX = {
     display: 'flex',
     flexDirection: 'row',
 };
-
+const BUTTON_LABEL_STYLE = {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+};
 const MENU_BUTTON_STYLE = { margin: 'auto 0' };
 
 interface ListHeaderProps {
@@ -74,13 +76,14 @@ const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
             <Tooltip title={path} arrow>
                 <Button
                     variant="text"
+                    color="inherit"
                     fullWidth
                     disableFocusRipple
                     startIcon={<PetsIcon />}
                     sx={LIST_HEADER_BUTTON_SX}
                     onClick={onHeaderClick}
                 >
-                    {fileName(path)}
+                    <span style={BUTTON_LABEL_STYLE}>{fileName(path)}</span>
                 </Button>
             </Tooltip>
             <MenuButton style={MENU_BUTTON_STYLE} />
