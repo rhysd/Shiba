@@ -12,7 +12,7 @@ It is designed for simplicity, performance, keyboard-friendliness.
 
 Features:
 
-- [GitHub-flavored Markdown][gfm] support; Emoji, Table, Math expressions with [Mathjax][mathjax], Diagrams with [mermaid.js][mermaid]
+- [GitHub-flavored Markdown][gfm] support; Emoji, Table, Math expressions with [Mathjax][mathjax], Diagrams with [mermaid.js][mermaid], ...
 - Automatically update preview when the file is updated by efficiently watching files or directories using OS-specific filesystem
   events (FSEvents, inotify, ...)
 - Automatically scroll to the last modified position
@@ -30,19 +30,23 @@ Features:
 
 ### Prerequisites
 
-On Linux, some additional packages need to be installed via system package manager.
+On Linux, some additional shared libraries need to be installed via system package manager.
 
 ```sh
-# On Ubuntu/Debian
+# On Ubuntu or Debian
 sudo apt install libwebkit2gtk-4.1-dev libxdo-dev
 
 # On Fedora
 sudo dnf install gtk3-devel webkit2gtk4.1-devel libxdo
 ```
 
+On Windows, please ensure that [WebView2 component][webview2] is installed on your system. It is installed on Windows 11
+and recent Windows 10 by default.
+
 ### Building from source
 
-Install [Cargo package manager][cargo] via [rustup][] and [Node.js][nodejs] as prerequisites.
+Install [Cargo package manager][cargo] via [rustup][] and [Node.js][nodejs]. All build tasks are defined as `make` rules.
+On Windows, install Make via [winget][winget-make] or [chocolatey][choco-make].
 
 Clone this repository from GitHub:
 
@@ -51,7 +55,7 @@ git clone --depth=1 'https://github.com/rhysd/Shiba.git'
 cd ./Shiba/v2
 ```
 
-To build `shiba` (or `shiba.exe` on Windows) single binary executable as CLI application:
+To build `shiba` (or `shiba.exe` on Windows) single-binary executable as CLI application:
 
 ```sh
 make release
@@ -59,10 +63,12 @@ cp ./target/release/shiba /path/to/your/bin/
 shiba --help
 ```
 
-To build macOS universal package:
+To build a macOS universal package:
 
 ```sh
 make Shiba.dmg
+# or
+make Shiba.app
 ```
 
 To build an installer for Windows ([WiX v4][wix] is needed):
@@ -111,9 +117,12 @@ This software is distributed under [the MIT license](./LICENSE).
 [rust]: https://www.rust-lang.org/ja
 [ts]: https://www.typescriptlang.org/
 [react]: https://react.dev/
+[webview2]: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
 [cargo]: https://doc.rust-lang.org/cargo/
 [rustup]: https://rustup.rs/
 [nodejs]: https://nodejs.org/en
+[winget-make]: https://winget.run/pkg/GnuWin32/Make
+[choco-make]: https://community.chocolatey.org/packages/make
 [wix]: https://wixtoolset.org/
 [cargo-deb]: https://github.com/kornelski/cargo-deb
 [v1]: https://github.com/rhysd/Shiba/tree/v1
