@@ -165,8 +165,6 @@ pub struct WebViewRenderer {
     zoom_level: ZoomLevel,
     always_on_top: bool,
     menu: Menu,
-    #[cfg(target_os = "linux")]
-    theme: ThemeConfig,
 }
 
 impl WebViewRenderer {
@@ -197,8 +195,7 @@ impl WebViewRenderer {
             builder = builder.with_always_on_top(true);
         }
 
-        let theme = config.window().theme;
-        match theme {
+        match config.window().theme {
             ThemeConfig::System => {}
             ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
             ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
@@ -240,14 +237,7 @@ impl WebViewRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(WebViewRenderer {
-            webview,
-            zoom_level,
-            always_on_top,
-            menu,
-            #[cfg(target_os = "linux")]
-            theme,
-        })
+        Ok(WebViewRenderer { webview, zoom_level, always_on_top, menu })
     }
 }
 
@@ -292,18 +282,6 @@ impl Renderer for WebViewRenderer {
         Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top })
     }
 
-    // On Linux, `Window::theme` does not return the theme set when building window. For the workaround,
-    // remember the theme config and respect it.
-    // https://github.com/tauri-apps/tao/issues/799
-    #[cfg(target_os = "linux")]
-    fn theme(&self) -> RendererTheme {
-        match self.theme {
-            ThemeConfig::Light => RendererTheme::Light,
-            ThemeConfig::Dark => RendererTheme::Dark,
-            ThemeConfig::System => window_theme(self.webview.window()),
-        }
-    }
-    #[cfg(not(target_os = "linux"))]
     fn theme(&self) -> RendererTheme {
         window_theme(self.webview.window())
     }
