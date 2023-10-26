@@ -128,10 +128,11 @@ impl Menu {
                 &PredefinedMenuItem::separator(),
                 &zoom_in,
                 &zoom_out,
-                #[cfg(not(target_os = "macos"))]
                 &PredefinedMenuItem::separator(),
                 #[cfg(not(target_os = "macos"))]
                 &toggle_menu_bar,
+                #[cfg(not(target_os = "macos"))]
+                &PredefinedMenuItem::bring_all_to_front(None),
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
