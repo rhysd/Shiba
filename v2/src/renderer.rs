@@ -180,6 +180,7 @@ pub trait Renderer {
     fn set_title(&self, title: &str);
     fn window_state(&self) -> Option<WindowState>;
     fn theme(&self) -> Theme;
+    fn set_theme(&self, theme: Theme) -> Result<()>;
     fn show(&self);
     fn set_background_color(&self, rbga: (u8, u8, u8, u8)) -> Result<()>;
     fn print(&self) -> Result<()>;
@@ -209,5 +210,6 @@ pub trait Rendering: Sized {
 pub trait EventHandler {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
     fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
+    fn handle_theme_changed(&mut self, theme: Theme) -> Result<RenderingFlow>;
     fn handle_exit(&self) -> Result<()>;
 }

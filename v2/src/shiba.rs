@@ -5,7 +5,7 @@ use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::renderer::{
     EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow, UserEvent,
+    RenderingFlow, Theme, UserEvent,
 };
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Result};
@@ -491,6 +491,11 @@ where
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
         }
+        Ok(RenderingFlow::Continue)
+    }
+
+    fn handle_theme_changed(&mut self, theme: Theme) -> Result<RenderingFlow> {
+        self.renderer.set_theme(theme)?;
         Ok(RenderingFlow::Continue)
     }
 

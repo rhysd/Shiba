@@ -286,6 +286,22 @@ impl Renderer for WebViewRenderer {
         window_theme(self.webview.window())
     }
 
+    #[cfg(target_os = "windows")]
+    fn set_theme(&self, theme: RendererTheme) -> Result<()> {
+        use wry::webview::{Theme as WebViewTheme, WebviewExtWindows as _};
+        let theme = match theme {
+            RendererTheme::Dark => WebViewTheme::Dark,
+            RendererTheme::Light => WebViewTheme::Light,
+        };
+        self.webview.set_theme(theme);
+        Ok(())
+    }
+    #[cfg(not(target_os = "windows"))]
+    fn set_theme(&self, _theme: RendererTheme) -> Result<()> {
+        // Note: winit has Window::set_theme but tao doesn't
+        Ok(())
+    }
+
     fn show(&self) {
         self.webview.window().set_visible(true);
     }

@@ -1,10 +1,13 @@
 use crate::config::Config;
-use crate::renderer::{EventHandler, Rendering, RenderingFlow, UserEvent, UserEventSender};
+use crate::renderer::{
+    EventHandler, Rendering, RenderingFlow, Theme as RendererTheme, UserEvent, UserEventSender,
+};
 use crate::wry::menu::{Menu, MenuEvents};
 use crate::wry::webview::{EventLoop, WebViewRenderer};
 use anyhow::{Error, Result};
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
+use wry::application::window::Theme;
 
 pub struct Wry {
     event_loop: EventLoop,
@@ -87,6 +90,22 @@ impl Rendering for Wry {
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                     log::debug!("Closing window was requested");
                     RenderingFlow::Exit
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::ThemeChanged(theme @ (Theme::Light | Theme::Dark)),
+                    ..
+                } => {
+                    log::debug!("Window theme was changed: {:?}", theme);
+                    let theme = match theme {
+                        Theme::Light => RendererTheme::Light,
+                        Theme::Dark => RendererTheme::Dark,
+                        _ => unreachable!(),
+                    };
+                    handler.handle_theme_changed(theme).unwrap_or_else(|err| {
+                        log::error!("Could not handle theme change: {:?}", theme);
+                        log_causes(err);
+                        RenderingFlow::Continue
+                    })
                 }
                 Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
                     log::error!("Could not handle user event");
