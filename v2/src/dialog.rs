@@ -13,9 +13,10 @@ pub struct SystemDialog;
 
 impl Dialog for SystemDialog {
     fn pick_file(&self, dir: &Path, extensions: &FileExtensions) -> Option<PathBuf> {
-        // `FileDialog::add_filter` requires `&[&str]` but we have `Vec<String>` in config
-        let extensions: Vec<&str> = extensions.as_slice().iter().map(String::as_str).collect();
-        FileDialog::new().add_filter("Markdown", &extensions).set_directory(dir).pick_file()
+        FileDialog::new()
+            .add_filter("Markdown", extensions.as_slice())
+            .set_directory(dir)
+            .pick_file()
     }
 
     fn pick_dir(&self, dir: &Path) -> Option<PathBuf> {
