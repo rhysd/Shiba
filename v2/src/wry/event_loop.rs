@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::renderer::{EventHandler, Rendering, RenderingFlow, UserEvent, UserEventSender};
 use crate::wry::menu::{Menu, MenuEvents};
 use crate::wry::webview::{EventLoop, WebViewRenderer};
-use anyhow::{Error, Result};
+use anyhow::Result;
 use wry::application::event::{Event, StartCause, WindowEvent};
 use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
@@ -73,12 +73,6 @@ impl Rendering for Wry {
         H: EventHandler + 'static,
     {
         self.event_loop.run(move |event, _, control| {
-            fn log_causes(err: Error) {
-                for err in err.chain() {
-                    log::error!("  Caused by: {}", err);
-                }
-            }
-
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
@@ -89,9 +83,7 @@ impl Rendering for Wry {
                     RenderingFlow::Exit
                 }
                 Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
-                    log::error!("Could not handle user event");
-                    log_causes(err);
-                    RenderingFlow::Continue
+                    handler.handle_error(err.context("Could not handle user event"))
                 }),
                 _ => self
                     .menu_events
@@ -101,9 +93,7 @@ impl Rendering for Wry {
                         None => Ok(RenderingFlow::Continue),
                     })
                     .unwrap_or_else(|err| {
-                        log::error!("Could not handle menu event");
-                        log_causes(err);
-                        RenderingFlow::Continue
+                        handler.handle_error(err.context("Could not handle menu event"))
                     }),
             };
 
@@ -112,8 +102,7 @@ impl Rendering for Wry {
                 RenderingFlow::Exit => match handler.handle_exit() {
                     Ok(()) => ControlFlow::Exit,
                     Err(err) => {
-                        log::error!("Could not handle application exit correctly");
-                        log_causes(err);
+                        handler.handle_error(err.context("Could not handle application exit"));
                         ControlFlow::ExitWithCode(1)
                     }
                 },

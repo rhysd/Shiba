@@ -286,7 +286,7 @@ impl UserConfig {
                 match fs::read(&path) {
                     Ok(bytes) =>
                         return serde_yaml::from_slice(&bytes)
-                            .with_context(|| format!("Could not parse config file as YAML: {:?}. To reset config file, try --generate-config-file", path)),
+                            .with_context(|| format!("Could not parse a configuration file at {:?}. To reset config file, try --generate-config-file", path)),
                     Err(err) => {
                         log::debug!("Could not read config file from {:?}: {}", path, err);
                     }

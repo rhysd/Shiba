@@ -8,8 +8,9 @@ use crate::renderer::{
     RenderingFlow, UserEvent,
 };
 use crate::watcher::{PathFilter, Watcher};
-use anyhow::{Context as _, Result};
+use anyhow::{Context as _, Error, Result};
 use std::collections::VecDeque;
+use std::fmt::Write as _;
 use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
@@ -188,6 +189,17 @@ impl PreviewContent {
     }
 }
 
+fn alert_error<D: Dialog>(dialog: &D, error: &Error) {
+    let mut errs = error.chain();
+    let title = format!("Error: {}", errs.next().unwrap());
+    let mut message = title.clone();
+    for err in errs {
+        write!(message, "\n  Caused by: {}", err).unwrap();
+    }
+    log::error!("{}", message);
+    dialog.alert(title, message);
+}
+
 pub struct Shiba<R: Rendering, O, W, D> {
     renderer: R::Renderer,
     opener: O,
@@ -210,8 +222,13 @@ where
     where
         Self: 'static,
     {
-        let mut rendering = R::new()?;
-        let dog = Self::new(options, &mut rendering)?;
+        fn on_err<D: Dialog>(err: Error) -> Error {
+            let err = err.context("Could not launch application");
+            alert_error(&D::default(), &err);
+            err
+        }
+        let mut rendering = R::new().map_err(on_err::<D>)?;
+        let dog = Self::new(options, &mut rendering).map_err(on_err::<D>)?;
         rendering.start(dog)
     }
 
@@ -505,5 +522,10 @@ where
         }
         data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
         Ok(())
+    }
+
+    fn handle_error(&self, err: Error) -> RenderingFlow {
+        alert_error(&self.dialog, &err);
+        RenderingFlow::Continue
     }
 }
