@@ -1,4 +1,4 @@
-name: CI for v2
+name: Watchdogs
 on: [push, pull_request]
 env:
   TERM: xterm

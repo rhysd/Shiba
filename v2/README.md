@@ -106,8 +106,8 @@ Shiba v2 is the complete rewrite of v1 with so many breaking changes. For v1, pl
 
 This software is distributed under [the MIT license](./LICENSE).
 
-[ci]: https://github.com/rhysd/Shiba/actions/workflows/ci.yml
-[ci-badge]: https://github.com/rhysd/Shiba/actions/workflows/ci.yml/badge.svg
+[ci]: https://github.com/rhysd/Shiba/actions/workflows/watchdogs.yml
+[ci-badge]: https://github.com/rhysd/Shiba/actions/workflows/watchdogs.yml/badge.svg
 [shiba-badge]: https://img.shields.io/badge/dogs-respected-brightgreen.svg?longCache=true&style=flat
 [shiba]: https://github.com/rhysd/Shiba
 [gh-markdown]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
