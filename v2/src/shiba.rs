@@ -10,8 +10,8 @@ use crate::renderer::{
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
 use std::collections::VecDeque;
-use std::fmt::Write as _;
 use std::fs;
+use std::marker::PhantomData;
 use std::mem;
 use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 
@@ -189,17 +189,6 @@ impl PreviewContent {
     }
 }
 
-fn alert_error<D: Dialog>(dialog: &D, error: &Error) {
-    let mut errs = error.chain();
-    let title = format!("Error: {}", errs.next().unwrap());
-    let mut message = title.clone();
-    for err in errs {
-        write!(message, "\n  Caused by: {}", err).unwrap();
-    }
-    log::error!("{}", message);
-    dialog.alert(title, message);
-}
-
 pub struct Shiba<R: Rendering, O, W, D> {
     renderer: R::Renderer,
     opener: O,
@@ -208,7 +197,7 @@ pub struct Shiba<R: Rendering, O, W, D> {
     config: Config,
     preview: PreviewContent,
     init_file: Option<PathBuf>,
-    dialog: D,
+    _dialog: PhantomData<D>,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -224,7 +213,7 @@ where
     {
         fn on_err<D: Dialog>(err: Error) -> Error {
             let err = err.context("Could not launch application");
-            alert_error(&D::default(), &err);
+            D::alert(&err);
             err
         }
         let mut rendering = R::new().map_err(on_err::<D>)?;
@@ -262,7 +251,7 @@ where
             config,
             preview: PreviewContent::default(),
             init_file,
-            dialog: D::default(),
+            _dialog: PhantomData,
         })
     }
 
@@ -310,7 +299,7 @@ where
     fn open_file(&mut self) -> Result<()> {
         let extensions = self.config.watch().file_extensions();
         let dir = self.config.dialog().default_dir()?;
-        let file = self.dialog.pick_file(&dir, extensions);
+        let file = D::pick_file(&dir, extensions);
         #[cfg(windows)]
         let file = file.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
 
@@ -324,7 +313,7 @@ where
 
     fn open_dir(&mut self) -> Result<()> {
         let dir = self.config.dialog().default_dir()?;
-        let dir = self.dialog.pick_dir(&dir);
+        let dir = D::pick_dir(&dir);
         #[cfg(windows)]
         let dir = dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
 
@@ -511,7 +500,7 @@ where
         Ok(RenderingFlow::Continue)
     }
 
-    fn handle_exit(&self) -> Result<()> {
+    fn handle_exit(&mut self) -> Result<()> {
         log::debug!("Handling application exit");
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
@@ -524,8 +513,8 @@ where
         Ok(())
     }
 
-    fn handle_error(&self, err: Error) -> RenderingFlow {
-        alert_error(&self.dialog, &err);
+    fn handle_error(&mut self, err: Error) -> RenderingFlow {
+        D::alert(&err);
         RenderingFlow::Continue
     }
 }

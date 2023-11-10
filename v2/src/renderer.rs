@@ -209,6 +209,6 @@ pub trait Rendering: Sized {
 pub trait EventHandler {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
     fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
-    fn handle_exit(&self) -> Result<()>;
-    fn handle_error(&self, err: Error) -> RenderingFlow;
+    fn handle_exit(&mut self) -> Result<()>;
+    fn handle_error(&mut self, err: Error) -> RenderingFlow;
 }
