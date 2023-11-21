@@ -274,7 +274,7 @@ impl Default for UserConfig {
 }
 
 impl UserConfig {
-    const DEFAULT_CONFIG_YAML: &str = include_str!("assets/default_config.yml");
+    const DEFAULT_CONFIG_YAML: &'static str = include_str!("assets/default_config.yml");
 
     fn load(path: impl Into<PathBuf>) -> Result<Self> {
         let mut path = path.into();
