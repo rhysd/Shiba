@@ -1,7 +1,6 @@
 use anyhow::Result;
-use getopts::Options as GetOpts;
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ThemeOption {
@@ -10,8 +9,27 @@ pub enum ThemeOption {
     Light,
 }
 
+impl ThemeOption {
+    fn new(name: &str) -> Result<Self> {
+        match name {
+            "dark" | "Dark" => Ok(Self::Dark),
+            "light" | "Light" => Ok(Self::Light),
+            "system" | "System" => Ok(Self::System),
+            _ => anyhow::bail!(
+                r#"Value for --theme must be one of "dark", "light" or "system" but got {name:?}"#,
+            ),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Parsed {
+    Options(Options),
+    Help(&'static str),
+}
+
 #[non_exhaustive]
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Options {
     pub debug: bool,
     pub init_file: Option<PathBuf>,
@@ -23,84 +41,91 @@ pub struct Options {
     pub data_dir: Option<PathBuf>,
 }
 
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            debug: false,
+            init_file: None,
+            watch_paths: vec![],
+            watch: true,
+            theme: None,
+            gen_config_file: false,
+            config_dir: None,
+            data_dir: None,
+        }
+    }
+}
+
 impl Options {
-    pub fn from_args(iter: impl Iterator<Item = String>) -> Result<Option<Self>> {
-        let mut opts = GetOpts::new();
-        opts.optflag("h", "help", "print this help");
-        opts.optopt("t", "theme", r#"window theme ("dark", "light" or "system")"#, "THEME");
-        opts.optflag("", "no-watch", "disable to watch file changes");
-        opts.optflag(
-            "",
-            "generate-config-file",
-            "generate default config file at the config directory. this overwrites an existing file",
-        );
-        opts.optopt("", "config-dir", "custom config directory path", "PATH");
-        opts.optopt("", "data-dir", "custom data directory path", "PATH");
-        opts.optflag("", "debug", "enable debug features");
+    const USAGE: &'static str = r#"
+    Usage: shiba [options...] [PATH...]
 
-        let matches = opts.parse(iter)?;
+    Options:
+        -t, --theme THEME           Window theme ("dark", "light" or "system")
+            --no-watch              Disable to watch file changes
+            --generate-config-file  Generate the default config file overwriting an existing file
+            --config-dir PATH       Custom the config directory path
+            --data-dir PATH         Custom the data directory path
+            --debug                 Enable debug features
+        -h, --help                  Print this help
+    "#;
 
-        #[allow(clippy::print_stdout)]
-        if matches.opt_present("h") {
-            println!("{}", opts.usage("Usage: shiba [option] [PATH...]"));
-            return Ok(None);
+    pub fn parse(args: impl Iterator<Item = String>) -> Result<Parsed> {
+        use lexopt::prelude::*;
+
+        fn value(parser: &mut lexopt::Parser) -> Result<String> {
+            let Ok(v) = parser.value()?.into_string() else {
+                anyhow::bail!("Invalid UTF-8 sequence in command line argument");
+            };
+            if v.starts_with('-') {
+                anyhow::bail!("Expected option value but got option name {v}");
+            }
+            Ok(v)
         }
 
-        let theme = match matches.opt_str("t") {
-            Some(theme) => match theme.as_str() {
-                "dark" | "Dark" => Some(ThemeOption::Dark),
-                "light" | "Light" => Some(ThemeOption::Light),
-                "system" | "System" => Some(ThemeOption::System),
-                _ => anyhow::bail!(
-                    r#"Value for --theme must be one of "dark", "light" or "system" but got {:?}"#,
-                    theme,
-                ),
-            },
-            None => None,
-        };
-        let watch = !matches.opt_present("no-watch");
-        let gen_config_file = matches.opt_present("generate-config-file");
-        let config_dir = matches.opt_str("config-dir").map(PathBuf::from);
-        let data_dir = matches.opt_str("data-dir").map(PathBuf::from);
-        let debug = matches.opt_present("debug");
+        let mut opts = Options::default();
 
-        let mut init_file = None;
-        let mut watch_paths = vec![];
         let mut cwd: Option<PathBuf> = None;
-        for arg in matches.free.iter() {
-            let path = Path::new(arg);
-            let exists = path.exists();
+        let mut parser = lexopt::Parser::from_iter(args);
+        while let Some(arg) = parser.next()? {
+            match arg {
+                Short('h') | Long("help") => return Ok(Parsed::Help(Self::USAGE)),
+                Short('t') | Long("theme") => {
+                    opts.theme = Some(ThemeOption::new(&value(&mut parser)?)?);
+                }
+                Long("no-watch") => opts.watch = false,
+                Long("generate-config-file") => opts.gen_config_file = true,
+                Long("config-dir") => opts.config_dir = Some(value(&mut parser)?.into()),
+                Long("data-dir") => opts.data_dir = Some(value(&mut parser)?.into()),
+                Long("debug") => opts.debug = true,
+                Value(path) => {
+                    let path = PathBuf::from(path);
+                    let exists = path.exists();
 
-            // `path.canonicalize()` returns an error when the path does not exist. Instead, create the absolute path
-            // using current directory as a parent
-            let path = if exists {
-                path.canonicalize()?
-            } else if let Some(dir) = &cwd {
-                dir.join(path)
-            } else {
-                let dir = env::current_dir()?.canonicalize()?;
-                let path = dir.join(path);
-                cwd = Some(dir);
-                path
-            };
+                    // `path.canonicalize()` returns an error when the path does not exist. Instead, create the absolute path
+                    // using current directory as a parent
+                    let path = if exists {
+                        path.canonicalize()?
+                    } else if let Some(dir) = &cwd {
+                        dir.join(path)
+                    } else {
+                        let dir = env::current_dir()?.canonicalize()?;
+                        let path = dir.join(path);
+                        cwd = Some(dir);
+                        path
+                    };
 
-            if init_file.is_some() || path.is_dir() || !exists {
-                watch_paths.push(path);
-            } else {
-                init_file = Some(path);
+                    if opts.init_file.is_some() || path.is_dir() || !exists {
+                        opts.watch_paths.push(path);
+                    } else {
+                        opts.init_file = Some(path);
+                    }
+                }
+                _ => return Err(arg.unexpected().into()),
             }
         }
 
-        Ok(Some(Self {
-            debug,
-            init_file,
-            watch_paths,
-            watch,
-            theme,
-            gen_config_file,
-            config_dir,
-            data_dir,
-        }))
+        Ok(Parsed::Options(opts))
     }
 }
 
@@ -108,15 +133,24 @@ impl Options {
 mod tests {
     use super::*;
 
+    fn cmdline(args: &[&str]) -> impl Iterator<Item = String> {
+        let mut c = vec!["shiba".to_string()];
+        c.extend(args.iter().map(ToString::to_string));
+        c.into_iter()
+    }
+
     #[test]
     fn parse_args_ok() {
         let cur = env::current_dir().unwrap().canonicalize().unwrap();
-        let tests = &[
-            (&[][..], Options { watch: true, ..Default::default() }),
+        #[rustfmt::skip]
+        let tests = [
+            (
+                &[][..],
+                Options::default(),
+            ),
             (
                 &["README.md"][..],
                 Options {
-                    watch: true,
                     init_file: Some(cur.join("README.md")),
                     ..Default::default()
                 },
@@ -124,7 +158,6 @@ mod tests {
             (
                 &["README.md", "src"][..],
                 Options {
-                    watch: true,
                     init_file: Some(cur.join("README.md")),
                     watch_paths: vec![cur.join("src")],
                     ..Default::default()
@@ -133,22 +166,26 @@ mod tests {
             (
                 &["file-not-existing.md"][..],
                 Options {
-                    watch: true,
                     init_file: None,
                     watch_paths: vec![cur.join("file-not-existing.md")],
                     ..Default::default()
                 },
             ),
-            (&["--no-watch"][..], Options::default()),
-            (&["--debug"][..], Options { watch: true, debug: true, ..Default::default() }),
+            (
+                &["--no-watch"][..],
+                Options { watch: false, ..Default::default() },
+            ),
+            (
+                &["--debug"][..],
+                Options { debug: true, ..Default::default() },
+            ),
             (
                 &["--theme", "dark"][..],
-                Options { watch: true, theme: Some(ThemeOption::Dark), ..Default::default() },
+                Options { theme: Some(ThemeOption::Dark), ..Default::default() },
             ),
             (
                 &["--config-dir", "some-dir"][..],
                 Options {
-                    watch: true,
                     config_dir: Some(PathBuf::from("some-dir")),
                     ..Default::default()
                 },
@@ -156,7 +193,6 @@ mod tests {
             (
                 &["--data-dir", "some-dir"][..],
                 Options {
-                    watch: true,
                     data_dir: Some(PathBuf::from("some-dir")),
                     ..Default::default()
                 },
@@ -164,31 +200,54 @@ mod tests {
         ];
 
         for (args, want) in tests {
-            let opts = Options::from_args(args.iter().map(|&s| String::from(s))).unwrap().unwrap();
-            assert_eq!(&opts, want, "args={:?}", args);
+            match Options::parse(cmdline(args)).unwrap() {
+                Parsed::Options(opts) => assert_eq!(opts, want, "args={args:?}"),
+                Parsed::Help(_) => panic!("--help is returned for {args:?}"),
+            }
         }
     }
 
     #[test]
     fn help_option() {
-        let args = [String::from("--help")];
-        let opts = Options::from_args(args.into_iter()).unwrap();
-        assert!(opts.is_none(), "{:?}", opts);
+        match Options::parse(cmdline(&["--help"])).unwrap() {
+            Parsed::Options(opts) => panic!("--help is not recognized: {opts:?}"),
+            Parsed::Help(help) => {
+                assert!(help.contains("Usage: shiba [options...] [PATH...]"), "{help:?}")
+            }
+        }
     }
 
     #[test]
     fn parse_args_error() {
-        let args = [String::from("--foo")];
-        let err = Options::from_args(args.into_iter()).unwrap_err();
-        assert!(format!("{}", err).contains("Unrecognized option"), "{:?}", err);
+        let err = Options::parse(cmdline(&["--foo"])).unwrap_err();
+        let msg = format!("{err}");
+        assert!(msg.contains("invalid option '--foo'"), "unexpected message {msg:?}");
 
-        let args = [String::from("--theme"), String::from("foo")];
-        let err = Options::from_args(args.into_iter()).unwrap_err();
-        let msg = format!("{}", err);
-        assert!(
-            msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
-            "{:?}",
-            err,
-        );
+        // Test missing value
+        for arg in ["--config-dir", "--data-dir", "--theme"] {
+            let err = Options::parse(cmdline(&[arg, "--debug"])).unwrap_err();
+            assert_eq!(
+                format!("{err}"),
+                "Expected option value but got option name --debug",
+                "unexpected message {err:?} for {arg:?}",
+            );
+
+            let err = Options::parse(cmdline(&["--debug", arg])).unwrap_err();
+            assert_eq!(
+                format!("{err}"),
+                format!("missing argument for option '{arg}'"),
+                "unexpected message {err:?} for {arg:?}",
+            );
+        }
+
+        // Test --theme
+        {
+            let err = Options::parse(cmdline(&["--theme", "foo"])).unwrap_err();
+            let msg = format!("{err}");
+            assert!(
+                msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
+                "unexpected message {msg:?}",
+            );
+        }
     }
 }

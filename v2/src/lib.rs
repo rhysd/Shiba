@@ -19,7 +19,7 @@ mod watcher;
 mod windows;
 mod wry;
 
-pub use cli::Options;
+pub use cli::{Options, Parsed};
 #[cfg(feature = "__bench")]
 pub use markdown::{MarkdownContent, MarkdownParser};
 #[cfg(feature = "__bench")]
