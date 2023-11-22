@@ -1,4 +1,5 @@
 use anyhow::Result;
+use once_cell::unsync::OnceCell;
 use std::env;
 use std::path::PathBuf;
 
@@ -85,7 +86,7 @@ impl Options {
 
         let mut opts = Options::default();
 
-        let mut cwd: Option<PathBuf> = None;
+        let cwd = OnceCell::new();
         let mut parser = lexopt::Parser::from_iter(args);
         while let Some(arg) = parser.next()? {
             match arg {
@@ -106,13 +107,8 @@ impl Options {
                     // using current directory as a parent
                     let path = if exists {
                         path.canonicalize()?
-                    } else if let Some(dir) = &cwd {
-                        dir.join(path)
                     } else {
-                        let dir = env::current_dir()?.canonicalize()?;
-                        let path = dir.join(path);
-                        cwd = Some(dir);
-                        path
+                        cwd.get_or_try_init(|| env::current_dir()?.canonicalize())?.join(path)
                     };
 
                     if opts.init_file.is_some() || path.is_dir() || !exists {
@@ -142,6 +138,7 @@ mod tests {
     #[test]
     fn parse_args_ok() {
         let cur = env::current_dir().unwrap().canonicalize().unwrap();
+
         #[rustfmt::skip]
         let tests = [
             (
@@ -180,8 +177,20 @@ mod tests {
                 Options { debug: true, ..Default::default() },
             ),
             (
+                &["--generate-config-file"][..],
+                Options { gen_config_file: true, ..Default::default() },
+            ),
+            (
                 &["--theme", "dark"][..],
                 Options { theme: Some(ThemeOption::Dark), ..Default::default() },
+            ),
+            (
+                &["--theme", "light"][..],
+                Options { theme: Some(ThemeOption::Light), ..Default::default() },
+            ),
+            (
+                &["--theme", "system"][..],
+                Options { theme: Some(ThemeOption::System), ..Default::default() },
             ),
             (
                 &["--config-dir", "some-dir"][..],
