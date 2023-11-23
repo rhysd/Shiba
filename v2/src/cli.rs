@@ -1,6 +1,7 @@
 use anyhow::Result;
 use once_cell::unsync::OnceCell;
 use std::env;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -58,26 +59,33 @@ impl Default for Options {
 }
 
 impl Options {
-    const USAGE: &'static str = r#"
-    Usage: shiba [options...] [PATH...]
+    const USAGE: &'static str = r#"Usage: shiba [OPTIONS...] [PATH...]
 
-    Options:
-        -t, --theme THEME           Window theme ("dark", "light" or "system")
-            --no-watch              Disable to watch file changes
-            --generate-config-file  Generate the default config file overwriting an existing file
-            --config-dir PATH       Custom the config directory path
-            --data-dir PATH         Custom the data directory path
-            --debug                 Enable debug features
-        -h, --help                  Print this help
-    "#;
+Shiba is a markdown preview application to be used with your favorite text
+editor, designed for simplicity, performance, and keyboard-friendliness.
 
-    pub fn parse(args: impl Iterator<Item = String>) -> Result<Parsed> {
+Options:
+    -t, --theme THEME           Window theme ("dark", "light" or "system")
+        --no-watch              Disable to watch file changes
+        --generate-config-file  Generate the default config file overwriting an existing file
+        --config-dir PATH       Change the config directory path
+        --data-dir PATH         Change the application data directory path
+        --debug                 Enable debug features
+    -h, --help                  Print this help
+
+Document:
+    https://github.com/rhysd/Shiba/v2/README.md
+"#;
+
+    pub fn parse<A>(args: A) -> Result<Parsed>
+    where
+        A: IntoIterator,
+        A::Item: Into<OsString>,
+    {
         use lexopt::prelude::*;
 
         fn value(parser: &mut lexopt::Parser) -> Result<String> {
-            let Ok(v) = parser.value()?.into_string() else {
-                anyhow::bail!("Invalid UTF-8 sequence in command line argument");
-            };
+            let v = parser.value()?.string()?;
             if v.starts_with('-') {
                 anyhow::bail!("Expected option value but got option name {v}");
             }
@@ -220,9 +228,7 @@ mod tests {
     fn help_option() {
         match Options::parse(cmdline(&["--help"])).unwrap() {
             Parsed::Options(opts) => panic!("--help is not recognized: {opts:?}"),
-            Parsed::Help(help) => {
-                assert!(help.contains("Usage: shiba [options...] [PATH...]"), "{help:?}")
-            }
+            Parsed::Help(help) => assert_eq!(help, Options::USAGE),
         }
     }
 
