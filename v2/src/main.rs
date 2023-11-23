@@ -11,10 +11,10 @@ use std::env;
 fn main() -> Result<()> {
     // When windows_subsystem is set to "windows", console outputs are detached from the process and no longer printed
     // on terminal. However we still want to see the logger output for debugging by running this binary from terminal.
-    #[cfg(all(windows, not(debug_assertions), not(__bench)))]
+    #[cfg(all(windows, not(debug_assertions)))]
     let _console = shiba_preview::WindowsConsole::attach();
 
-    match Options::parse(env::args())? {
+    match Options::parse(env::args_os())? {
         Parsed::Options(options) => {
             let level = if options.debug { LevelFilter::Debug } else { LevelFilter::Info };
             env_logger::builder()
@@ -25,7 +25,7 @@ fn main() -> Result<()> {
             run(options)
         }
         Parsed::Help(help) => {
-            println!("{}", help);
+            println!("{help}");
             Ok(())
         }
     }

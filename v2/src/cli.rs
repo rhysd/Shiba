@@ -1,8 +1,9 @@
-use anyhow::Result;
+use anyhow::{Error, Result};
 use once_cell::unsync::OnceCell;
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ThemeOption {
@@ -11,8 +12,10 @@ pub enum ThemeOption {
     Light,
 }
 
-impl ThemeOption {
-    fn new(name: &str) -> Result<Self> {
+impl FromStr for ThemeOption {
+    type Err = Error;
+
+    fn from_str(name: &str) -> Result<Self> {
         match name {
             "dark" | "Dark" => Ok(Self::Dark),
             "light" | "Light" => Ok(Self::Light),
@@ -77,19 +80,15 @@ Document:
     https://github.com/rhysd/Shiba/v2/README.md
 "#;
 
-    pub fn parse<A>(args: A) -> Result<Parsed>
-    where
-        A: IntoIterator,
-        A::Item: Into<OsString>,
-    {
+    pub fn parse(args: impl IntoIterator<Item = impl Into<OsString>>) -> Result<Parsed> {
         use lexopt::prelude::*;
 
-        fn value(parser: &mut lexopt::Parser) -> Result<String> {
+        fn path_value(parser: &mut lexopt::Parser) -> Result<PathBuf> {
             let v = parser.value()?.string()?;
             if v.starts_with('-') {
                 anyhow::bail!("Expected option value but got option name {v}");
             }
-            Ok(v)
+            Ok(v.into())
         }
 
         let mut opts = Options::default();
@@ -99,13 +98,11 @@ Document:
         while let Some(arg) = parser.next()? {
             match arg {
                 Short('h') | Long("help") => return Ok(Parsed::Help(Self::USAGE)),
-                Short('t') | Long("theme") => {
-                    opts.theme = Some(ThemeOption::new(&value(&mut parser)?)?);
-                }
+                Short('t') | Long("theme") => opts.theme = Some(parser.value()?.parse()?),
                 Long("no-watch") => opts.watch = false,
                 Long("generate-config-file") => opts.gen_config_file = true,
-                Long("config-dir") => opts.config_dir = Some(value(&mut parser)?.into()),
-                Long("data-dir") => opts.data_dir = Some(value(&mut parser)?.into()),
+                Long("config-dir") => opts.config_dir = Some(path_value(&mut parser)?),
+                Long("data-dir") => opts.data_dir = Some(path_value(&mut parser)?),
                 Long("debug") => opts.debug = true,
                 Value(path) => {
                     let path = PathBuf::from(path);
@@ -119,7 +116,7 @@ Document:
                         cwd.get_or_try_init(|| env::current_dir()?.canonicalize())?.join(path)
                     };
 
-                    if opts.init_file.is_some() || path.is_dir() || !exists {
+                    if opts.init_file.is_some() || !exists || path.is_dir() {
                         opts.watch_paths.push(path);
                     } else {
                         opts.init_file = Some(path);
@@ -233,20 +230,18 @@ mod tests {
     }
 
     #[test]
-    fn parse_args_error() {
-        let err = Options::parse(cmdline(&["--foo"])).unwrap_err();
-        let msg = format!("{err}");
-        assert!(msg.contains("invalid option '--foo'"), "unexpected message {msg:?}");
+    fn parse_unknown_option() {
+        for arg in ["--foo", "-f"] {
+            let err = Options::parse(cmdline(&[arg])).unwrap_err();
+            let have = format!("{err}");
+            let want = format!("invalid option '{arg}'");
+            assert_eq!(have, want, "unexpected message {have:?}");
+        }
+    }
 
-        // Test missing value
+    #[test]
+    fn parse_missing_option_arg() {
         for arg in ["--config-dir", "--data-dir", "--theme"] {
-            let err = Options::parse(cmdline(&[arg, "--debug"])).unwrap_err();
-            assert_eq!(
-                format!("{err}"),
-                "Expected option value but got option name --debug",
-                "unexpected message {err:?} for {arg:?}",
-            );
-
             let err = Options::parse(cmdline(&["--debug", arg])).unwrap_err();
             assert_eq!(
                 format!("{err}"),
@@ -254,15 +249,27 @@ mod tests {
                 "unexpected message {err:?} for {arg:?}",
             );
         }
+    }
 
-        // Test --theme
-        {
-            let err = Options::parse(cmdline(&["--theme", "foo"])).unwrap_err();
-            let msg = format!("{err}");
-            assert!(
-                msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
-                "unexpected message {msg:?}",
+    #[test]
+    fn parse_invalid_option_arg() {
+        for arg in ["--config-dir", "--data-dir"] {
+            let err = Options::parse(cmdline(&[arg, "--debug"])).unwrap_err();
+            assert_eq!(
+                format!("{err}"),
+                "Expected option value but got option name --debug",
+                "unexpected message {err:?} for {arg:?}",
             );
         }
+    }
+
+    #[test]
+    fn parse_theme_name() {
+        let err = Options::parse(cmdline(&["--theme", "foo"])).unwrap_err();
+        let msg = format!("{err}");
+        assert!(
+            msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
+            "unexpected message {msg:?}",
+        );
     }
 }
