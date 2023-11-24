@@ -28,5 +28,9 @@ fn main() -> Result<()> {
             println!("{help}");
             Ok(())
         }
+        Parsed::Version(version) => {
+            println!("{version}");
+            Ok(())
+        }
     }
 }

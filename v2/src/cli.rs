@@ -31,6 +31,7 @@ impl FromStr for ThemeOption {
 pub enum Parsed {
     Options(Options),
     Help(&'static str),
+    Version(&'static str),
 }
 
 #[non_exhaustive]
@@ -68,13 +69,14 @@ Shiba is a markdown preview application to be used with your favorite text
 editor, designed for simplicity, performance, and keyboard-friendliness.
 
 Options:
-    -t, --theme THEME           Window theme ("dark", "light" or "system")
+    -t, --theme THEME           Window theme ("system" (default), "dark" or "light")
         --no-watch              Disable to watch file changes
         --generate-config-file  Generate the default config file overwriting an existing file
         --config-dir PATH       Change the config directory path
         --data-dir PATH         Change the application data directory path
         --debug                 Enable debug features
     -h, --help                  Print this help
+        --version               Print application version
 
 Document:
     https://github.com/rhysd/Shiba/v2/README.md
@@ -98,6 +100,7 @@ Document:
         while let Some(arg) = parser.next()? {
             match arg {
                 Short('h') | Long("help") => return Ok(Parsed::Help(Self::USAGE)),
+                Long("version") => return Ok(Parsed::Version(env!("CARGO_PKG_VERSION"))),
                 Short('t') | Long("theme") => opts.theme = Some(parser.value()?.parse()?),
                 Long("no-watch") => opts.watch = false,
                 Long("generate-config-file") => opts.gen_config_file = true,
@@ -216,7 +219,7 @@ mod tests {
         for (args, want) in tests {
             match Options::parse(cmdline(args)).unwrap() {
                 Parsed::Options(opts) => assert_eq!(opts, want, "args={args:?}"),
-                Parsed::Help(_) => panic!("--help is returned for {args:?}"),
+                p => panic!("unexpected parse result: {p:?}"),
             }
         }
     }
@@ -224,8 +227,16 @@ mod tests {
     #[test]
     fn help_option() {
         match Options::parse(cmdline(&["--help"])).unwrap() {
-            Parsed::Options(opts) => panic!("--help is not recognized: {opts:?}"),
             Parsed::Help(help) => assert_eq!(help, Options::USAGE),
+            p => panic!("unexpected parse result: {p:?}"),
+        }
+    }
+
+    #[test]
+    fn version_option() {
+        match Options::parse(cmdline(&["--version"])).unwrap() {
+            Parsed::Version(v) => assert_eq!(v, env!("CARGO_PKG_VERSION")),
+            p => panic!("unexpected parse result: {p:?}"),
         }
     }
 
