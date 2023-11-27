@@ -7,17 +7,17 @@ use crate::renderer::{
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
-use wry::application::dpi::{PhysicalPosition, PhysicalSize};
+use tao::dpi::{PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
-use wry::application::platform::macos::WindowBuilderExtMacOS as _;
-use wry::application::window::{Fullscreen, Theme, Window, WindowBuilder};
+use tao::platform::macos::WindowBuilderExtMacOS as _;
+use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 #[cfg(target_os = "windows")]
-use wry::webview::WebViewBuilderExtWindows;
-use wry::webview::{FileDropEvent, WebContext, WebView, WebViewBuilder};
+use wry::WebViewBuilderExtWindows;
+use wry::{FileDropEvent, WebContext, WebView, WebViewBuilder};
 
-pub type EventLoop = wry::application::event_loop::EventLoop<UserEvent>;
+pub type EventLoop = tao::event_loop::EventLoop<UserEvent>;
 
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -33,32 +33,32 @@ fn window_theme(window: &Window) -> RendererTheme {
     }
 }
 
-fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
+fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
-    let loader = Assets::new(config, window_theme(&window));
+    let loader = Assets::new(config, window_theme(window));
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
 
     #[allow(unused_mut)]
-    let mut builder = WebViewBuilder::new(window)?
+    let mut builder = WebViewBuilder::new(window)
         .with_url("shiba://localhost/index.html")?
-        .with_ipc_handler(move |_w, s| {
-            let m: MessageFromRenderer = serde_json::from_str(&s).unwrap();
-            log::debug!("Message from WebView: {:?}", m);
-            if let Err(e) = ipc_proxy.send_event(UserEvent::IpcMessage(m)) {
-                log::error!("Could not send user event for message from WebView: {}", e);
+        .with_ipc_handler(move |msg| {
+            let msg: MessageFromRenderer = serde_json::from_str(&msg).unwrap();
+            log::debug!("Message from WebView: {msg:?}");
+            if let Err(err) = ipc_proxy.send_event(UserEvent::IpcMessage(msg)) {
+                log::error!("Could not send user event for message from WebView: {err}");
             }
         })
-        .with_file_drop_handler(move |_w, e| {
-            if let FileDropEvent::Dropped { paths, .. } = e {
-                log::debug!("Files were dropped (the first one will be opened): {:?}", paths);
+        .with_file_drop_handler(move |event| {
+            if let FileDropEvent::Dropped { paths, .. } = event {
+                log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
                 if let Some(path) = paths.into_iter().next() {
-                    if let Err(e) = file_drop_proxy.send_event(UserEvent::FileDrop(path)) {
-                        log::error!("Could not send user event for file drop: {}", e);
+                    if let Err(err) = file_drop_proxy.send_event(UserEvent::FileDrop(path)) {
+                        log::error!("Could not send user event for file drop: {err}");
                     }
                 }
             }
@@ -135,7 +135,7 @@ fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Re
 
     #[cfg(target_os = "windows")]
     {
-        use wry::webview::Theme;
+        use wry::Theme;
         builder = builder.with_browser_accelerator_keys(false);
         match config.window().theme {
             ThemeConfig::System => {}
@@ -154,7 +154,7 @@ fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Re
     #[cfg(target_os = "macos")]
     {
         use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
-        apply_vibrancy(webview.window(), NSVisualEffectMaterial::Sidebar, None, None)?;
+        apply_vibrancy(window, NSVisualEffectMaterial::Sidebar, None, None)?;
     }
 
     Ok(webview)
@@ -162,6 +162,7 @@ fn create_webview(window: Window, event_loop: &EventLoop, config: &Config) -> Re
 
 pub struct WebViewRenderer {
     webview: WebView,
+    window: Window,
     zoom_level: ZoomLevel,
     always_on_top: bool,
     menu: Menu,
@@ -203,7 +204,7 @@ impl WebViewRenderer {
 
         #[cfg(not(target_os = "macos"))]
         {
-            use wry::application::window::Icon;
+            use tao::window::Icon;
             let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
             builder = builder.with_window_icon(Some(icon));
         }
@@ -222,7 +223,7 @@ impl WebViewRenderer {
             menu.toggle(&window)?;
         }
 
-        let webview = create_webview(window, event_loop, config)?;
+        let webview = create_webview(&window, event_loop, config)?;
         log::debug!("WebView was created successfully");
 
         let zoom_factor = zoom_level.factor();
@@ -237,7 +238,7 @@ impl WebViewRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(WebViewRenderer { webview, zoom_level, always_on_top, menu })
+        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
     }
 }
 
@@ -261,33 +262,32 @@ impl Renderer for WebViewRenderer {
     #[cfg(not(target_os = "macos"))]
     fn set_title(&self, title: &str) {
         log::debug!("Set window title: {}", title);
-        self.webview.window().set_title(title);
+        self.window.set_title(title);
     }
     #[cfg(target_os = "macos")]
     fn set_title(&self, _title: &str) {} // On macOS, the title bar is hidden
 
     fn window_state(&self) -> Option<WindowState> {
-        let PhysicalSize { width, height } = self.webview.inner_size(); // `self.webview.window().inner_size()` doesn't work
-        let w = self.webview.window();
-        let PhysicalPosition { x, y } = match w.inner_position() {
+        let PhysicalSize { width, height } = self.window.inner_size();
+        let PhysicalPosition { x, y } = match self.window.inner_position() {
             Ok(position) => position,
             Err(err) => {
                 log::debug!("Could not get window position for window state: {}", err);
                 return None;
             }
         };
-        let fullscreen = w.fullscreen().is_some();
+        let fullscreen = self.window.fullscreen().is_some();
         let zoom_level = self.zoom_level;
         let always_on_top = self.always_on_top;
         Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top })
     }
 
     fn theme(&self) -> RendererTheme {
-        window_theme(self.webview.window())
+        window_theme(&self.window)
     }
 
     fn show(&self) {
-        self.webview.window().set_visible(true);
+        self.window.set_visible(true);
     }
 
     fn set_background_color(&self, rgba: (u8, u8, u8, u8)) -> Result<()> {
@@ -310,7 +310,7 @@ impl Renderer for WebViewRenderer {
 
     fn set_always_on_top(&mut self, enabled: bool) {
         if self.always_on_top != enabled {
-            self.webview.window().set_always_on_top(enabled);
+            self.window.set_always_on_top(enabled);
             self.always_on_top = enabled;
         }
     }
@@ -320,7 +320,7 @@ impl Renderer for WebViewRenderer {
     }
 
     fn drag_window(&self) -> Result<()> {
-        self.webview.window().drag_window().context("Could not start dragging the window")
+        self.window.drag_window().context("Could not start dragging the window")
     }
 
     fn window_appearance(&self) -> WindowAppearance {
@@ -333,10 +333,10 @@ impl Renderer for WebViewRenderer {
     }
 
     fn show_menu_at(&self, position: Option<(f64, f64)>) {
-        self.menu.show_at(position, self.webview.window());
+        self.menu.show_at(position, &self.window);
     }
 
     fn toggle_menu(&mut self) -> Result<()> {
-        self.menu.toggle(self.webview.window())
+        self.menu.toggle(&self.window)
     }
 }

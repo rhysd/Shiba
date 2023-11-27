@@ -3,8 +3,8 @@ use crate::renderer::{EventHandler, Rendering, RenderingFlow, UserEvent, UserEve
 use crate::wry::menu::{Menu, MenuEvents};
 use crate::wry::webview::{EventLoop, WebViewRenderer};
 use anyhow::Result;
-use wry::application::event::{Event, StartCause, WindowEvent};
-use wry::application::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
+use tao::event::{Event, StartCause, WindowEvent};
+use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
 pub struct Wry {
     event_loop: EventLoop,
@@ -34,8 +34,8 @@ impl Rendering for Wry {
 
     #[cfg(windows)]
     fn new() -> Result<Self> {
+        use tao::platform::windows::EventLoopBuilderExtWindows;
         use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
-        use wry::application::platform::windows::EventLoopBuilderExtWindows;
 
         let mut menu_events = MenuEvents::new();
         let menu = Menu::new(&mut menu_events)?;

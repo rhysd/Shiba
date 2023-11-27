@@ -8,12 +8,12 @@ use muda::{
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 #[cfg(target_os = "macos")]
-use wry::application::platform::macos::WindowExtMacOS as _;
+use tao::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]
-use wry::application::platform::unix::WindowExtUnix as _;
+use tao::platform::unix::WindowExtUnix as _;
 #[cfg(target_os = "windows")]
-use wry::application::platform::windows::WindowExtWindows as _;
-use wry::application::window::{Window, WindowId};
+use tao::platform::windows::WindowExtWindows as _;
+use tao::window::{Window, WindowId};
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
