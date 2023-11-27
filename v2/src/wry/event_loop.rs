@@ -25,14 +25,14 @@ impl Rendering for Wry {
     type UserEventSender = EventLoopProxy<UserEvent>;
     type Renderer = WebViewRenderer;
 
-    #[cfg(not(windows))]
+    #[cfg(not(target_os = "windows"))]
     fn new() -> Result<Self> {
         let event_loop = EventLoopBuilder::with_user_event().build();
         let menu_events = MenuEvents::new();
         Ok(Self { event_loop, menu_events })
     }
 
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     fn new() -> Result<Self> {
         use tao::platform::windows::EventLoopBuilderExtWindows;
         use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
@@ -45,8 +45,9 @@ impl Rendering for Wry {
                 .with_msg_hook(move |msg| {
                     let msg = msg as *const MSG;
                     let haccel = menu.haccel();
-                    // SAFETY: Win32 API usage is always unsafe
-                    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratorw
+                    // SAFETY: `msg` pointer was given by `EventLoopBuilder::with_user_event` which internally receives
+                    // events via message loop. `haccel` is validated by muda's API.
+                    // Ref: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratorw
                     let translated = unsafe { TranslateAcceleratorW((*msg).hwnd, haccel, msg) };
                     translated != 0
                 })

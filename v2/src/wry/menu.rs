@@ -33,7 +33,7 @@ fn metadata() -> AboutMetadata {
         m.website = Some(env!("CARGO_PKG_HOMEPAGE").into());
     }
 
-    #[cfg(not(windows))]
+    #[cfg(not(target_os = "windows"))]
     {
         use muda::Icon;
         const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_256x256.rgba");
@@ -66,8 +66,7 @@ impl MenuEvents {
 
 #[derive(Clone)]
 pub struct Menu {
-    // This instance must be kept since dropping this instance removes menu from application
-    menu_bar: MenuBar,
+    menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
     visibility: HashMap<WindowId, bool>,
     #[cfg(target_os = "macos")]
     window_menu: Submenu,
@@ -252,7 +251,7 @@ impl Menu {
         })
     }
 
-    #[cfg_attr(not(windows), allow(dead_code))]
+    #[cfg(target_os = "windows")]
     pub fn menu_bar(&self) -> &MenuBar {
         &self.menu_bar
     }
