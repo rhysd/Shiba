@@ -423,9 +423,9 @@ mod tests {
     use std::env;
 
     const EXPECTED_CONFIG: &str = include_str!("testdata/config/Shiba/config.yml");
-    #[cfg(not(windows))]
+    #[cfg(not(target_os = "windows"))]
     const TEST_CONFIG_DIR: &str = "src/testdata/config/Shiba";
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     const TEST_CONFIG_DIR: &str = r"src\testdata\config\Shiba";
 
     struct Env<'a>((&'a str, Option<String>));

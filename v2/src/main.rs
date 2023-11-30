@@ -1,7 +1,10 @@
 // Do not pop up cmd.exe window when clicking .exe on Windows. This also disables any console outputs
 // so logger output will not work.
 // https://learn.microsoft.com/en-us/cpp/build/reference/subsystem-specify-subsystem
-#![cfg_attr(all(windows, not(debug_assertions), not(__bench)), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions), not(__bench)),
+    windows_subsystem = "windows"
+)]
 
 use anyhow::Result;
 use log::LevelFilter;

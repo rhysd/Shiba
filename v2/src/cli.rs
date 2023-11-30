@@ -203,14 +203,14 @@ mod tests {
             (
                 &["--config-dir", "some-dir"][..],
                 Options {
-                    config_dir: Some(PathBuf::from("some-dir")),
+                    config_dir: Some("some-dir".into()),
                     ..Default::default()
                 },
             ),
             (
                 &["--data-dir", "some-dir"][..],
                 Options {
-                    data_dir: Some(PathBuf::from("some-dir")),
+                    data_dir: Some("some-dir".into()),
                     ..Default::default()
                 },
             ),

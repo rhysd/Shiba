@@ -197,7 +197,7 @@ impl Assets {
             "/logo.png"            => LOGO_PNG.into(),
             #[cfg(debug_assertions)]
             "/bundle.js.map"       => BUNDLE_JS_MAP.into(),
-            #[cfg(windows)]
+            #[cfg(target_os = "windows")]
             "/favicon.ico"         => Cow::Owned(vec![]),
             path                   => {
                 log::debug!("Dynamically loading external resource {:?}", path);

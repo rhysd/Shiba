@@ -15,7 +15,7 @@ mod persistent;
 mod renderer;
 mod shiba;
 mod watcher;
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 mod windows;
 mod wry;
 
@@ -24,7 +24,7 @@ pub use cli::{Options, Parsed};
 pub use markdown::{MarkdownContent, MarkdownParser};
 #[cfg(feature = "__bench")]
 pub use renderer::RawMessageWriter;
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 pub use windows::WindowsConsole;
 
 use anyhow::Result;

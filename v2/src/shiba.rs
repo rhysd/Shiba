@@ -101,7 +101,7 @@ struct PreviewContent {
 impl Default for PreviewContent {
     fn default() -> Self {
         let home_dir = dirs::home_dir();
-        #[cfg(windows)]
+        #[cfg(target_os = "windows")]
         let home_dir = home_dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
         Self {
             home_dir,
@@ -300,7 +300,7 @@ where
         let extensions = self.config.watch().file_extensions();
         let dir = self.config.dialog().default_dir()?;
         let file = D::pick_file(&dir, extensions);
-        #[cfg(windows)]
+        #[cfg(target_os = "windows")]
         let file = file.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
 
         if let Some(file) = file {
@@ -314,7 +314,7 @@ where
     fn open_dir(&mut self) -> Result<()> {
         let dir = self.config.dialog().default_dir()?;
         let dir = D::pick_dir(&dir);
-        #[cfg(windows)]
+        #[cfg(target_os = "windows")]
         let dir = dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
 
         if let Some(dir) = dir {
