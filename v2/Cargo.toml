@@ -50,17 +50,11 @@ serde_yaml = "0.9.27"
 tao = { version = "0.24", default-features = false, features = [ "rwh_05" ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-# TODO: Uncomment the following line when wry v0.35.1 is released
-# https://github.com/tauri-apps/wry/issues/1112
-# wry = { version = "0.35.1", features = ["transparent"] }
-wry = { git = "https://github.com/tauri-apps/wry.git", features = ["transparent"] }
+wry = { version = "0.35.1", features = ["transparent"] }
 window-vibrancy = "0.4.2"
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
-# TODO: Uncomment the following line when wry v0.35.1 is released
-# https://github.com/tauri-apps/wry/issues/1112
-# wry = "0.35.1"
-wry = { git = "https://github.com/tauri-apps/wry.git" }
+wry = "0.35.1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52.0", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
