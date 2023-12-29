@@ -304,7 +304,7 @@ impl Menu {
         #[cfg(target_os = "windows")]
         self.menu_bar.show_context_menu_for_hwnd(window.hwnd() as _, position);
         #[cfg(target_os = "linux")]
-        self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window(), position);
+        self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window().as_ref(), position);
         #[cfg(target_os = "macos")]
         self.menu_bar.show_context_menu_for_nsview(window.ns_view() as _, position);
     }
