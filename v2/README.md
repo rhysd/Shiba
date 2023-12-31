@@ -26,77 +26,12 @@ Features:
 - Customizable with [a YAML config file](./src/assets/default_config.yml) (color theme, keyboard shortcuts, custom CSS, ...)
 - Dogs are respected :dog2:
 
-## Installation
-
-### Prerequisites
-
-On Linux, some additional shared libraries need to be installed via system package manager.
-
-```sh
-# On Ubuntu or Debian
-sudo apt install libwebkit2gtk-4.1-dev libxdo-dev
-
-# On Fedora
-sudo dnf install gtk3-devel webkit2gtk4.1-devel libxdo
-```
-
-On Windows, please ensure that [WebView2 component][webview2] is installed on your system. It is installed on Windows 11
-and recent Windows 10 by default.
-
-### Building from source
-
-Install [Cargo package manager][cargo] via [rustup][] and [Node.js][nodejs]. All build tasks are defined as `make` rules.
-On Windows, install Make via [winget][winget-make] or [chocolatey][choco-make].
-
-Clone this repository from GitHub:
-
-```sh
-git clone --depth=1 'https://github.com/rhysd/Shiba.git'
-cd ./Shiba/v2
-```
-
-To build `shiba` (or `shiba.exe` on Windows) single-binary executable as CLI application:
-
-```sh
-make release
-cp ./target/release/shiba /path/to/your/bin/
-shiba --help
-```
-
-To build a macOS universal package:
-
-```sh
-make Shiba.dmg
-# or
-make Shiba.app
-```
-
-To build an installer for Windows ([WiX v4][wix] is needed):
-
-```sh
-make shiba.msi
-```
-
-To build a package for Debian/Ubuntu ([cargo-deb][] is needed):
-
-```sh
-make shiba_amd64.deb
-```
-
-### Pre-built binaries
-
-Download from [the release page](https://github.com/rhysd/Shiba/releases/tag/unreleased). Artifacts in this page are
-**experimental** and built at some point of main branch. They may be buggy yet.
-
-- `.zip` files are archived single binaries for each platforms
-- `.msi`, `.deb`, `.dmg` files are installers for each platforms
-
-**Note:** These executables are not signed. When your OS complains about it, go to 'Security' OS settings and allow the
-executable to run.
-
 ## Documentation
 
-Documentation is not ready yet.
+All documentations are in the [docs](./docs) directory.
+
+- [Installation](./docs/installation.md)
+- ...More docs will be added
 
 ## About v2
 
@@ -117,12 +52,4 @@ This software is distributed under [the MIT license](./LICENSE).
 [rust]: https://www.rust-lang.org/ja
 [ts]: https://www.typescriptlang.org/
 [react]: https://react.dev/
-[webview2]: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
-[cargo]: https://doc.rust-lang.org/cargo/
-[rustup]: https://rustup.rs/
-[nodejs]: https://nodejs.org/en
-[winget-make]: https://winget.run/pkg/GnuWin32/Make
-[choco-make]: https://community.chocolatey.org/packages/make
-[wix]: https://wixtoolset.org/
-[cargo-deb]: https://github.com/kornelski/cargo-deb
 [v1]: https://github.com/rhysd/Shiba/tree/v1
