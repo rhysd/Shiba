@@ -55,6 +55,16 @@ impl TextTokenizer for () {
     }
 }
 
+// TODO: Use `str::floor_char_boundary` when it is stabilized.
+// https://doc.rust-lang.org/std/primitive.str.html#method.floor_char_boundary
+#[inline]
+fn floor_char_boundary(s: &str, mut i: usize) -> usize {
+    while !s.is_char_boundary(i) {
+        i -= 1;
+    }
+    i
+}
+
 #[derive(Default)]
 pub struct MarkdownContent {
     source: String,
@@ -78,12 +88,16 @@ impl MarkdownContent {
         // The first two bytes are the same. So the byte offset is 2 and it points at the middle of the sequence.
         // `MarkdownParser` will try to split the text at this position and will crash.
         //
-        // Note: Fiding the offset on a byte-by-byte basis and then find the char boundary by `str::is_char_boundary`
-        // may be faster
+        // Note: Iterating UTF-8 character indices with `str::char_indices` is slower than iterating bytes and adjusting
+        // the byte offset to the UTF-8 character boundary.
+        // See https://github.com/rhysd/misc/tree/master/rust_bench/str_utf8_aware_offset
         prev_source
-            .char_indices()
-            .zip(new_source.chars())
-            .find_map(|((idx, a), b)| (a != b).then_some(idx))
+            .as_bytes()
+            .iter()
+            .copied()
+            .enumerate()
+            .zip(new_source.as_bytes().iter().copied())
+            .find_map(|((i, a), b)| (a != b).then(|| floor_char_boundary(new_source, i)))
             .or_else(|| {
                 let (prev_len, new_len) = (prev_source.len(), new_source.len());
                 (prev_len != new_len).then_some(cmp::min(prev_len, new_len))
@@ -1087,6 +1101,9 @@ mod tests {
         for (before, after, expected) in [
             ("あ", "い", Some(0)),
             ("ああ", "あい", Some(3)),
+            ("あああ", "あいう", Some(3)),
+            ("あああ", "あいあ", Some(3)),
+            ("あいう", "あいえ", Some(6)),
             ("", "あ", Some(0)),
             ("あ", "", Some(0)),
             ("あ", "あい", Some(3)),
