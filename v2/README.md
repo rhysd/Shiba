@@ -80,7 +80,7 @@ make shiba.msi
 To build a package for Debian/Ubuntu ([cargo-deb][] is needed):
 
 ```sh
-make shiba_0.0.0_amd64.deb
+make shiba_amd64.deb
 ```
 
 ### Pre-built binaries
