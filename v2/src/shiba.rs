@@ -143,7 +143,7 @@ impl PreviewContent {
         let is_new = self.title != title;
         let new_content = MarkdownContent::new(source, path.parent());
         let prev_content = std::mem::replace(&mut self.content, new_content);
-        let offset = if is_new { None } else { prev_content.modified_offset(&self.content) };
+        let offset = if is_new { None } else { prev_content.modified_utf8_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);
 
         self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;

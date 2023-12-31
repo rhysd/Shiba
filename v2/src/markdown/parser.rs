@@ -68,13 +68,22 @@ impl MarkdownContent {
         Self { source, base_dir }
     }
 
-    pub fn modified_offset(&self, new: &Self) -> Option<usize> {
+    pub fn modified_utf8_offset(&self, new: &Self) -> Option<usize> {
         let (prev_source, new_source) = (&self.source, &new.source);
+        // Offset must be UTF-8 aware to split text tokens correctly. If finding modified byte offset on a byte-by-byte
+        // basis, the offset may point at the middle of UTF-8 character sequence.
+        // For example, when a text 'あ' is modified to 'い',
+        // - あ: 0xE3 0x81 0x82
+        // - い: 0xE3 0x81 0x84
+        // The first two bytes are the same. So the byte offset is 2 and it points at the middle of the sequence.
+        // `MarkdownParser` will try to split the text at this position and will crash.
+        //
+        // Note: Fiding the offset on a byte-by-byte basis and then find the char boundary by `str::is_char_boundary`
+        // may be faster
         prev_source
-            .as_bytes()
-            .iter()
-            .zip(new_source.as_bytes().iter())
-            .position(|(a, b)| a != b)
+            .char_indices()
+            .zip(new_source.chars())
+            .find_map(|((idx, a), b)| (a != b).then_some(idx))
             .or_else(|| {
                 let (prev_len, new_len) = (prev_source.len(), new_source.len());
                 (prev_len != new_len).then_some(cmp::min(prev_len, new_len))
@@ -379,10 +388,10 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             self.out.write_all(b"}")
         } else {
             let i = offset - start;
-            self.text_tokens(&text[..i], range.start..offset)?;
+            self.text_tokens(&text[..i], start..offset)?;
             self.tag("modified")?;
             self.out.write_all(b"}")?;
-            self.text_tokens(&text[i..], offset..range.end)
+            self.text_tokens(&text[i..], offset..end)
         }
     }
 
@@ -1070,6 +1079,24 @@ mod tests {
                 let (s, e) = found.unwrap();
                 assert_eq!(url, &input[s..e]);
             }
+        }
+    }
+
+    #[test]
+    fn utf8_aware_byte_offset() {
+        for (before, after, expected) in [
+            ("あ", "い", Some(0)),
+            ("ああ", "あい", Some(3)),
+            ("", "あ", Some(0)),
+            ("あ", "", Some(0)),
+            ("あ", "あい", Some(3)),
+            ("あ", "あ", None),
+            ("", "", None),
+        ] {
+            let prev = MarkdownContent::new(before.into(), None);
+            let now = MarkdownContent::new(after.into(), None);
+            let offset = prev.modified_utf8_offset(&now);
+            assert_eq!(offset, expected, "{before:?}, {after:?}");
         }
     }
 }
