@@ -296,6 +296,14 @@ export class KeyMapping {
 
         const shortcuts = [...bounds.values()];
         shortcuts.sort((l, r) => l.action.localeCompare(r.action));
+
+        function classify(bind: string): number {
+            return bind.length === 1 ? 0 : bind.includes('+') ? 1 : 2;
+        }
+        for (const shortcut of shortcuts) {
+            shortcut.binds.sort((a, b) => classify(a) - classify(b));
+        }
+
         this.sortedShortcuts = shortcuts;
     }
 }
