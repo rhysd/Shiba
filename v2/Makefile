@@ -46,6 +46,6 @@ shiba_amd64.deb: target/debian/shiba_0.0.0_amd64.deb
 build: target/debug/shiba
 release: target/release/shiba
 clean:
-	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target Shiba.app shiba.msi
+	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target Shiba.app Shiba.dmg shiba.msi shiba_amd64.deb
 
 .DEFAULT_GOAL := build

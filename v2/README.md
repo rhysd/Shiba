@@ -35,7 +35,7 @@ All documentations are in the [docs](./docs) directory.
 
 ## About v2
 
-Shiba v2 is the complete rewrite of v1 with so many breaking changes. For v1, please visit [the `v1` branch][v1].
+Shiba v2 is the complete rewrite of v1 using Rust and platform-specific WebView. For v1, please visit [the `v1` branch][v1].
 
 ## License
 
