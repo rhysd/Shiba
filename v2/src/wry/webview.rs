@@ -165,6 +165,7 @@ pub struct WebViewRenderer {
     window: Window,
     zoom_level: ZoomLevel,
     always_on_top: bool,
+    maximized: bool,
     menu: Menu,
 }
 
@@ -238,7 +239,8 @@ impl WebViewRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
+        let maximized = false;
+        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, maximized, menu })
     }
 }
 
@@ -321,6 +323,11 @@ impl Renderer for WebViewRenderer {
 
     fn drag_window(&self) -> Result<()> {
         self.window.drag_window().context("Could not start dragging the window")
+    }
+
+    fn toggle_maximized(&mut self) {
+        self.maximized = !self.maximized;
+        self.window.set_maximized(self.maximized);
     }
 
     fn window_appearance(&self) -> WindowAppearance {

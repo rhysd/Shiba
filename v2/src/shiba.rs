@@ -399,6 +399,7 @@ where
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
+            ToggleMaximized => self.renderer.toggle_maximized(),
             Quit => return Ok(RenderingFlow::Exit),
             OpenMenu { position } => self.renderer.show_menu_at(position),
             ToggleMenuBar => self.renderer.toggle_menu()?,

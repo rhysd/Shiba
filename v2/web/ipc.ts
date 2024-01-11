@@ -293,6 +293,9 @@ export type MessageToMain =
           kind: 'drag_window';
       }
     | {
+          kind: 'toggle_maximized';
+      }
+    | {
           kind: 'open_menu';
           position?: [number, number];
       }

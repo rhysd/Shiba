@@ -15,6 +15,11 @@ function detectDragStart(event: React.MouseEvent): void {
     sendMessage({ kind: 'drag_window' });
 }
 
+function onDoubleClick(event: React.MouseEvent): void {
+    event.preventDefault();
+    sendMessage({ kind: 'toggle_maximized' });
+}
+
 export const WindowBar: React.FC = () => {
-    return <div style={STYLE} onMouseDown={detectDragStart} />;
+    return <div style={STYLE} onMouseDown={detectDragStart} onDoubleClick={onDoubleClick} />;
 };
