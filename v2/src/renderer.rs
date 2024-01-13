@@ -189,7 +189,8 @@ pub trait Renderer {
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
     fn drag_window(&self) -> Result<()>;
-    fn toggle_maximized(&mut self);
+    fn is_maximized(&self) -> bool;
+    fn set_maximized(&mut self, maximized: bool);
     fn window_appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;

@@ -350,6 +350,12 @@ where
         self.renderer.send_message(MessageToRenderer::AlwaysOnTop { pinned })
     }
 
+    fn toggle_maximized(&mut self) {
+        let maximized = !self.renderer.is_maximized();
+        log::debug!("Toggle maximized window (maximized={})", maximized);
+        self.renderer.set_maximized(maximized);
+    }
+
     fn open_config(&mut self) -> Result<()> {
         let path = self.config.config_file()?;
         log::debug!("Opening config file via menu item: {:?}", path);
@@ -399,7 +405,7 @@ where
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
-            ToggleMaximized => self.renderer.toggle_maximized(),
+            ToggleMaximized => self.toggle_maximized(),
             Quit => return Ok(RenderingFlow::Exit),
             OpenMenu { position } => self.renderer.show_menu_at(position),
             ToggleMenuBar => self.renderer.toggle_menu()?,

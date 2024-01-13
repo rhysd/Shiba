@@ -325,9 +325,13 @@ impl Renderer for WebViewRenderer {
         self.window.drag_window().context("Could not start dragging the window")
     }
 
-    fn toggle_maximized(&mut self) {
-        self.maximized = !self.maximized;
-        self.window.set_maximized(self.maximized);
+    fn is_maximized(&self) -> bool {
+        self.maximized
+    }
+
+    fn set_maximized(&mut self, maximized: bool) {
+        self.window.set_maximized(maximized);
+        self.maximized = maximized;
     }
 
     fn window_appearance(&self) -> WindowAppearance {
