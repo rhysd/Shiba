@@ -269,7 +269,7 @@ impl Renderer for WebViewRenderer {
 
     fn window_state(&self) -> Option<WindowState> {
         let PhysicalSize { width, height } = self.window.inner_size();
-        let PhysicalPosition { x, y } = match self.window.inner_position() {
+        let PhysicalPosition { x, y } = match self.window.outer_position() {
             Ok(position) => position,
             Err(err) => {
                 log::debug!("Could not get window position for window state: {}", err);
