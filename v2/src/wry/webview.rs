@@ -165,7 +165,6 @@ pub struct WebViewRenderer {
     window: Window,
     zoom_level: ZoomLevel,
     always_on_top: bool,
-    maximized: bool,
     menu: Menu,
 }
 
@@ -239,8 +238,7 @@ impl WebViewRenderer {
             log::debug!("Opened DevTools for debugging");
         }
 
-        let maximized = false;
-        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, maximized, menu })
+        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
     }
 }
 
@@ -326,12 +324,11 @@ impl Renderer for WebViewRenderer {
     }
 
     fn is_maximized(&self) -> bool {
-        self.maximized
+        self.window.is_maximized() // Note: Window is unmaximized when a user changes the window size manually
     }
 
     fn set_maximized(&mut self, maximized: bool) {
         self.window.set_maximized(maximized);
-        self.maximized = maximized;
     }
 
     fn window_appearance(&self) -> WindowAppearance {
