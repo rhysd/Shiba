@@ -174,7 +174,16 @@ impl WebViewRenderer {
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
-            let WindowState { height, width, x, y, fullscreen, zoom_level, always_on_top } = state;
+            let WindowState {
+                height,
+                width,
+                x,
+                y,
+                fullscreen,
+                zoom_level,
+                always_on_top,
+                maximized,
+            } = state;
             log::debug!("Restoring window state {state:?}");
             let size = PhysicalSize { width, height };
             builder = builder.with_inner_size(size);
@@ -182,6 +191,8 @@ impl WebViewRenderer {
             builder = builder.with_position(position);
             if fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+            } else if maximized {
+                builder = builder.with_maximized(true);
             }
             (zoom_level, always_on_top)
         } else {
@@ -279,7 +290,8 @@ impl Renderer for WebViewRenderer {
         let fullscreen = self.window.fullscreen().is_some();
         let zoom_level = self.zoom_level;
         let always_on_top = self.always_on_top;
-        Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top })
+        let maximized = self.window.is_maximized();
+        Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top, maximized })
     }
 
     fn theme(&self) -> RendererTheme {
