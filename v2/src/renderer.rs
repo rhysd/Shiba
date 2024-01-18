@@ -119,28 +119,13 @@ pub enum Theme {
 pub struct ZoomLevel(u8);
 
 impl ZoomLevel {
-    const MAX: u8 = 14;
-
     // Following the same zoom factors in Chrome
+    const FACTORS: [f64; 15] =
+        [0.25, 0.33, 0.50, 0.67, 0.75, 0.80, 0.90, 1.00, 1.10, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00];
+    const MAX: u8 = Self::FACTORS.len() as u8 - 1;
+
     pub fn factor(self) -> f64 {
-        match self.0 {
-            0 => 0.25,
-            1 => 0.33,
-            2 => 0.50,
-            3 => 0.67,
-            4 => 0.75,
-            5 => 0.80,
-            6 => 0.90,
-            7 => 1.00,
-            8 => 1.10,
-            9 => 1.25,
-            10 => 1.50,
-            11 => 1.75,
-            12 => 2.00,
-            13 => 2.50,
-            14 => 3.00,
-            _ => unreachable!("Invalid zoom level {:?}", self.0),
-        }
+        Self::FACTORS[self.0 as usize]
     }
 
     pub fn percent(self) -> u16 {
