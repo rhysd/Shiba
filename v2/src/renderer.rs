@@ -123,6 +123,7 @@ impl ZoomLevel {
     const FACTORS: [f64; 15] =
         [0.25, 0.33, 0.50, 0.67, 0.75, 0.80, 0.90, 1.00, 1.10, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00];
     const MAX: u8 = Self::FACTORS.len() as u8 - 1;
+    const DEFAULT: u8 = Self::MAX / 2;
 
     pub fn factor(self) -> f64 {
         Self::FACTORS[self.0 as usize]
@@ -143,7 +144,7 @@ impl ZoomLevel {
 
 impl Default for ZoomLevel {
     fn default() -> Self {
-        Self(7) // Zoom factor 1.0
+        Self(Self::DEFAULT)
     }
 }
 
@@ -199,4 +200,45 @@ pub trait EventHandler {
     fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
     fn handle_exit(&mut self) -> Result<()>;
     fn handle_error(&mut self, err: Error) -> RenderingFlow;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_zoom_level() {
+        assert_eq!(ZoomLevel::default().factor(), 1.0);
+    }
+
+    #[test]
+    fn zoom_level_percent() {
+        assert_eq!(ZoomLevel::default().percent(), 100);
+        assert_eq!(ZoomLevel(0).percent(), 25);
+        assert_eq!(ZoomLevel(ZoomLevel::MAX).percent(), 300);
+    }
+
+    #[test]
+    fn zoom_in() {
+        let mut z = ZoomLevel(0);
+        let mut prev = z.factor();
+        for _ in 0..ZoomLevel::MAX {
+            z = z.zoom_in().unwrap();
+            assert!(prev < z.factor());
+            prev = z.factor();
+        }
+        assert_eq!(z.zoom_in(), None);
+    }
+
+    #[test]
+    fn zoom_out() {
+        let mut z = ZoomLevel(ZoomLevel::MAX);
+        let mut prev = z.factor();
+        for _ in 0..ZoomLevel::MAX {
+            z = z.zoom_out().unwrap();
+            assert!(prev > z.factor());
+            prev = z.factor();
+        }
+        assert_eq!(z.zoom_out(), None);
+    }
 }
