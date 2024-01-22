@@ -47,7 +47,7 @@ rfd = "0.12.1"  # 0.12.0 is incompatible with wry because of gtk-sys version
 serde = "1.0.195"
 serde_json = "1.0.111"
 serde_yaml = "0.9.30"
-tao = { version = "0.24", default-features = false, features = [ "rwh_05" ] }
+winit = { version = "0.29.10", default-features = false, features = ["rwh_05", "x11", "wayland", "wayland-dlopen", "wayland-csd-adwaita"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 wry = { version = "0.35.2", features = ["transparent"] }

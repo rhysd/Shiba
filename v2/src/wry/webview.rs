@@ -7,29 +7,25 @@ use crate::renderer::{
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
-use tao::dpi::{PhysicalPosition, PhysicalSize};
+use winit::dpi::{PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
-use tao::platform::macos::WindowBuilderExtMacOS as _;
-use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
+use winit::platform::macos::WindowBuilderExtMacOS as _;
+use winit::window::{Fullscreen, Theme, Window, WindowBuilder, WindowLevel};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 #[cfg(target_os = "windows")]
 use wry::WebViewBuilderExtWindows;
 use wry::{FileDropEvent, WebContext, WebView, WebViewBuilder};
 
-pub type EventLoop = tao::event_loop::EventLoop<UserEvent>;
+pub type EventLoop = winit::event_loop::EventLoop<UserEvent>;
 
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
 
 fn window_theme(window: &Window) -> RendererTheme {
-    match window.theme() {
+    match window.theme().unwrap_or(Theme::Light) {
         Theme::Light => RendererTheme::Light,
         Theme::Dark => RendererTheme::Dark,
-        t => {
-            log::error!("Unknown window theme: {:?}", t);
-            RendererTheme::Light
-        }
     }
 }
 
@@ -204,7 +200,7 @@ impl WebViewRenderer {
         };
 
         if always_on_top {
-            builder = builder.with_always_on_top(true);
+            builder = builder.with_window_level(WindowLevel::AlwaysOnBottom);
         }
 
         match config.window().theme {
@@ -215,7 +211,7 @@ impl WebViewRenderer {
 
         #[cfg(not(target_os = "macos"))]
         {
-            use tao::window::Icon;
+            use winit::window::Icon;
             let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
             builder = builder.with_window_icon(Some(icon));
         }
@@ -322,7 +318,8 @@ impl Renderer for WebViewRenderer {
 
     fn set_always_on_top(&mut self, enabled: bool) {
         if self.always_on_top != enabled {
-            self.window.set_always_on_top(enabled);
+            let level = if enabled { WindowLevel::AlwaysOnTop } else { WindowLevel::Normal };
+            self.window.set_window_level(level);
             self.always_on_top = enabled;
         }
     }

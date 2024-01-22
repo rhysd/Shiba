@@ -151,7 +151,7 @@ impl Default for ZoomLevel {
 #[derive(Debug)]
 pub enum RenderingFlow {
     Continue,
-    Exit,
+    Close,
 }
 
 /// Sender to send [`UserEvent`] accross threads. It is used to send the user events to the main thread
@@ -190,16 +190,16 @@ pub trait Rendering: Sized {
     fn new() -> Result<Self>;
     fn create_sender(&self) -> Self::UserEventSender;
     fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
-    /// Starts the rendering execution and runs until the process exits.
-    fn start<H: EventHandler + 'static>(self, handler: H) -> !;
+    fn run<H: EventHandler>(self, handler: H) -> Result<()>;
 }
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
     fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
-    fn handle_exit(&mut self) -> Result<()>;
+    fn handle_close(&mut self) -> Result<()>;
     fn handle_error(&mut self, err: Error) -> RenderingFlow;
+    fn handle_exit(&mut self) -> Result<()>;
 }
 
 #[cfg(test)]

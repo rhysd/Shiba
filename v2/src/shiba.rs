@@ -197,6 +197,7 @@ pub struct Shiba<R: Rendering, O, W, D> {
     config: Config,
     preview: PreviewContent,
     init_file: Option<PathBuf>,
+    last_error: Option<Error>,
     _dialog: PhantomData<D>,
 }
 
@@ -207,10 +208,7 @@ where
     W: Watcher,
     D: Dialog,
 {
-    pub fn run(options: Options) -> Result<()>
-    where
-        Self: 'static,
-    {
+    pub fn run(options: Options) -> Result<()> {
         fn on_err<D: Dialog>(err: Error) -> Error {
             let err = err.context("Could not launch application");
             D::alert(&err);
@@ -218,7 +216,7 @@ where
         }
         let mut rendering = R::new().map_err(on_err::<D>)?;
         let dog = Self::new(options, &mut rendering).map_err(on_err::<D>)?;
-        rendering.start(dog)
+        rendering.run(dog)
     }
 
     pub fn new(mut options: Options, rendering: &mut R) -> Result<Self> {
@@ -251,6 +249,7 @@ where
             config,
             preview: PreviewContent::default(),
             init_file,
+            last_error: None,
             _dialog: PhantomData,
         })
     }
@@ -406,7 +405,7 @@ where
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
             ToggleMaximized => self.toggle_maximized(),
-            Quit => return Ok(RenderingFlow::Exit),
+            Quit => return Ok(RenderingFlow::Close),
             OpenMenu { position } => self.renderer.show_menu_at(position),
             ToggleMenuBar => self.renderer.toggle_menu()?,
             Error { message } => anyhow::bail!("Error reported from renderer: {}", message),
@@ -483,7 +482,7 @@ where
 
         log::debug!("Menu item was clicked: {:?}", item);
         match item {
-            Quit => return Ok(RenderingFlow::Exit),
+            Quit => return Ok(RenderingFlow::Close),
             Forward => self.forward()?,
             Back => self.back()?,
             Reload => self.reload()?,
@@ -507,7 +506,7 @@ where
         Ok(RenderingFlow::Continue)
     }
 
-    fn handle_exit(&mut self) -> Result<()> {
+    fn handle_close(&mut self) -> Result<()> {
         log::debug!("Handling application exit");
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
@@ -522,6 +521,15 @@ where
 
     fn handle_error(&mut self, err: Error) -> RenderingFlow {
         D::alert(&err);
+        self.last_error = Some(err);
         RenderingFlow::Continue
+    }
+
+    fn handle_exit(&mut self) -> Result<()> {
+        if let Some(err) = self.last_error.take() {
+            Err(err)
+        } else {
+            Ok(())
+        }
     }
 }

@@ -3,8 +3,8 @@ use crate::renderer::{EventHandler, Rendering, RenderingFlow, UserEvent, UserEve
 use crate::wry::menu::{Menu, MenuEvents};
 use crate::wry::webview::{EventLoop, WebViewRenderer};
 use anyhow::Result;
-use tao::event::{Event, StartCause, WindowEvent};
-use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
+use winit::event::{Event, StartCause, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
 pub struct Wry {
     event_loop: EventLoop,
@@ -27,15 +27,15 @@ impl Rendering for Wry {
 
     #[cfg(not(target_os = "windows"))]
     fn new() -> Result<Self> {
-        let event_loop = EventLoopBuilder::with_user_event().build();
+        let event_loop = EventLoopBuilder::with_user_event().build()?;
         let menu_events = MenuEvents::new();
         Ok(Self { event_loop, menu_events })
     }
 
     #[cfg(target_os = "windows")]
     fn new() -> Result<Self> {
-        use tao::platform::windows::EventLoopBuilderExtWindows;
         use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
+        use winit::platform::windows::EventLoopBuilderExtWindows;
 
         let mut menu_events = MenuEvents::new();
         let menu = Menu::new(&mut menu_events)?;
@@ -51,7 +51,7 @@ impl Rendering for Wry {
                     let translated = unsafe { TranslateAcceleratorW((*msg).hwnd, haccel, msg) };
                     translated != 0
                 })
-                .build()
+                .build()?
         };
 
         Ok(Self { event_loop, menu_events, menu })
@@ -69,11 +69,8 @@ impl Rendering for Wry {
         WebViewRenderer::new(config, &self.event_loop, menu)
     }
 
-    fn start<H>(self, mut handler: H) -> !
-    where
-        H: EventHandler + 'static,
-    {
-        self.event_loop.run(move |event, _, control| {
+    fn run<H: EventHandler>(self, mut handler: H) -> Result<()> {
+        self.event_loop.run(|event, target| {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
@@ -81,7 +78,7 @@ impl Rendering for Wry {
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                     log::debug!("Closing window was requested");
-                    RenderingFlow::Exit
+                    RenderingFlow::Close
                 }
                 Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
                     handler.handle_error(err.context("Could not handle user event"))
@@ -98,16 +95,16 @@ impl Rendering for Wry {
                     }),
             };
 
-            *control = match flow {
-                RenderingFlow::Continue => ControlFlow::Wait,
-                RenderingFlow::Exit => match handler.handle_exit() {
-                    Ok(()) => ControlFlow::Exit,
-                    Err(err) => {
+            match flow {
+                RenderingFlow::Continue => target.set_control_flow(ControlFlow::Wait),
+                RenderingFlow::Close => {
+                    if let Err(err) = handler.handle_close() {
                         handler.handle_error(err.context("Could not handle application exit"));
-                        ControlFlow::ExitWithCode(1)
                     }
-                },
+                    target.exit();
+                }
             };
-        })
+        })?;
+        handler.handle_exit()
     }
 }

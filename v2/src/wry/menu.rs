@@ -8,12 +8,12 @@ use muda::{
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 #[cfg(target_os = "macos")]
-use tao::platform::macos::WindowExtMacOS as _;
+use winit::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]
-use tao::platform::unix::WindowExtUnix as _;
+use winit::platform::unix::WindowExtUnix as _;
+use winit::window::{Window, WindowId};
 #[cfg(target_os = "windows")]
-use tao::platform::windows::WindowExtWindows as _;
-use tao::window::{Window, WindowId};
+use wry::raw_window_handle::{HasRawWindowHandle as _, RawWindowHandle};
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
@@ -41,6 +41,14 @@ fn metadata() -> AboutMetadata {
     }
 
     m
+}
+
+#[cfg(target_os = "windows")]
+fn hwnd(win: &Window) -> isize {
+    match win.raw_window_handle() {
+        RawWindowHandle::Win32(handle) => handle.hwnd as isize,
+        handle => panic!("window is not managed by Win32 application: {handle:?}"),
+    }
 }
 
 pub struct MenuEvents {
@@ -261,7 +269,7 @@ impl Menu {
         match self.visibility.entry(id) {
             Entry::Vacant(entry) => {
                 #[cfg(target_os = "windows")]
-                self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
+                self.menu_bar.init_for_hwnd(hwnd(window))?;
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
                 #[cfg(target_os = "macos")]
@@ -281,13 +289,13 @@ impl Menu {
                 let visible = entry.into_mut();
                 if *visible {
                     #[cfg(target_os = "windows")]
-                    self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
+                    self.menu_bar.hide_for_hwnd(hwnd(window))?;
                     #[cfg(target_os = "linux")]
                     self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
                     log::debug!("Hide menu on window (id={:?})", id);
                 } else {
                     #[cfg(target_os = "windows")]
-                    self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
+                    self.menu_bar.show_for_hwnd(hwnd(window))?;
                     #[cfg(target_os = "linux")]
                     self.menu_bar.show_for_gtk_window(window.gtk_window())?;
                     log::debug!("Show menu on window (id={:?})", id);
@@ -302,7 +310,7 @@ impl Menu {
         let position = position.map(|(x, y)| Position::Logical(LogicalPosition { x, y }));
         log::debug!("Showing context menu at {:?}", position);
         #[cfg(target_os = "windows")]
-        self.menu_bar.show_context_menu_for_hwnd(window.hwnd() as _, position);
+        self.menu_bar.show_context_menu_for_hwnd(hwnd(window), position);
         #[cfg(target_os = "linux")]
         self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window().as_ref(), position);
         #[cfg(target_os = "macos")]
