@@ -7,12 +7,11 @@ use muda::{
 };
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-#[cfg(target_os = "macos")]
-use winit::platform::macos::WindowExtMacOS as _;
+use std::ffi::c_void;
 #[cfg(target_os = "linux")]
 use winit::platform::unix::WindowExtUnix as _;
 use winit::window::{Window, WindowId};
-#[cfg(target_os = "windows")]
+#[cfg(any(target_os = "windows", target_os = "macos"))]
 use wry::raw_window_handle::{HasRawWindowHandle as _, RawWindowHandle};
 
 fn metadata() -> AboutMetadata {
@@ -48,6 +47,14 @@ fn hwnd(win: &Window) -> isize {
     match win.raw_window_handle() {
         RawWindowHandle::Win32(handle) => handle.hwnd as isize,
         handle => panic!("window is not managed by Win32 application: {handle:?}"),
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn ns_view(win: &Window) -> *mut c_void {
+    match win.raw_window_handle() {
+        RawWindowHandle::AppKit(handle) => handle.ns_view,
+        handle => panic!("window is not managed by AppKit application: {handle:?}"),
     }
 }
 
@@ -314,6 +321,6 @@ impl Menu {
         #[cfg(target_os = "linux")]
         self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window().as_ref(), position);
         #[cfg(target_os = "macos")]
-        self.menu_bar.show_context_menu_for_nsview(window.ns_view() as _, position);
+        self.menu_bar.show_context_menu_for_nsview(ns_view(window) as _, position);
     }
 }
