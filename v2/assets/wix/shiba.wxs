@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
     <Package Name="Shiba" UpgradeCode="80666faf-9701-44d2-9845-5e37325ac89e" Language="1033" Codepage="1252" Version="$(var.ShibaVersion)" Manufacturer="Shiba" InstallerVersion="200">
         <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -20,7 +21,7 @@
         <!-- Application shortcut -->
         <DirectoryRef Id="ShibaProgramMenu">
             <Component Id="ShibaShortcut" Guid="05061698-a706-4e4d-8324-1263d3cfe6c2">
-                <Shortcut Id="ShibaShortcutFile" Name="Shiba" Description="A cross-platform, GPU-accelerated terminal emulator" Target="[ShibaProgramFiles]shiba.exe" />
+                <Shortcut Id="ShibaShortcutFile" Name="Shiba" Description="Simple markdown previewer for your favorite text editor" Target="[ShibaProgramFiles]shiba.exe" />
                 <RemoveFolder Id="ShibaProgramMenu" On="uninstall" />
                 <RegistryValue Root="HKCU" Key="Software\Microsoft\Shiba" Name="installed" Type="integer" Value="1" KeyPath="yes" />
             </Component>
