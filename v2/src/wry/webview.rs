@@ -10,9 +10,13 @@ use anyhow::{Context as _, Result};
 use tao::dpi::{PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
+#[cfg(target_os = "linux")]
+use tao::platform::unix::WindowExtUnix;
 use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
 use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
+#[cfg(target_os = "linux")]
+use wry::WebViewBuilderExtUnix;
 #[cfg(target_os = "windows")]
 use wry::WebViewBuilderExtWindows;
 use wry::{FileDropEvent, WebContext, WebView, WebViewBuilder};
@@ -43,8 +47,12 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
 
-    #[allow(unused_mut)]
-    let mut builder = WebViewBuilder::new(window)
+    #[cfg(not(target_os = "linux"))]
+    let mut builder = WebViewBuilder::new(window);
+    #[cfg(target_os = "linux")]
+    let mut builder = WebViewBuilder::new_gtk(window.default_vbox().unwrap());
+
+    builder = builder
         .with_url("shiba://localhost/index.html")?
         .with_ipc_handler(move |msg| {
             let msg: MessageFromRenderer = serde_json::from_str(&msg).unwrap();
