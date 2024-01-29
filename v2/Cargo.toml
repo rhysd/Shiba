@@ -22,8 +22,9 @@ lto = "thin"
 
 [features]
 default = []
-__bench = []
 devtools = ["wry/devtools"]
+__bench = []
+__sanity = []
 
 [dependencies]
 aho-corasick = "1.1.2"

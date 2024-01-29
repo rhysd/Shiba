@@ -387,6 +387,9 @@ where
                 } else {
                     self.renderer.send_message(MessageToRenderer::Welcome)?;
                 }
+
+                #[cfg(feature = "__sanity")]
+                return Ok(RenderingFlow::Exit);
             }
             Search { query, index, matcher } => {
                 self.preview.search(&self.renderer, &query, index, matcher)?;

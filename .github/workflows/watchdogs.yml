@@ -10,7 +10,7 @@ defaults:
     working-directory: v2
 
 jobs:
-  test:
+  unit-test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -34,6 +34,33 @@ jobs:
       - run: npm run bundle
       - run: cargo clippy --all --benches --tests -- -D warnings
       - run: cargo test
+  sanity-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: v2 -> v2/target
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: sudo bash ./scripts/install_apt_deps.bash
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - run: npm ci
+      - run: make release
+      - uses: coactions/setup-xvfb@v1
+        with:
+          run: cargo run --release --features=__sanity -- --debug README.md
+          working-directory: ./v2
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - run: cargo run --release --features=__sanity -- --debug README.md
+        if: ${{ matrix.os != 'ubuntu-latest' }}
   lint:
     runs-on: ubuntu-latest
     steps:
