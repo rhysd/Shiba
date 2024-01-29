@@ -37,7 +37,12 @@ jobs:
   sanity-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
+        # macos-latest is removed from the OS list since currently the release build crashes on
+        # macOS due to the following issue. The next version of wry crate will solve this issue.
+        # - https://github.com/tauri-apps/wry/issues/1151
+        # - https://github.com/rhysd/Shiba/actions/runs/7697292527/job/20974017230
+        # os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
