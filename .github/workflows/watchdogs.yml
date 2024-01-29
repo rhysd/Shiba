@@ -50,7 +50,7 @@ jobs:
           node-version: 'lts/*'
           cache: npm
           cache-dependency-path: v2/package-lock.json
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3'
       - run: pip install yamllint
