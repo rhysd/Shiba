@@ -13,6 +13,8 @@ mod markdown;
 mod opener;
 mod persistent;
 mod renderer;
+#[cfg(feature = "__sanity")]
+mod sanity;
 mod shiba;
 mod watcher;
 #[cfg(target_os = "windows")]

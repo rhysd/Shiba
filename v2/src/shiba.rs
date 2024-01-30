@@ -7,6 +7,8 @@ use crate::renderer::{
     EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
     RenderingFlow, UserEvent,
 };
+#[cfg(feature = "__sanity")]
+use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
 use std::collections::VecDeque;
@@ -198,6 +200,8 @@ pub struct Shiba<R: Rendering, O, W, D> {
     preview: PreviewContent,
     init_file: Option<PathBuf>,
     _dialog: PhantomData<D>,
+    #[cfg(feature = "__sanity")]
+    sanity: SanityTest<R::UserEventSender>,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -252,6 +256,8 @@ where
             preview: PreviewContent::default(),
             init_file,
             _dialog: PhantomData,
+            #[cfg(feature = "__sanity")]
+            sanity: SanityTest::new(rendering.create_sender()),
         })
     }
 
@@ -389,7 +395,7 @@ where
                 }
 
                 #[cfg(feature = "__sanity")]
-                return Ok(RenderingFlow::Exit);
+                self.sanity.quit_after_secs(3);
             }
             Search { query, index, matcher } => {
                 self.preview.search(&self.renderer, &query, index, matcher)?;

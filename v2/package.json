@@ -17,7 +17,7 @@
     "fix:eslint": "eslint --fix \"web/**/*.ts\" \"web/**/*.tsx\"",
     "lint": "concurrently -c auto npm:lint:tsc npm:lint:clippy npm:lint:prettier npm:lint:rustfmt npm:lint:eslint npm:lint:stylelint",
     "lint:tsc": "tsc --noEmit -p .",
-    "lint:clippy": "cargo clippy --color always --all --benches -- -D warnings",
+    "lint:clippy": "cargo clippy --color always --all-features --all --benches -- -D warnings",
     "lint:prettier": "prettier --check \"web/**/*.ts\" \"web/**/*.tsx\" scripts/bundle.mjs web/style.css",
     "lint:rustfmt": "cargo fmt --all --check -- --color always",
     "lint:eslint": "eslint --max-warnings 0 \"web/**/*.ts\" \"web/**/*.tsx\"",
