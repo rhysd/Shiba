@@ -11,16 +11,36 @@ impl<S: UserEventSender> SanityTest<S> {
         Self { sender: Some(sender) }
     }
 
-    pub fn quit_after_secs(&mut self, seconds: u64) {
+    pub fn run_test(&mut self) {
         let Some(sender) = self.sender.take() else {
             return;
         };
 
-        // TODO: Send more messages to test more features
-
+        log::debug!("Start sanity test. This app will quit soon");
         spawn(move || {
-            sleep(Duration::from_secs(seconds));
-            sender.send(UserEvent::IpcMessage(MessageFromRenderer::Quit));
+            use MessageFromRenderer::*;
+
+            let messages = [
+                OpenFile { path: "README.md".to_string() },
+                OpenFile {
+                    #[cfg(target_os = "windows")]
+                    path: r"docs\installation.md".to_string(),
+                    #[cfg(not(target_os = "windows"))]
+                    path: "docs/installation.md".to_string(),
+                },
+                Back,
+                Forward,
+                Reload,
+                ToggleMaximized,
+                ToggleMaximized,
+                Quit,
+            ];
+
+            for msg in messages {
+                sleep(Duration::from_millis(1000));
+                log::debug!("Sanity test case is about to send message: {msg:?}");
+                sender.send(UserEvent::IpcMessage(msg));
+            }
         });
     }
 }

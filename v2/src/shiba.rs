@@ -395,7 +395,7 @@ where
                 }
 
                 #[cfg(feature = "__sanity")]
-                self.sanity.quit_after_secs(3);
+                self.sanity.run_test();
             }
             Search { query, index, matcher } => {
                 self.preview.search(&self.renderer, &query, index, matcher)?;

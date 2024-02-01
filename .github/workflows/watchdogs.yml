@@ -62,10 +62,10 @@ jobs:
       - run: make release
       - uses: coactions/setup-xvfb@v1
         with:
-          run: cargo run --release --features=__sanity -- --debug README.md
+          run: cargo run --release --features=__sanity -- --debug
           working-directory: ./v2
         if: ${{ matrix.os == 'ubuntu-latest' }}
-      - run: cargo run --release --features=__sanity -- --debug README.md
+      - run: cargo run --release --features=__sanity -- --debug
         if: ${{ matrix.os != 'ubuntu-latest' }}
   lint:
     runs-on: ubuntu-latest
