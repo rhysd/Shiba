@@ -73,7 +73,7 @@ impl Rendering for Wry {
     where
         H: EventHandler + 'static,
     {
-        let mut is_active = true;
+        let mut is_minimized = false;
         self.event_loop.run(move |event, _, control| {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
@@ -88,11 +88,11 @@ impl Rendering for Wry {
                     handler.handle_error(err.context("Could not handle user event"))
                 }),
                 Event::WindowEvent { event: WindowEvent::Resized(size), .. } => {
-                    let next_active = size.height > 0 && size.width > 0;
-                    if next_active != is_active {
-                        log::debug!("Application active state changed to {next_active}");
-                        is_active = next_active;
-                        handler.handle_active_state(is_active);
+                    let next_minimized = size.height == 0 || size.width == 0;
+                    if next_minimized != is_minimized {
+                        is_minimized = next_minimized;
+                        log::debug!("Minimized state changed: {is_minimized}");
+                        handler.handle_minimized(is_minimized);
                     }
                     RenderingFlow::Continue
                 }

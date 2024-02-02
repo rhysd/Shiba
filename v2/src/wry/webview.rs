@@ -362,11 +362,11 @@ impl Renderer for WebViewRenderer {
     }
 
     #[cfg(target_os = "windows")]
-    fn set_active(&mut self, is_active: bool) {
-        let level = if is_active { MemoryUsageLevel::Normal } else { MemoryUsageLevel::Low };
-        log::debug!("Meory usage level is set to {level:?}");
+    fn set_minimized(&mut self, minimized: bool) {
+        let level = if minimized { MemoryUsageLevel::Low } else { MemoryUsageLevel::Normal };
+        log::debug!("Memory usage level is set to {level:?} due to minimized={minimized}");
         self.webview.set_memory_usage_level(level);
     }
     #[cfg(not(target_os = "windows"))]
-    fn set_active(&mut self, _is_active: bool) {}
+    fn set_minimized(&mut self, _minimized: bool) {}
 }

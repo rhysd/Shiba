@@ -516,8 +516,8 @@ where
         Ok(RenderingFlow::Continue)
     }
 
-    fn handle_active_state(&mut self, is_active: bool) {
-        self.renderer.set_active(is_active);
+    fn handle_minimized(&mut self, minimized: bool) {
+        self.renderer.set_minimized(minimized);
     }
 
     fn handle_exit(&mut self) -> Result<()> {
