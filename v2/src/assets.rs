@@ -184,7 +184,7 @@ impl Assets {
         Self { hljs_css, markdown_css }
     }
 
-    pub fn load(&self, path: &str) -> (Cow<'static, [u8]>, &'static str) {
+    pub fn load(&self, path: &str) -> (Option<Cow<'static, [u8]>>, &'static str) {
         let mime = guess_mime(path);
 
         #[rustfmt::skip]
@@ -198,19 +198,19 @@ impl Assets {
             #[cfg(debug_assertions)]
             "/bundle.js.map"       => BUNDLE_JS_MAP.into(),
             #[cfg(target_os = "windows")]
-            "/favicon.ico"         => Cow::Owned(vec![]),
+            "/favicon.ico"         => return (None, mime),
             path                   => {
                 log::debug!("Dynamically loading external resource {:?}", path);
                 match fs::read(path) {
                     Ok(content) => content.into(),
                     Err(err) => {
                         log::error!("Could not read external resource {:?}: {}", path, err);
-                        Cow::Owned(vec![])
+                        return (None, mime);
                     }
                 }
             }
         };
 
-        (body, mime)
+        (Some(body), mime)
     }
 }

@@ -106,7 +106,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
                 log::debug!("Opening local path {:?}", path);
                 UserEvent::OpenLocalPath(path)
             } else {
-                log::debug!("Navigating to URL {:?}", url);
+                log::debug!("Navigating to external URL {:?}", url);
                 UserEvent::OpenExternalLink(url)
             };
 
@@ -124,18 +124,11 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
             let uri = request.uri();
             log::debug!("Handling custom protocol: {:?}", uri);
             let path = uri.path();
-            let (body, mime) = loader.load(path);
-            let status = if body.is_empty() { 404 } else { 200 };
-            Response::builder().status(status).header(CONTENT_TYPE, mime).body(body).unwrap_or_else(
-                |err| {
-                    log::error!("Could not build response for request {:?}: {:?}", uri, err);
-                    Response::builder()
-                        .status(404)
-                        .header(CONTENT_TYPE, "application/octet-stream")
-                        .body(vec![].into())
-                        .unwrap()
-                },
-            )
+            let (content, mime) = loader.load(path);
+            let (body, status) =
+                if let Some(content) = content { (content, 200) } else { (vec![].into(), 404) };
+            // The header and status are never invalid so `.unwrap()` call never panics
+            Response::builder().status(status).header(CONTENT_TYPE, mime).body(body).unwrap()
         })
         .with_web_context(&mut context)
         .with_focused(true)
