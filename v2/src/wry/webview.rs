@@ -171,10 +171,14 @@ pub struct WebViewRenderer {
 
 impl WebViewRenderer {
     pub fn new(config: &Config, event_loop: &EventLoop, mut menu: Menu) -> Result<Self> {
-        let mut builder = WindowBuilder::new().with_title("Shiba").with_visible(false);
+        let mut builder = WindowBuilder::new()
+            .with_title("Shiba")
+            .with_visible(false)
+            .with_min_inner_size(PhysicalSize { width: 100, height: 100 });
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
+            log::debug!("Restoring window state: {state:?}");
             let WindowState {
                 height,
                 width,
@@ -185,11 +189,9 @@ impl WebViewRenderer {
                 always_on_top,
                 maximized,
             } = state;
-            log::debug!("Restoring window state {state:?}");
-            let size = PhysicalSize { width, height };
-            builder = builder.with_inner_size(size);
-            let position = PhysicalPosition { x, y };
-            builder = builder.with_position(position);
+            builder = builder
+                .with_inner_size(PhysicalSize { width, height })
+                .with_position(PhysicalPosition { x, y });
             if fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             } else if maximized {
