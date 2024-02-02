@@ -516,6 +516,10 @@ where
         Ok(RenderingFlow::Continue)
     }
 
+    fn handle_active_state(&mut self, is_active: bool) {
+        self.renderer.set_active(is_active);
+    }
+
     fn handle_exit(&mut self) -> Result<()> {
         log::debug!("Handling application exit");
         let data_dir = self.config.data_dir();

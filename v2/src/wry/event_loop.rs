@@ -73,6 +73,7 @@ impl Rendering for Wry {
     where
         H: EventHandler + 'static,
     {
+        let mut is_active = true;
         self.event_loop.run(move |event, _, control| {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
@@ -86,6 +87,15 @@ impl Rendering for Wry {
                 Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
                     handler.handle_error(err.context("Could not handle user event"))
                 }),
+                Event::WindowEvent { event: WindowEvent::Resized(size), .. } => {
+                    let next_active = size.height > 0 && size.width > 0;
+                    if next_active != is_active {
+                        log::debug!("Application active state changed to {next_active}");
+                        is_active = next_active;
+                        handler.handle_active_state(is_active);
+                    }
+                    RenderingFlow::Continue
+                }
                 _ => self
                     .menu_events
                     .try_receive()

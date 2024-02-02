@@ -17,9 +17,9 @@ use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
-#[cfg(target_os = "windows")]
-use wry::WebViewBuilderExtWindows;
 use wry::{FileDropEvent, WebContext, WebView, WebViewBuilder};
+#[cfg(target_os = "windows")]
+use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
 
 pub type EventLoop = tao::event_loop::EventLoop<UserEvent>;
 
@@ -367,4 +367,13 @@ impl Renderer for WebViewRenderer {
     fn toggle_menu(&mut self) -> Result<()> {
         self.menu.toggle(&self.window)
     }
+
+    #[cfg(target_os = "windows")]
+    fn set_active(&mut self, is_active: bool) {
+        let level = if is_active { MemoryUsageLevel::Normal } else { MemoryUsageLevel::Low };
+        log::debug!("Meory usage level is set to {level:?}");
+        self.webview.set_memory_usage_level(level);
+    }
+    #[cfg(not(target_os = "windows"))]
+    fn set_active(&mut self, _is_active: bool) {}
 }

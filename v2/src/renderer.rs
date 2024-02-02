@@ -180,6 +180,7 @@ pub trait Renderer {
     fn window_appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
+    fn set_active(&mut self, is_active: bool);
 }
 
 /// Context to execute rendering.
@@ -198,6 +199,7 @@ pub trait Rendering: Sized {
 pub trait EventHandler {
     fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
     fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
+    fn handle_active_state(&mut self, is_active: bool);
     fn handle_exit(&mut self) -> Result<()>;
     fn handle_error(&mut self, err: Error) -> RenderingFlow;
 }
