@@ -76,6 +76,8 @@ pub enum Event {
     WatchedFilesChanged(Vec<PathBuf>),
     OpenLocalPath(PathBuf),
     OpenExternalLink(String),
+    Menu(MenuItem),
+    Minimized(bool),
     Error(Error),
 }
 
@@ -198,8 +200,6 @@ pub trait Rendering: Sized {
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
     fn handle_event(&mut self, event: Event) -> Result<RenderingFlow>;
-    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
-    fn handle_minimized(&mut self, is_active: bool);
     fn handle_exit(&mut self) -> Result<()>;
     fn handle_error(&mut self, err: Error) -> RenderingFlow;
 }

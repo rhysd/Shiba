@@ -92,15 +92,19 @@ impl Rendering for Wry {
                     if next_minimized != is_minimized {
                         is_minimized = next_minimized;
                         log::debug!("Minimized state changed: {is_minimized}");
-                        handler.handle_minimized(is_minimized);
+                        let event = AppEvent::Minimized(is_minimized);
+                        handler.handle_event(event).unwrap_or_else(|err| {
+                            handler.handle_error(err.context("Could not handle minimized event"))
+                        })
+                    } else {
+                        RenderingFlow::Continue
                     }
-                    RenderingFlow::Continue
                 }
                 _ => self
                     .menu_events
                     .try_receive()
                     .and_then(|item| match item {
-                        Some(item) => handler.handle_menu_event(item),
+                        Some(item) => handler.handle_event(AppEvent::Menu(item)),
                         None => Ok(RenderingFlow::Continue),
                     })
                     .unwrap_or_else(|err| {

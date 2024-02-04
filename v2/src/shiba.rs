@@ -422,6 +422,35 @@ where
         }
         Ok(RenderingFlow::Continue)
     }
+
+    fn handle_menu_item(&mut self, item: MenuItem) -> Result<RenderingFlow> {
+        use MenuItem::*;
+
+        log::debug!("Menu item was clicked: {:?}", item);
+        match item {
+            Quit => return Ok(RenderingFlow::Exit),
+            Forward => self.forward()?,
+            Back => self.back()?,
+            Reload => self.reload()?,
+            OpenFile => self.open_file()?,
+            WatchDir => self.open_dir()?,
+            Search => self.renderer.send_message(MessageToRenderer::Search)?,
+            SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
+            SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,
+            Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
+            Print => self.renderer.print()?,
+            ZoomIn => self.zoom(Zoom::In)?,
+            ZoomOut => self.zoom(Zoom::Out)?,
+            #[cfg(not(target_os = "macos"))]
+            ToggleMenuBar => self.renderer.toggle_menu()?,
+            History => self.renderer.send_message(MessageToRenderer::History)?,
+            ToggleAlwaysOnTop => self.toggle_always_on_top()?,
+            Help => self.renderer.send_message(MessageToRenderer::Help)?,
+            OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
+            EditConfig => self.open_config()?,
+        }
+        Ok(RenderingFlow::Continue)
+    }
 }
 
 impl<R, O, W, D> EventHandler for Shiba<R, O, W, D>
@@ -482,42 +511,11 @@ where
                 log::debug!("Opening external link item clicked in WebView: {:?}", link);
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
+            Event::Menu(item) => return self.handle_menu_item(item),
+            Event::Minimized(is_minimized) => self.renderer.set_minimized(is_minimized),
             Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)
-    }
-
-    fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow> {
-        use MenuItem::*;
-
-        log::debug!("Menu item was clicked: {:?}", item);
-        match item {
-            Quit => return Ok(RenderingFlow::Exit),
-            Forward => self.forward()?,
-            Back => self.back()?,
-            Reload => self.reload()?,
-            OpenFile => self.open_file()?,
-            WatchDir => self.open_dir()?,
-            Search => self.renderer.send_message(MessageToRenderer::Search)?,
-            SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
-            SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,
-            Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
-            Print => self.renderer.print()?,
-            ZoomIn => self.zoom(Zoom::In)?,
-            ZoomOut => self.zoom(Zoom::Out)?,
-            #[cfg(not(target_os = "macos"))]
-            ToggleMenuBar => self.renderer.toggle_menu()?,
-            History => self.renderer.send_message(MessageToRenderer::History)?,
-            ToggleAlwaysOnTop => self.toggle_always_on_top()?,
-            Help => self.renderer.send_message(MessageToRenderer::Help)?,
-            OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
-            EditConfig => self.open_config()?,
-        }
-        Ok(RenderingFlow::Continue)
-    }
-
-    fn handle_minimized(&mut self, minimized: bool) {
-        self.renderer.set_minimized(minimized);
     }
 
     fn handle_exit(&mut self) -> Result<()> {
