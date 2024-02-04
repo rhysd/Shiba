@@ -4,8 +4,8 @@ use crate::dialog::Dialog;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
 use crate::renderer::{
-    EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow, UserEvent,
+    Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
+    RenderingFlow,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -201,7 +201,7 @@ pub struct Shiba<R: Rendering, O, W, D> {
     init_file: Option<PathBuf>,
     _dialog: PhantomData<D>,
     #[cfg(feature = "__sanity")]
-    sanity: SanityTest<R::UserEventSender>,
+    sanity: SanityTest<R::EventSender>,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -368,7 +368,7 @@ where
         self.opener.open(&path)
     }
 
-    fn handle_ipc_message(&mut self, message: MessageFromRenderer) -> Result<RenderingFlow> {
+    fn handle_renderer_message(&mut self, message: MessageFromRenderer) -> Result<RenderingFlow> {
         use MessageFromRenderer::*;
         match message {
             Init => {
@@ -431,18 +431,18 @@ where
     W: Watcher,
     D: Dialog,
 {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow> {
+    fn handle_event(&mut self, event: Event) -> Result<RenderingFlow> {
         log::debug!("Handling user event {:?}", event);
         match event {
-            UserEvent::IpcMessage(msg) => return self.handle_ipc_message(msg),
-            UserEvent::FileDrop(mut path) => {
+            Event::RendererMessage(msg) => return self.handle_renderer_message(msg),
+            Event::FileDrop(mut path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
                 self.preview_new(path)?;
             }
-            UserEvent::WatchedFilesChanged(mut paths) => {
+            Event::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
                 if let Some(current) = self.history.current() {
                     if paths.contains(current) {
@@ -460,7 +460,7 @@ where
                     }
                 }
             }
-            UserEvent::OpenLocalPath(mut path) => {
+            Event::OpenLocalPath(mut path) => {
                 if path.is_relative() {
                     if let Some(current_file) = self.history.current() {
                         if let Some(dir) = current_file.parent() {
@@ -478,11 +478,11 @@ where
                     self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
                 }
             }
-            UserEvent::OpenExternalLink(link) => {
+            Event::OpenExternalLink(link) => {
                 log::debug!("Opening external link item clicked in WebView: {:?}", link);
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
-            UserEvent::Error(err) => return Err(err),
+            Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)
     }

@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::renderer::{EventHandler, Rendering, RenderingFlow, UserEvent, UserEventSender};
+use crate::renderer::{Event as AppEvent, EventHandler, EventSender, Rendering, RenderingFlow};
 use crate::wry::menu::{Menu, MenuEvents};
 use crate::wry::webview::{EventLoop, WebViewRenderer};
 use anyhow::Result;
@@ -13,8 +13,8 @@ pub struct Wry {
     menu: Menu, // On Windows, Menu instance needs to be created before creating the event loop
 }
 
-impl UserEventSender for EventLoopProxy<UserEvent> {
-    fn send(&self, event: UserEvent) {
+impl EventSender for EventLoopProxy<AppEvent> {
+    fn send(&self, event: AppEvent) {
         if let Err(err) = self.send_event(event) {
             log::error!("Could not send user event for message from WebView: {}", err);
         }
@@ -22,7 +22,7 @@ impl UserEventSender for EventLoopProxy<UserEvent> {
 }
 
 impl Rendering for Wry {
-    type UserEventSender = EventLoopProxy<UserEvent>;
+    type EventSender = EventLoopProxy<AppEvent>;
     type Renderer = WebViewRenderer;
 
     #[cfg(not(target_os = "windows"))]
@@ -57,7 +57,7 @@ impl Rendering for Wry {
         Ok(Self { event_loop, menu_events, menu })
     }
 
-    fn create_sender(&self) -> Self::UserEventSender {
+    fn create_sender(&self) -> Self::EventSender {
         self.event_loop.create_proxy()
     }
 
@@ -84,7 +84,7 @@ impl Rendering for Wry {
                     log::debug!("Closing window was requested");
                     RenderingFlow::Exit
                 }
-                Event::UserEvent(event) => handler.handle_user_event(event).unwrap_or_else(|err| {
+                Event::UserEvent(event) => handler.handle_event(event).unwrap_or_else(|err| {
                     handler.handle_error(err.context("Could not handle user event"))
                 }),
                 Event::WindowEvent { event: WindowEvent::Resized(size), .. } => {

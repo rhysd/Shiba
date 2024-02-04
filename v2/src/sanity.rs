@@ -1,4 +1,4 @@
-use crate::renderer::{MessageFromRenderer, UserEvent, UserEventSender};
+use crate::renderer::{Event, EventSender, MessageFromRenderer};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -6,7 +6,7 @@ pub struct SanityTest<S> {
     sender: Option<S>,
 }
 
-impl<S: UserEventSender> SanityTest<S> {
+impl<S: EventSender> SanityTest<S> {
     pub fn new(sender: S) -> Self {
         Self { sender: Some(sender) }
     }
@@ -39,7 +39,7 @@ impl<S: UserEventSender> SanityTest<S> {
             for msg in messages {
                 sleep(Duration::from_millis(1000));
                 log::debug!("Sanity test case is about to send message: {msg:?}");
-                sender.send(UserEvent::IpcMessage(msg));
+                sender.send(Event::RendererMessage(msg));
             }
         });
     }

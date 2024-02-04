@@ -70,8 +70,8 @@ pub enum MessageFromRenderer {
 }
 
 #[derive(Debug)]
-pub enum UserEvent {
-    IpcMessage(MessageFromRenderer),
+pub enum Event {
+    RendererMessage(MessageFromRenderer),
     FileDrop(PathBuf),
     WatchedFilesChanged(Vec<PathBuf>),
     OpenLocalPath(PathBuf),
@@ -154,10 +154,10 @@ pub enum RenderingFlow {
     Exit,
 }
 
-/// Sender to send [`UserEvent`] accross threads. It is used to send the user events to the main thread
+/// Sender to send [`Event`] accross threads. It is used to send the user events to the main thread
 /// from another worker thread.
-pub trait UserEventSender: 'static + Send {
-    fn send(&self, event: UserEvent);
+pub trait EventSender: 'static + Send {
+    fn send(&self, event: Event);
 }
 
 /// Renderer is responsible for rendering the actual UI in the rendering context.
@@ -185,11 +185,11 @@ pub trait Renderer {
 
 /// Context to execute rendering.
 pub trait Rendering: Sized {
-    type UserEventSender: UserEventSender;
+    type EventSender: EventSender;
     type Renderer: Renderer;
 
     fn new() -> Result<Self>;
-    fn create_sender(&self) -> Self::UserEventSender;
+    fn create_sender(&self) -> Self::EventSender;
     fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
     /// Starts the rendering execution and runs until the process exits.
     fn start<H: EventHandler + 'static>(self, handler: H) -> !;
@@ -197,7 +197,7 @@ pub trait Rendering: Sized {
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
-    fn handle_user_event(&mut self, event: UserEvent) -> Result<RenderingFlow>;
+    fn handle_event(&mut self, event: Event) -> Result<RenderingFlow>;
     fn handle_menu_event(&mut self, item: MenuItem) -> Result<RenderingFlow>;
     fn handle_minimized(&mut self, is_active: bool);
     fn handle_exit(&mut self) -> Result<()>;

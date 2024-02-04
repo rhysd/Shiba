@@ -2,8 +2,8 @@ use crate::assets::Assets;
 use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
-    MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, Theme as RendererTheme,
-    UserEvent, WindowAppearance, ZoomLevel,
+    Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer,
+    Theme as RendererTheme, WindowAppearance, ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
@@ -21,7 +21,7 @@ use wry::{FileDropEvent, WebContext, WebView, WebViewBuilder};
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
 
-pub type EventLoop = tao::event_loop::EventLoop<UserEvent>;
+pub type EventLoop = tao::event_loop::EventLoop<Event>;
 
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -57,7 +57,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         .with_ipc_handler(move |msg| {
             let msg: MessageFromRenderer = serde_json::from_str(&msg).unwrap();
             log::debug!("Message from WebView: {msg:?}");
-            if let Err(err) = ipc_proxy.send_event(UserEvent::IpcMessage(msg)) {
+            if let Err(err) = ipc_proxy.send_event(Event::RendererMessage(msg)) {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
@@ -65,7 +65,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
             if let FileDropEvent::Dropped { paths, .. } = event {
                 log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
                 if let Some(path) = paths.into_iter().next() {
-                    if let Err(err) = file_drop_proxy.send_event(UserEvent::FileDrop(path)) {
+                    if let Err(err) = file_drop_proxy.send_event(Event::FileDrop(path)) {
                         log::error!("Could not send user event for file drop: {err}");
                     }
                 }
@@ -104,10 +104,10 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
                 let path = url.replace('/', "\\").into();
 
                 log::debug!("Opening local path {:?}", path);
-                UserEvent::OpenLocalPath(path)
+                Event::OpenLocalPath(path)
             } else {
                 log::debug!("Navigating to external URL {:?}", url);
-                UserEvent::OpenExternalLink(url)
+                Event::OpenExternalLink(url)
             };
 
             if let Err(e) = navigation_proxy.send_event(event) {

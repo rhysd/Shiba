@@ -1,11 +1,11 @@
 use super::{find_watch_path_fallback, should_watch_event, PathFilter, Watcher};
-use crate::renderer::{UserEvent, UserEventSender};
+use crate::renderer::{Event, EventSender};
 use anyhow::{Context as _, Result};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 use std::path::Path;
 
 impl Watcher for RecommendedWatcher {
-    fn new<S: UserEventSender>(sender: S, mut filter: PathFilter) -> Result<Self> {
+    fn new<S: EventSender>(sender: S, mut filter: PathFilter) -> Result<Self> {
         let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) if should_watch_event(event.kind) => {
                 log::debug!("Caught filesystem event: {:?}", event);
@@ -15,7 +15,7 @@ impl Watcher for RecommendedWatcher {
 
                 if !paths.is_empty() {
                     log::debug!("Files change event from watcher: {:?}", paths);
-                    sender.send(UserEvent::WatchedFilesChanged(paths));
+                    sender.send(Event::WatchedFilesChanged(paths));
                 }
 
                 filter.cleanup_debouncer();
@@ -23,7 +23,7 @@ impl Watcher for RecommendedWatcher {
             Ok(event) => log::debug!("Ignored filesystem event: {:?}", event),
             Err(err) => {
                 log::error!("Error on watching file changes: {}", err);
-                sender.send(UserEvent::Error(err.into()));
+                sender.send(Event::Error(err.into()));
             }
         })?;
         Ok(watcher)

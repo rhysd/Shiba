@@ -21,7 +21,8 @@ Features:
 - Sections outline in side navigation bar. The current section is automatically focused
 - Both CLI and GUI friendly; Available as a single binary executable as well as a desktop application installed to your system
 - Performance critical part (parsing Markdown text, searching Markdown AST, calculating the last modified position, ...) and
-  core application logic are written in [Rust][rust]. View logic is written in [TypeScript][ts] and [React][react]
+  core application logic are written in [Rust][rust]. View logic written in [TypeScript][ts] and [React][react] runs on
+  platform-specific WebView
 - Cross platform; macOS, Windows, Linux are supported
 - Customizable with [a YAML config file](./src/assets/default_config.yml) (color theme, keyboard shortcuts, custom CSS, ...)
 - Dogs are respected :dog2:
