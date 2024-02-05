@@ -199,9 +199,8 @@ pub trait Rendering: Sized {
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
-    fn handle_event(&mut self, event: Event) -> Result<RenderingFlow>;
-    fn handle_exit(&mut self) -> Result<()>;
-    fn handle_error(&mut self, err: Error) -> RenderingFlow;
+    fn on_event(&mut self, event: Event) -> RenderingFlow;
+    fn on_exit(&mut self) -> i32;
 }
 
 #[cfg(test)]

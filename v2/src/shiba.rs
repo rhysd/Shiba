@@ -451,17 +451,9 @@ where
         }
         Ok(RenderingFlow::Continue)
     }
-}
 
-impl<R, O, W, D> EventHandler for Shiba<R, O, W, D>
-where
-    R: Rendering,
-    O: Opener,
-    W: Watcher,
-    D: Dialog,
-{
     fn handle_event(&mut self, event: Event) -> Result<RenderingFlow> {
-        log::debug!("Handling user event {:?}", event);
+        log::debug!("Handling event {:?}", event);
         match event {
             Event::RendererMessage(msg) => return self.handle_renderer_message(msg),
             Event::FileDrop(mut path) => {
@@ -513,7 +505,7 @@ where
             }
             Event::Menu(item) => return self.handle_menu_item(item),
             Event::Minimized(is_minimized) => self.renderer.set_minimized(is_minimized),
-            Event::Error(err) => return Err(err),
+            Event::Error(err) => self.show_error(&err),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -531,8 +523,32 @@ where
         Ok(())
     }
 
-    fn handle_error(&mut self, err: Error) -> RenderingFlow {
-        D::alert(&err);
-        RenderingFlow::Continue
+    fn show_error(&self, err: &Error) {
+        log::error!("{err}");
+        D::alert(err);
+    }
+}
+
+impl<R, O, W, D> EventHandler for Shiba<R, O, W, D>
+where
+    R: Rendering,
+    O: Opener,
+    W: Watcher,
+    D: Dialog,
+{
+    fn on_event(&mut self, event: Event) -> RenderingFlow {
+        self.handle_event(event).unwrap_or_else(|err| {
+            self.show_error(&err.context("Could not handle event"));
+            RenderingFlow::Continue
+        })
+    }
+
+    fn on_exit(&mut self) -> i32 {
+        if let Err(err) = self.handle_exit() {
+            self.show_error(&err.context("Could not handle application exit"));
+            1
+        } else {
+            0
+        }
     }
 }

@@ -84,43 +84,29 @@ impl Rendering for Wry {
                     log::debug!("Closing window was requested");
                     RenderingFlow::Exit
                 }
-                Event::UserEvent(event) => handler.handle_event(event).unwrap_or_else(|err| {
-                    handler.handle_error(err.context("Could not handle user event"))
-                }),
+                Event::UserEvent(event) => handler.on_event(event),
                 Event::WindowEvent { event: WindowEvent::Resized(size), .. } => {
                     let next_minimized = size.height == 0 || size.width == 0;
                     if next_minimized != is_minimized {
                         is_minimized = next_minimized;
                         log::debug!("Minimized state changed: {is_minimized}");
-                        let event = AppEvent::Minimized(is_minimized);
-                        handler.handle_event(event).unwrap_or_else(|err| {
-                            handler.handle_error(err.context("Could not handle minimized event"))
-                        })
+                        handler.on_event(AppEvent::Minimized(is_minimized))
                     } else {
                         RenderingFlow::Continue
                     }
                 }
-                _ => self
-                    .menu_events
-                    .try_receive()
-                    .and_then(|item| match item {
-                        Some(item) => handler.handle_event(AppEvent::Menu(item)),
-                        None => Ok(RenderingFlow::Continue),
-                    })
-                    .unwrap_or_else(|err| {
-                        handler.handle_error(err.context("Could not handle menu event"))
-                    }),
+                _ => match self.menu_events.try_receive() {
+                    Ok(Some(item)) => handler.on_event(AppEvent::Menu(item)),
+                    Ok(None) => RenderingFlow::Continue,
+                    Err(err) => handler.on_event(AppEvent::Error(
+                        err.context("Could not receive menu item event"),
+                    )),
+                },
             };
 
             *control = match flow {
                 RenderingFlow::Continue => ControlFlow::Wait,
-                RenderingFlow::Exit => match handler.handle_exit() {
-                    Ok(()) => ControlFlow::Exit,
-                    Err(err) => {
-                        handler.handle_error(err.context("Could not handle application exit"));
-                        ControlFlow::ExitWithCode(1)
-                    }
-                },
+                RenderingFlow::Exit => ControlFlow::ExitWithCode(handler.on_exit()),
             };
         })
     }
