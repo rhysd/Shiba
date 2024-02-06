@@ -505,12 +505,12 @@ where
             }
             Event::Menu(item) => return self.handle_menu_item(item),
             Event::Minimized(is_minimized) => self.renderer.set_minimized(is_minimized),
-            Event::Error(err) => self.show_error(&err),
+            Event::Error(err) => D::alert(&err),
         }
         Ok(RenderingFlow::Continue)
     }
 
-    fn handle_exit(&mut self) -> Result<()> {
+    fn shutdown(&mut self) -> Result<()> {
         log::debug!("Handling application exit");
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
@@ -521,11 +521,6 @@ where
         }
         data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
         Ok(())
-    }
-
-    fn show_error(&self, err: &Error) {
-        log::error!("{err}");
-        D::alert(err);
     }
 }
 
@@ -538,14 +533,14 @@ where
 {
     fn on_event(&mut self, event: Event) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
-            self.show_error(&err.context("Could not handle event"));
+            D::alert(&err.context("Could not handle event"));
             RenderingFlow::Continue
         })
     }
 
     fn on_exit(&mut self) -> i32 {
-        if let Err(err) = self.handle_exit() {
-            self.show_error(&err.context("Could not handle application exit"));
+        if let Err(err) = self.shutdown() {
+            D::alert(&err.context("Could not shutdown application"));
             1
         } else {
             0
