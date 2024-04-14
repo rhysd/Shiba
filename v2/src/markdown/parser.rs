@@ -88,11 +88,11 @@ impl MarkdownContent {
         // `MarkdownParser` will try to split the text at this position and will crash.
         //
         // Note: Iterating UTF-8 character indices with `str::char_indices` is slower than iterating bytes and adjusting
-        // the byte offset to the UTF-8 character boundary. In addition, it is 6~7x faster to search 128 bytes chunk
+        // the byte offset to the UTF-8 character boundary. In addition, it is 8~10x faster to search 32 bytes chunk
         // index at first then search the byte index within the chunk rather than searching the index byte-by-byte.
         // - Benchmark:  https://github.com/rhysd/misc/tree/master/rust_bench/str_utf8_aware_offset
         // - Discussion: https://users.rust-lang.org/t/how-to-find-common-prefix-of-two-byte-slices-effectively/25815
-        const CHUNK_SIZE: usize = 128;
+        const CHUNK_SIZE: usize = 32;
         let prev = prev_source.as_bytes();
         let new = new_source.as_bytes();
         let offset = prev
