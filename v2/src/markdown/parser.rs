@@ -7,7 +7,6 @@ use pulldown_cmark::{
     Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, MathDisplay, Options, Parser,
     Tag,
 };
-use std::cmp;
 use std::collections::HashMap;
 use std::io::{Read, Result, Write};
 use std::iter::Peekable;
@@ -79,7 +78,7 @@ impl MarkdownContent {
     }
 
     pub fn modified_utf8_offset(&self, new: &Self) -> Option<usize> {
-        let (prev_source, new_source) = (&self.source, &new.source);
+        let (prev_source, new_source) = (self.source.as_str(), new.source.as_str());
         // Offset must be UTF-8 aware to split text tokens correctly. If finding modified byte offset on a byte-by-byte
         // basis, the offset may point at the middle of UTF-8 character sequence.
         // For example, when a text 'あ' is modified to 'い',
@@ -89,19 +88,26 @@ impl MarkdownContent {
         // `MarkdownParser` will try to split the text at this position and will crash.
         //
         // Note: Iterating UTF-8 character indices with `str::char_indices` is slower than iterating bytes and adjusting
-        // the byte offset to the UTF-8 character boundary.
-        // See https://github.com/rhysd/misc/tree/master/rust_bench/str_utf8_aware_offset
-        prev_source
-            .as_bytes()
-            .iter()
-            .copied()
-            .enumerate()
-            .zip(new_source.as_bytes().iter().copied())
-            .find_map(|((i, a), b)| (a != b).then(|| floor_char_boundary(new_source, i)))
-            .or_else(|| {
-                let (prev_len, new_len) = (prev_source.len(), new_source.len());
-                (prev_len != new_len).then_some(cmp::min(prev_len, new_len))
-            })
+        // the byte offset to the UTF-8 character boundary. In addition, it is 6~7x faster to search 128 bytes chunk
+        // index at first then search the byte index within the chunk rather than searching the index byte-by-byte.
+        // - Benchmark:  https://github.com/rhysd/misc/tree/master/rust_bench/str_utf8_aware_offset
+        // - Discussion: https://users.rust-lang.org/t/how-to-find-common-prefix-of-two-byte-slices-effectively/25815
+        const CHUNK_SIZE: usize = 128;
+        let prev = prev_source.as_bytes();
+        let new = new_source.as_bytes();
+        let offset = prev
+            .chunks_exact(CHUNK_SIZE)
+            .zip(new.chunks_exact(CHUNK_SIZE))
+            .take_while(|(x, y)| x == y)
+            .count()
+            * CHUNK_SIZE;
+        let index =
+            offset + prev[offset..].iter().zip(&new[offset..]).take_while(|(x, y)| x == y).count();
+        let min_len = prev.len().min(new.len());
+        if index == min_len {
+            return (prev.len() != new.len()).then_some(min_len);
+        }
+        Some(floor_char_boundary(new_source, index))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -1103,11 +1109,14 @@ mod tests {
             ("ああ", "あい", Some(3)),
             ("あああ", "あいう", Some(3)),
             ("あああ", "あいあ", Some(3)),
+            ("あいう", "ああうえお", Some(3)),
             ("あいう", "あいえ", Some(6)),
             ("", "あ", Some(0)),
             ("あ", "", Some(0)),
             ("あ", "あい", Some(3)),
             ("あ", "あ", None),
+            ("あい", "あい", None),
+            ("あいう", "あいう", None),
             ("", "", None),
         ] {
             let prev = MarkdownContent::new(before.into(), None);
