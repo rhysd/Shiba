@@ -35,13 +35,19 @@ pub struct SystemDialog;
 impl Dialog for SystemDialog {
     fn pick_file(dir: &Path, extensions: &FileExtensions) -> Option<PathBuf> {
         FileDialog::new()
+            .set_title("Open file to preview")
             .add_filter("Markdown", extensions.as_slice())
             .set_directory(dir)
+            .set_can_create_directories(true)
             .pick_file()
     }
 
     fn pick_dir(dir: &Path) -> Option<PathBuf> {
-        FileDialog::new().set_directory(dir).pick_folder()
+        FileDialog::new()
+            .set_title("Choose directory to watch")
+            .set_directory(dir)
+            .set_can_create_directories(true)
+            .pick_folder()
     }
 
     fn message(level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>) {
