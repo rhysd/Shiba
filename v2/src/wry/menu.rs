@@ -1,9 +1,10 @@
 use crate::renderer::MenuItem as AppMenuItem;
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
+use muda::dpi::{LogicalPosition, Position};
 use muda::{
-    AboutMetadata, ContextMenu, LogicalPosition, Menu as MenuBar, MenuEvent, MenuEventReceiver,
-    MenuId, MenuItem, Position, PredefinedMenuItem, Submenu,
+    AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
+    PredefinedMenuItem, Submenu,
 };
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
