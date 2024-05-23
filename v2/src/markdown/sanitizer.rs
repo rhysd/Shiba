@@ -58,19 +58,17 @@ pub fn should_rebase_url(url: &str) -> bool {
         && !url.starts_with("//")
 }
 
-// TODO: Change this to `struct RebaseUrl<'a>{ prefix: &'a str }` when the following PR is released.
-// https://github.com/rust-ammonia/ammonia/pull/176
-struct RebaseUrl {
-    prefix: String,
+struct RebaseUrl<'a> {
+    prefix: &'a str,
 }
 
-impl UrlRelativeEvaluate for RebaseUrl {
+impl<'a> UrlRelativeEvaluate<'a> for RebaseUrl<'a> {
     fn evaluate<'u>(&self, url: &'u str) -> Option<Cow<'u, str>> {
         if !should_rebase_url(url) {
             return Some(Cow::Borrowed(url));
         }
 
-        let mut s = self.prefix.clone();
+        let mut s = self.prefix.to_string();
         if !url.starts_with('/') {
             s.push('/');
         }
@@ -93,8 +91,7 @@ impl<'a> Sanitizer<'a> {
 
     pub fn clean<W: Write, R: Read>(&self, out: W, reader: R) -> Result<()> {
         let cleaner = self.cleaner.get_or_init(|| {
-            let prefix = self.base_dir.to_string();
-            let eval = Box::new(RebaseUrl { prefix });
+            let eval = Box::new(RebaseUrl { prefix: self.base_dir });
             let mut builder = Builder::default();
             builder
                 .add_generic_attributes(ALLOWED_ATTRIBUTES)
@@ -142,7 +139,7 @@ mod tests {
 
     #[test]
     fn rebase_relative_url() {
-        let rebase = RebaseUrl { prefix: "/foo/bar".to_string() };
+        let rebase = RebaseUrl { prefix: "/foo/bar" };
 
         for (url, want) in [
             ("", "/foo/bar/"),
