@@ -2840,7 +2840,7 @@ dependencies = [
  "serde_yaml",
  "tao",
  "window-vibrancy",
- "windows-sys 0.52.0",
+ "windows",
  "winresource",
  "wry",
 ]
