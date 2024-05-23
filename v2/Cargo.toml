@@ -69,7 +69,7 @@ winresource = { version = "0.1.17", default-features = false }
 [package.metadata.deb]
 name = "shiba"
 copyright = "Copyright (c) 2015 rhysd"
-pre-depends = ["libwebkit2gtk-4.1-dev", "libxdo-dev"]
+pre-depends = ["libwebkit2gtk-4.1-dev", "libxdo-dev", "libgtk-3-dev"]
 section = "doc"
 assets = [
     ["target/release/shiba", "usr/bin/", "755"],

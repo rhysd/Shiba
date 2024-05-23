@@ -14,11 +14,16 @@ On Linux, Shiba uses GTKWebKit. Some additional shared libraries need to be inst
 
 ```sh
 # On Ubuntu or Debian
-sudo apt install libwebkit2gtk-4.1-dev libxdo-dev
+sudo apt install libwebkit2gtk-4.1-dev libxdo-dev libgtk-3-dev
 
 # On Fedora
 sudo dnf install gtk3-devel webkit2gtk4.1-devel libxdo
+
+# On Arch Linux
+sudo pacman -S webkit2gtk-4.1 gtk3 xdotool
 ```
+
+Note: If you install `.deb` file through `dpkg` command, these dependencies are automatically installed.
 
 ### Windows
 
