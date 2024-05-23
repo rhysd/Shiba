@@ -13,7 +13,7 @@ jobs:
   unit-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
     needs: unit-test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -84,10 +84,7 @@ jobs:
       - run: pip install yamllint
       - run: sudo bash ./scripts/install_apt_deps.bash
       - run: npm ci
-      - run: npm run lint:tsc
-      - run: npm run lint:prettier
-      - run: npm run lint:eslint
-      - run: npm run lint:stylelint
+      - run: npm run lint:web
       - run: cargo fmt --all --check
-      - run: shellcheck ./scripts/gen_macos_app.bash ./scripts/install_apt_deps.bash
+      - run: shellcheck ./scripts/gen_macos_app.bash ./scripts/gen_macos_dmg.bash ./scripts/install_apt_deps.bash
       - run: yamllint --strict ./src/assets/default_config.yml

@@ -47,8 +47,8 @@ jobs:
           echo "prerelease=${{ github.event_name == 'workflow_dispatch' }}" >> "$GITHUB_OUTPUT"
   release-mac:
     name: Build and upload macOS package
-    # macos-latest is macOS 12. Binary built on macOS 12 cannot be run on macOS 11
-    runs-on: macos-11
+    # Note: Binary built on macOS 13 cannot be run on macOS 12
+    runs-on: macos-12
     needs: [info]
     steps:
       - uses: actions/checkout@v4

@@ -22,6 +22,7 @@
     "lint:rustfmt": "cargo fmt --all --check -- --color always",
     "lint:eslint": "eslint --max-warnings 0 \"web/**/*.ts\" \"web/**/*.tsx\"",
     "lint:stylelint": "stylelint web/style.css",
+    "lint:web": "concurrently -c auto npm:lint:tsc npm:lint:prettier npm:lint:eslint npm:lint:stylelint",
     "test": "cargo test",
     "prepare": "cd .. && husky install"
   },
