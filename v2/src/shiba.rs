@@ -341,7 +341,7 @@ where
             return Ok(());
         };
 
-        self.renderer.zoom(level);
+        self.renderer.zoom(level)?;
         let percent = level.percent();
         log::debug!("Changed zoom factor: {}%", percent);
         self.renderer.send_message(MessageToRenderer::Zoomed { percent })?;
@@ -504,7 +504,7 @@ where
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
-            Event::Minimized(is_minimized) => self.renderer.set_minimized(is_minimized),
+            Event::Minimized(is_minimized) => self.renderer.set_minimized(is_minimized)?,
             Event::Error(err) => D::alert(&err),
         }
         Ok(RenderingFlow::Continue)

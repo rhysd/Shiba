@@ -171,7 +171,7 @@ pub trait Renderer {
     fn theme(&self) -> Theme;
     fn show(&self);
     fn print(&self) -> Result<()>;
-    fn zoom(&mut self, level: ZoomLevel);
+    fn zoom(&mut self, level: ZoomLevel) -> Result<()>;
     fn zoom_level(&self) -> ZoomLevel;
     fn set_always_on_top(&mut self, enabled: bool);
     fn always_on_top(&self) -> bool;
@@ -181,7 +181,7 @@ pub trait Renderer {
     fn window_appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
-    fn set_minimized(&mut self, minimized: bool);
+    fn set_minimized(&mut self, minimized: bool) -> Result<()>;
 }
 
 /// Context to execute rendering.

@@ -17,7 +17,7 @@ use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
-use wry::{FileDropEvent, WebContext, WebView, WebViewBuilder};
+use wry::{DragDropEvent, WebContext, WebView, WebViewBuilder};
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
 
@@ -53,17 +53,18 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     let mut builder = WebViewBuilder::new_gtk(window.default_vbox().unwrap());
 
     builder = builder
-        .with_url("shiba://localhost/index.html")?
+        .with_url("shiba://localhost/index.html")
         .with_ipc_handler(move |msg| {
-            let msg: MessageFromRenderer = serde_json::from_str(&msg).unwrap();
+            let msg: MessageFromRenderer = serde_json::from_str(msg.body()).unwrap();
             log::debug!("Message from WebView: {msg:?}");
             if let Err(err) = ipc_proxy.send_event(Event::RendererMessage(msg)) {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
-        .with_file_drop_handler(move |event| {
-            if let FileDropEvent::Dropped { paths, .. } = event {
+        .with_drag_drop_handler(move |event| {
+            if let DragDropEvent::Drop { paths, .. } = event {
                 log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
+                // TODO: Support dropping multiple files
                 if let Some(path) = paths.into_iter().next() {
                     if let Err(err) = file_drop_proxy.send_event(Event::FileDrop(path)) {
                         log::error!("Could not send user event for file drop: {err}");
@@ -242,7 +243,7 @@ impl WebViewRenderer {
 
         let zoom_factor = zoom_level.factor();
         if zoom_factor != 1.0 {
-            webview.zoom(zoom_factor);
+            webview.zoom(zoom_factor)?;
             log::debug!("Zoom factor was set to {}", zoom_factor);
         }
 
@@ -309,9 +310,10 @@ impl Renderer for WebViewRenderer {
         Ok(self.webview.print()?)
     }
 
-    fn zoom(&mut self, level: ZoomLevel) {
-        self.webview.zoom(level.factor());
+    fn zoom(&mut self, level: ZoomLevel) -> Result<()> {
+        self.webview.zoom(level.factor())?;
         self.zoom_level = level;
+        Ok(())
     }
 
     fn zoom_level(&self) -> ZoomLevel {
@@ -359,11 +361,14 @@ impl Renderer for WebViewRenderer {
     }
 
     #[cfg(target_os = "windows")]
-    fn set_minimized(&mut self, minimized: bool) {
+    fn set_minimized(&mut self, minimized: bool) -> Result<()> {
         let level = if minimized { MemoryUsageLevel::Low } else { MemoryUsageLevel::Normal };
         log::debug!("Memory usage level is set to {level:?} due to minimized={minimized}");
-        self.webview.set_memory_usage_level(level);
+        self.webview.set_memory_usage_level(level)?;
+        Ok(())
     }
     #[cfg(not(target_os = "windows"))]
-    fn set_minimized(&mut self, _minimized: bool) {}
+    fn set_minimized(&mut self, _minimized: bool) -> Result<()> {
+        Ok(())
+    }
 }
