@@ -305,11 +305,6 @@ impl Renderer for WebViewRenderer {
         self.window.set_visible(true);
     }
 
-    fn set_background_color(&self, rgba: (u8, u8, u8, u8)) -> Result<()> {
-        self.webview.set_background_color(rgba)?;
-        Ok(())
-    }
-
     fn print(&self) -> Result<()> {
         Ok(self.webview.print()?)
     }
