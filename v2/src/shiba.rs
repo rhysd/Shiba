@@ -512,6 +512,10 @@ where
 
     fn shutdown(&mut self) -> Result<()> {
         log::debug!("Handling application exit");
+
+        // Hide the window before destroying it to avoid flickering.
+        self.renderer.hide();
+
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
@@ -520,6 +524,7 @@ where
             }
         }
         data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
+
         Ok(())
     }
 }

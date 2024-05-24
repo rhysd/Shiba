@@ -306,6 +306,10 @@ impl Renderer for WebViewRenderer {
         self.window.set_visible(true);
     }
 
+    fn hide(&self) {
+        self.window.set_visible(false);
+    }
+
     fn print(&self) -> Result<()> {
         Ok(self.webview.print()?)
     }

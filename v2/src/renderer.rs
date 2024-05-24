@@ -170,6 +170,7 @@ pub trait Renderer {
     fn window_state(&self) -> Option<WindowState>;
     fn theme(&self) -> Theme;
     fn show(&self);
+    fn hide(&self);
     fn print(&self) -> Result<()>;
     fn zoom(&mut self, level: ZoomLevel) -> Result<()>;
     fn zoom_level(&self) -> ZoomLevel;
