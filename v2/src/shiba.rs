@@ -455,7 +455,6 @@ where
     fn handle_event(&mut self, event: Event) -> Result<RenderingFlow> {
         log::debug!("Handling event {:?}", event);
         match event {
-            Event::Redraw => self.renderer.redraw(),
             Event::RendererMessage(msg) => return self.handle_renderer_message(msg),
             Event::FileDrop(mut path) => {
                 log::debug!("Previewing file dropped into window: {:?}", path);

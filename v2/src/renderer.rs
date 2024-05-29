@@ -78,7 +78,6 @@ pub enum Event {
     OpenExternalLink(String),
     Menu(MenuItem),
     Minimized(bool),
-    Redraw,
     Error(Error),
 }
 
@@ -184,7 +183,6 @@ pub trait Renderer {
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
     fn set_minimized(&mut self, minimized: bool) -> Result<()>;
-    fn redraw(&self);
 }
 
 /// Context to execute rendering.
