@@ -938,6 +938,7 @@ mod tests {
     snapshot_test!(highlight);
     snapshot_test!(not_link);
     snapshot_test!(soft_and_hard_break);
+    snapshot_test!(all);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
