@@ -95,6 +95,10 @@ impl Rendering for Wry {
                         RenderingFlow::Continue
                     }
                 }
+                Event::MainEventsCleared => {
+                    handler.on_event(AppEvent::Redraw);
+                    RenderingFlow::Continue
+                }
                 _ => match self.menu_events.try_receive() {
                     Ok(Some(item)) => handler.on_event(AppEvent::Menu(item)),
                     Ok(None) => RenderingFlow::Continue,

@@ -375,4 +375,8 @@ impl Renderer for WebViewRenderer {
     fn set_minimized(&mut self, _minimized: bool) -> Result<()> {
         Ok(())
     }
+
+    fn redraw(&self) {
+        self.window.request_redraw();
+    }
 }
