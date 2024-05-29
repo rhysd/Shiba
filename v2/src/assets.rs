@@ -119,7 +119,7 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "webp" => "image/webp",
     "tiff" => "image/tiff",
     "map"  => "text/plain;charset=UTF-8",
-    "ico" => "image/vnd.microsoft.icon",
+    "ico"  => "image/vnd.microsoft.icon",
 };
 
 fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
@@ -158,7 +158,7 @@ fn guess_mime(path: &str) -> &'static str {
             return mime;
         }
     }
-    log::error!("Unknown mime type for {:?}. Fallback to octet-stream", path);
+    log::debug!("Unknown mime type for {:?}. Fallback to octet-stream", path);
     "application/octet-stream"
 }
 
