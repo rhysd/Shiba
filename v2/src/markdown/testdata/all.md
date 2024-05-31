@@ -207,6 +207,8 @@ Raw URL auto link extension: https://example.com
 
 This is <a href="https://example.com">a link with anchor tag</a> in a paragraph block.
 
+This inline script tag <script>alert('hello')</script> should be sanitized.
+
 # Task lists extension
 
 Task lists:

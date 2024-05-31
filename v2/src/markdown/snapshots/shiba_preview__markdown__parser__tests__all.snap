@@ -1009,6 +1009,17 @@ expression: json
     },
     {
       "c": [
+        "This inline script tag ",
+        {
+          "raw": "",
+          "t": "html"
+        },
+        " should be sanitized."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
         "Task lists extension"
       ],
       "level": 1,
@@ -1431,9 +1442,14 @@ expression: json
       "t": "p"
     },
     {
-      "expr": "\\left( \\sum_{k=1}^n a_k b_k \\right)^2 \\leq \\left( \\sum_{k=1}^n a_k^2 \\right) \\left( \\sum_{k=1}^n b_k^2 \\right)",
-      "inline": false,
-      "t": "math"
+      "c": [
+        {
+          "expr": "\\left( \\sum_{k=1}^n a_k b_k \\right)^2 \\leq \\left( \\sum_{k=1}^n a_k^2 \\right) \\left( \\sum_{k=1}^n b_k^2 \\right)",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
     },
     {
       "c": [

@@ -4,12 +4,10 @@ use aho_corasick::AhoCorasick;
 use emojis::Emoji;
 use memchr::{memchr_iter, Memchr};
 use pulldown_cmark::{
-    Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, MathDisplay, Options, Parser,
-    Tag,
+    Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options, Parser, Tag, TagEnd,
 };
 use std::collections::HashMap;
 use std::io::{Read, Result, Write};
-use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::path::Path;
 
@@ -115,23 +113,23 @@ impl MarkdownContent {
     }
 }
 
-pub struct MarkdownParser<'a, V: TextVisitor, T: TextTokenizer> {
-    parser: Parser<'a, 'a>,
-    base_dir: &'a SlashPath,
+pub struct MarkdownParser<'input, V: TextVisitor, T: TextTokenizer> {
+    parser: Parser<'input>,
+    base_dir: &'input SlashPath,
     offset: Option<usize>,
     text_tokenizer: T,
     _phantom: PhantomData<V>,
 }
 
-impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
-    pub fn new(content: &'a MarkdownContent, offset: Option<usize>, text_tokenizer: T) -> Self {
+impl<'input, V: TextVisitor, T: TextTokenizer> MarkdownParser<'input, V, T> {
+    pub fn new(content: &'input MarkdownContent, offset: Option<usize>, text_tokenizer: T) -> Self {
         let mut options = Options::empty();
         options.insert(
             Options::ENABLE_STRIKETHROUGH
-                | Options::ENABLE_FOOTNOTES
+                | Options::ENABLE_OLD_FOOTNOTES
                 | Options::ENABLE_TABLES
                 | Options::ENABLE_TASKLISTS
-                | Options::ENABLE_MATH,
+                | Options::ENABLE_MATH, // TODO: Add ENABLE_GFM for alerts
         );
         let parser = Parser::new_ext(&content.source, options);
         let base_dir = &content.base_dir;
@@ -141,7 +139,7 @@ impl<'a, V: TextVisitor, T: TextTokenizer> MarkdownParser<'a, V, T> {
 
 // Note: Build raw JavaScript expression which is evaluated to the render tree encoded as JSON value.
 // This expression will be evaluated via `receive(JSON.parse('{"kind":"render_tree",...}'))` by renderer.
-impl<'a, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'a, V, T> {
+impl<'input, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'input, V, T> {
     type Output = V;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
@@ -220,28 +218,27 @@ impl<W: Write> Write for StringContentEncoder<W> {
     }
 }
 
-struct RawHtmlReader<'a, I: Iterator<Item = (Event<'a>, Range)>> {
-    current: CowStr<'a>,
+struct InlineHtmlReader<'input, I: Iterator<Item = (Event<'input>, Range)>> {
+    current: CowStr<'input>,
     index: usize,
-    events: Peekable<I>,
-    stack: usize,
+    events: I,
+    stack: isize,
 }
 
-impl<'a, I: Iterator<Item = (Event<'a>, Range)>> RawHtmlReader<'a, I> {
-    fn new(current: CowStr<'a>, events: Peekable<I>) -> Self {
-        Self { current, index: 0, events, stack: 1 }
+impl<'input, I: Iterator<Item = (Event<'input>, Range)>> InlineHtmlReader<'input, I> {
+    fn new(current: CowStr<'input>, events: I) -> Self {
+        let stack = if current.starts_with("</") { 0 } else { 1 };
+        Self { current, index: 0, events, stack }
     }
 
     fn read_byte(&mut self) -> Option<u8> {
-        // Current event was consumed. Fetch next event otherwise return `None`.
+        if self.stack == 0 && self.current.len() <= self.index {
+            return None;
+        }
+
         while self.current.len() <= self.index {
-            if !matches!(self.events.peek(), Some((Event::Html(_) | Event::Text(_), _)))
-                || self.stack == 0
-            {
-                return None;
-            }
-            self.current = match self.events.next().unwrap().0 {
-                Event::Html(html) => {
+            self.current = match self.events.next()?.0 {
+                Event::InlineHtml(html) => {
                     if html.starts_with("</") {
                         self.stack -= 1;
                     } else {
@@ -250,7 +247,8 @@ impl<'a, I: Iterator<Item = (Event<'a>, Range)>> RawHtmlReader<'a, I> {
                     html
                 }
                 Event::Text(text) => text,
-                _ => unreachable!(),
+                // TODO: Items inside inline HTML are treated as text incorecctly
+                _ => continue,
             };
             self.index = 0;
         }
@@ -261,7 +259,7 @@ impl<'a, I: Iterator<Item = (Event<'a>, Range)>> RawHtmlReader<'a, I> {
     }
 }
 
-impl<'a, I: Iterator<Item = (Event<'a>, Range)>> Read for RawHtmlReader<'a, I> {
+impl<'input, I: Iterator<Item = (Event<'input>, Range)>> Read for InlineHtmlReader<'input, I> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         for (i, dest) in buf.iter_mut().enumerate() {
             if let Some(b) = self.read_byte() {
@@ -274,22 +272,72 @@ impl<'a, I: Iterator<Item = (Event<'a>, Range)>> Read for RawHtmlReader<'a, I> {
     }
 }
 
-struct RenderTreeEncoder<'a, W: Write, V: TextVisitor, T: TextTokenizer> {
+struct HtmlBlockReader<'input, I: Iterator<Item = (Event<'input>, Range)>> {
+    current: CowStr<'input>,
+    index: usize,
+    events: I,
+    end: bool,
+}
+
+impl<'input, I: Iterator<Item = (Event<'input>, Range)>> HtmlBlockReader<'input, I> {
+    fn new(current: CowStr<'input>, events: I) -> Self {
+        Self { current, index: 0, events, end: false }
+    }
+
+    fn read_byte(&mut self) -> Option<u8> {
+        if self.end {
+            return None;
+        }
+
+        // Current event was consumed. Fetch next event otherwise return `None`.
+        while self.current.len() <= self.index {
+            self.current = match self.events.next().unwrap().0 {
+                Event::End(TagEnd::HtmlBlock) => {
+                    self.end = true;
+                    return None;
+                }
+                Event::Html(html) => html,
+                event => unreachable!("unexpected event: {event:?}"),
+            };
+            self.index = 0;
+        }
+
+        let b = self.current.as_bytes()[self.index];
+        self.index += 1;
+        Some(b)
+    }
+}
+
+impl<'input, I: Iterator<Item = (Event<'input>, Range)>> Read for HtmlBlockReader<'input, I> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        for (i, dest) in buf.iter_mut().enumerate() {
+            if let Some(b) = self.read_byte() {
+                *dest = b;
+            } else {
+                return Ok(i);
+            }
+        }
+        Ok(buf.len())
+    }
+}
+
+struct RenderTreeEncoder<'input, W: Write, V: TextVisitor, T: TextTokenizer> {
     out: W,
-    base_dir: &'a SlashPath,
+    base_dir: &'input SlashPath,
     table: TableState,
     is_start: bool,
-    ids: HashMap<CowStr<'a>, usize>,
+    ids: HashMap<CowStr<'input>, usize>,
     modified: Option<usize>,
     text_visitor: V,
     text_tokenizer: T,
     autolinker: Autolinker,
-    sanitizer: Sanitizer<'a>,
+    sanitizer: Sanitizer<'input>,
     in_code_block: bool,
+    in_auto_link: bool,
 }
 
-impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V, T> {
-    fn new(w: W, base_dir: &'a SlashPath, modified: Option<usize>, text_tokenizer: T) -> Self {
+impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'input, W, V, T> {
+    fn new(w: W, base_dir: &'input SlashPath, modified: Option<usize>, text_tokenizer: T) -> Self {
         Self {
             out: w,
             base_dir,
@@ -302,10 +350,11 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             autolinker: Autolinker::default(),
             sanitizer: Sanitizer::new(base_dir),
             in_code_block: false,
+            in_auto_link: false,
         }
     }
 
-    fn push(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
+    fn push(&mut self, parser: Parser<'input>) -> Result<()> {
         self.out.write_all(b"[")?;
         self.events(parser)?;
         // Modified offset was not consumed by any text, it would mean that some non-text parts after any text were
@@ -339,7 +388,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         })
     }
 
-    fn id(&mut self, name: CowStr<'a>) -> usize {
+    fn id(&mut self, name: CowStr<'input>) -> usize {
         let new = self.ids.len() + 1;
         *self.ids.entry(name).or_insert(new)
     }
@@ -470,7 +519,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         Ok(())
     }
 
-    fn events(&mut self, parser: Parser<'a, 'a>) -> Result<()> {
+    fn events(&mut self, parser: Parser<'input>) -> Result<()> {
         use Event::*;
 
         let mut events = parser.into_offset_iter().peekable();
@@ -480,7 +529,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     let next_event = events.peek().map(|(e, _)| e);
                     self.start_tag(tag, next_event)?;
                 }
-                End(tag) => self.end_tag(tag)?,
+                End(tag_end) => self.end_tag(tag_end)?,
                 Text(text) if self.in_code_block => self.text(&text, range)?,
                 Text(text) => self.autolink_text(&text, range)?,
                 Code(text) => {
@@ -496,9 +545,18 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.out.write_all(br#","raw":""#)?;
 
                     let mut dst = StringContentEncoder(&mut self.out);
-                    let mut src = RawHtmlReader::new(html, events);
+                    let mut src = HtmlBlockReader::new(html, &mut events);
                     self.sanitizer.clean(&mut dst, &mut src)?;
-                    events = src.events;
+
+                    self.out.write_all(br#""}"#)?;
+                }
+                InlineHtml(html) => {
+                    self.tag("html")?;
+                    self.out.write_all(br#","raw":""#)?;
+
+                    let mut dst = StringContentEncoder(&mut self.out);
+                    let mut src = InlineHtmlReader::new(html, &mut events);
+                    self.sanitizer.clean(&mut dst, &mut src)?;
 
                     self.out.write_all(br#""}"#)?;
                 }
@@ -525,9 +583,15 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.tag("checkbox")?;
                     write!(self.out, r#","checked":{}}}"#, checked)?;
                 }
-                Math(display, text) => {
+                DisplayMath(text) => {
                     self.tag("math")?;
-                    write!(self.out, r#","inline":{},"expr":"#, display == MathDisplay::Inline)?;
+                    self.out.write_all(br#","inline":false,"expr":"#)?;
+                    self.string(&text)?;
+                    self.out.write_all(b"}")?;
+                }
+                InlineMath(text) => {
+                    self.tag("math")?;
+                    self.out.write_all(br#","inline":true,"expr":"#)?;
                     self.string(&text)?;
                     self.out.write_all(b"}")?;
                 }
@@ -562,13 +626,13 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
         self.out.write_all(b"]}")
     }
 
-    fn start_tag(&mut self, tag: Tag<'a>, next: Option<&Event>) -> Result<()> {
+    fn start_tag(&mut self, tag: Tag<'input>, next: Option<&Event>) -> Result<()> {
         use Tag::*;
         match tag {
             Paragraph => {
                 self.tag("p")?;
             }
-            Heading(level, id, _) => {
+            Heading { level, .. } => {
                 self.tag("h")?;
 
                 let level: u8 = match level {
@@ -580,11 +644,6 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     HeadingLevel::H6 => 6,
                 };
                 write!(self.out, r#","level":{}"#, level)?;
-
-                if let Some(id) = id {
-                    self.out.write_all(br#","id":"#)?;
-                    self.string(id)?;
-                }
             }
             Table(alignments) => {
                 self.tag("table")?;
@@ -617,7 +676,8 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 };
                 self.tag(tag)?;
             }
-            BlockQuote => {
+            // TODO: Add ENABLE_GFM for alerts
+            BlockQuote(_) => {
                 self.tag("blockquote")?;
             }
             CodeBlock(info) => {
@@ -650,18 +710,22 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
             Emphasis => self.tag("em")?,
             Strong => self.tag("strong")?,
             Strikethrough => self.tag("del")?,
-            Link(LinkType::Autolink, _, _) => return Ok(()), // Ignore autolink since it is linked by `Autolinker`
-            Link(link_type, dest, title) => {
+            Link { link_type: LinkType::Autolink, .. } => {
+                self.in_auto_link = true;
+                // Ignore autolink since it is linked by `Autolinker`
+                return Ok(());
+            }
+            Link { link_type, dest_url, title, .. } => {
                 self.tag("a")?;
 
                 self.out.write_all(br#","href":"#)?;
                 match link_type {
                     LinkType::Email => {
                         self.out.write_all(b"\"mailto:")?;
-                        self.string_content(&dest)?;
+                        self.string_content(&dest_url)?;
                         self.out.write_all(b"\"")?;
                     }
-                    _ => self.rebase_link(&dest)?,
+                    _ => self.rebase_link(&dest_url)?,
                 }
 
                 if !title.is_empty() {
@@ -669,7 +733,7 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                     self.string(&title)?;
                 }
             }
-            Image(_link_type, dest, title) => {
+            Image { dest_url, title, .. } => {
                 self.tag("img")?;
 
                 if !title.is_empty() {
@@ -678,8 +742,9 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 }
 
                 self.out.write_all(br#","src":"#)?;
-                self.rebase_link(&dest)?;
+                self.rebase_link(&dest_url)?;
             }
+            HtmlBlock => return Ok(()), // HTML block is handled by `Event::Html` event
             FootnoteDefinition(name) => {
                 self.tag("fn-def")?;
 
@@ -691,35 +756,31 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 let id = self.id(name);
                 write!(self.out, r#","id":{}"#, id)?;
             }
+            MetadataBlock(_) => unreachable!(), // This option is not enabled
         }
 
         // Tag element must have its children (maybe empty)
         self.children_begin()
     }
 
-    fn end_tag(&mut self, tag: Tag<'a>) -> Result<()> {
-        use Tag::*;
-        match tag {
-            Link(LinkType::Autolink, _, _) => Ok(()), // Ignore autolink since it is linked by `Autolinker`
-            Paragraph
-            | Heading(_, _, _)
-            | TableRow
-            | TableCell
-            | BlockQuote
-            | List(_)
-            | Item
-            | Emphasis
-            | Strong
-            | Strikethrough
-            | Link(_, _, _)
-            | Image(_, _, _)
-            | FootnoteDefinition(_) => self.tag_end(),
-            CodeBlock(_) => {
+    fn end_tag(&mut self, end: TagEnd) -> Result<()> {
+        use TagEnd::*;
+        match end {
+            Link if self.in_auto_link => {
+                self.in_auto_link = false;
+                // Ignore autolink since it is linked by `Autolinker`
+                Ok(())
+            }
+            Paragraph | Heading(_) | TableRow | TableCell | BlockQuote | List(_) | Item
+            | Emphasis | Strong | Strikethrough | Link | Image | FootnoteDefinition => {
+                self.tag_end()
+            }
+            CodeBlock => {
                 self.in_code_block = false;
                 self.tag_end()?;
                 self.tag_end()
             }
-            Table(_) => {
+            Table => {
                 self.tag_end()?;
                 self.tag_end()
             }
@@ -729,6 +790,8 @@ impl<'a, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'a, W, V,
                 self.tag("tbody")?;
                 self.children_begin()
             }
+            HtmlBlock => unreachable!(), // This event is handled in `HtmlBlockReader`
+            MetadataBlock(_) => unreachable!(), // This option is not enabled
         }
     }
 }
@@ -802,31 +865,31 @@ impl Autolinker {
 }
 
 #[derive(Debug)]
-enum EmojiToken<'a> {
-    Text(&'a str),
+enum EmojiToken<'input> {
+    Text(&'input str),
     Emoji(&'static Emoji, usize),
 }
 
-struct EmojiTokenizer<'a> {
-    text: &'a str,
-    iter: Memchr<'a>,
+struct EmojiTokenizer<'input> {
+    text: &'input str,
+    iter: Memchr<'input>,
     start: usize,
 }
 
-impl<'a> EmojiTokenizer<'a> {
-    fn new(text: &'a str) -> Self {
+impl<'input> EmojiTokenizer<'input> {
+    fn new(text: &'input str) -> Self {
         Self { iter: memchr_iter(b':', text.as_bytes()), text, start: 0 }
     }
 
-    fn eat(&mut self, end: usize) -> &'a str {
+    fn eat(&mut self, end: usize) -> &'input str {
         let text = &self.text[self.start..end];
         self.start = end;
         text
     }
 }
 
-impl<'a> Iterator for EmojiTokenizer<'a> {
-    type Item = EmojiToken<'a>;
+impl<'input> Iterator for EmojiTokenizer<'input> {
+    type Item = EmojiToken<'input>;
 
     // Tokenizing example:
     //   "foo :dog: bar :piyo: wow"
