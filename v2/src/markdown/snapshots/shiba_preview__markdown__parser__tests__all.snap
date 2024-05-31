@@ -991,6 +991,24 @@ expression: json
     },
     {
       "c": [
+        "Inline HTML"
+      ],
+      "level": 1,
+      "t": "h"
+    },
+    {
+      "c": [
+        "This is ",
+        {
+          "raw": "<a href=\"https://example.com\" rel=\"noopener noreferrer\">a link with anchor tag</a>",
+          "t": "html"
+        },
+        " in a paragraph block."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
         "Task lists extension"
       ],
       "level": 1,

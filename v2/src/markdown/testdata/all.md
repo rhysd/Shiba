@@ -203,6 +203,10 @@ Standard auto link: <https://example.com>
 
 Raw URL auto link extension: https://example.com
 
+# Inline HTML
+
+This is <a href="https://example.com">a link with anchor tag</a> in a paragraph block.
+
 # Task lists extension
 
 Task lists:
