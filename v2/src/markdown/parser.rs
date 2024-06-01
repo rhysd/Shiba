@@ -8,6 +8,7 @@ use pulldown_cmark::{
 };
 use std::collections::HashMap;
 use std::io::{Read, Result, Write};
+use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::path::Path;
 
@@ -218,36 +219,59 @@ impl<W: Write> Write for StringContentEncoder<W> {
     }
 }
 
+// XXX: Items inside inline HTML are treated as raw texts
 struct InlineHtmlReader<'input, I: Iterator<Item = (Event<'input>, Range)>> {
     current: CowStr<'input>,
     index: usize,
-    events: I,
-    stack: isize,
+    events: Peekable<I>,
+    tag_stack: u32,
+    child_stack: u32,
 }
 
 impl<'input, I: Iterator<Item = (Event<'input>, Range)>> InlineHtmlReader<'input, I> {
-    fn new(current: CowStr<'input>, events: I) -> Self {
-        let stack = if current.starts_with("</") { 0 } else { 1 };
-        Self { current, index: 0, events, stack }
+    fn new(current: CowStr<'input>, events: Peekable<I>) -> Self {
+        let tag_stack = if current.starts_with("</") { 0 } else { 1 };
+        Self { current, index: 0, events, tag_stack, child_stack: 0 }
     }
 
     fn read_byte(&mut self) -> Option<u8> {
-        if self.stack == 0 && self.current.len() <= self.index {
-            return None;
-        }
-
         while self.current.len() <= self.index {
-            self.current = match self.events.next()?.0 {
-                Event::InlineHtml(html) => {
-                    if html.starts_with("</") {
-                        self.stack -= 1;
+            if self.tag_stack == 0 {
+                return None;
+            }
+
+            match &self.events.peek()?.0 {
+                Event::InlineHtml(html) if html.starts_with("</") => {
+                    if let Some(stack) = self.tag_stack.checked_sub(1) {
+                        self.tag_stack = stack;
                     } else {
-                        self.stack += 1;
+                        return None;
                     }
-                    html
                 }
+                Event::InlineHtml(_) => {
+                    self.tag_stack += 1;
+                }
+                Event::Start(_) => {
+                    self.child_stack += 1;
+                }
+                Event::End(_) => {
+                    if let Some(stack) = self.child_stack.checked_sub(1) {
+                        self.child_stack = stack;
+                    } else {
+                        return None;
+                    }
+                }
+                _ => {}
+            }
+
+            self.current = match self.events.next()?.0 {
+                Event::InlineHtml(html) => html,
                 Event::Text(text) => text,
-                // TODO: Items inside inline HTML are treated as text incorecctly
+                Event::Code(text) => text,
+                Event::SoftBreak => " ".into(),
+                Event::HardBreak => "\n".into(),
+                Event::DisplayMath(text) => text,
+                Event::InlineMath(text) => text,
                 _ => continue,
             };
             self.index = 0;
@@ -555,8 +579,9 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     self.out.write_all(br#","raw":""#)?;
 
                     let mut dst = StringContentEncoder(&mut self.out);
-                    let mut src = InlineHtmlReader::new(html, &mut events);
+                    let mut src = InlineHtmlReader::new(html, events);
                     self.sanitizer.clean(&mut dst, &mut src)?;
+                    events = src.events;
 
                     self.out.write_all(br#""}"#)?;
                 }
@@ -1002,6 +1027,9 @@ mod tests {
     snapshot_test!(not_link);
     snapshot_test!(soft_and_hard_break);
     snapshot_test!(all);
+    snapshot_test!(unmatched_inline_html);
+    snapshot_test!(inline_open_block_close_html);
+    snapshot_test!(block_open_inline_close_html);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
