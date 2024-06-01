@@ -126,7 +126,7 @@ impl<'input, V: TextVisitor, T: TextTokenizer> MarkdownParser<'input, V, T> {
         let mut options = Options::empty();
         options.insert(
             Options::ENABLE_STRIKETHROUGH
-                | Options::ENABLE_OLD_FOOTNOTES
+                | Options::ENABLE_FOOTNOTES
                 | Options::ENABLE_TABLES
                 | Options::ENABLE_TASKLISTS
                 | Options::ENABLE_MATH, // TODO: Add ENABLE_GFM for alerts

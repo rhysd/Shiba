@@ -1367,11 +1367,12 @@ expression: json
           "id": 1,
           "t": "fn-ref"
         },
-        ". With some additional text after it. ",
+        ". With named label",
         {
           "id": 2,
           "t": "fn-ref"
-        }
+        },
+        "."
       ],
       "t": "p"
     },
@@ -1392,26 +1393,13 @@ expression: json
       "c": [
         {
           "c": [
-            "This is big note!"
+            "This is note with label"
           ],
           "t": "p"
-        },
-        {
-          "c": [
-            {
-              "c": [
-                "some text",
-                " ",
-                "continues"
-              ],
-              "t": "p"
-            }
-          ],
-          "t": "blockquote"
         }
       ],
       "id": 2,
-      "name": "big",
+      "name": "label",
       "t": "fn-def"
     },
     {

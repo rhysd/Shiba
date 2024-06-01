@@ -262,7 +262,7 @@ class RenderTreeToReact {
                 const backref = (
                     <a
                         href={`#user-content-fnref-${elem.id}`}
-                        aria-label="Back to content"
+                        aria-label={`Back to reference ${elem.id}`}
                         key="backref"
                         style={FOOTNOTE_BACKREF_STYLE}
                     >
@@ -449,7 +449,7 @@ class RenderTreeToReact {
                             id={`user-content-fnref-${elem.id}`}
                             aria-describedby="footnote-label"
                         >
-                            {elem.id}
+                            [{elem.id}]
                         </a>
                     </sup>
                 );

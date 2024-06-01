@@ -251,13 +251,11 @@ are deleted.~~
 
 # Foot notes extension
 
-Here is a simple footnote[^1]. With some additional text after it. [^big]
+Here is a simple footnote[^1]. With named label[^label].
 
 [^1]: My reference.
 
-[^big]: This is big note!
-> some text
-> continues
+[^label]: This is note with label
 
 # Math extension
 
