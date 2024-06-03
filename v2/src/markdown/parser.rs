@@ -305,8 +305,8 @@ struct HtmlBlockReader<'input, I: Iterator<Item = (Event<'input>, Range)>> {
 }
 
 impl<'input, I: Iterator<Item = (Event<'input>, Range)>> HtmlBlockReader<'input, I> {
-    fn new(current: CowStr<'input>, events: I) -> Self {
-        Self { current, index: 0, events, end: false }
+    fn new(events: I) -> Self {
+        Self { current: "".into(), index: 0, events, end: false }
     }
 
     fn read_byte(&mut self) -> Option<u8> {
@@ -314,7 +314,7 @@ impl<'input, I: Iterator<Item = (Event<'input>, Range)>> HtmlBlockReader<'input,
             return None;
         }
 
-        // Current event was consumed. Fetch next event otherwise return `None`.
+        // Current event was consumed. Fetch next event or return `None` at the end of the block.
         while self.current.len() <= self.index {
             self.current = match self.events.next().unwrap().0 {
                 Event::End(TagEnd::HtmlBlock) => {
@@ -665,7 +665,18 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                             self.out.write_all(br#","src":"#)?;
                             self.rebase_link(&dest_url)?;
                         }
-                        HtmlBlock => continue, // HTML block is handled by `Event::Html` event
+                        HtmlBlock => {
+                            self.tag("html")?;
+                            self.out.write_all(br#","raw":""#)?;
+
+                            let mut dst = StringContentEncoder(&mut self.out);
+                            let mut src = HtmlBlockReader::new(&mut events);
+                            self.sanitizer.clean(&mut dst, &mut src)?;
+
+                            self.out.write_all(br#""}"#)?;
+                            // Unlike other tags, `HtmlBlockReader consumes all events until `TagEnd::HtmlBlock`
+                            continue;
+                        }
                         FootnoteDefinition(name) => {
                             self.tag("fn-def")?;
 
@@ -705,7 +716,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                             self.tag("tbody")?;
                             self.children_begin()?;
                         }
-                        HtmlBlock => unreachable!(), // This event is handled in `HtmlBlockReader`
+                        HtmlBlock => unreachable!(), // This event is handled in `Tag::HtmlBlock` event using `HtmlBlockReader`
                         MetadataBlock(_) => unreachable!(), // This option is not enabled
                     }
                 }
@@ -719,16 +730,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     self.text(&text, inner_range)?;
                     self.tag_end()?;
                 }
-                Event::Html(html) => {
-                    self.tag("html")?;
-                    self.out.write_all(br#","raw":""#)?;
-
-                    let mut dst = StringContentEncoder(&mut self.out);
-                    let mut src = HtmlBlockReader::new(html, &mut events);
-                    self.sanitizer.clean(&mut dst, &mut src)?;
-
-                    self.out.write_all(br#""}"#)?;
-                }
+                Event::Html(_) => unreachable!(), // This event is handled in `Tag::HtmlBlock` event using `HtmlBlockReader`
                 Event::InlineHtml(html) => {
                     self.tag("html")?;
                     self.out.write_all(br#","raw":""#)?;
