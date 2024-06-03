@@ -1,0 +1,5 @@
+---
+source: src/markdown/parser.rs
+expression: buf
+---
+JSON.parse('{"kind":"render_tree","tree":[{"t":"p","c":["This line\'s text contains the single quote."]},{"t":"p","c":["This line contains ","\\\\ several \\" escaped \\t things!"]}]}')

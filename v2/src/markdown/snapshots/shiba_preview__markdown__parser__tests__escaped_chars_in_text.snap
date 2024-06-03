@@ -1,0 +1,22 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "This line's text contains the single quote."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        "This line contains ",
+        "\\ several \" escaped \t things!"
+      ],
+      "t": "p"
+    }
+  ]
+}

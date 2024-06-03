@@ -976,7 +976,7 @@ mod tests {
                 let () = parser.write_to(&mut buf).unwrap();
                 let buf = String::from_utf8(buf).unwrap();
                 // Revert extra escape for '...' JavaScript string
-                let buf = buf.replace("\\\\", "\\");
+                let buf = buf.replace("\\\\", "\\").replace("\\'", "'");
                 // Remove the `JSON.parse` call to restore JSON value passed to the function
                 let buf = buf.strip_prefix("JSON.parse('").unwrap();
                 let buf = buf.strip_suffix("')").unwrap();
@@ -1024,6 +1024,7 @@ mod tests {
     snapshot_test!(inline_open_block_close_html);
     snapshot_test!(block_open_inline_close_html);
     snapshot_test!(inline_items_nested_in_inline_html);
+    snapshot_test!(escaped_chars_in_text);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
@@ -1037,6 +1038,18 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     const BASE_DIR: &str = "/a/b/c/d/e";
     snapshot_test!(relative_links, None, Some(Path::new(BASE_DIR)));
+
+    // Note: This test cannot be done by snapshot_test! since JSON parser complains the escaped single quote.
+    #[test]
+    fn escaped_characters_in_text() {
+        let source = load_data("escaped_chars_in_text");
+        let target = MarkdownContent::new(source, None);
+        let parser = MarkdownParser::new(&target, None, ());
+        let mut buf = Vec::new();
+        let () = parser.write_to(&mut buf).unwrap();
+        let buf = String::from_utf8(buf).unwrap();
+        insta::assert_snapshot!(buf);
+    }
 
     mod visitor {
         use super::*;
