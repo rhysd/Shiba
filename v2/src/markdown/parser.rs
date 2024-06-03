@@ -221,16 +221,19 @@ impl<W: Write> Write for StringContentEncoder<W> {
 
 // XXX: Items inside inline HTML are treated as raw texts
 // See src/markdown/testdata/inline_items_nested_in_inline_html.md
-struct InlineHtmlReader<'input, I: Iterator<Item = (Event<'input>, Range)>> {
+struct InlineHtmlReader<'events, 'input, I: Iterator<Item = (Event<'input>, Range)>> {
     current: CowStr<'input>,
     index: usize,
-    events: Peekable<I>,
+    events: &'events mut Peekable<I>,
     tag_stack: u32,
     child_stack: u32,
 }
 
-impl<'input, I: Iterator<Item = (Event<'input>, Range)>> InlineHtmlReader<'input, I> {
-    fn new(current: CowStr<'input>, events: Peekable<I>) -> Self {
+impl<'events, 'input, I> InlineHtmlReader<'events, 'input, I>
+where
+    I: Iterator<Item = (Event<'input>, Range)>,
+{
+    fn new(current: CowStr<'input>, events: &'events mut Peekable<I>) -> Self {
         let tag_stack = if current.starts_with("</") { 0 } else { 1 };
         Self { current, index: 0, events, tag_stack, child_stack: 0 }
     }
@@ -243,8 +246,8 @@ impl<'input, I: Iterator<Item = (Event<'input>, Range)>> InlineHtmlReader<'input
 
             match &self.events.peek()?.0 {
                 Event::InlineHtml(html) if html.starts_with("</") => {
-                    if let Some(stack) = self.tag_stack.checked_sub(1) {
-                        self.tag_stack = stack;
+                    if let Some(popped) = self.tag_stack.checked_sub(1) {
+                        self.tag_stack = popped;
                     } else {
                         return None;
                     }
@@ -256,8 +259,8 @@ impl<'input, I: Iterator<Item = (Event<'input>, Range)>> InlineHtmlReader<'input
                     self.child_stack += 1;
                 }
                 Event::End(_) => {
-                    if let Some(stack) = self.child_stack.checked_sub(1) {
-                        self.child_stack = stack;
+                    if let Some(popped) = self.child_stack.checked_sub(1) {
+                        self.child_stack = popped;
                     } else {
                         return None;
                     }
@@ -284,7 +287,10 @@ impl<'input, I: Iterator<Item = (Event<'input>, Range)>> InlineHtmlReader<'input
     }
 }
 
-impl<'input, I: Iterator<Item = (Event<'input>, Range)>> Read for InlineHtmlReader<'input, I> {
+impl<'events, 'input, I> Read for InlineHtmlReader<'events, 'input, I>
+where
+    I: Iterator<Item = (Event<'input>, Range)>,
+{
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         for (i, dest) in buf.iter_mut().enumerate() {
             if let Some(b) = self.read_byte() {
@@ -669,9 +675,9 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                             self.tag("html")?;
                             self.out.write_all(br#","raw":""#)?;
 
-                            let mut dst = StringContentEncoder(&mut self.out);
-                            let mut src = HtmlBlockReader::new(&mut events);
-                            self.sanitizer.clean(&mut dst, &mut src)?;
+                            let dst = StringContentEncoder(&mut self.out);
+                            let src = HtmlBlockReader::new(&mut events);
+                            self.sanitizer.clean(dst, src)?;
 
                             self.out.write_all(br#""}"#)?;
                             // Unlike other tags, `HtmlBlockReader consumes all events until `TagEnd::HtmlBlock`
@@ -735,10 +741,9 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     self.tag("html")?;
                     self.out.write_all(br#","raw":""#)?;
 
-                    let mut dst = StringContentEncoder(&mut self.out);
-                    let mut src = InlineHtmlReader::new(html, events);
-                    self.sanitizer.clean(&mut dst, &mut src)?;
-                    events = src.events;
+                    let dst = StringContentEncoder(&mut self.out);
+                    let src = InlineHtmlReader::new(html, &mut events);
+                    self.sanitizer.clean(dst, src)?;
 
                     self.out.write_all(br#""}"#)?;
                 }
