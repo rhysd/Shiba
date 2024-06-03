@@ -197,6 +197,24 @@ expression: json
     },
     {
       "c": [
+        "The ",
+        {
+          "c": [
+            "<details>"
+          ],
+          "t": "code"
+        },
+        " tag can fold contents",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "raw": "<details>\n<summary>Folded!</summary>\n<pre>Lorem Ipsum is simply dummy text of the printing\nand typesetting industry. Lorem Ipsum has been the\nindustrial standard dummy text ever since the 1500s,\nwhen an unknown printer took a galley of type and\nscrambled it to make a type specimen book.\n</pre>\n</details>\n",
+      "t": "html"
+    },
+    {
+      "c": [
         "Link references"
       ],
       "level": 1,
@@ -1009,6 +1027,17 @@ expression: json
     },
     {
       "c": [
+        "This is nested ",
+        {
+          "raw": "<code>inline, <a href=\"https://example.com\" rel=\"noopener noreferrer\">HTML</a></code>",
+          "t": "html"
+        },
+        " items."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
         "This inline script tag ",
         {
           "raw": "",
@@ -1017,6 +1046,24 @@ expression: json
         " should be sanitized."
       ],
       "t": "p"
+    },
+    {
+      "c": [
+        "Code block using ",
+        {
+          "c": [
+            "<pre><code>"
+          ],
+          "t": "code"
+        },
+        " is written in inline HTML but rendered as block",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "raw": "<pre><code>This is\ncode block</code></pre>\n",
+      "t": "html"
     },
     {
       "c": [

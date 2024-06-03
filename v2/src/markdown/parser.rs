@@ -268,7 +268,7 @@ where
                 _ => {}
             }
 
-            self.current = match self.events.next()?.0 {
+            self.current = match self.events.next().unwrap().0 {
                 Event::InlineHtml(html) => html,
                 Event::Text(text) => text,
                 Event::Code(text) => text,
@@ -322,7 +322,7 @@ impl<'input, I: Iterator<Item = (Event<'input>, Range)>> HtmlBlockReader<'input,
 
         // Current event was consumed. Fetch next event or return `None` at the end of the block.
         while self.current.len() <= self.index {
-            self.current = match self.events.next().unwrap().0 {
+            self.current = match self.events.next()?.0 {
                 Event::End(TagEnd::HtmlBlock) => {
                     self.end = true;
                     return None;

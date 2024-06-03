@@ -66,6 +66,19 @@ The `<script>` tag should be stripped out:
 alert("hey!");
 </script>
 
+The `<details>` tag can fold contents:
+
+<details>
+<summary>Folded!</summary>
+<pre>
+Lorem Ipsum is simply dummy text of the printing
+and typesetting industry. Lorem Ipsum has been the
+industrial standard dummy text ever since the 1500s,
+when an unknown printer took a galley of type and
+scrambled it to make a type specimen book.
+</pre>
+</details>
+
 # Link references
 
 [minimal absolute link]
@@ -207,7 +220,14 @@ Raw URL auto link extension: https://example.com
 
 This is <a href="https://example.com">a link with anchor tag</a> in a paragraph block.
 
+This is nested <code>inline, <a href="https://example.com">HTML</a></code> items.
+
 This inline script tag <script>alert('hello')</script> should be sanitized.
+
+Code block using `<pre><code>` is written in inline HTML but rendered as block:
+
+<pre><code>This is
+code block</code></pre>
 
 # Task lists extension
 
