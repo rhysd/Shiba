@@ -6,7 +6,15 @@ expression: json
   "kind": "render_tree",
   "tree": [
     {
-      "raw": "\n\n<div>hello</div>\n",
+      "raw": "\n",
+      "t": "html"
+    },
+    {
+      "raw": "\n",
+      "t": "html"
+    },
+    {
+      "raw": "<div>hello</div>\n",
       "t": "html"
     }
   ]

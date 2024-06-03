@@ -1,0 +1,18 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "raw": "<span>String, italic, link, image, <span>nested HTML</span></span>",
+          "t": "html"
+        }
+      ],
+      "t": "p"
+    }
+  ]
+}

@@ -207,6 +207,8 @@ Raw URL auto link extension: https://example.com
 
 This is <a href="https://example.com">a link with anchor tag</a> in a paragraph block.
 
+This inline script tag <script>alert('hello')</script> should be sanitized.
+
 # Task lists extension
 
 Task lists:
@@ -249,13 +251,11 @@ are deleted.~~
 
 # Foot notes extension
 
-Here is a simple footnote[^1]. With some additional text after it. [^big]
+Here is a simple footnote[^1]. With named label[^label].
 
 [^1]: My reference.
 
-[^big]: This is big note!
-> some text
-> continues
+[^label]: This is note with label
 
 # Math extension
 

@@ -40,24 +40,24 @@ expression: json
             "This is big note!"
           ],
           "t": "p"
-        },
-        {
-          "c": [
-            {
-              "c": [
-                "some text",
-                " ",
-                "continues"
-              ],
-              "t": "p"
-            }
-          ],
-          "t": "blockquote"
         }
       ],
       "id": 2,
       "name": "big",
       "t": "fn-def"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "some text",
+            " ",
+            "continues"
+          ],
+          "t": "p"
+        }
+      ],
+      "t": "blockquote"
     }
   ]
 }

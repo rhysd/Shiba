@@ -262,7 +262,7 @@ class RenderTreeToReact {
                 const backref = (
                     <a
                         href={`#user-content-fnref-${elem.id}`}
-                        aria-label="Back to content"
+                        aria-label={`Back to reference ${elem.id}`}
                         key="backref"
                         style={FOOTNOTE_BACKREF_STYLE}
                     >
@@ -449,7 +449,7 @@ class RenderTreeToReact {
                             id={`user-content-fnref-${elem.id}`}
                             aria-describedby="footnote-label"
                         >
-                            {elem.id}
+                            [{elem.id}]
                         </a>
                     </sup>
                 );
@@ -460,12 +460,15 @@ class RenderTreeToReact {
                 const className = elem.inline ? 'math-expr-inline' : 'math-expr-block';
                 return this.mathjax.render(elem.expr, className, key);
             }
-            case 'html': {
+            case 'html':
+                // When an HTML sanitizer dropped an entire input, the result can be empty.
+                if (elem.raw.length === 0) {
+                    return null;
+                }
                 // XXX: This <span> element is necessary because React cannot render inner HTML under fragment
                 // https://github.com/reactjs/rfcs/pull/129
                 // XXX: Relative paths don't work because they need to be adjusted with base directory path
                 return <span key={key} dangerouslySetInnerHTML={{ __html: elem.raw }} />; // eslint-disable-line @typescript-eslint/naming-convention
-            }
             case 'modified':
                 return this.lastModified(key);
             case 'match':
