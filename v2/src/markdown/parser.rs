@@ -357,8 +357,6 @@ struct RenderTreeEncoder<'input, W: Write, V: TextVisitor, T: TextTokenizer> {
     text_tokenizer: T,
     autolinker: Autolinker,
     sanitizer: Sanitizer<'input>,
-    in_code_block: bool,
-    in_auto_link: bool,
 }
 
 impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'input, W, V, T> {
@@ -374,8 +372,6 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
             text_tokenizer,
             autolinker: Autolinker::default(),
             sanitizer: Sanitizer::new(base_dir),
-            in_code_block: false,
-            in_auto_link: false,
         }
     }
 
@@ -545,19 +541,177 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
     }
 
     fn events(&mut self, parser: Parser<'input>) -> Result<()> {
-        use Event::*;
+        let mut in_code_block = false;
+        let mut in_auto_link = false;
 
         let mut events = parser.into_offset_iter().peekable();
         while let Some((event, range)) = events.next() {
             match event {
-                Start(tag) => {
-                    let next_event = events.peek().map(|(e, _)| e);
-                    self.start_tag(tag, next_event)?;
+                Event::Start(tag) => {
+                    use Tag::*;
+                    match tag {
+                        Paragraph => {
+                            self.tag("p")?;
+                        }
+                        Heading { level, .. } => {
+                            self.tag("h")?;
+
+                            let level: u8 = match level {
+                                HeadingLevel::H1 => 1,
+                                HeadingLevel::H2 => 2,
+                                HeadingLevel::H3 => 3,
+                                HeadingLevel::H4 => 4,
+                                HeadingLevel::H5 => 5,
+                                HeadingLevel::H6 => 6,
+                            };
+                            write!(self.out, r#","level":{}"#, level)?;
+                        }
+                        Table(alignments) => {
+                            self.tag("table")?;
+
+                            self.out.write_all(br#","align":["#)?;
+                            let mut alignments = alignments.into_iter();
+                            if let Some(a) = alignments.next() {
+                                self.alignment(a)?;
+                            }
+                            for a in alignments {
+                                self.out.write_all(b",")?;
+                                self.alignment(a)?;
+                            }
+                            self.out.write_all(b"]")?;
+                        }
+                        TableHead => {
+                            self.table = TableState::Head;
+                            self.tag("thead")?;
+                            self.children_begin()?;
+                            self.tag("tr")?;
+                        }
+                        TableRow => {
+                            self.table = TableState::Row;
+                            self.tag("tr")?;
+                        }
+                        TableCell => {
+                            let tag = match self.table {
+                                TableState::Head => "th",
+                                TableState::Row => "td",
+                            };
+                            self.tag(tag)?;
+                        }
+                        // TODO: Add ENABLE_GFM for alerts
+                        BlockQuote(_) => {
+                            self.tag("blockquote")?;
+                        }
+                        CodeBlock(info) => {
+                            self.tag("pre")?;
+                            self.children_begin()?;
+                            self.tag("code")?;
+                            if let CodeBlockKind::Fenced(info) = info {
+                                if let Some(lang) = info.split(' ').next() {
+                                    if !lang.is_empty() {
+                                        self.out.write_all(br#","lang":"#)?;
+                                        self.string(lang)?;
+                                    }
+                                }
+                            }
+                            in_code_block = true;
+                        }
+                        List(Some(1)) => self.tag("ol")?,
+                        List(Some(start)) => {
+                            self.tag("ol")?;
+                            write!(self.out, r#","start":{}"#, start)?;
+                        }
+                        List(None) => self.tag("ul")?,
+                        Item => {
+                            if let Some((Event::TaskListMarker(_), _)) = events.peek() {
+                                self.tag("task-list")?;
+                            } else {
+                                self.tag("li")?;
+                            }
+                        }
+                        Emphasis => self.tag("em")?,
+                        Strong => self.tag("strong")?,
+                        Strikethrough => self.tag("del")?,
+                        Link { link_type: LinkType::Autolink, .. } => {
+                            in_auto_link = true;
+                            // Ignore autolink since it is linked by `Autolinker`
+                            continue;
+                        }
+                        Link { link_type, dest_url, title, .. } => {
+                            self.tag("a")?;
+
+                            self.out.write_all(br#","href":"#)?;
+                            match link_type {
+                                LinkType::Email => {
+                                    self.out.write_all(b"\"mailto:")?;
+                                    self.string_content(&dest_url)?;
+                                    self.out.write_all(b"\"")?;
+                                }
+                                _ => self.rebase_link(&dest_url)?,
+                            }
+
+                            if !title.is_empty() {
+                                self.out.write_all(br#","title":"#)?;
+                                self.string(&title)?;
+                            }
+                        }
+                        Image { dest_url, title, .. } => {
+                            self.tag("img")?;
+
+                            if !title.is_empty() {
+                                self.out.write_all(br#","title":"#)?;
+                                self.string(&title)?;
+                            }
+
+                            self.out.write_all(br#","src":"#)?;
+                            self.rebase_link(&dest_url)?;
+                        }
+                        HtmlBlock => continue, // HTML block is handled by `Event::Html` event
+                        FootnoteDefinition(name) => {
+                            self.tag("fn-def")?;
+
+                            if !name.is_empty() {
+                                self.out.write_all(br#","name":"#)?;
+                                self.string(&name)?;
+                            }
+
+                            let id = self.id(name);
+                            write!(self.out, r#","id":{}"#, id)?;
+                        }
+                        MetadataBlock(_) => unreachable!(), // This option is not enabled
+                    }
+
+                    // Tag element must have its children (maybe empty)
+                    self.children_begin()?;
                 }
-                End(tag_end) => self.end_tag(tag_end)?,
-                Text(text) if self.in_code_block => self.text(&text, range)?,
-                Text(text) => self.autolink_text(&text, range)?,
-                Code(text) => {
+                Event::End(tag_end) => {
+                    use TagEnd::*;
+                    match tag_end {
+                        Link if in_auto_link => in_auto_link = false,
+                        Paragraph | Heading(_) | TableRow | TableCell | BlockQuote | List(_)
+                        | Item | Emphasis | Strong | Strikethrough | Link | Image
+                        | FootnoteDefinition => self.tag_end()?,
+                        CodeBlock => {
+                            in_code_block = false;
+                            self.tag_end()?;
+                            self.tag_end()?;
+                        }
+                        Table => {
+                            self.tag_end()?;
+                            self.tag_end()?;
+                        }
+                        TableHead => {
+                            self.tag_end()?;
+                            self.tag_end()?;
+                            self.tag("tbody")?;
+                            self.children_begin()?;
+                        }
+                        HtmlBlock => unreachable!(), // This event is handled in `HtmlBlockReader`
+                        MetadataBlock(_) => unreachable!(), // This option is not enabled
+                    }
+                }
+                Event::Text(text) if in_code_block => self.text(&text, range)?,
+                Event::Text(text) => self.autolink_text(&text, range)?,
+                Event::Code(text) => {
                     let pad = (range.len() - text.len()) / 2;
                     let inner_range = (range.start + pad)..(range.end - pad);
                     self.tag("code")?;
@@ -565,7 +719,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     self.text(&text, inner_range)?;
                     self.tag_end()?;
                 }
-                Html(html) => {
+                Event::Html(html) => {
                     self.tag("html")?;
                     self.out.write_all(br#","raw":""#)?;
 
@@ -575,7 +729,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
 
                     self.out.write_all(br#""}"#)?;
                 }
-                InlineHtml(html) => {
+                Event::InlineHtml(html) => {
                     self.tag("html")?;
                     self.out.write_all(br#","raw":""#)?;
 
@@ -586,36 +740,36 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
 
                     self.out.write_all(br#""}"#)?;
                 }
-                SoftBreak => {
+                Event::SoftBreak => {
                     // Soft break consists of \n or \r\n so the length is 1 or 2
                     let range = if range.len() == 1 { range } else { (range.end - 1)..range.end };
                     // Soft break is rendered as a single white space in Markdown. Do not pass through \n or \r\n
                     self.text(" ", range)?
                 }
-                HardBreak => {
+                Event::HardBreak => {
                     self.tag("br")?;
                     self.out.write_all(b"}")?;
                 }
-                Rule => {
+                Event::Rule => {
                     self.tag("hr")?;
                     self.out.write_all(b"}")?;
                 }
-                FootnoteReference(name) => {
+                Event::FootnoteReference(name) => {
                     self.tag("fn-ref")?;
                     let id = self.id(name);
                     write!(self.out, r#","id":{}}}"#, id)?;
                 }
-                TaskListMarker(checked) => {
+                Event::TaskListMarker(checked) => {
                     self.tag("checkbox")?;
                     write!(self.out, r#","checked":{}}}"#, checked)?;
                 }
-                DisplayMath(text) => {
+                Event::DisplayMath(text) => {
                     self.tag("math")?;
                     self.out.write_all(br#","inline":false,"expr":"#)?;
                     self.string(&text)?;
                     self.out.write_all(b"}")?;
                 }
-                InlineMath(text) => {
+                Event::InlineMath(text) => {
                     self.tag("math")?;
                     self.out.write_all(br#","inline":true,"expr":"#)?;
                     self.string(&text)?;
@@ -650,175 +804,6 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
     fn tag_end(&mut self) -> Result<()> {
         self.is_start = false;
         self.out.write_all(b"]}")
-    }
-
-    fn start_tag(&mut self, tag: Tag<'input>, next: Option<&Event>) -> Result<()> {
-        use Tag::*;
-        match tag {
-            Paragraph => {
-                self.tag("p")?;
-            }
-            Heading { level, .. } => {
-                self.tag("h")?;
-
-                let level: u8 = match level {
-                    HeadingLevel::H1 => 1,
-                    HeadingLevel::H2 => 2,
-                    HeadingLevel::H3 => 3,
-                    HeadingLevel::H4 => 4,
-                    HeadingLevel::H5 => 5,
-                    HeadingLevel::H6 => 6,
-                };
-                write!(self.out, r#","level":{}"#, level)?;
-            }
-            Table(alignments) => {
-                self.tag("table")?;
-
-                self.out.write_all(br#","align":["#)?;
-                let mut alignments = alignments.into_iter();
-                if let Some(a) = alignments.next() {
-                    self.alignment(a)?;
-                }
-                for a in alignments {
-                    self.out.write_all(b",")?;
-                    self.alignment(a)?;
-                }
-                self.out.write_all(b"]")?;
-            }
-            TableHead => {
-                self.table = TableState::Head;
-                self.tag("thead")?;
-                self.children_begin()?;
-                self.tag("tr")?;
-            }
-            TableRow => {
-                self.table = TableState::Row;
-                self.tag("tr")?;
-            }
-            TableCell => {
-                let tag = match self.table {
-                    TableState::Head => "th",
-                    TableState::Row => "td",
-                };
-                self.tag(tag)?;
-            }
-            // TODO: Add ENABLE_GFM for alerts
-            BlockQuote(_) => {
-                self.tag("blockquote")?;
-            }
-            CodeBlock(info) => {
-                self.tag("pre")?;
-                self.children_begin()?;
-                self.tag("code")?;
-                if let CodeBlockKind::Fenced(info) = info {
-                    if let Some(lang) = info.split(' ').next() {
-                        if !lang.is_empty() {
-                            self.out.write_all(br#","lang":"#)?;
-                            self.string(lang)?;
-                        }
-                    }
-                }
-                self.in_code_block = true;
-            }
-            List(Some(1)) => self.tag("ol")?,
-            List(Some(start)) => {
-                self.tag("ol")?;
-                write!(self.out, r#","start":{}"#, start)?;
-            }
-            List(None) => self.tag("ul")?,
-            Item => {
-                if let Some(Event::TaskListMarker(_)) = next {
-                    self.tag("task-list")?;
-                } else {
-                    self.tag("li")?;
-                }
-            }
-            Emphasis => self.tag("em")?,
-            Strong => self.tag("strong")?,
-            Strikethrough => self.tag("del")?,
-            Link { link_type: LinkType::Autolink, .. } => {
-                self.in_auto_link = true;
-                // Ignore autolink since it is linked by `Autolinker`
-                return Ok(());
-            }
-            Link { link_type, dest_url, title, .. } => {
-                self.tag("a")?;
-
-                self.out.write_all(br#","href":"#)?;
-                match link_type {
-                    LinkType::Email => {
-                        self.out.write_all(b"\"mailto:")?;
-                        self.string_content(&dest_url)?;
-                        self.out.write_all(b"\"")?;
-                    }
-                    _ => self.rebase_link(&dest_url)?,
-                }
-
-                if !title.is_empty() {
-                    self.out.write_all(br#","title":"#)?;
-                    self.string(&title)?;
-                }
-            }
-            Image { dest_url, title, .. } => {
-                self.tag("img")?;
-
-                if !title.is_empty() {
-                    self.out.write_all(br#","title":"#)?;
-                    self.string(&title)?;
-                }
-
-                self.out.write_all(br#","src":"#)?;
-                self.rebase_link(&dest_url)?;
-            }
-            HtmlBlock => return Ok(()), // HTML block is handled by `Event::Html` event
-            FootnoteDefinition(name) => {
-                self.tag("fn-def")?;
-
-                if !name.is_empty() {
-                    self.out.write_all(br#","name":"#)?;
-                    self.string(&name)?;
-                }
-
-                let id = self.id(name);
-                write!(self.out, r#","id":{}"#, id)?;
-            }
-            MetadataBlock(_) => unreachable!(), // This option is not enabled
-        }
-
-        // Tag element must have its children (maybe empty)
-        self.children_begin()
-    }
-
-    fn end_tag(&mut self, end: TagEnd) -> Result<()> {
-        use TagEnd::*;
-        match end {
-            Link if self.in_auto_link => {
-                self.in_auto_link = false;
-                // Ignore autolink since it is linked by `Autolinker`
-                Ok(())
-            }
-            Paragraph | Heading(_) | TableRow | TableCell | BlockQuote | List(_) | Item
-            | Emphasis | Strong | Strikethrough | Link | Image | FootnoteDefinition => {
-                self.tag_end()
-            }
-            CodeBlock => {
-                self.in_code_block = false;
-                self.tag_end()?;
-                self.tag_end()
-            }
-            Table => {
-                self.tag_end()?;
-                self.tag_end()
-            }
-            TableHead => {
-                self.tag_end()?;
-                self.tag_end()?;
-                self.tag("tbody")?;
-                self.children_begin()
-            }
-            HtmlBlock => unreachable!(), // This event is handled in `HtmlBlockReader`
-            MetadataBlock(_) => unreachable!(), // This option is not enabled
-        }
     }
 }
 
