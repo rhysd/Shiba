@@ -220,6 +220,7 @@ impl<W: Write> Write for StringContentEncoder<W> {
 }
 
 // XXX: Items inside inline HTML are treated as raw texts
+// See src/markdown/testdata/inline_items_nested_in_inline_html.md
 struct InlineHtmlReader<'input, I: Iterator<Item = (Event<'input>, Range)>> {
     current: CowStr<'input>,
     index: usize,
@@ -1030,6 +1031,7 @@ mod tests {
     snapshot_test!(unmatched_inline_html);
     snapshot_test!(inline_open_block_close_html);
     snapshot_test!(block_open_inline_close_html);
+    snapshot_test!(inline_items_nested_in_inline_html);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
