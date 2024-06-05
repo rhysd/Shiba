@@ -22,7 +22,7 @@ fn parse(c: &mut Criterion) {
         b.iter(move || run(source.clone(), None));
     });
     c.bench_function("markdown::large", |b| {
-        let source = asset("rust_releases.md");
+        let source = asset("the_book.md");
         b.iter(move || run(source.clone(), None));
     });
     c.bench_function("markdown::offset", |b| {
