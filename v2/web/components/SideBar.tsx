@@ -70,7 +70,7 @@ interface ListHeaderProps {
 }
 
 const ListHeader: React.FC<ListHeaderProps> = ({ path }) => {
-    if (path !== null && path.startsWith('\\\\?\\')) {
+    if (path?.startsWith('\\\\?\\')) {
         path = path.slice(4); // Strip UNC path
     }
     const title = <Typography variant="body2">{path}</Typography>;
