@@ -519,8 +519,10 @@ where
         let data_dir = self.config.data_dir();
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
-                log::debug!("Saving window state as persistent data: {:?}", state);
-                data_dir.save(&state)?;
+                if state.height > 0 && state.width > 0 {
+                    log::debug!("Saving window state as persistent data: {:?}", state);
+                    data_dir.save(&state)?;
+                }
             }
         }
         data_dir.save_recent_files(self.history.iter(), self.config.max_recent_files())?;
