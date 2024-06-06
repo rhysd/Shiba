@@ -3,6 +3,7 @@ use crate::config::{Config, SearchMatcher};
 use crate::dialog::Dialog;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
+use crate::persistent::WindowState;
 use crate::renderer::{
     Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
     RenderingFlow,
@@ -229,9 +230,17 @@ where
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
         let init_file = mem::take(&mut options.init_file);
+        let no_restore = !options.restore;
 
         let config = Config::load(options)?;
         log::debug!("Application config: {:?}", config);
+
+        if no_restore {
+            if let Err(err) = config.data_dir().delete::<WindowState>() {
+                let inner = err.source().unwrap();
+                log::debug!("Window state was not deleted: {err}: {inner}");
+            }
+        }
 
         let renderer = rendering.create_renderer(&config)?;
 

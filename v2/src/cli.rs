@@ -41,6 +41,7 @@ pub struct Options {
     pub init_file: Option<PathBuf>,
     pub watch_paths: Vec<PathBuf>,
     pub watch: bool,
+    pub restore: bool,
     pub theme: Option<ThemeOption>,
     pub gen_config_file: bool,
     pub config_dir: Option<PathBuf>,
@@ -54,6 +55,7 @@ impl Default for Options {
             init_file: None,
             watch_paths: vec![],
             watch: true,
+            restore: true,
             theme: None,
             gen_config_file: false,
             config_dir: None,
@@ -71,6 +73,7 @@ editor, designed for simplicity, performance, and keyboard-friendliness.
 Options:
     -t, --theme THEME           Window theme ("system" (default), "dark" or "light")
         --no-watch              Disable to watch file changes
+        --no-restore            Do not restore the previous window state
         --generate-config-file  Generate the default config file overwriting an existing file
         --config-dir PATH       Change the config directory path
         --data-dir PATH         Change the application data directory path
@@ -103,6 +106,7 @@ Document:
                 Long("version") => return Ok(Parsed::Version(env!("CARGO_PKG_VERSION"))),
                 Short('t') | Long("theme") => opts.theme = Some(parser.value()?.parse()?),
                 Long("no-watch") => opts.watch = false,
+                Long("no-restore") => opts.restore = false,
                 Long("generate-config-file") => opts.gen_config_file = true,
                 Long("config-dir") => opts.config_dir = Some(path_value(&mut parser)?),
                 Long("data-dir") => opts.data_dir = Some(path_value(&mut parser)?),
@@ -179,6 +183,10 @@ mod tests {
             (
                 &["--no-watch"][..],
                 Options { watch: false, ..Default::default() },
+            ),
+            (
+                &["--no-restore"][..],
+                Options { restore: false, ..Default::default() },
             ),
             (
                 &["--debug"][..],

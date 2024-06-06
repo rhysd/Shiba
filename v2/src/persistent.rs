@@ -74,6 +74,16 @@ impl DataDir {
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
     }
 
+    pub fn delete<D: PersistentData>(&self) -> Result<()> {
+        let Some(dir) = &self.path else {
+            return Ok(());
+        };
+        let path = dir.join(D::FILE);
+        log::debug!("Delete persistent data at {path:?}");
+        fs::remove_file(&path)
+            .with_context(|| format!("Could not delete persistent data at {path:?}"))
+    }
+
     pub fn load_recent_files(&self, max_files: usize) -> Vec<PathBuf> {
         if max_files == 0 {
             return vec![];
