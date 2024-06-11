@@ -206,15 +206,17 @@ fn resolve_path<'de, D: Deserializer<'de>>(
     if &s == "null" {
         return Ok(None);
     }
-    if !s.starts_with(PREFIX) {
-        return Ok(Some(PathBuf::from(s)));
-    }
 
-    let Some(mut path) = dirs::home_dir() else {
-        return Ok(None);
+    let path = if let Some(rel) = s.strip_prefix(PREFIX) {
+        let Some(mut home) = dirs::home_dir() else {
+            return Ok(None);
+        };
+        home.push(rel);
+        home
+    } else {
+        PathBuf::from(s)
     };
 
-    path.push(&s[2..]);
     if !path.is_dir() {
         log::error!("Path {:?} in config is not a directory", path);
         return Ok(None);
@@ -296,7 +298,9 @@ impl UserConfig {
             }
         }
 
-        log::debug!("config.yml nor config.yaml was found in {path:?}. Using the default config");
+        log::debug!(
+            "Neither config.yml nor config.yaml was found in {path:?}. Using the default config"
+        );
         Ok(Self::default())
     }
 
