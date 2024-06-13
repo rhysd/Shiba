@@ -70,16 +70,6 @@ impl DataDir {
         fs::write(&path, s)
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
     }
-
-    pub fn delete<D: PersistentData>(&self) -> Result<()> {
-        let Some(dir) = &self.path else {
-            return Ok(());
-        };
-        let path = dir.join(D::FILE);
-        log::debug!("Delete persistent data at {path:?}");
-        fs::remove_file(&path)
-            .with_context(|| format!("Could not delete persistent data at {path:?}"))
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

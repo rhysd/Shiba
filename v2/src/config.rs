@@ -357,6 +357,10 @@ impl Config {
             };
         }
 
+        if !options.restore {
+            user_config.window.restore = false;
+        }
+
         let data_dir = if let Some(dir) = mem::take(&mut options.data_dir) {
             DataDir::new(dir)
         } else {
