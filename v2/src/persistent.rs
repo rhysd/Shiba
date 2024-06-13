@@ -2,11 +2,8 @@ use crate::renderer::ZoomLevel;
 use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-
-const RECENT_FILES_FILE: &str = "recent_files.json";
 
 pub trait PersistentData {
     const FILE: &'static str;
@@ -83,64 +80,6 @@ impl DataDir {
         fs::remove_file(&path)
             .with_context(|| format!("Could not delete persistent data at {path:?}"))
     }
-
-    pub fn load_recent_files(&self, max_files: usize) -> Vec<PathBuf> {
-        if max_files == 0 {
-            return vec![];
-        }
-
-        #[derive(Deserialize)]
-        struct Data {
-            paths: Vec<PathBuf>,
-        }
-        impl PersistentData for Data {
-            const FILE: &'static str = RECENT_FILES_FILE;
-        }
-
-        let Some(Data { mut paths }) = self.load() else {
-            return vec![];
-        };
-
-        paths.retain(|p| p.exists());
-        let len = paths.len();
-        if len > max_files {
-            paths.drain(0..len - max_files);
-        }
-
-        paths
-    }
-
-    pub fn save_recent_files<'a, I>(&self, iter: I, max_files: usize) -> Result<()>
-    where
-        I: Iterator<Item = &'a Path>,
-    {
-        let mut seen = HashSet::new();
-        let mut paths = vec![];
-        for path in iter {
-            if paths.len() >= max_files {
-                break;
-            }
-            if seen.contains(path) {
-                continue;
-            }
-            seen.insert(path);
-            paths.push(path);
-        }
-
-        if paths.is_empty() {
-            return Ok(());
-        }
-
-        #[derive(Serialize)]
-        struct Data<'a> {
-            paths: Vec<&'a Path>,
-        }
-        impl<'a> PersistentData for Data<'a> {
-            const FILE: &'static str = RECENT_FILES_FILE;
-        }
-
-        self.save(&Data { paths })
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -157,6 +96,24 @@ pub struct WindowState {
 
 impl PersistentData for WindowState {
     const FILE: &'static str = "window.json";
+}
+
+#[derive(Serialize, Debug)]
+pub struct RecentFiles<'a> {
+    pub paths: Vec<&'a Path>,
+}
+
+impl<'a> PersistentData for RecentFiles<'a> {
+    const FILE: &'static str = "recent_files.json";
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RecentFilesOwned {
+    pub paths: Vec<PathBuf>,
+}
+
+impl PersistentData for RecentFilesOwned {
+    const FILE: &'static str = RecentFiles::FILE;
 }
 
 #[cfg(test)]
