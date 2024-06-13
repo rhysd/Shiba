@@ -106,8 +106,8 @@ preview:
   #
   # [1]: https://github.com/hyrious/github-markdown-css
   css: null
-  # Number of files to remember as 'recent files'. The recent files are saved in a file when this
-  # application quits. They will appear in history when this app launches at next time.
+  # Maximum number of files to remember as 'recent files'. The recent files are remembered
+  # persistently and will be restored when this application launches at next time.
   recent_files: 100
 
 # Configuration related to dialog to open a file or watch a directory.

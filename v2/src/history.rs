@@ -11,14 +11,12 @@ pub struct History {
 }
 
 impl History {
-    pub const DEFAULT_MAX_HISTORY_SIZE: usize = 20;
-
-    pub fn load(max_items: usize, config: &Config) -> Self {
-        let max_recent_files = config.max_recent_files();
-        if max_items > 0 && max_recent_files > 0 {
+    pub fn load(config: &Config) -> Self {
+        let max_items = config.preview().recent_files;
+        if max_items > 0 {
             if let Some(mut recent) = config.data_dir().load::<RecentFilesOwned>() {
-                let max = max_recent_files.min(max_items);
-                recent.paths.truncate(max);
+                recent.paths.truncate(max_items);
+                log::debug!("Loaded {} paths as recent files history", recent.paths.len());
                 return Self { max_items, index: 0, items: VecDeque::from(recent.paths) };
             }
         }
@@ -84,21 +82,19 @@ impl History {
     }
 
     pub fn save(&self, config: &Config) -> Result<()> {
-        let max_recent_files = config.max_recent_files();
-        if self.max_items == 0 || max_recent_files == 0 {
+        if self.max_items == 0 {
             return Ok(());
         }
 
         let mut seen = HashSet::new();
         let mut paths = vec![];
         for path in self.items.iter().map(|p| p.as_path()) {
-            if seen.len() >= max_recent_files {
-                break;
-            }
             if seen.insert(path) {
                 paths.push(path);
             }
         }
+
+        log::debug!("Saving {} paths as recent files history", paths.len());
         config.data_dir().save(&RecentFiles { paths })
     }
 }

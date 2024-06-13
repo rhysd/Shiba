@@ -174,7 +174,7 @@ where
         Ok(Self {
             renderer,
             opener: O::default(),
-            history: History::load(History::DEFAULT_MAX_HISTORY_SIZE, &config),
+            history: History::load(&config),
             watcher,
             config,
             preview: PreviewContent::default(),

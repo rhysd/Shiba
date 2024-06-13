@@ -175,7 +175,7 @@ impl Default for PreviewHighlight {
 pub struct Preview {
     highlight: PreviewHighlight,
     css: Option<PathBuf>,
-    recent_files: usize,
+    pub recent_files: usize,
 }
 
 impl Default for Preview {
@@ -414,10 +414,6 @@ impl Config {
 
     pub fn dialog(&self) -> &Dialog {
         &self.user_config.dialog
-    }
-
-    pub fn max_recent_files(&self) -> usize {
-        self.user_config.preview.recent_files
     }
 
     pub fn debug(&self) -> bool {
