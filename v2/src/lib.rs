@@ -9,6 +9,7 @@ mod assets;
 mod cli;
 mod config;
 mod dialog;
+mod history;
 mod markdown;
 mod opener;
 mod persistent;
