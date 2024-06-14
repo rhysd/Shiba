@@ -43,6 +43,12 @@ article {
   flex-grow: 7;
 }
 
+/* This is a workaround for current github-markdown-css issue: https://github.com/sindresorhus/github-markdown-css/issues/110 */
+.markdown-body {
+  --base-size-8: 8px;
+  --base-size-16: 16px;
+}
+
 /* Both <pre> from github-markdown.css and <code> from highlight.js are trying to add 1em padding. */
 pre code.hljs {
   padding: 0;

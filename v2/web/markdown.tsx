@@ -12,12 +12,14 @@ import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
 import type { LiteElement } from 'mathjax-full/js/adaptors/lite/Element';
 import type { LiteText } from 'mathjax-full/js/adaptors/lite/Text';
 import type { LiteDocument } from 'mathjax-full/js/adaptors/lite/Document';
+import { InfoIcon, LightBulbIcon, AlertIcon, ReportIcon, StopIcon } from '@primer/octicons-react';
 import type {
     RenderTreeElem,
     RenderTreeFootNoteDef,
     RenderTreeTableAlign,
     RenderTreeCodeFence,
     WindowTheme,
+    AlertKind,
 } from './ipc';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
@@ -213,6 +215,23 @@ function tableAlignStyle({ aligns, index }: TableState): React.CSSProperties | n
         return null;
     }
     return { textAlign };
+}
+
+function alertIcon(kind: AlertKind): ReactElement | null {
+    switch (kind) {
+        case 'note':
+            return <InfoIcon className="octicon octicon-info mr-2" />;
+        case 'tip':
+            return <LightBulbIcon className="octicon octicon-light-bulb mr-2" />;
+        case 'warning':
+            return <AlertIcon className="octicon octicon-alert mr-2" />;
+        case 'important':
+            return <ReportIcon className="octicon octicon-report mr-2" />;
+        case 'caution':
+            return <StopIcon className="octicon octicon-stop mr-2" />;
+        default:
+            return null;
+    }
 }
 
 class RenderTreeToReact {
@@ -459,6 +478,19 @@ class RenderTreeToReact {
             case 'math': {
                 const className = elem.inline ? 'math-expr-inline' : 'math-expr-block';
                 return this.mathjax.render(elem.expr, className, key);
+            }
+            case 'alert': {
+                const className = `markdown-alert markdown-alert-${elem.kind}`;
+                const title = elem.kind.charAt(0).toUpperCase() + elem.kind.slice(1);
+                return (
+                    <div className={className} key={key}>
+                        <p className="markdown-alert-title">
+                            {alertIcon(elem.kind)}
+                            {title}
+                        </p>
+                        {await this.renderAll(elem.c)}
+                    </div>
+                );
             }
             case 'html':
                 // When an HTML sanitizer dropped an entire input, the result can be empty.

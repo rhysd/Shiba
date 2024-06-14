@@ -12,13 +12,14 @@ It is designed for simplicity, performance, keyboard-friendliness.
 
 Features:
 
-- [GitHub-flavored Markdown][gfm] support; Emoji, Table, Math expressions with [Mathjax][mathjax], Diagrams with [mermaid.js][mermaid], ...
-- Automatically update preview when the file is updated by efficiently watching files or directories using OS-specific filesystem
-  events (FSEvents, inotify, ...)
+- [GitHub-flavored Markdown][gfm] support; Emojis, Table, [Alerts][alerts], Math expressions with [Mathjax][mathjax], Diagrams with
+  [mermaid.js][mermaid], ...
+- Watch the files or directories and automatically update the preview efficiently using OS-specific filesystem events
+  (FSEvents, inotify, ...)
 - Automatically scroll to the last modified position
-- All features can be accessed via keyboard shortcuts (scroll the article, search text, jump to section, ...). Type `?` to know
-  all shortcuts
-- Sections outline in side navigation bar. The current section is automatically focused
+- All features can be accessed via keyboard shortcuts (scroll the article, search text, jump to section, go forward/back history...).
+  Type `?` to know all shortcuts
+- Sections outline in side navigation bar highlighting the current section
 - Both CLI and GUI friendly; Available as a single binary executable as well as a desktop application installed to your system
 - Performance critical part (parsing Markdown text, searching Markdown AST, calculating the last modified position, ...) and
   core application logic are written in [Rust][rust]. View logic written in [TypeScript][ts] and [React][react] runs on
@@ -54,3 +55,4 @@ This software is distributed under [the MIT license](./LICENSE).
 [ts]: https://www.typescriptlang.org/
 [react]: https://react.dev/
 [v1]: https://github.com/rhysd/Shiba/tree/v1
+[alerts]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts

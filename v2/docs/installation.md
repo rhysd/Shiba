@@ -28,11 +28,11 @@ Note: If you install `.deb` file through `dpkg` command, these dependencies are 
 ### Windows
 
 Shiba uses [WebView2 component][webview2]. Usually it is already installed because Windows 11 and recent Windows 10
-installs it by default. When you see Shiba crashes on startup, please check if WebView2 is installed.
+install it by default. When you see Shiba crashes on startup, please check if WebView2 is installed.
 
 ### macOS
 
-Shiba uses WKWebView and it is installed by default on macOS. No additional dependency is necessary.
+Shiba uses [WKWebView][wkwebview] and it is installed by default on macOS. No additional dependency is necessary.
 
 ## Use Pre-built binaries
 
@@ -113,6 +113,7 @@ make shiba_amd64.deb
 
 [wry]: https://github.com/tauri-apps/wry
 [webview2]: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+[wkwebview]: https://developer.apple.com/documentation/webkit/wkwebview
 [cargo]: https://doc.rust-lang.org/cargo/
 [rustup]: https://rustup.rs/
 [nodejs]: https://nodejs.org/en
