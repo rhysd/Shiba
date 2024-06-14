@@ -460,6 +460,17 @@ class RenderTreeToReact {
                 const className = elem.inline ? 'math-expr-inline' : 'math-expr-block';
                 return this.mathjax.render(elem.expr, className, key);
             }
+            case 'alert': {
+                const className = `markdown-alert markdown-alert-${elem.kind}`;
+                const title = elem.kind.charAt(0).toUpperCase() + elem.kind.slice(1);
+                // TODO: Add icon to the alert title
+                return (
+                    <div className={className} key={key}>
+                        <p className="markdown-alert-title">{title}</p>
+                        {await this.renderAll(elem.c)}
+                    </div>
+                );
+            }
             case 'html':
                 // When an HTML sanitizer dropped an entire input, the result can be empty.
                 if (elem.raw.length === 0) {

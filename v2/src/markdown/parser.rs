@@ -4,7 +4,8 @@ use aho_corasick::AhoCorasick;
 use emojis::Emoji;
 use memchr::{memchr_iter, Memchr};
 use pulldown_cmark::{
-    Alignment, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options, Parser, Tag, TagEnd,
+    Alignment, BlockQuoteKind, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options,
+    Parser, Tag, TagEnd,
 };
 use std::collections::HashMap;
 use std::io::{Read, Result, Write};
@@ -130,7 +131,8 @@ impl<'input, V: TextVisitor, T: TextTokenizer> MarkdownParser<'input, V, T> {
                 | Options::ENABLE_FOOTNOTES
                 | Options::ENABLE_TABLES
                 | Options::ENABLE_TASKLISTS
-                | Options::ENABLE_MATH, // TODO: Add ENABLE_GFM for alerts
+                | Options::ENABLE_MATH
+                | Options::ENABLE_GFM,
         );
         let parser = Parser::new_ext(&content.source, options);
         let base_dir = &content.base_dir;
@@ -603,9 +605,17 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                             };
                             self.tag(tag)?;
                         }
-                        // TODO: Add ENABLE_GFM for alerts
-                        BlockQuote(_) => {
-                            self.tag("blockquote")?;
+                        BlockQuote(None) => self.tag("blockquote")?,
+                        BlockQuote(Some(kind)) => {
+                            let kind = match kind {
+                                BlockQuoteKind::Warning => "warning",
+                                BlockQuoteKind::Important => "important",
+                                BlockQuoteKind::Caution => "caution",
+                                BlockQuoteKind::Note => "note",
+                                BlockQuoteKind::Tip => "tip",
+                            };
+                            self.tag("alert")?;
+                            write!(self.out, r#","kind":"{}""#, kind)?;
                         }
                         CodeBlock(info) => {
                             self.tag("pre")?;

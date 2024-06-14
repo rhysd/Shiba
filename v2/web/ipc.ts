@@ -40,8 +40,8 @@ export type KeyMaps = Record<string, KeyAction>;
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
 export type WindowTheme = 'Dark' | 'Light';
 export type Platform = 'Mac' | 'Windows' | 'Linux';
-
 export type RenderTreeTableAlign = 'left' | 'center' | 'right' | null;
+export type AlertKind = 'warning' | 'important' | 'caution' | 'note' | 'tip';
 export interface RenderTreeFootNoteDef {
     t: 'fn-def';
     name?: string;
@@ -170,6 +170,11 @@ export type RenderTreeElem =
           t: 'math';
           inline: boolean;
           expr: string;
+      }
+    | {
+          t: 'alert';
+          kind: AlertKind;
+          c: RenderTreeElem[];
       }
     | {
           t: 'modified'; // Special token to indicate the last modified position
