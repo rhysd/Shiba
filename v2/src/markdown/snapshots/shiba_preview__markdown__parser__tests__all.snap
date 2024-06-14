@@ -1561,76 +1561,61 @@ expression: json
       "c": [
         {
           "c": [
-            "[",
-            "!NOTE",
-            "]",
-            " ",
             "Highlights information that users should take into account, even when skimming."
           ],
           "t": "p"
         }
       ],
-      "t": "blockquote"
+      "kind": "note",
+      "t": "alert"
     },
     {
       "c": [
         {
           "c": [
-            "[",
-            "!TIP",
-            "]",
-            " ",
             "Optional information to help a user be more successful."
           ],
           "t": "p"
         }
       ],
-      "t": "blockquote"
+      "kind": "tip",
+      "t": "alert"
     },
     {
       "c": [
         {
           "c": [
-            "[",
-            "!IMPORTANT",
-            "]",
-            " ",
             "Crucial information necessary for users to succeed."
           ],
           "t": "p"
         }
       ],
-      "t": "blockquote"
+      "kind": "important",
+      "t": "alert"
     },
     {
       "c": [
         {
           "c": [
-            "[",
-            "!WARNING",
-            "]",
-            " ",
             "Critical content demanding immediate user attention due to potential risks."
           ],
           "t": "p"
         }
       ],
-      "t": "blockquote"
+      "kind": "warning",
+      "t": "alert"
     },
     {
       "c": [
         {
           "c": [
-            "[",
-            "!CAUTION",
-            "]",
-            " ",
             "Negative potential consequences of an action."
           ],
           "t": "p"
         }
       ],
-      "t": "blockquote"
+      "kind": "caution",
+      "t": "alert"
     },
     {
       "c": [

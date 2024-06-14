@@ -1035,6 +1035,7 @@ mod tests {
     snapshot_test!(block_open_inline_close_html);
     snapshot_test!(inline_items_nested_in_inline_html);
     snapshot_test!(escaped_chars_in_text);
+    snapshot_test!(alert);
 
     // Offset
     snapshot_test!(offset_block, Some(30));

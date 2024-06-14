@@ -1,0 +1,171 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "Code block inside note."
+          ],
+          "t": "p"
+        },
+        {
+          "c": [
+            {
+              "c": [
+                "println!(\"This is code block inside note\");\n"
+              ],
+              "lang": "rust",
+              "t": "code"
+            }
+          ],
+          "t": "pre"
+        }
+      ],
+      "kind": "note",
+      "t": "alert"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "List of tips",
+            ":"
+          ],
+          "t": "p"
+        },
+        {
+          "c": [
+            {
+              "c": [
+                "Tip 1"
+              ],
+              "t": "li"
+            },
+            {
+              "c": [
+                "Tip 2"
+              ],
+              "t": "li"
+            },
+            {
+              "c": [
+                "Tip 3"
+              ],
+              "t": "li"
+            }
+          ],
+          "t": "ul"
+        }
+      ],
+      "kind": "tip",
+      "t": "alert"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "Emoji ",
+            {
+              "c": [
+                "🐶"
+              ],
+              "name": "dog face",
+              "t": "emoji"
+            },
+            " is important."
+          ],
+          "t": "p"
+        }
+      ],
+      "kind": "important",
+      "t": "alert"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            {
+              "expr": "P \\neq NP",
+              "inline": true,
+              "t": "math"
+            }
+          ],
+          "t": "p"
+        }
+      ],
+      "kind": "warning",
+      "t": "alert"
+    },
+    {
+      "c": [
+        {
+          "c": [
+            "See the below table",
+            ":"
+          ],
+          "t": "p"
+        },
+        {
+          "align": [
+            null,
+            null
+          ],
+          "c": [
+            {
+              "c": [
+                {
+                  "c": [
+                    {
+                      "c": [
+                        "Caution 1"
+                      ],
+                      "t": "th"
+                    },
+                    {
+                      "c": [
+                        "Caution 2"
+                      ],
+                      "t": "th"
+                    }
+                  ],
+                  "t": "tr"
+                }
+              ],
+              "t": "thead"
+            },
+            {
+              "c": [
+                {
+                  "c": [
+                    {
+                      "c": [
+                        "Details 1"
+                      ],
+                      "t": "td"
+                    },
+                    {
+                      "c": [
+                        "Details 2"
+                      ],
+                      "t": "td"
+                    }
+                  ],
+                  "t": "tr"
+                }
+              ],
+              "t": "tbody"
+            }
+          ],
+          "t": "table"
+        }
+      ],
+      "kind": "caution",
+      "t": "alert"
+    }
+  ]
+}
