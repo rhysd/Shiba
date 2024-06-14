@@ -26,7 +26,7 @@ fn metadata() -> AboutMetadata {
         ..Default::default()
     };
 
-    #[cfg(not(target_os = "darwin"))]
+    #[cfg(not(target_os = "macos"))]
     {
         m.authors = Some(vec![env!("CARGO_PKG_AUTHORS").into()]);
         m.comments = Some(env!("CARGO_PKG_DESCRIPTION").into());

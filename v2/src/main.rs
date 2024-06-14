@@ -2,7 +2,7 @@
 // so logger output will not work.
 // https://learn.microsoft.com/en-us/cpp/build/reference/subsystem-specify-subsystem
 #![cfg_attr(
-    all(target_os = "windows", not(debug_assertions), not(__bench)),
+    all(target_os = "windows", not(debug_assertions), not(feature = "__bench")),
     windows_subsystem = "windows"
 )]
 
