@@ -45,8 +45,8 @@ article {
 
 /* This is a workaround for current github-markdown-css issue: https://github.com/sindresorhus/github-markdown-css/issues/110 */
 .markdown-body {
-  --base-size-8: 8px;
-  --base-size-16: 16px;
+  --base-size-8: 0.5rem;
+  --base-size-16: 1rem;
 }
 
 /* Both <pre> from github-markdown.css and <code> from highlight.js are trying to add 1em padding. */
