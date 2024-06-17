@@ -7,7 +7,7 @@ use crate::renderer::{
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
-use tao::dpi::{PhysicalPosition, PhysicalSize};
+use tao::dpi::{LogicalPosition, LogicalSize};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -175,7 +175,7 @@ impl WebViewRenderer {
         let mut builder = WindowBuilder::new()
             .with_title("Shiba")
             .with_visible(false)
-            .with_min_inner_size(PhysicalSize { width: 100, height: 100 });
+            .with_min_inner_size(LogicalSize { width: 100.0, height: 100.0 });
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
         let (zoom_level, always_on_top) = if let Some(state) = window_state {
@@ -191,8 +191,8 @@ impl WebViewRenderer {
                 maximized,
             } = state;
             builder = builder
-                .with_inner_size(PhysicalSize { width, height })
-                .with_position(PhysicalPosition { x, y });
+                .with_inner_size(LogicalSize { width, height })
+                .with_position(LogicalPosition { x, y });
             if fullscreen {
                 builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
             } else if maximized {
@@ -201,7 +201,7 @@ impl WebViewRenderer {
             (zoom_level, always_on_top)
         } else {
             if let Some(size) = config.window().default_size {
-                let size = PhysicalSize { width: size.width, height: size.height };
+                let size = LogicalSize { width: size.width as f64, height: size.height as f64 };
                 builder = builder.with_inner_size(size);
             }
             (ZoomLevel::default(), config.window().always_on_top)
@@ -255,6 +255,13 @@ impl WebViewRenderer {
 
         Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
     }
+
+    fn window_rect(&self) -> Result<(LogicalSize<f64>, LogicalPosition<f64>)> {
+        let scale = self.window.scale_factor();
+        let size = self.window.inner_size().to_logical(scale);
+        let pos = self.window.outer_position()?.to_logical(scale);
+        Ok((size, pos))
+    }
 }
 
 impl Renderer for WebViewRenderer {
@@ -283,9 +290,8 @@ impl Renderer for WebViewRenderer {
     fn set_title(&self, _title: &str) {} // On macOS, the title bar is hidden
 
     fn window_state(&self) -> Option<WindowState> {
-        let PhysicalSize { width, height } = self.window.inner_size();
-        let PhysicalPosition { x, y } = match self.window.outer_position() {
-            Ok(position) => position,
+        let (width, height, x, y) = match self.window_rect() {
+            Ok((size, pos)) => (size.width, size.height, pos.x, pos.y),
             Err(err) => {
                 log::debug!("Could not get window position for window state: {}", err);
                 return None;

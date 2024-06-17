@@ -74,10 +74,10 @@ impl DataDir {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WindowState {
-    pub x: i32,
-    pub y: i32,
-    pub width: u32,
-    pub height: u32,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
     pub fullscreen: bool,
     pub zoom_level: ZoomLevel,
     pub always_on_top: bool,

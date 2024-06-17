@@ -442,7 +442,7 @@ where
 
         if self.config.window().restore {
             if let Some(state) = self.renderer.window_state() {
-                if state.height > 0 && state.width > 0 {
+                if state.height > 0.0 && state.width > 0.0 {
                     log::debug!("Saving window state as persistent data: {:?}", state);
                     self.config.data_dir().save(&state)?;
                 }
