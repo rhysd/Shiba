@@ -256,24 +256,19 @@ impl WebViewRenderer {
         Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
     }
 
-    #[cfg(not(target_os = "macos"))]
-    fn window_rect(&self) -> Result<(LogicalSize<f64>, LogicalPosition<f64>)> {
-        let scale = self.window.scale_factor();
-        let size = self.window.inner_size().to_logical(scale);
-        let pos = self.window.outer_position()?.to_logical(scale);
-        Ok((size, pos))
-    }
-
+    // `self.window.inner_size()` does not work on macOS because `WebView` replaces `NSWindow`
+    // instance's `contentView` field of `self.window`.
     #[cfg(target_os = "macos")]
-    fn window_rect(&self) -> Result<(LogicalSize<f64>, LogicalPosition<f64>)> {
-        let scale = self.window.scale_factor();
-        // `self.window.inner_size()` does not work because `WebView` replaces `NSWindow` instance's
-        // `contentView` field of `self.window`.
-        let size = self.webview.bounds()?.size.to_logical(scale);
-        // `self.webview.bounds()` does not report a correct position so it needs to be obtained
-        // separately.
-        let pos = self.window.outer_position()?.to_logical(scale);
-        Ok((size, pos))
+    fn wkwebview_frame_size(&self) -> (f64, f64) {
+        use core_graphics::geometry::CGRect;
+        use objc::*;
+        use wry::WebViewExtMacOS as _;
+        // Safety: `wry::WebView::webview` returns the valid reference to `WKWebView`. And `WKWebView`
+        // inherits `NSView`. So calling `frame` method returns its rect information.
+        // * https://developer.apple.com/documentation/webkit/wkwebview
+        // * https://developer.apple.com/documentation/appkit/nsview
+        let frame: CGRect = unsafe { msg_send![self.webview.webview(), frame] };
+        (frame.size.width, frame.size.height)
     }
 }
 
@@ -303,13 +298,20 @@ impl Renderer for WebViewRenderer {
     fn set_title(&self, _title: &str) {} // On macOS, the title bar is hidden
 
     fn window_state(&self) -> Option<WindowState> {
-        let (width, height, x, y) = match self.window_rect() {
-            Ok((size, pos)) => (size.width, size.height, pos.x, pos.y),
+        let scale = self.window.scale_factor();
+        let LogicalPosition { x, y } = match self.window.outer_position() {
+            Ok(pos) => pos.to_logical(scale),
             Err(err) => {
                 log::debug!("Could not get window position for window state: {}", err);
                 return None;
             }
         };
+
+        #[cfg(not(target_os = "macos"))]
+        let LogicalSize { width, height } = self.window.inner_size().to_logical(scale);
+        #[cfg(target_os = "macos")]
+        let (width, height) = self.wkwebview_frame_size();
+
         let fullscreen = self.window.fullscreen().is_some();
         let zoom_level = self.zoom_level;
         let always_on_top = self.always_on_top;
