@@ -256,9 +256,22 @@ impl WebViewRenderer {
         Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
     }
 
+    #[cfg(not(target_os = "macos"))]
     fn window_rect(&self) -> Result<(LogicalSize<f64>, LogicalPosition<f64>)> {
         let scale = self.window.scale_factor();
         let size = self.window.inner_size().to_logical(scale);
+        let pos = self.window.outer_position()?.to_logical(scale);
+        Ok((size, pos))
+    }
+
+    #[cfg(target_os = "macos")]
+    fn window_rect(&self) -> Result<(LogicalSize<f64>, LogicalPosition<f64>)> {
+        let scale = self.window.scale_factor();
+        // `self.window.inner_size()` does not work because `WebView` replaces `NSWindow` instance's
+        // `contentView` field of `self.window`.
+        let size = self.webview.bounds()?.size.to_logical(scale);
+        // `self.webview.bounds()` does not report a correct position so it needs to be obtained
+        // separately.
         let pos = self.window.outer_position()?.to_logical(scale);
         Ok((size, pos))
     }
