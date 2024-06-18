@@ -24,7 +24,7 @@
     "lint:stylelint": "stylelint web/style.css",
     "lint:web": "concurrently -c auto npm:lint:tsc npm:lint:prettier npm:lint:eslint npm:lint:stylelint",
     "test": "cargo test",
-    "prepare": "cd .. && husky install"
+    "prepare": "cd .. && husky"
   },
   "author": "rhysd <lin90162@yahoo.co.jp> (https://rhysd.github.io/)",
   "license": "MIT",
