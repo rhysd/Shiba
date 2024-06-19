@@ -7,7 +7,7 @@
   "scripts": {
     "watch": "concurrently -c auto npm:watch:bundle npm:watch:ts npm:watch:rs",
     "watch:bundle": "npm run bundle -- --watch",
-    "watch:ts": "npm run lint:tsc -- --watch --preserveWatchOutput --pretty",
+    "watch:ts": "npm run lint:tsc -- --watch --preserveWatchOutput",
     "watch:rs": "cargo watch --watch src --watch bench/benches -- cargo check --all --benches --color always",
     "bundle": "node scripts/bundle.mjs",
     "release": "npm run bundle -- --minify",
@@ -16,7 +16,7 @@
     "fix:prettier": "prettier --write \"web/**/*.ts\" \"web/**/*.tsx\" scripts/bundle.mjs web/style.css",
     "fix:eslint": "eslint --fix \"web/**/*.ts\" \"web/**/*.tsx\"",
     "lint": "concurrently -c auto npm:lint:tsc npm:lint:clippy npm:lint:prettier npm:lint:rustfmt npm:lint:eslint npm:lint:stylelint",
-    "lint:tsc": "tsc --noEmit -p .",
+    "lint:tsc": "tsc --noEmit -p . --pretty",
     "lint:clippy": "cargo clippy --color always --all-features --all --benches -- -D warnings",
     "lint:prettier": "prettier --check \"web/**/*.ts\" \"web/**/*.tsx\" scripts/bundle.mjs web/style.css",
     "lint:rustfmt": "cargo fmt --all --check -- --color always",

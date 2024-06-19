@@ -504,31 +504,15 @@ class RenderTreeToReact {
             case 'modified':
                 return this.lastModified(key);
             case 'match':
-                return (
-                    <span key={key} className="search-text">
-                        {await this.renderAll(elem.c)}
-                    </span>
-                );
+                return <span key={key} className="search-text" />;
             case 'match-current':
-                return (
-                    <span key={key} className="search-text-current">
-                        {await this.renderAll(elem.c)}
-                    </span>
-                );
+                return <span key={key} className="search-text-current" />;
             case 'match-start':
                 this.matchCount++;
-                return (
-                    <span key={key} className="search-text-start">
-                        {await this.renderAll(elem.c)}
-                    </span>
-                );
+                return <span key={key} className="search-text-start" />;
             case 'match-current-start':
                 this.matchCount++;
-                return (
-                    <span key={key} className="search-text-current-start">
-                        {await this.renderAll(elem.c)}
-                    </span>
-                );
+                return <span key={key} className="search-text-current-start" />;
             default:
                 log.error('Unknown render tree element:', JSON.stringify(elem));
                 return null;

@@ -181,19 +181,15 @@ export type RenderTreeElem =
       }
     | {
           t: 'match'; // Text search match tokens after match-start
-          c: RenderTreeElem[];
       }
     | {
           t: 'match-current'; // Current text search match tokens after match-current-start
-          c: RenderTreeElem[];
       }
     | {
           t: 'match-start'; // First text search match token
-          c: RenderTreeElem[];
       }
     | {
           t: 'match-current-start'; // First current text search match token
-          c: RenderTreeElem[];
       };
 
 export type MessageFromMain =
