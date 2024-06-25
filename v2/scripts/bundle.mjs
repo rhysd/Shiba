@@ -1,5 +1,5 @@
 import { join, dirname } from 'node:path';
-import { copyFile, readFile } from 'node:fs/promises';
+import { copyFile, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import esbuild from 'esbuild';
 
@@ -8,19 +8,23 @@ if (process.argv.includes('--help')) {
 
 Options:
 
---watch  : Watch file changes and bundle changed files automatically
---minify : Minify the bundled files
+--watch    : Watch file changes and bundle changed files automatically
+--minify   : Minify the bundled files
+--metafile : Output the bundle metadata file as meta.json
 `);
     process.exit(0);
 }
 
+console.log(process.argv);
+
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
+const metafile = process.argv.includes('--metafile');
 const absWorkingDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const {
     compilerOptions: { target },
 } = JSON.parse(await readFile(join(absWorkingDir, 'tsconfig.json'), 'utf8'));
-console.log('Bundle options:', { watch, minify, target });
+console.log('Bundle options:', { watch, minify, target, metafile });
 
 const bundleDest = minify ? 'bundle.min.js' : 'bundle.js';
 const sourcemap = !minify;
@@ -35,6 +39,7 @@ const buildTsOptions = {
     logLevel: 'info',
     color: true,
     absWorkingDir,
+    metafile,
 };
 const buildCssOptions = {
     entryPoints: [
@@ -59,5 +64,11 @@ if (watch) {
     const cssCtx = await esbuild.context(buildCssOptions);
     await cssCtx.watch();
 } else {
-    await Promise.all([esbuild.build(buildTsOptions), esbuild.build(buildCssOptions)]);
+    const [ts, _] = await Promise.all([esbuild.build(buildTsOptions), esbuild.build(buildCssOptions)]);
+    if (metafile) {
+        await writeFile('meta.json', JSON.stringify(ts.metafile));
+        console.log(
+            'Meta file for the JS bundle was output to meta.json. Analyze it at https://esbuild.github.io/analyze/'
+        );
+    }
 }
