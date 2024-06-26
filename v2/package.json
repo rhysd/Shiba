@@ -23,8 +23,7 @@
     "lint:eslint": "eslint --max-warnings 0 \"web/**/*.ts\" \"web/**/*.tsx\"",
     "lint:stylelint": "stylelint web/style.css",
     "lint:web": "concurrently -c auto npm:lint:tsc npm:lint:prettier npm:lint:eslint npm:lint:stylelint",
-    "test": "cargo test",
-    "prepare": "cd .. && husky"
+    "test": "cargo test"
   },
   "author": "rhysd <lin90162@yahoo.co.jp> (https://rhysd.github.io/)",
   "license": "MIT",
@@ -57,7 +56,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-security": "^3.0.0",
-    "husky": "^9.0.11",
+    "set-git-hooks-dir": "^0.0.0",
     "prettier": "^3.3.1",
     "stylelint": "^16.6.1",
     "stylelint-config-standard": "^36.0.0",
