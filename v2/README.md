@@ -3,7 +3,8 @@
 [![CI for v2][ci-badge]][ci]
 [![dogs respected][shiba-badge]][shiba]
 
-**:warning: WORK IN PROGRESS**
+> [!WARNING]
+> Shiba v2 is a work in progress
 
 [Shiba][shiba] is a simple [Markdown][gh-markdown] preview application to be used with your favorite text editor.
 It is designed for simplicity, performance, keyboard-friendliness.
