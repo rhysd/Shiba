@@ -34,6 +34,7 @@ impl Rendering for Wry {
 
     #[cfg(target_os = "windows")]
     fn new() -> Result<Self> {
+        use std::ffi::c_void;
         use tao::platform::windows::EventLoopBuilderExtWindows;
         use windows::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, HACCEL, MSG};
 
@@ -44,7 +45,8 @@ impl Rendering for Wry {
             EventLoopBuilder::with_user_event()
                 .with_msg_hook(move |msg| {
                     let msg = msg as *const MSG;
-                    let haccel = HACCEL(menu.haccel());
+                    // Note: windows-sys v0.52 (depended by muda) returns `isize` but windows v0.58 requires `*mut c_void`
+                    let haccel = HACCEL(menu.haccel() as *mut c_void);
                     // SAFETY: `msg` pointer was given by `EventLoopBuilder::with_msg_hook` which internally receives
                     // events via message loop. `haccel` is validated by muda's API.
                     // Ref: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratorw
