@@ -223,7 +223,7 @@ impl<W: Write> Write for StringContentEncoder<W> {
 
 // XXX: Items inside inline HTML are treated as raw texts
 // See src/markdown/testdata/inline_items_nested_in_inline_html.md
-struct InlineHtmlReader<'events, 'input, I: Iterator<Item = (Event<'input>, Range)>> {
+struct InlineHtmlReader<'events, 'input, I: Iterator> {
     current: CowStr<'input>,
     index: usize,
     events: &'events mut Peekable<I>,
@@ -704,7 +704,10 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                             let id = self.id(name);
                             write!(self.out, r#","id":{}"#, id)?;
                         }
-                        MetadataBlock(_) => unreachable!(), // This option is not enabled
+                        DefinitionList
+                        | DefinitionListDefinition
+                        | DefinitionListTitle
+                        | MetadataBlock(_) => unreachable!("disabled markdown feature"),
                     }
 
                     // Tag element must have its children (maybe empty)
@@ -714,7 +717,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     use TagEnd::*;
                     match tag_end {
                         Link if in_auto_link => in_auto_link = false,
-                        Paragraph | Heading(_) | TableRow | TableCell | BlockQuote | List(_)
+                        Paragraph | Heading(_) | TableRow | TableCell | BlockQuote(_) | List(_)
                         | Item | Emphasis | Strong | Strikethrough | Link | Image
                         | FootnoteDefinition => self.tag_end()?,
                         CodeBlock => {
@@ -733,7 +736,10 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                             self.children_begin()?;
                         }
                         HtmlBlock => unreachable!(), // This event is handled in `Tag::HtmlBlock` event using `HtmlBlockReader`
-                        MetadataBlock(_) => unreachable!(), // This option is not enabled
+                        DefinitionList
+                        | DefinitionListDefinition
+                        | DefinitionListTitle
+                        | MetadataBlock(_) => unreachable!("disabled markdown feature"), // This option is not enabled
                     }
                 }
                 Event::Text(text) if in_code_block => self.text(&text, range)?,
