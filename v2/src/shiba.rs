@@ -372,6 +372,7 @@ where
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
+            About => unreachable!("'About' menu event is never emitted for now"),
         }
         Ok(RenderingFlow::Continue)
     }

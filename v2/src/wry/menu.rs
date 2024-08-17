@@ -28,7 +28,7 @@ fn metadata() -> AboutMetadata {
 
     #[cfg(not(target_os = "macos"))]
     {
-        m.authors = Some(vec![env!("CARGO_PKG_AUTHORS").into()]);
+        m.authors = Some(vec![env!("CARGO_PKG_AUTHORS").into()]); // This implementation is only correct when only one person is listed in `authors` array.
         m.comments = Some(env!("CARGO_PKG_DESCRIPTION").into());
         m.license = Some(env!("CARGO_PKG_LICENSE").into());
         m.website = Some(env!("CARGO_PKG_HOMEPAGE").into());
@@ -58,10 +58,11 @@ impl MenuEvents {
         let Ok(event) = self.receiver.try_recv() else {
             return Ok(None);
         };
-        let Some(id) = self.ids.get(&event.id).copied() else {
-            anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids);
-        };
-        Ok(Some(id))
+        match self.ids.get(&event.id).copied() {
+            Some(AppMenuItem::About) => Ok(None), // This is predefined item and was already handled by OS
+            Some(id) => Ok(Some(id)),
+            None => anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids),
+        }
     }
 }
 
@@ -112,6 +113,8 @@ impl Menu {
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
         let open_repo = no_accel("Open Repository Page");
+        // Though this is a predefined item, `MenuEvent` is emitted when the item is clicked
+        let about = PredefinedMenuItem::about(Some("About Shiba"), Some(metadata()));
 
         // Menu bar structure
         let window_menu = Submenu::with_items(
@@ -142,7 +145,7 @@ impl Menu {
                 "Shiba",
                 true,
                 &[
-                    &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    &about,
                     &PredefinedMenuItem::separator(),
                     &settings,
                     &PredefinedMenuItem::separator(),
@@ -167,7 +170,7 @@ impl Menu {
                     #[cfg(not(target_os = "macos"))]
                     &PredefinedMenuItem::separator(),
                     #[cfg(not(target_os = "macos"))]
-                    &PredefinedMenuItem::about(Some("About Shiba"), Some(metadata())),
+                    &about,
                     #[cfg(target_os = "windows")]
                     &PredefinedMenuItem::separator(),
                     #[cfg(target_os = "windows")]
@@ -236,8 +239,9 @@ impl Menu {
                 (guide.into_id(),         Help),
                 (open_repo.into_id(),     OpenRepo),
                 (settings.into_id(),      EditConfig),
+                (about.into_id(),         About),
                 #[cfg(not(target_os = "macos"))]
-                (toggle_menu_bar.into_id(),   ToggleMenuBar),
+                (toggle_menu_bar.into_id(), ToggleMenuBar),
             ]
         });
 
