@@ -36,7 +36,7 @@ env_logger = { version = "0.11.3", default-features = false, features = ["auto-c
 lexopt = "0.3.0"
 log = "0.4.20"
 memchr = "2.7.1"
-muda = "0.13.5"
+muda = "0.14.0"
 notify = "6.1.1"
 once_cell = "1.19.0"
 open = "5.0.1"
@@ -47,16 +47,16 @@ rfd = "0.14.1"
 serde = "1.0.195"
 serde_json = "1.0.111"
 serde_yaml = "0.9.30"
-tao = { version = "0.28.0", default-features = false, features = [ "rwh_06" ] }
+tao = { version = "0.29.0", default-features = false, features = [ "rwh_06" ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-wry = { version = "0.41.0", features = ["transparent"] }
+wry = { version = "0.42.0", features = ["transparent"] }
 window-vibrancy = "0.5.0"
 objc = "0.2.7"
-core-graphics = "0.23.2"
+core-graphics = "0.24.0"
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
-wry = "0.41.0"
+wry = "0.42.0"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58.0", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
