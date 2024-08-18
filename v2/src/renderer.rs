@@ -103,7 +103,6 @@ pub enum MenuItem {
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,
-    About,
 }
 
 pub trait RawMessageWriter {

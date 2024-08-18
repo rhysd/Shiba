@@ -45,24 +45,27 @@ fn metadata() -> AboutMetadata {
 }
 
 pub struct MenuEvents {
+    about_id: MenuId,
     ids: HashMap<MenuId, AppMenuItem>,
     receiver: &'static MenuEventReceiver,
 }
 
 impl MenuEvents {
     pub fn new() -> Self {
-        Self { ids: HashMap::new(), receiver: MenuEvent::receiver() }
+        Self { about_id: MenuId::default(), ids: HashMap::new(), receiver: MenuEvent::receiver() }
     }
 
     pub fn try_receive(&self) -> Result<Option<AppMenuItem>> {
         let Ok(event) = self.receiver.try_recv() else {
             return Ok(None);
         };
-        match self.ids.get(&event.id).copied() {
-            Some(AppMenuItem::About) => Ok(None), // This is predefined item and was already handled by OS
-            Some(id) => Ok(Some(id)),
-            None => anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids),
+        if event.id == self.about_id {
+            return Ok(None); // 'About' predefined item was already handled by OS but menu event is emitted
         }
+        let Some(id) = self.ids.get(&event.id).copied() else {
+            anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids);
+        };
+        Ok(Some(id))
     }
 }
 
@@ -239,11 +242,12 @@ impl Menu {
                 (guide.into_id(),         Help),
                 (open_repo.into_id(),     OpenRepo),
                 (settings.into_id(),      EditConfig),
-                (about.into_id(),         About),
                 #[cfg(not(target_os = "macos"))]
                 (toggle_menu_bar.into_id(), ToggleMenuBar),
             ]
         });
+
+        events.about_id = about.into_id();
 
         log::debug!("Registered menu items: {:?}", events.ids);
         Ok(Self {
