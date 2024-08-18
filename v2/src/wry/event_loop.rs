@@ -25,7 +25,17 @@ impl Rendering for Wry {
     type EventSender = EventLoopProxy<AppEvent>;
     type Renderer = WebViewRenderer;
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
+    fn new() -> Result<Self> {
+        use tao::platform::unix::EventLoopBuilderExtUnix as _;
+
+        const APP_ID: &str = "io.github.rhysd.Shiba";
+        let event_loop = EventLoopBuilder::with_user_event().with_app_id(APP_ID).build();
+        let menu_events = MenuEvents::new();
+        Ok(Self { event_loop, menu_events })
+    }
+
+    #[cfg(target_os = "macos")]
     fn new() -> Result<Self> {
         let event_loop = EventLoopBuilder::with_user_event().build();
         let menu_events = MenuEvents::new();
