@@ -76,7 +76,7 @@ jobs:
           cp target/aarch64-apple-darwin/release/shiba shiba
           zip shiba_macos_aarch64_v${{ needs.info.outputs.version }}.zip shiba
           rm shiba
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
@@ -114,7 +114,7 @@ jobs:
         run: |
           wix --version
           wix build -arch "x64" -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -out shiba_x64_v${{ needs.info.outputs.version }}.msi assets/wix/shiba.wxs -define ShibaVersion=${{ needs.info.outputs.version }}
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
@@ -146,7 +146,7 @@ jobs:
           set -x
           cargo install cargo-deb
           cargo deb --no-build --verbose
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
@@ -154,4 +154,4 @@ jobs:
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
             v2/shiba_linux_x86_64_v${{ needs.info.outputs.version }}.zip
-            v2/target/debian/shiba_${{ needs.info.outputs.version }}_amd64.deb
+            v2/target/debian/shiba_${{ needs.info.outputs.version }}-1_amd64.deb
