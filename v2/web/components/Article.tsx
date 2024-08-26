@@ -61,7 +61,6 @@ function dispatchHeadings(root: HTMLElement, dispatch: Dispatch): void {
         currentId = null;
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     currentId = setTimeout(callback, 100);
 }
 
