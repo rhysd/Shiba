@@ -318,7 +318,7 @@ class RenderTreeToReact {
                 return <p key={key}>{await this.renderAll(elem.c)}</p>;
             case 'h': {
                 const tag = `h${elem.level}`;
-                const props: JSX.IntrinsicElements['h1'] = { key };
+                const props: React.JSX.IntrinsicElements['h1'] = { key };
                 if (elem.id) {
                     props.id = elem.id; // TODO?: Clobber IDs
                 }

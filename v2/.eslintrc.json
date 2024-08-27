@@ -5,6 +5,7 @@
     "plugin:security/recommended-legacy",
     "plugin:import/recommended",
     "plugin:import/typescript",
+    "plugin:deprecation/recommended",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -13,7 +14,8 @@
   },
   "plugins": [
     "@typescript-eslint",
-    "react-hooks"
+    "react-hooks",
+    "deprecation"
   ],
   "env": {
     "browser": true,
