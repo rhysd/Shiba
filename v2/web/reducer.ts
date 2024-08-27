@@ -48,7 +48,6 @@ export interface State {
     welcome: boolean;
     headings: Heading[];
     currentPath: string | null;
-    theme: Theme;
 }
 
 export const INITIAL_CONFIG: Config = {
@@ -78,7 +77,6 @@ export const INITIAL_STATE: State = {
     welcome: false,
     headings: [],
     currentPath: null,
-    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
 };
 
 const MAX_HISTORIES = 50;
@@ -140,10 +138,6 @@ type Action =
       }
     | {
           kind: 'welcome';
-      }
-    | {
-          kind: 'theme';
-          theme: Theme;
       };
 export type Dispatch = React.Dispatch<Action>;
 
@@ -212,11 +206,6 @@ export function reducer(state: State, action: Action): State {
             return { ...state, config: action.config };
         case 'recent_files':
             return { ...state, files: action.paths };
-        case 'theme':
-            if (action.theme === state.theme) {
-                return state;
-            }
-            return { ...state, theme: action.theme };
         case 'welcome':
             return { ...state, welcome: true };
         default:
@@ -308,10 +297,6 @@ export function welcome(): Action {
 
 export function updateHeadings(headings: Heading[]): Action {
     return { kind: 'headings', headings };
-}
-
-export function updateTheme(theme: Theme): Action {
-    return { kind: 'theme', theme };
 }
 
 export function initConfig(config: Config): Action {

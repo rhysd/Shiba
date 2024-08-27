@@ -1,7 +1,6 @@
 import {
     type Dispatch,
     type State,
-    type Theme,
     INITIAL_STATE,
     initConfig,
     notifyAlwaysOnTop,
@@ -18,7 +17,6 @@ import {
     setRecentFiles,
     setSearchMatcher,
     welcome,
-    updateTheme,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
 import { ReactMarkdownRenderer } from './markdown';
@@ -39,13 +37,12 @@ export class GlobalDispatcher {
         };
         this.state = INITIAL_STATE;
         this.keymap = new KeyMapping();
-        this.markdown = new ReactMarkdownRenderer(this.state.theme);
+        this.markdown = new ReactMarkdownRenderer();
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
         this.dispatch = dispatch;
         this.state = state;
-        this.markdown.theme = state.theme;
     }
 
     openSearch(): void {
@@ -64,10 +61,6 @@ export class GlobalDispatcher {
         if (searching) {
             this.dispatch(searchPrevious(searchIndex));
         }
-    }
-
-    updateTheme(theme: Theme): void {
-        this.dispatch(updateTheme(theme));
     }
 
     async handleIpcMessage(msg: MessageFromMain): Promise<void> {

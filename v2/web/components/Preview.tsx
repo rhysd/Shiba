@@ -7,8 +7,9 @@ import { WindowBar } from './WindowBar';
 import { SideBar } from './SideBar';
 import { Article } from './Article';
 import { ConfigContext } from './ConfigContext';
+import { IS_DARK } from '../css';
 import type { MarkdownReactTree } from '../markdown';
-import type { Dispatch, Heading, Theme } from '../reducer';
+import type { Dispatch, Heading } from '../reducer';
 
 const NAV_RESIZE_DIRECTION = {
     top: false,
@@ -30,11 +31,10 @@ export interface Props {
     tree: MarkdownReactTree;
     headings: Heading[];
     path: string | null;
-    theme: Theme;
     dispatch: Dispatch;
 }
 
-export const Preview: React.FC<Props> = ({ tree, headings, path, theme, dispatch }) => {
+export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
     const { titleBar, vibrant, borderTop } = useContext(ConfigContext);
 
     if (tree.root === null) {
@@ -49,7 +49,7 @@ export const Preview: React.FC<Props> = ({ tree, headings, path, theme, dispatch
         boxSizing?: string;
     } = {};
     if (!vibrant) {
-        sx.bgcolor = theme === 'dark' ? 'grey.900' : 'grey.100';
+        sx.bgcolor = IS_DARK ? 'grey.900' : 'grey.100';
     }
     if (borderTop) {
         sx.borderTop = 1;
