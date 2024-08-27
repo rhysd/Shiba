@@ -38,6 +38,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         welcome,
         headings,
         currentPath,
+        theme,
     } = state;
 
     let searchInput;
@@ -77,7 +78,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     return (
         <ThemeProvider theme={THEME}>
             <ConfigContext.Provider value={config}>
-                <Preview tree={previewTree} headings={headings} path={currentPath} dispatch={dispatch} />
+                <Preview tree={previewTree} headings={headings} path={currentPath} theme={theme} dispatch={dispatch} />
                 {searchInput}
                 {outlineDialog}
                 {historyDialog}

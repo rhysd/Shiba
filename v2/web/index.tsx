@@ -16,6 +16,10 @@ const dispatcher = new GlobalDispatcher();
 // The main process will send IPC events via this global function
 window.postShibaMessageFromMain = dispatcher.handleIpcMessage.bind(dispatcher);
 
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    dispatcher.updateTheme(event.matches ? 'dark' : 'light');
+});
+
 const reactRoot = document.getElementById('shiba-root');
 if (reactRoot) {
     createRoot(reactRoot).render(<App dispatcher={dispatcher} />);
