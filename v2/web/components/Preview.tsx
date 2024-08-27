@@ -7,6 +7,7 @@ import { WindowBar } from './WindowBar';
 import { SideBar } from './SideBar';
 import { Article } from './Article';
 import { ConfigContext } from './ConfigContext';
+import { IS_DARK } from '../css';
 import type { MarkdownReactTree } from '../markdown';
 import type { Dispatch, Heading } from '../reducer';
 
@@ -34,7 +35,7 @@ export interface Props {
 }
 
 export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
-    const { titleBar, vibrant, borderTop, theme } = useContext(ConfigContext);
+    const { titleBar, vibrant, borderTop } = useContext(ConfigContext);
 
     if (tree.root === null) {
         return <></>;
@@ -48,7 +49,7 @@ export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => 
         boxSizing?: string;
     } = {};
     if (!vibrant) {
-        sx.bgcolor = theme === 'light' ? 'grey.100' : 'grey.900';
+        sx.bgcolor = IS_DARK ? 'grey.900' : 'grey.100';
     }
     if (borderTop) {
         sx.borderTop = 1;

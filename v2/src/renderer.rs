@@ -22,7 +22,6 @@ pub enum MessageToRenderer<'a> {
     Config {
         keymaps: &'a HashMap<String, KeyAction>,
         search: &'a SearchConfig,
-        theme: Theme,
         recent: &'a [&'a Path],
         home: Option<&'a Path>,
         window: WindowAppearance,
@@ -110,7 +109,7 @@ pub trait RawMessageWriter {
     fn write_to(self, writer: impl io::Write) -> io::Result<Self::Output>;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Theme {
     Dark,
     Light,
@@ -168,7 +167,6 @@ pub trait Renderer {
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
     fn window_state(&self) -> Option<WindowState>;
-    fn theme(&self) -> Theme;
     fn show(&self);
     fn hide(&self);
     fn print(&self) -> Result<()>;

@@ -1,3 +1,5 @@
+export const IS_DARK = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
 export function parseColor(color: string): [number, number, number] | null {
     if (!color.startsWith('#')) {
         return null;

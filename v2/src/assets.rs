@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::renderer::Theme as WindowTheme;
+use crate::renderer::Theme;
 use phf::phf_map;
 use std::borrow::Cow;
 use std::fs;
@@ -168,11 +168,11 @@ pub struct Assets {
 }
 
 impl Assets {
-    pub fn new(config: &Config, theme: WindowTheme) -> Self {
+    pub fn new(config: &Config, theme: Theme) -> Self {
         let hl = config.preview().highlight();
         let hljs_css = match theme {
-            WindowTheme::Light => load_hljs_css(&hl.light, HLJS_DEFAULT_LIGHT_CSS),
-            WindowTheme::Dark => load_hljs_css(&hl.dark, HLJS_DEFAULT_DARK_CSS),
+            Theme::Light => load_hljs_css(&hl.light, HLJS_DEFAULT_LIGHT_CSS),
+            Theme::Dark => load_hljs_css(&hl.dark, HLJS_DEFAULT_DARK_CSS),
         };
 
         let markdown_css = if let Some(css) = load_user_css(config) {

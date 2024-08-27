@@ -80,7 +80,6 @@ export class GlobalDispatcher {
                     this.keymap.register(msg.keymaps, this);
                     this.dispatch(
                         initConfig({
-                            theme: msg.theme === 'Dark' ? 'dark' : 'light',
                             titleBar: !msg.window.title,
                             vibrant: msg.window.vibrancy,
                             hideScrollBar: !msg.window.scrollBar,
@@ -90,13 +89,6 @@ export class GlobalDispatcher {
                     );
                     this.dispatch(setSearchMatcher(msg.search.matcher));
                     this.dispatch(setRecentFiles(msg.recent));
-                    // `this.state.theme` is not available since it is updated *after* the first rendering of Markdown content.
-                    //   1. Receive `config` IPC message
-                    //   2. Dispatch `setTheme` action
-                    //   3. Receive `render_tree` IPC message
-                    //   4. Render the Markdown content (at this point, `this.state.theme` has not been changed yet)
-                    //   5. Dispatched `setTheme` action is handled and `this.state` is updated
-                    this.markdown.theme = msg.theme;
                     break;
                 case 'search':
                     this.openSearch();

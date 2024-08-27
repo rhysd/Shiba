@@ -303,7 +303,6 @@ where
                 self.renderer.send_message(MessageToRenderer::Config {
                     keymaps: self.config.keymaps(),
                     search: self.config.search(),
-                    theme: self.renderer.theme(),
                     recent: &self.history.iter().collect::<Vec<_>>(),
                     home: self.preview.home_dir(),
                     window: self.renderer.window_appearance(),

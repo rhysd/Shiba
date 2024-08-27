@@ -26,7 +26,6 @@ export interface Heading {
 }
 
 export interface Config {
-    theme: Theme;
     titleBar: boolean;
     vibrant: boolean;
     hideScrollBar: boolean;
@@ -52,7 +51,6 @@ export interface State {
 }
 
 export const INITIAL_CONFIG: Config = {
-    theme: 'light',
     titleBar: true,
     vibrant: false,
     hideScrollBar: false,

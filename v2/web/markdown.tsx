@@ -18,25 +18,15 @@ import type {
     RenderTreeFootNoteDef,
     RenderTreeTableAlign,
     RenderTreeCodeFence,
-    WindowTheme,
     AlertKind,
 } from './ipc';
+import { IS_DARK } from './css';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
 
 class MermaidRenderer {
-    private theme: 'default' | 'dark' = 'default';
     private initialized = false;
     private id = 0;
-
-    setTheme(theme: WindowTheme): void {
-        const next = theme === 'Light' ? 'default' : 'dark';
-        if (this.theme !== next && this.initialized) {
-            this.initialized = false;
-            log.debug('Mermaid will be initialized again since the window theme was changed', this.theme, next, theme);
-        }
-        this.theme = next;
-    }
 
     resetId(): void {
         this.id = 0;
@@ -46,8 +36,9 @@ class MermaidRenderer {
         if (this.initialized) {
             return;
         }
-        mermaid.initialize({ startOnLoad: false, theme: this.theme });
-        log.debug('Initialized mermaid renderer', this.theme);
+        const theme = IS_DARK ? 'dark' : 'default';
+        mermaid.initialize({ startOnLoad: false, theme });
+        log.debug('Initialized mermaid renderer', theme);
         this.initialized = true;
     }
 
@@ -523,10 +514,6 @@ class RenderTreeToReact {
 export class ReactMarkdownRenderer {
     private readonly mermaid = new MermaidRenderer();
     private readonly mathjax = new MathJaxRenderer();
-
-    set theme(theme: WindowTheme) {
-        this.mermaid.setTheme(theme);
-    }
 
     render(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
         this.mermaid.resetId();

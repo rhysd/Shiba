@@ -26,22 +26,19 @@ pub type EventLoop = tao::event_loop::EventLoop<Event>;
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
 
-fn window_theme(window: &Window) -> RendererTheme {
-    match window.theme() {
+fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
+    let ipc_proxy = event_loop.create_proxy();
+    let file_drop_proxy = event_loop.create_proxy();
+    let navigation_proxy = event_loop.create_proxy();
+    let theme = match window.theme() {
         Theme::Light => RendererTheme::Light,
         Theme::Dark => RendererTheme::Dark,
         t => {
             log::error!("Unknown window theme: {:?}", t);
             RendererTheme::Light
         }
-    }
-}
-
-fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
-    let ipc_proxy = event_loop.create_proxy();
-    let file_drop_proxy = event_loop.create_proxy();
-    let navigation_proxy = event_loop.create_proxy();
-    let loader = Assets::new(config, window_theme(window));
+    };
+    let loader = Assets::new(config, theme);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
     log::debug!("WebView user data directory: {:?}", user_dir);
@@ -317,10 +314,6 @@ impl Renderer for WebViewRenderer {
         let always_on_top = self.always_on_top;
         let maximized = self.window.is_maximized();
         Some(WindowState { width, height, x, y, fullscreen, zoom_level, always_on_top, maximized })
-    }
-
-    fn theme(&self) -> RendererTheme {
-        window_theme(&self.window)
     }
 
     fn show(&self) {

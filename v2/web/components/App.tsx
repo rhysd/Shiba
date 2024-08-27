@@ -15,8 +15,7 @@ import type { GlobalDispatcher } from '../dispatcher';
 
 // Note: `CssBaseline` is not available since it sets `background-color` and prevents vibrant window.
 
-const LIGHT_THEME = createTheme({ palette: { mode: 'light' } });
-const DARK_THEME = createTheme({ palette: { mode: 'dark' } });
+const THEME = createTheme({ colorSchemes: { dark: true } });
 
 interface Props {
     dispatcher: GlobalDispatcher;
@@ -76,7 +75,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     }, []); // Run only when component was mounted
 
     return (
-        <ThemeProvider theme={config.theme === 'light' ? LIGHT_THEME : DARK_THEME}>
+        <ThemeProvider theme={THEME}>
             <ConfigContext.Provider value={config}>
                 <Preview tree={previewTree} headings={headings} path={currentPath} dispatch={dispatch} />
                 {searchInput}

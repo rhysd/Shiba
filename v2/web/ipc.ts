@@ -38,7 +38,6 @@ export type KeyAction =
 
 export type KeyMaps = Record<string, KeyAction>;
 export type SearchMatcher = 'SmartCase' | 'CaseSensitive' | 'CaseInsensitive' | 'CaseSensitiveRegex';
-export type WindowTheme = 'Dark' | 'Light';
 export type Platform = 'Mac' | 'Windows' | 'Linux';
 export type RenderTreeTableAlign = 'left' | 'center' | 'right' | null;
 export type AlertKind = 'warning' | 'important' | 'caution' | 'note' | 'tip';
@@ -207,7 +206,6 @@ export type MessageFromMain =
           search: {
               matcher: SearchMatcher;
           };
-          theme: WindowTheme;
           recent: string[];
           home: string | null;
           window: {
