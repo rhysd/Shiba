@@ -143,7 +143,6 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
         };
         return (
             <ListItem
-                selected={selected}
                 alignItems="flex-start"
                 onClick={() => {
                     h.elem.scrollIntoView({
@@ -157,7 +156,7 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
                 ref={ref}
                 key={key}
             >
-                <ListItemButton style={style} disableGutters>
+                <ListItemButton selected={selected} style={style} disableGutters>
                     <ListItemText primary={h.text} disableTypography sx={sx} />
                 </ListItemButton>
             </ListItem>
