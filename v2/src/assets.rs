@@ -169,6 +169,9 @@ pub struct Assets {
 
 impl Assets {
     pub fn new(config: &Config, theme: Theme) -> Self {
+        // TODO: Currently dark/light CSS theme for highlight.js is selected before app starts. However the theme can
+        // actually change dynamically. Both the dark/light CSS theme needs to be defined in hljs-theme.css using
+        // prefers-color-scheme media query.
         let hl = config.preview().highlight();
         let hljs_css = match theme {
             Theme::Light => load_hljs_css(&hl.light, HLJS_DEFAULT_LIGHT_CSS),

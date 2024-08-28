@@ -20,13 +20,19 @@ import type {
     RenderTreeCodeFence,
     AlertKind,
 } from './ipc';
-import { IS_DARK } from './css';
+import { colorScheme } from './css';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
 
 class MermaidRenderer {
     private initialized = false;
     private id = 0;
+
+    constructor() {
+        colorScheme.addListener(() => {
+            this.initialized = false;
+        });
+    }
 
     resetId(): void {
         this.id = 0;
@@ -36,7 +42,7 @@ class MermaidRenderer {
         if (this.initialized) {
             return;
         }
-        const theme = IS_DARK ? 'dark' : 'default';
+        const theme = colorScheme.isDark ? 'dark' : 'default';
         mermaid.initialize({ startOnLoad: false, theme });
         log.debug('Initialized mermaid renderer', theme);
         this.initialized = true;

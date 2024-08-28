@@ -1,4 +1,40 @@
-export const IS_DARK = window.matchMedia('(prefers-color-scheme: dark)').matches;
+import { sendMessage } from './ipc';
+import * as log from './log';
+
+type Listener = (isDark: boolean) => void;
+
+class ColorScheme {
+    private readonly listeners: Listener[] = [];
+    private dark: boolean;
+
+    constructor() {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        media.addEventListener('change', this.onEvent.bind(this));
+        this.dark = media.matches;
+    }
+
+    get isDark(): boolean {
+        return this.dark;
+    }
+
+    addListener(listener: Listener): void {
+        this.listeners.push(listener);
+    }
+
+    private onEvent(event: MediaQueryListEvent): void {
+        if (this.dark === event.matches) {
+            return;
+        }
+        this.dark = !this.dark;
+        for (const listener of this.listeners) {
+            listener(this.dark);
+        }
+        sendMessage({ kind: 'reload' }); // Rerender the preview with the changed theme after all callbacks were run
+        log.debug('prefers-color-scheme media query has changed. isDark:', !this.dark, '->', this.dark);
+    }
+}
+
+export const colorScheme = new ColorScheme();
 
 export function parseColor(color: string): [number, number, number] | null {
     if (!color.startsWith('#')) {
