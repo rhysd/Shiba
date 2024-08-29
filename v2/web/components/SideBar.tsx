@@ -132,11 +132,13 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
     const children = headings.map((h, key) => {
         const selected = !!h.current;
         const ref = selected ? focusedRef : undefined;
-        const style = {
+        const buttonStyle = {
             padding: `0 1em 0 ${h.level}em`,
         };
-        const sx = {
+        const textSx = {
             color: selected ? 'text.primary' : 'text.secondary',
+            overflowX: 'hidden',
+            textOverflow: 'ellipsis',
         };
         return (
             <ListItem
@@ -152,8 +154,8 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
                 ref={ref}
                 key={key}
             >
-                <ListItemButton selected={selected} style={style} disableGutters>
-                    <ListItemText primary={h.text} disableTypography sx={sx} />
+                <ListItemButton selected={selected} style={buttonStyle} disableGutters>
+                    <ListItemText primary={h.text} disableTypography sx={textSx} />
                 </ListItemButton>
             </ListItem>
         );
