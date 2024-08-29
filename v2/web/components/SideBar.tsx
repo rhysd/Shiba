@@ -100,9 +100,6 @@ const LIST_SX = {
     overscrollBehavior: 'none',
     fontSize: '0.875rem',
 };
-const LIST_ITEM_SX = {
-    padding: '0 8px',
-};
 
 interface Props {
     headings: Heading[];
@@ -136,7 +133,7 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
         const selected = !!h.current;
         const ref = selected ? focusedRef : undefined;
         const style = {
-            padding: `0 0 0 ${h.level - 1}em`,
+            padding: `0 1em 0 ${h.level}em`,
         };
         const sx = {
             color: selected ? 'text.primary' : 'text.secondary',
@@ -152,7 +149,6 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
                     });
                 }}
                 disablePadding
-                sx={LIST_ITEM_SX}
                 ref={ref}
                 key={key}
             >
