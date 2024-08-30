@@ -29,7 +29,7 @@ function getTitle(elem: HTMLElement): string {
 
 function collectHeadings(root: HTMLElement): Heading[] {
     const headings: Heading[] = [];
-    for (const elem of root.querySelectorAll('article > h1,h2,h3,h4,h5,h6') as NodeListOf<HTMLHeadingElement>) {
+    for (const elem of root.querySelectorAll<HTMLHeadingElement>('article > h1,h2,h3,h4,h5,h6')) {
         const level = parseInt(elem.tagName.slice(1), 10);
         const text = getTitle(elem);
         headings.push({ level, text, elem });
@@ -37,13 +37,20 @@ function collectHeadings(root: HTMLElement): Heading[] {
 
     const scrollTop = root.scrollTop;
     const scrollBottom = scrollTop + root.clientHeight;
+    let found = false;
     for (let i = 0; i < headings.length; i++) {
         const top = headings[i].elem.offsetTop;
         if (top >= scrollTop) {
             const j = top >= scrollBottom && i > 0 ? i - 1 : i;
             headings[j].current = true;
+            found = true;
             break;
         }
+    }
+
+    // Current scroll position is below the last heading.
+    if (!found && headings.length > 0) {
+        headings[headings.length - 1].current = true;
     }
 
     return headings;
