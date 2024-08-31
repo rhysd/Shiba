@@ -180,7 +180,7 @@ pub trait Renderer {
     fn window_appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
-    fn set_minimized(&mut self, minimized: bool) -> Result<()>;
+    fn save_memory(&mut self, is_low: bool) -> Result<()>;
 }
 
 /// Context to execute rendering.
