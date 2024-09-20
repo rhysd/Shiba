@@ -48,20 +48,20 @@ open = "5.0.1"
 phf = { version = "0.11.2", features = ["macros"] }
 pulldown-cmark = { version = "0.12.0", default-features = false, features = [] }
 regex = "1.10.2"
-rfd = "0.14.1"
+rfd = "0.15.0"
 serde = "1.0.195"
 serde_json = "1.0.111"
 serde_yaml = "0.9.30"
 tao = { version = "0.30.0", default-features = false, features = [ "rwh_06" ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-wry = { version = "0.43.1", features = ["transparent"] }
+wry = { version = "0.44.0", features = ["transparent"] }
 window-vibrancy = "0.5.0"
 objc = "0.2.7"
 core-graphics = "0.24.0"
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
-wry = "0.43.1"
+wry = "0.44.0"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58.0", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
