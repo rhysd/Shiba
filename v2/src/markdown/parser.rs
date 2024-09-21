@@ -551,6 +551,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
     fn events(&mut self, parser: Parser<'input>) -> Result<()> {
         let mut in_code_block = false;
         let mut in_auto_link = false;
+        let mut in_link = false;
 
         let mut events = parser.into_offset_iter().peekable();
         while let Some((event, range)) = events.next() {
@@ -669,6 +670,8 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                                 self.out.write_all(br#","title":"#)?;
                                 self.string(&title)?;
                             }
+
+                            in_link = true;
                         }
                         Image { dest_url, title, .. } => {
                             self.tag("img")?;
@@ -717,9 +720,14 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     use TagEnd::*;
                     match tag_end {
                         Link if in_auto_link => in_auto_link = false,
+                        Link => {
+                            in_link = false;
+                            self.tag_end()?
+                        }
                         Paragraph | Heading(_) | TableRow | TableCell | BlockQuote(_) | List(_)
-                        | Item | Emphasis | Strong | Strikethrough | Link | Image
-                        | FootnoteDefinition => self.tag_end()?,
+                        | Item | Emphasis | Strong | Strikethrough | Image | FootnoteDefinition => {
+                            self.tag_end()?
+                        }
                         CodeBlock => {
                             in_code_block = false;
                             self.tag_end()?;
@@ -742,7 +750,7 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                         | MetadataBlock(_) => unreachable!("disabled markdown feature"), // This option is not enabled
                     }
                 }
-                Event::Text(text) if in_code_block => self.text(&text, range)?,
+                Event::Text(text) if in_code_block || in_link => self.text(&text, range)?,
                 Event::Text(text) => self.autolink_text(&text, range)?,
                 Event::Code(text) => {
                     let pad = (range.len() - text.len()) / 2;
@@ -1042,6 +1050,7 @@ mod tests {
     snapshot_test!(inline_items_nested_in_inline_html);
     snapshot_test!(escaped_chars_in_text);
     snapshot_test!(alert);
+    snapshot_test!(url_inside_link);
 
     // Offset
     snapshot_test!(offset_block, Some(30));

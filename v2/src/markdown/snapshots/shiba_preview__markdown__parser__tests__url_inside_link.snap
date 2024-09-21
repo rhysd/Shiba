@@ -1,0 +1,29 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            "https://example.com/text"
+          ],
+          "href": "https://example.com/link",
+          "t": "a"
+        },
+        " ",
+        {
+          "c": [
+            "https://example.com/text"
+          ],
+          "href": "https://example.com/label",
+          "t": "a"
+        }
+      ],
+      "t": "p"
+    }
+  ]
+}
