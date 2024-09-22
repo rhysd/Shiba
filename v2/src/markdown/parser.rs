@@ -330,6 +330,8 @@ impl<'input, I: Iterator<Item = (Event<'input>, Range)>> HtmlBlockReader<'input,
                     return None;
                 }
                 Event::Html(html) => html,
+                // Text event is emitted when tags are preceded by spaces like " <p></p>"
+                Event::Text(text) => text,
                 event => unreachable!("unexpected event: {event:?}"),
             };
             self.index = 0;
@@ -1249,5 +1251,18 @@ mod tests {
             let offset = prev.modified_utf8_offset(&now);
             assert_eq!(offset, expected, "{before:?}, {after:?}");
         }
+    }
+
+    #[test]
+    fn text_event_inside_html_block() {
+        let target = MarkdownContent::new(" <p>foo</p>".to_string(), None);
+        let parser = MarkdownParser::new(&target, None, ());
+        let mut buf = Vec::new();
+        let () = parser.write_to(&mut buf).unwrap();
+        let buf = String::from_utf8(buf).unwrap();
+        assert!(
+            buf.contains(r#"{"t":"html","raw":" <p>foo</p>"}"#),
+            "expected HTML block is not contained: {buf:?}",
+        );
     }
 }
