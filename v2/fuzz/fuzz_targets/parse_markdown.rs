@@ -11,6 +11,7 @@ fuzz_target!(|data: &[u8]| {
     else {
         return;
     };
+    dbg!(&source);
     let target = MarkdownContent::new(source, None);
     let parser = MarkdownParser::new(&target, offset, ());
     let mut buf = Vec::new();

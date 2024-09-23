@@ -762,8 +762,12 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                     self.text(&text, inner_range)?;
                     self.tag_end()?;
                 }
-                Event::Html(_) => unreachable!(), // This event is handled in `Tag::HtmlBlock` event using `HtmlBlockReader`
-                Event::InlineHtml(html) => {
+                // Inline HTML inside blockquote is emitted as Event::Html event wrongly. Uncomment the below line when
+                // the following issue is fixed and the fix is released.
+                // https://github.com/pulldown-cmark/pulldown-cmark/issues/960
+                //
+                // Event::Html(_) => unreachable!(), // This event is handled in `Tag::HtmlBlock` event using `HtmlBlockReader`
+                Event::Html(html) | Event::InlineHtml(html) => {
                     self.tag("html")?;
                     self.out.write_all(br#","raw":""#)?;
 
@@ -1053,6 +1057,7 @@ mod tests {
     snapshot_test!(escaped_chars_in_text);
     snapshot_test!(alert);
     snapshot_test!(url_inside_link);
+    snapshot_test!(inline_html_inside_blockquote);
 
     // Offset
     snapshot_test!(offset_block, Some(30));

@@ -1,0 +1,23 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        {
+          "c": [
+            {
+              "raw": "",
+              "t": "html"
+            }
+          ],
+          "t": "p"
+        }
+      ],
+      "t": "blockquote"
+    }
+  ]
+}
