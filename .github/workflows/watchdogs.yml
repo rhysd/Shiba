@@ -34,6 +34,8 @@ jobs:
       - run: npm run bundle
       - run: cargo clippy --all --all-features --benches --tests -- -D warnings
       - run: cargo test
+      - run: cargo clippy -- -D warnings
+        working-directory: v2/fuzz
   sanity-test:
     needs: unit-test
     strategy:
