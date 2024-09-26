@@ -269,8 +269,11 @@ impl Menu {
         let id = window.id();
         match self.visibility.entry(id) {
             Entry::Vacant(entry) => {
+                // Safety: Using the handle returned from `Window::hwnd`.
                 #[cfg(target_os = "windows")]
-                self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
+                unsafe {
+                    self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
+                }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
                 #[cfg(target_os = "macos")]
@@ -289,14 +292,20 @@ impl Menu {
             Entry::Occupied(entry) => {
                 let visible = entry.into_mut();
                 if *visible {
+                    // Safety: Using the handle returned from `Window::hwnd`.
                     #[cfg(target_os = "windows")]
-                    self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
+                    unsafe {
+                        self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
+                    }
                     #[cfg(target_os = "linux")]
                     self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
                     log::debug!("Hide menu on window (id={:?})", id);
                 } else {
+                    // Safety: Using the handle returned from `Window::hwnd`.
                     #[cfg(target_os = "windows")]
-                    self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
+                    unsafe {
+                        self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
+                    }
                     #[cfg(target_os = "linux")]
                     self.menu_bar.show_for_gtk_window(window.gtk_window())?;
                     log::debug!("Show menu on window (id={:?})", id);
@@ -310,11 +319,17 @@ impl Menu {
     pub fn show_at(&self, position: Option<(f64, f64)>, window: &Window) {
         let position = position.map(|(x, y)| Position::Logical(LogicalPosition { x, y }));
         log::debug!("Showing context menu at {:?}", position);
+        // Safety: Using the handle returned from `Window::hwnd`.
         #[cfg(target_os = "windows")]
-        self.menu_bar.show_context_menu_for_hwnd(window.hwnd() as _, position);
+        unsafe {
+            self.menu_bar.show_context_menu_for_hwnd(window.hwnd() as _, position);
+        }
         #[cfg(target_os = "linux")]
         self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window().as_ref(), position);
+        // Safety: Using the pointer returned from `Window::ns_view`.
         #[cfg(target_os = "macos")]
-        self.menu_bar.show_context_menu_for_nsview(window.ns_view() as _, position);
+        unsafe {
+            self.menu_bar.show_context_menu_for_nsview(window.ns_view() as _, position);
+        }
     }
 }
