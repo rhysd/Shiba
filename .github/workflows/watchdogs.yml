@@ -57,10 +57,7 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: npm ci
       - run: make release
-      - uses: coactions/setup-xvfb@v1
-        with:
-          run: cargo run --release --features=__sanity -- --debug
-          working-directory: ./v2
+      - run: xvfb-run cargo run --release --features=__sanity -- --debug
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: cargo run --release --features=__sanity -- --debug
         if: ${{ matrix.os != 'ubuntu-latest' }}
