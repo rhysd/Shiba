@@ -142,7 +142,7 @@ impl<'input, V: TextVisitor, T: TextTokenizer> MarkdownParser<'input, V, T> {
 
 // Note: Build raw JavaScript expression which is evaluated to the render tree encoded as JSON value.
 // This expression will be evaluated via `receive(JSON.parse('{"kind":"render_tree",...}'))` by renderer.
-impl<'input, V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'input, V, T> {
+impl<V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'_, V, T> {
     type Output = V;
 
     fn write_to(self, writer: impl Write) -> Result<Self::Output> {
@@ -289,7 +289,7 @@ where
     }
 }
 
-impl<'events, 'input, I> Read for InlineHtmlReader<'events, 'input, I>
+impl<'input, I> Read for InlineHtmlReader<'_, 'input, I>
 where
     I: Iterator<Item = (Event<'input>, Range)>,
 {

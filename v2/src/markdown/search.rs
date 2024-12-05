@@ -20,7 +20,7 @@ impl MatchPosition for AhoCorasickMatch {
     }
 }
 
-impl<'text> MatchPosition for RegexMatch<'text> {
+impl MatchPosition for RegexMatch<'_> {
     fn start(&self) -> usize {
         self.start()
     }
@@ -194,7 +194,7 @@ pub struct MatchTokenizer<'a> {
     index: Option<usize>,
 }
 
-impl<'a> MatchTokenizer<'a> {
+impl MatchTokenizer<'_> {
     fn next(&mut self) -> bool {
         let Some((h, t)) = self.tail.split_first() else {
             return false;
@@ -225,7 +225,7 @@ impl<'a> MatchTokenizer<'a> {
     }
 }
 
-impl<'a> TextTokenizer for MatchTokenizer<'a> {
+impl TextTokenizer for MatchTokenizer<'_> {
     fn tokenize<'t>(&mut self, text: &'t str, range: &Range) -> (TokenKind, &'t str) {
         debug_assert_eq!(text.len(), range.len(), "text={:?} range={:?}", text, range);
         let Range { start, end } = *range;

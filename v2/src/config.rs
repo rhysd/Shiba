@@ -443,7 +443,7 @@ mod tests {
         }
     }
 
-    impl<'a> Drop for Env<'a> {
+    impl Drop for Env<'_> {
         fn drop(&mut self) {
             let Self((name, saved)) = &self;
             if let Some(saved) = saved {

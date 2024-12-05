@@ -93,7 +93,7 @@ pub struct RecentFiles<'a> {
     pub paths: Vec<&'a Path>,
 }
 
-impl<'a> PersistentData for RecentFiles<'a> {
+impl PersistentData for RecentFiles<'_> {
     const FILE: &'static str = "recent_files.json";
 }
 
