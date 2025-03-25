@@ -712,7 +712,9 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                         DefinitionList
                         | DefinitionListDefinition
                         | DefinitionListTitle
-                        | MetadataBlock(_) => unreachable!("disabled markdown feature"),
+                        | MetadataBlock(_)
+                        | Superscript
+                        | Subscript => unreachable!("disabled markdown feature"),
                     }
 
                     // Tag element must have its children (maybe empty)
@@ -749,7 +751,9 @@ impl<'input, W: Write, V: TextVisitor, T: TextTokenizer> RenderTreeEncoder<'inpu
                         DefinitionList
                         | DefinitionListDefinition
                         | DefinitionListTitle
-                        | MetadataBlock(_) => unreachable!("disabled markdown feature"), // This option is not enabled
+                        | MetadataBlock(_)
+                        | Superscript
+                        | Subscript => unreachable!("disabled markdown feature"), // This option is not enabled
                     }
                 }
                 Event::Text(text) if in_code_block || in_link => self.text(&text, range)?,

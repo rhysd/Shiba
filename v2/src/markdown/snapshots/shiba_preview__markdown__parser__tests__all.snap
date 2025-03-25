@@ -1067,6 +1067,29 @@ expression: json
     },
     {
       "c": [
+        "Super script and sub script"
+      ],
+      "level": 1,
+      "t": "h"
+    },
+    {
+      "c": [
+        "This is a test for subscript",
+        {
+          "raw": "<sub>sub</sub>",
+          "t": "html"
+        },
+        " and superscript",
+        {
+          "raw": "<sup>sup</sup>",
+          "t": "html"
+        },
+        "."
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
         "Task lists extension"
       ],
       "level": 1,

@@ -229,6 +229,10 @@ Code block using `<pre><code>` is written in inline HTML but rendered as block:
 <pre><code>This is
 code block</code></pre>
 
+# Super script and sub script
+
+This is a test for subscript<sub>sub</sub> and superscript<sup>sup</sup>.
+
 # Task lists extension
 
 Task lists:
