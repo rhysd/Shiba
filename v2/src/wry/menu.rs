@@ -284,7 +284,7 @@ impl Menu {
             Entry::Occupied(entry) => {
                 let visible = entry.into_mut();
                 if *visible {
-                    // Safety: Using the handle returned from `Window::hwnd`.
+                    // Safety: The handle is valid because it is returned from `Window::hwnd`.
                     #[cfg(target_os = "windows")]
                     unsafe {
                         self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
@@ -293,7 +293,7 @@ impl Menu {
                     self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
                     log::debug!("Hide menu on window (id={:?})", id);
                 } else {
-                    // Safety: Using the handle returned from `Window::hwnd`.
+                    // Safety: The handle is valid because it is returned from `Window::hwnd`.
                     #[cfg(target_os = "windows")]
                     unsafe {
                         self.menu_bar.show_for_hwnd(window.hwnd() as _)?;

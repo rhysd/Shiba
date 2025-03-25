@@ -43,11 +43,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
-
-    #[cfg(not(target_os = "linux"))]
-    let mut builder = WebViewBuilder::new(window);
-    #[cfg(target_os = "linux")]
-    let mut builder = WebViewBuilder::new_gtk(window.default_vbox().unwrap());
+    let mut builder = WebViewBuilder::with_web_context(&mut context);
 
     builder = builder
         .with_url("shiba://localhost/index.html")
@@ -118,7 +114,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
             log::debug!("Rejected to open new window for URL: {}", url);
             false
         })
-        .with_custom_protocol("shiba".into(), move |request| {
+        .with_custom_protocol("shiba".into(), move |_webview_id, request| {
             let uri = request.uri();
             log::debug!("Handling custom protocol: {:?}", uri);
             let path = uri.path();
@@ -128,7 +124,6 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
             // The header and status are never invalid so `.unwrap()` call never panics
             Response::builder().status(status).header(CONTENT_TYPE, mime).body(body).unwrap()
         })
-        .with_web_context(&mut context)
         .with_focused(true)
         .with_devtools(cfg!(any(debug_assertions, feature = "devtools")));
 
@@ -148,7 +143,10 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         builder = builder.with_transparent(true);
     }
 
-    let webview = builder.build()?;
+    #[cfg(not(target_os = "linux"))]
+    let webview = builder.build(window)?;
+    #[cfg(target_os = "linux")]
+    let webview = builder.build_gtk(window.gtk_window())?;
 
     #[cfg(target_os = "macos")]
     {
