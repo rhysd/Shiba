@@ -22,7 +22,6 @@ fn metadata() -> AboutMetadata {
         version: Some(env!("CARGO_PKG_VERSION").into()),
         copyright: Some("Copyright (c) 2015 rhysd".into()),
         license: Some("The MIT License".into()),
-        website: Some("https://github.com/rhysd/Shiba".into()),
         ..Default::default()
     };
 
@@ -45,23 +44,19 @@ fn metadata() -> AboutMetadata {
 }
 
 pub struct MenuEvents {
-    about_id: MenuId,
     ids: HashMap<MenuId, AppMenuItem>,
     receiver: &'static MenuEventReceiver,
 }
 
 impl MenuEvents {
     pub fn new() -> Self {
-        Self { about_id: MenuId::default(), ids: HashMap::new(), receiver: MenuEvent::receiver() }
+        Self { ids: HashMap::new(), receiver: MenuEvent::receiver() }
     }
 
     pub fn try_receive(&self) -> Result<Option<AppMenuItem>> {
         let Ok(event) = self.receiver.try_recv() else {
             return Ok(None);
         };
-        if event.id == self.about_id {
-            return Ok(None); // 'About' predefined item was already handled by OS but menu event is emitted
-        }
         let Some(id) = self.ids.get(&event.id).copied() else {
             anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids);
         };
@@ -116,7 +111,6 @@ impl Menu {
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
         let open_repo = no_accel("Open Repository Page");
-        // Though this is a predefined item, `MenuEvent` is emitted when the item is clicked
         let about = PredefinedMenuItem::about(Some("About Shiba"), Some(metadata()));
 
         // Menu bar structure
@@ -246,8 +240,6 @@ impl Menu {
                 (toggle_menu_bar.into_id(), ToggleMenuBar),
             ]
         });
-
-        events.about_id = about.into_id();
 
         log::debug!("Registered menu items: {:?}", events.ids);
         Ok(Self {
