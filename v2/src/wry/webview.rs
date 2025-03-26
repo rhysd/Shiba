@@ -250,21 +250,6 @@ impl WebViewRenderer {
 
         Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
     }
-
-    // `self.window.inner_size()` does not work on macOS because `WebView` replaces `NSWindow`
-    // instance's `contentView` field of `self.window`.
-    #[cfg(target_os = "macos")]
-    fn wkwebview_frame_size(&self) -> (f64, f64) {
-        use core_graphics::geometry::CGRect;
-        use objc::*;
-        use wry::WebViewExtMacOS as _;
-        // Safety: `wry::WebView::webview` returns the valid reference to `WKWebView`. And `WKWebView`
-        // inherits `NSView`. So calling `frame` method returns its rect information.
-        // * https://developer.apple.com/documentation/webkit/wkwebview
-        // * https://developer.apple.com/documentation/appkit/nsview
-        let frame: CGRect = unsafe { msg_send![self.webview.webview(), frame] };
-        (frame.size.width, frame.size.height)
-    }
 }
 
 impl Renderer for WebViewRenderer {
@@ -301,12 +286,7 @@ impl Renderer for WebViewRenderer {
                 return None;
             }
         };
-
-        #[cfg(not(target_os = "macos"))]
         let LogicalSize { width, height } = self.window.inner_size().to_logical(scale);
-        #[cfg(target_os = "macos")]
-        let (width, height) = self.wkwebview_frame_size();
-
         let fullscreen = self.window.fullscreen().is_some();
         let zoom_level = self.zoom_level;
         let always_on_top = self.always_on_top;
