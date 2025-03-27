@@ -156,7 +156,7 @@ const FOOTNOTE_BACKREF_STYLE: React.CSSProperties = {
 
 export interface MarkdownReactTree {
     root: ReactNode;
-    lastModified: React.RefObject<HTMLSpanElement> | null;
+    lastModified: React.RefObject<HTMLSpanElement | null> | null;
     matchCount: number;
 }
 
@@ -186,11 +186,16 @@ function childrenText(children: RenderTreeElem[]): null | [string, boolean] {
     return [content, modified];
 }
 
-function isReactElement(node: ReactNode): node is ReactElement {
+interface HasChildren {
+    children: ReactNode[];
+    [key: string]: unknown;
+}
+
+function isReactElement(node: ReactNode): node is ReactElement<HasChildren | undefined> {
     return node !== null && typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, '$$typeof');
 }
 
-function lastElementOf(nodes: ReactNode[]): ReactElement | null {
+function lastElementOf(nodes: ReactNode[]): ReactElement<HasChildren | undefined> | null {
     if (nodes.length === 0) {
         return null;
     }
@@ -233,7 +238,7 @@ function alertIcon(kind: AlertKind): ReactElement | null {
 
 class RenderTreeToReact {
     private table: TableState | null;
-    private lastModifiedRef: React.RefObject<HTMLSpanElement> | null;
+    private lastModifiedRef: React.RefObject<HTMLSpanElement | null> | null;
     private readonly footNotes: RenderTreeFootNoteDef[];
     private matchCount: number;
     private readonly fence: FenceRenderer;
