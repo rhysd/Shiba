@@ -3,11 +3,14 @@ import ts from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import security from 'eslint-plugin-security';
 import prettier from 'eslint-config-prettier/flat';
+import importPlugin from 'eslint-plugin-import';
 
 export default ts.config(
     eslint.configs.recommended,
     reactHooks.configs['recommended-latest'],
     security.configs.recommended,
+    importPlugin.flatConfigs.recommended,
+    importPlugin.flatConfigs.typescript,
     ...ts.configs.recommendedTypeChecked,
     prettier,
     {
@@ -80,6 +83,8 @@ export default ts.config(
             '@typescript-eslint/no-deprecated': 'error',
             'react-hooks/exhaustive-deps': 'error',
             'react-hooks/rules-of-hooks': 'error',
+            'import/no-default-export': 'error',
+            'import/no-duplicates': 'error',
         },
     }
 );
