@@ -1,5 +1,6 @@
 {
   "extends": "stylelint-config-standard",
+  "defaultSeverity": "error",
   "rules": {
     "property-no-vendor-prefix": null
   }
