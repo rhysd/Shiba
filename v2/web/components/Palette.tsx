@@ -127,7 +127,7 @@ export function Palette<T extends Item>({
     };
 
     return (
-        <Dialog PaperProps={bodyProps(theme)} onClose={onClose} open scroll="paper">
+        <Dialog slotProps={{ paper: bodyProps(theme) }} onClose={onClose} open scroll="paper">
             <DialogTitle>
                 <InputBase
                     inputProps={{

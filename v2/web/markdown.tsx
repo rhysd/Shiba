@@ -186,16 +186,16 @@ function childrenText(children: RenderTreeElem[]): null | [string, boolean] {
     return [content, modified];
 }
 
-interface HasChildren {
-    children: ReactNode[];
+interface ReactElementProps {
+    children?: ReactNode[];
     [key: string]: unknown;
 }
 
-function isReactElement(node: ReactNode): node is ReactElement<HasChildren | undefined> {
+function isReactElement(node: ReactNode): node is ReactElement<ReactElementProps> {
     return node !== null && typeof node === 'object' && Object.prototype.hasOwnProperty.call(node, '$$typeof');
 }
 
-function lastElementOf(nodes: ReactNode[]): ReactElement<HasChildren | undefined> | null {
+function lastElementOf(nodes: ReactNode[]): ReactElement<ReactElementProps> | null {
     if (nodes.length === 0) {
         return null;
     }
@@ -291,7 +291,7 @@ class RenderTreeToReact {
                     </a>
                 );
 
-                (lastElementOf(children)?.props?.children ?? children).push(backref);
+                (lastElementOf(children)?.props.children ?? children).push(backref);
 
                 return (
                     <li key={idx} id={`user-content-fn-${elem.id}`}>

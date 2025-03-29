@@ -97,10 +97,6 @@ type Action =
           index: number | null;
       }
     | {
-          kind: 'search_index';
-          index: number | null;
-      }
-    | {
           kind: 'search_matcher';
           matcher: SearchMatcher;
       }

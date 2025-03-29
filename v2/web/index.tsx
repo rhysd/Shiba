@@ -7,7 +7,7 @@ import { error } from './log';
 
 declare global {
     interface Window {
-        postShibaMessageFromMain(msg: MessageFromMain): void;
+        postShibaMessageFromMain(msg: MessageFromMain): Promise<void>;
     }
 }
 

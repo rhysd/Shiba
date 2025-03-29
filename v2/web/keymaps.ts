@@ -48,7 +48,7 @@ export interface KeyShortcut {
     description: string;
 }
 
-const KeyShortcuts: { [K in KeyAction]: KeyShortcut } = {
+const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
     ScrollDown: {
         description: 'Scroll down the page by half of window height.',
         dispatch(): void {

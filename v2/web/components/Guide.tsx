@@ -62,10 +62,10 @@ export const Guide: React.FC<Props> = ({ shortcuts, dispatcher }) => {
     const handleClose = (): void => {
         dispatcher.dispatch(closeHelp());
     };
-    const props = blurBackdropProps(theme);
+    const paper = blurBackdropProps(theme);
 
     return (
-        <Dialog open scroll="paper" onClose={handleClose} PaperProps={props}>
+        <Dialog open scroll="paper" onClose={handleClose} slotProps={{ paper }}>
             <DialogTitle style={TITLE_STYLE}>
                 Key Guide
                 <IconButton aria-label="close" style={CLOSE_BUTTON_STYLE} onClick={handleClose}>

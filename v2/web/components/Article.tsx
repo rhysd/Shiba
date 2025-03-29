@@ -18,8 +18,8 @@ function getTitle(elem: HTMLElement): string {
         return text;
     }
 
-    type AltElem = HTMLElement & { alt: string };
-    const alt = (elem.querySelector('*[alt]') as AltElem | null)?.alt;
+    type AltElem = (HTMLElement & { alt: string }) | null;
+    const alt = (elem.querySelector('*[alt]') as AltElem)?.alt;
     if (alt) {
         return alt;
     }
