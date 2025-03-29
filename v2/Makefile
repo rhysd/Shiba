@@ -1,4 +1,4 @@
-TS_SRC := $(wildcard web/*.ts web/*.tsx web/components/*.tsx) web/style.css web/index.html
+TS_SRC := $(wildcard web/*.ts ui/*.tsx ui/components/*.tsx) ui/style.css ui/index.html
 RS_SRC := $(wildcard src/*.rs src/markdown/*.rs src/wry/*.rs) build.rs
 CSS := $(shell find -E src/assets -type f -regex .*\.css$ )
 

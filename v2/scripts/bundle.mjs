@@ -30,7 +30,7 @@ const bundleDest = minify ? 'bundle.min.js' : 'bundle.js';
 const sourcemap = !minify;
 const buildTsOptions = {
     bundle: true,
-    entryPoints: [join('web', 'index.tsx')],
+    entryPoints: [join('ui', 'index.tsx')],
     outfile: join('src', 'assets', bundleDest),
     platform: 'browser',
     target,
@@ -43,7 +43,7 @@ const buildTsOptions = {
 };
 const buildCssOptions = {
     entryPoints: [
-        join('web', 'style.css'),
+        join('ui', 'style.css'),
         join('node_modules', 'github-markdown-css', 'github-markdown.css'),
         join('node_modules', 'highlight.js', 'styles', '*.css'),
     ],
@@ -56,7 +56,7 @@ const buildCssOptions = {
     absWorkingDir,
 };
 
-await copyFile(join(absWorkingDir, 'web', 'index.html'), join(absWorkingDir, 'src', 'assets', 'index.html'));
+await copyFile(join(absWorkingDir, 'ui', 'index.html'), join(absWorkingDir, 'src', 'assets', 'index.html'));
 
 if (watch) {
     const tsCtx = await esbuild.context(buildTsOptions);

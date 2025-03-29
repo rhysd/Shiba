@@ -13,7 +13,7 @@ const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.min.js");
 const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
 const GITHUB_MARKDOWN_CSS: &[u8] =
     include_bytes!("assets/node_modules/github-markdown-css/github-markdown.css");
-const STYLE_CSS: &[u8] = include_bytes!("assets/web/style.css");
+const STYLE_CSS: &[u8] = include_bytes!("assets/ui/style.css");
 const HLJS_DEFAULT_LIGHT_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github.css");
 const HLJS_DEFAULT_DARK_CSS: &[u8] =

@@ -155,7 +155,7 @@ impl<V: TextVisitor, T: TextTokenizer> RawMessageWriter for MarkdownParser<'_, V
     }
 }
 
-// To know the format of JSON value, see type definitions in web/ipc.ts
+// To know the format of JSON value, see type definitions in ui/ipc.ts
 
 enum TableState {
     Head,

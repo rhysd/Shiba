@@ -22,7 +22,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "web/**/*.ts",
-    "web/**/*.tsx"
+    "ui/**/*.ts",
+    "ui/**/*.tsx"
   ]
 }
