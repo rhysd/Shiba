@@ -5,6 +5,7 @@ import ts from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import security from 'eslint-plugin-security';
 import prettier from 'eslint-config-prettier/flat';
+import globals from 'globals';
 
 export default ts.config(
     eslint.configs.recommended,
@@ -68,7 +69,15 @@ export default ts.config(
                     },
                 },
             ],
-            '@typescript-eslint/no-unused-vars': 'error',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                    destructuredArrayIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                },
+            ],
             '@typescript-eslint/no-confusing-void-expression': 'error',
             '@typescript-eslint/non-nullable-type-assertion-style': 'error',
             '@typescript-eslint/return-await': ['error', 'in-try-catch'],
@@ -85,16 +94,18 @@ export default ts.config(
         },
     },
     {
-        files: ['eslint.config.mjs'],
+        files: ['eslint.config.mjs', 'scripts/bundle.mjs'],
         languageOptions: {
             parserOptions: {
                 projectService: false,
-                project: 'tsconfig.eslint.json',
+                project: 'tsconfig.mjs.json',
             },
+            globals: globals.node,
         },
         rules: {
+            'no-console': 'off',
             '@typescript-eslint/naming-convention': 'off',
-            'n/no-extraneous-import': 'off',
+            '@typescript-eslint/no-unsafe-assignment': 'off',
         },
     }
 );

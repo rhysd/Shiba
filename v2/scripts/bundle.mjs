@@ -1,3 +1,5 @@
+// @ts-check
+
 import { join, dirname } from 'node:path';
 import { copyFile, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -32,11 +34,11 @@ const buildTsOptions = {
     bundle: true,
     entryPoints: [join('web', 'index.tsx')],
     outfile: join('src', 'assets', bundleDest),
-    platform: 'browser',
+    platform: /** @type {const} */ ('browser'),
     target,
     minify,
     sourcemap,
-    logLevel: 'info',
+    logLevel: /** @type {const} */ ('info'),
     color: true,
     absWorkingDir,
     metafile,
@@ -48,10 +50,10 @@ const buildCssOptions = {
         join('node_modules', 'highlight.js', 'styles', '*.css'),
     ],
     outdir: join('src', 'assets'),
-    platform: 'browser',
+    platform: /** @type {const} */ ('browser'),
     minify: true,
     sourcemap: false,
-    logLevel: 'info',
+    logLevel: /** @type {const} */ ('info'),
     color: true,
     absWorkingDir,
 };
