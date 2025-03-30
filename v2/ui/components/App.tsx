@@ -15,6 +15,8 @@ import type { GlobalDispatcher } from '../dispatcher';
 
 // Note: `CssBaseline` is not available since it sets `background-color` and prevents vibrant window.
 
+// TODO: Use CSS variables to dynamically change the colorscheme and access theme colors from JavaScript and style.css.
+// https://mui.com/material-ui/customization/css-theme-variables/usage/
 const THEME = createTheme({ colorSchemes: { dark: true } });
 
 interface Props {
