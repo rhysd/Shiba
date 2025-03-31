@@ -109,12 +109,6 @@ pub trait RawMessageWriter {
     fn write_to(self, writer: impl io::Write) -> io::Result<Self::Output>;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Theme {
-    Dark,
-    Light,
-}
-
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct ZoomLevel(u8);

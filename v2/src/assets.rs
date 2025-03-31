@@ -1,5 +1,4 @@
-use crate::config::Config;
-use crate::renderer::Theme;
+use crate::config::{Config, PreviewHighlight};
 use phf::phf_map;
 use std::borrow::Cow;
 use std::fs;
@@ -18,16 +17,12 @@ const HLJS_DEFAULT_LIGHT_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github.css");
 const HLJS_DEFAULT_DARK_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github-dark.css");
-const HLJS_DIMMED_DARK_CSS: &[u8] =
-    include_bytes!("assets/node_modules/highlight.js/styles/github-dark-dimmed.css");
 const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
 
 #[rustfmt::skip]
 const HLJS_CSS_TABLE: phf::Map<&'static str, &'static [u8]> = phf_map! {
     "GitHub"                   => HLJS_DEFAULT_LIGHT_CSS,
-    "Github"                   => HLJS_DEFAULT_LIGHT_CSS,
     "GitHub Dark"              => HLJS_DEFAULT_DARK_CSS,
-    "Github Dark"              => HLJS_DEFAULT_DARK_CSS,
     "A11Y Dark"                => include_bytes!("assets/node_modules/highlight.js/styles/a11y-dark.css"),
     "A11Y Light"               => include_bytes!("assets/node_modules/highlight.js/styles/a11y-light.css"),
     "Agate"                    => include_bytes!("assets/node_modules/highlight.js/styles/agate.css"),
@@ -49,8 +44,7 @@ const HLJS_CSS_TABLE: phf::Map<&'static str, &'static [u8]> = phf_map! {
     "Far"                      => include_bytes!("assets/node_modules/highlight.js/styles/far.css"),
     "Felipec"                  => include_bytes!("assets/node_modules/highlight.js/styles/felipec.css"),
     "Foundation"               => include_bytes!("assets/node_modules/highlight.js/styles/foundation.css"),
-    "Github Dark Dimmed"       => HLJS_DIMMED_DARK_CSS,
-    "GitHub Dark Dimmed"       => HLJS_DIMMED_DARK_CSS,
+    "Github Dark Dimmed"       => include_bytes!("assets/node_modules/highlight.js/styles/github-dark-dimmed.css"),
     "Gml"                      => include_bytes!("assets/node_modules/highlight.js/styles/gml.css"),
     "Googlecode"               => include_bytes!("assets/node_modules/highlight.js/styles/googlecode.css"),
     "Gradient Dark"            => include_bytes!("assets/node_modules/highlight.js/styles/gradient-dark.css"),
@@ -122,14 +116,27 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "ico"  => "image/vnd.microsoft.icon",
 };
 
-fn load_hljs_css(theme_name: &str, default: &'static [u8]) -> &'static [u8] {
-    log::debug!("Loading highlight.js theme {:?}", theme_name);
-    if let Some(css) = HLJS_CSS_TABLE.get(theme_name) {
-        css
-    } else {
-        log::error!("Unknown highlight.js theme name {:?}. See https://highlightjs.org/static/demo/ to know the list", theme_name);
-        default
+fn load_hljs_css(hl: &PreviewHighlight) -> Vec<u8> {
+    fn get(name: &str, default: &'static [u8]) -> &'static [u8] {
+        if let Some(css) = HLJS_CSS_TABLE.get(name) {
+            css
+        } else {
+            log::error!("Unknown highlight.js theme name {name:?}. See https://highlightjs.org/static/demo/ to know the list");
+            default
+        }
     }
+
+    log::debug!("Loading highlight.js theme from config: light={:?} dark={:?}", hl.light, hl.dark);
+    let mut buf = vec![];
+    buf.extend_from_slice(b"@media (prefers-color-scheme: light) {\n");
+    let light = get(&hl.light, HLJS_DEFAULT_LIGHT_CSS);
+    buf.extend_from_slice(light);
+    buf.extend_from_slice(b"}\n");
+    buf.extend_from_slice(b"@media (prefers-color-scheme: dark) {\n");
+    let light = get(&hl.dark, HLJS_DEFAULT_DARK_CSS);
+    buf.extend_from_slice(light);
+    buf.extend_from_slice(b"}\n");
+    buf
 }
 
 fn load_user_css(config: &Config) -> Option<Vec<u8>> {
@@ -163,21 +170,13 @@ fn guess_mime(path: &str) -> &'static str {
 }
 
 pub struct Assets {
-    hljs_css: &'static [u8],
+    hljs_css: Vec<u8>,
     markdown_css: Cow<'static, [u8]>,
 }
 
 impl Assets {
-    pub fn new(config: &Config, theme: Theme) -> Self {
-        // TODO: Currently dark/light CSS theme for highlight.js is selected before app starts. However the theme can
-        // actually change dynamically. Both the dark/light CSS theme needs to be defined in hljs-theme.css using
-        // prefers-color-scheme media query.
-        let hl = config.preview().highlight();
-        let hljs_css = match theme {
-            Theme::Light => load_hljs_css(&hl.light, HLJS_DEFAULT_LIGHT_CSS),
-            Theme::Dark => load_hljs_css(&hl.dark, HLJS_DEFAULT_DARK_CSS),
-        };
-
+    pub fn new(config: &Config) -> Self {
+        let hljs_css = load_hljs_css(config.preview().highlight());
         let markdown_css = if let Some(css) = load_user_css(config) {
             Cow::Owned(css)
         } else {
@@ -196,7 +195,7 @@ impl Assets {
             "/bundle.js"           => BUNDLE_JS.into(),
             "/style.css"           => STYLE_CSS.into(),
             "/github-markdown.css" => self.markdown_css.clone(),
-            "/hljs-theme.css"      => self.hljs_css.into(),
+            "/hljs-theme.css"      => self.hljs_css.clone().into(),
             "/logo.png"            => LOGO_PNG.into(),
             #[cfg(debug_assertions)]
             "/bundle.js.map"       => BUNDLE_JS_MAP.into(),

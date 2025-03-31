@@ -2,8 +2,8 @@ use crate::assets::Assets;
 use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
-    Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer,
-    Theme as RendererTheme, WindowAppearance, ZoomLevel,
+    Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
+    ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
@@ -30,15 +30,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     let ipc_proxy = event_loop.create_proxy();
     let file_drop_proxy = event_loop.create_proxy();
     let navigation_proxy = event_loop.create_proxy();
-    let theme = match window.theme() {
-        Theme::Light => RendererTheme::Light,
-        Theme::Dark => RendererTheme::Dark,
-        t => {
-            log::error!("Unknown window theme: {:?}", t);
-            RendererTheme::Light
-        }
-    };
-    let loader = Assets::new(config, theme);
+    let loader = Assets::new(config);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
     log::debug!("WebView user data directory: {:?}", user_dir);
