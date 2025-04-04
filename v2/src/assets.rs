@@ -2,6 +2,7 @@ use crate::config::{Config, PreviewHighlight};
 use phf::phf_map;
 use std::borrow::Cow;
 use std::fs;
+use std::io::Write;
 
 #[cfg(debug_assertions)]
 const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
@@ -18,6 +19,8 @@ const HLJS_DEFAULT_LIGHT_CSS: &[u8] =
 const HLJS_DEFAULT_DARK_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github-dark.css");
 const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
+const HLJS_DEFAULT_CSS: &[u8] =
+    include_bytes!("assets/node_modules/highlight.js/styles/shiba_default.css");
 
 #[rustfmt::skip]
 const HLJS_CSS_TABLE: phf::Map<&'static str, &'static [u8]> = phf_map! {
@@ -116,27 +119,27 @@ const MIME_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "ico"  => "image/vnd.microsoft.icon",
 };
 
-fn load_hljs_css(hl: &PreviewHighlight) -> Vec<u8> {
-    fn get(name: &str, default: &'static [u8]) -> &'static [u8] {
-        if let Some(css) = HLJS_CSS_TABLE.get(name) {
-            css
-        } else {
-            log::error!("Unknown highlight.js theme name {name:?}. See https://highlightjs.org/static/demo/ to know the list");
+fn load_hljs_css(hl: &PreviewHighlight) -> Cow<'static, [u8]> {
+    if hl.light == "GitHub" && hl.dark == "GitHub Dark" {
+        log::debug!("Loading default highlight.js theme");
+        return HLJS_DEFAULT_CSS.into();
+    }
+
+    fn write(buf: &mut Vec<u8>, mode: &str, name: &str, default: &'static [u8]) {
+        writeln!(buf, "@media (prefers-color-scheme: {mode}) {{").unwrap();
+        let css = HLJS_CSS_TABLE.get(name).copied().unwrap_or_else(|| {
+            log::error!("Unknown name {name:?} for {mode} highlight.js theme . See https://highlightjs.org/static/demo/ to know the list");
             default
-        }
+        });
+        buf.extend_from_slice(css);
+        buf.extend_from_slice(b"}\n");
     }
 
     log::debug!("Loading highlight.js theme from config: light={:?} dark={:?}", hl.light, hl.dark);
     let mut buf = vec![];
-    buf.extend_from_slice(b"@media (prefers-color-scheme: light) {\n");
-    let light = get(&hl.light, HLJS_DEFAULT_LIGHT_CSS);
-    buf.extend_from_slice(light);
-    buf.extend_from_slice(b"}\n");
-    buf.extend_from_slice(b"@media (prefers-color-scheme: dark) {\n");
-    let light = get(&hl.dark, HLJS_DEFAULT_DARK_CSS);
-    buf.extend_from_slice(light);
-    buf.extend_from_slice(b"}\n");
-    buf
+    write(&mut buf, "light", &hl.light, HLJS_DEFAULT_LIGHT_CSS);
+    write(&mut buf, "dark", &hl.dark, HLJS_DEFAULT_DARK_CSS);
+    buf.into()
 }
 
 fn load_user_css(config: &Config) -> Option<Vec<u8>> {
@@ -170,7 +173,7 @@ fn guess_mime(path: &str) -> &'static str {
 }
 
 pub struct Assets {
-    hljs_css: Vec<u8>,
+    hljs_css: Cow<'static, [u8]>,
     markdown_css: Cow<'static, [u8]>,
 }
 
@@ -195,7 +198,7 @@ impl Assets {
             "/bundle.js"           => BUNDLE_JS.into(),
             "/style.css"           => STYLE_CSS.into(),
             "/github-markdown.css" => self.markdown_css.clone(),
-            "/hljs-theme.css"      => self.hljs_css.clone().into(),
+            "/hljs-theme.css"      => self.hljs_css.clone(),
             "/logo.png"            => LOGO_PNG.into(),
             #[cfg(debug_assertions)]
             "/bundle.js.map"       => BUNDLE_JS_MAP.into(),

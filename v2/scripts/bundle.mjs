@@ -15,12 +15,26 @@ Options:
     process.exit(0);
 }
 
-console.log(process.argv);
+console.log('Arguments:', process.argv);
+
+const absWorkingDir = dirname(dirname(fileURLToPath(import.meta.url)));
+const hljsDefaultCssPlugin = {
+    name: 'hljs-default-css',
+    setup(build) {
+        build.onEnd(async result => {
+            const stylesDir = join(absWorkingDir, 'src', 'assets', 'node_modules', 'highlight.js', 'styles');
+            const light = await readFile(join(stylesDir, 'github.css'), 'utf8');
+            const dark = await readFile(join(stylesDir, 'github-dark.css'), 'utf8');
+            const content = `@media(prefers-color-scheme:light){\n${light}}\n@media(prefers-color-scheme:dark){\n${dark}}\n`;
+            await writeFile(join(stylesDir, 'shiba_default.css'), content, 'utf8');
+            console.log('Generated shiba_default.css');
+        });
+    },
+};
 
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
 const metafile = process.argv.includes('--metafile');
-const absWorkingDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const {
     compilerOptions: { target },
 } = JSON.parse(await readFile(join(absWorkingDir, 'tsconfig.json'), 'utf8'));
@@ -54,6 +68,7 @@ const buildCssOptions = {
     logLevel: 'info',
     color: true,
     absWorkingDir,
+    plugins: [hljsDefaultCssPlugin],
 };
 
 await copyFile(join(absWorkingDir, 'ui', 'index.html'), join(absWorkingDir, 'src', 'assets', 'index.html'));
