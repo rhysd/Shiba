@@ -278,7 +278,19 @@ impl Renderer for WebViewRenderer {
                 return None;
             }
         };
+
+        #[cfg(not(target_os = "macos"))]
         let LogicalSize { width, height } = self.window.inner_size().to_logical(scale);
+        #[cfg(target_os = "macos")]
+        let (width, height) = {
+            // The `inner_size` method does not work on macOS because it returns the size when the window was created
+            // even if it is resized afterwards. We use the size of WebView frame instead because it is the same as the
+            // window inner size in case of this application.
+            use wry::WebViewExtMacOS;
+            let size = self.webview.webview().frame().size;
+            (size.width, size.height)
+        };
+
         let fullscreen = self.window.fullscreen().is_some();
         let zoom_level = self.zoom_level;
         let always_on_top = self.always_on_top;
