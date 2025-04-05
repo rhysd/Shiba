@@ -125,25 +125,24 @@ fn load_hljs_css(hl: &PreviewHighlight) -> Cow<'static, [u8]> {
         return HLJS_DEFAULT_CSS.into();
     }
 
-    fn get(name: &str, default: &'static [u8]) -> &'static [u8] {
-        HLJS_CSS_TABLE.get(name).copied().unwrap_or_else(|| {
-            log::error!("Unknown name {name:?} for highlight.js theme. See https://highlightjs.org/static/demo/ to know the list");
-            default
-        })
-    }
-
+    log::debug!("Loading highlight.js theme from config: light={:?} dark={:?}", hl.light, hl.dark);
     if hl.light == hl.dark {
-        log::debug!("Loading highlight.js theme {:?}", hl.light);
-        return get(&hl.light, HLJS_DEFAULT_LIGHT_CSS).into();
+        if let Some(css) = HLJS_CSS_TABLE.get(&hl.light).copied() {
+            log::debug!("Loading highlight.js theme {:?}", hl.light);
+            return css.into();
+        }
     }
 
     fn write(buf: &mut Vec<u8>, mode: &str, name: &str, default: &'static [u8]) {
         writeln!(buf, "@media (prefers-color-scheme: {mode}) {{").unwrap();
-        buf.extend_from_slice(get(name, default));
+        let css = HLJS_CSS_TABLE.get(name).copied().unwrap_or_else(|| {
+            log::error!("Unknown name {name:?} for highlight.js {mode:?} theme. See https://highlightjs.org/static/demo/ to know the list");
+            default
+        });
+        buf.extend_from_slice(css);
         buf.extend_from_slice(b"}\n");
     }
 
-    log::debug!("Loading highlight.js theme from config: light={:?} dark={:?}", hl.light, hl.dark);
     let mut buf = vec![];
     write(&mut buf, "light", &hl.light, HLJS_DEFAULT_LIGHT_CSS);
     write(&mut buf, "dark", &hl.dark, HLJS_DEFAULT_DARK_CSS);
