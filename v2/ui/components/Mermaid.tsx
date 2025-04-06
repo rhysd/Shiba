@@ -7,7 +7,7 @@ export interface Props {
 }
 
 export const Mermaid: React.FC<Props> = ({ svg, bindFn }) => {
-    const ref = useRef<HTMLDivElement | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (ref.current !== null && bindFn) {

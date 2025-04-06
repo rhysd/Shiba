@@ -47,8 +47,8 @@ interface Props {
 }
 
 export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => {
-    const counterElem = useRef<HTMLDivElement | null>(null);
-    const inputElem = useRef<HTMLInputElement | null>(null);
+    const counterElem = useRef<HTMLDivElement>(null);
+    const inputElem = useRef<HTMLInputElement>(null);
     const [debId, setDebId] = useState<number | null>(null);
 
     useEffect(() => {
@@ -80,19 +80,24 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => 
         setDebId(id);
     };
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            handleNext();
-        } else if (e.key === 'Enter' && e.shiftKey) {
-            handlePrev();
-        } else if (e.key === 'Escape') {
-            // Note: This `blur()` call is a workaround for Safari.
-            // Safari has a bug to scroll the page to the input element automatically.
-            // To prevent this issue, removing the focus before unmounting is needed.
-            // https://github.com/sweetalert2/sweetalert2/issues/2088
-            e.currentTarget.blur();
-            handleClose();
-        } else {
-            return;
+        switch (e.key) {
+            case 'Enter':
+                if (e.shiftKey) {
+                    handlePrev();
+                } else {
+                    handleNext();
+                }
+                break;
+            case 'Escape':
+                // Note: This `blur()` call is a workaround for Safari.
+                // Safari has a bug to scroll the page to the input element automatically.
+                // To prevent this issue, removing the focus before unmounting is needed.
+                // https://github.com/sweetalert2/sweetalert2/issues/2088
+                e.currentTarget.blur();
+                handleClose();
+                break;
+            default:
+                return;
         }
         e.preventDefault();
     };

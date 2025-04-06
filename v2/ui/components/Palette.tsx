@@ -55,7 +55,7 @@ export function Palette<T extends Item>({
     const theme: Theme = useTheme();
     const [query, setQuery] = useState('');
     const [unadjustedIndex, setIndex] = useState(0);
-    const focusedItemRef = useRef<HTMLDivElement | null>(null);
+    const focusedItemRef = useRef<HTMLDivElement>(null);
     items = query === '' ? items : items.filter(h => h.text.toLowerCase().includes(query));
     const index = unadjustedIndex < items.length ? unadjustedIndex : items.length > 0 ? items.length - 1 : 0;
 
