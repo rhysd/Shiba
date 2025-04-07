@@ -22,6 +22,9 @@ const hljsDefaultCssPlugin = {
     name: 'hljs-default-css',
     setup(build) {
         build.onEnd(async result => {
+            if (result.errors.length > 0) {
+                return;
+            }
             const stylesDir = join(absWorkingDir, 'src', 'assets', 'node_modules', 'highlight.js', 'styles');
             const light = await readFile(join(stylesDir, 'github.css'), 'utf8');
             const dark = await readFile(join(stylesDir, 'github-dark.css'), 'utf8');

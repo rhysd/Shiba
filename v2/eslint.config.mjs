@@ -4,31 +4,44 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import security from 'eslint-plugin-security';
 import prettier from 'eslint-config-prettier/flat';
 import importPlugin from 'eslint-plugin-import';
+import globals from 'globals';
 
 export default ts.config(
     eslint.configs.recommended,
-    reactHooks.configs['recommended-latest'],
-    security.configs.recommended,
-    importPlugin.flatConfigs.recommended,
-    importPlugin.flatConfigs.typescript,
-    ...ts.configs.recommendedTypeChecked,
     prettier,
     {
+        rules: {
+            'prefer-spread': 'off',
+            'no-return-await': 'off',
+            eqeqeq: 'error',
+            'require-await': 'error',
+            'no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                },
+            ],
+        },
+    },
+    {
+        files: ['ui/**/*.ts', 'ui/**/*.tsx'],
+        extends: [
+            reactHooks.configs['recommended-latest'],
+            security.configs.recommended,
+            importPlugin.flatConfigs.recommended,
+            importPlugin.flatConfigs.typescript,
+            ...ts.configs.recommendedTypeChecked,
+        ],
         languageOptions: {
             parserOptions: {
                 projectService: true,
                 project: 'tsconfig.json',
             },
         },
-    },
-    {
         rules: {
-            'prefer-spread': 'off',
             'no-unused-vars': 'off',
-            'no-return-await': 'off',
             'security/detect-object-injection': 'off',
-            eqeqeq: 'error',
-            'require-await': 'error',
             'no-console': 'error',
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
@@ -85,6 +98,14 @@ export default ts.config(
             'react-hooks/rules-of-hooks': 'error',
             'import/no-default-export': 'error',
             'import/no-duplicates': 'error',
+        },
+    },
+    {
+        files: ['scripts/bundle.mjs'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            globals: globals.nodeBuiltin,
         },
     }
 );
