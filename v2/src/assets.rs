@@ -244,13 +244,20 @@ mod tests {
             "/logo.png",
             #[cfg(debug_assertions)]
             "/bundle.js.map",
-            #[cfg(target_os = "windows")]
-            "/favicon.ico",
         ] {
             let (bytes, mime) = assets.load(path);
             assert!(bytes.is_some(), "path={path:?}");
             assert_ne!(mime, "application/octet-stream", "path={path:?}");
         }
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn load_favicon() {
+        let assets = Assets::new(&Config::default());
+        let (bytes, mime) = assets.load("/favicon.ico");
+        assert!(bytes.is_none());
+        assert_eq!(mime, "image/vnd.microsoft.icon");
     }
 
     #[test]
@@ -265,6 +272,14 @@ mod tests {
 
         assert!(bytes.is_some());
         assert_eq!(mime, "image/png");
+    }
+
+    #[test]
+    fn load_unknown_resource() {
+        let assets = Assets::new(&Config::default());
+        let (bytes, mime) = assets.load("this-file-does-not-exist.js");
+        assert!(bytes.is_none());
+        assert_eq!(mime, "text/javascript;charset=UTF-8");
     }
 
     #[test]
