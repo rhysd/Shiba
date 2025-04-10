@@ -226,3 +226,55 @@ impl Assets {
         (Some(body), mime)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn load_bundled_resources() {
+        let assets = Assets::new(&Config::default());
+
+        for path in [
+            "/index.html",
+            "/bundle.js",
+            "/style.css",
+            "/github-markdown.css",
+            "/hljs-theme.css",
+            "/logo.png",
+            #[cfg(debug_assertions)]
+            "/bundle.js.map",
+            #[cfg(target_os = "windows")]
+            "/favicon.ico",
+        ] {
+            let (bytes, mime) = assets.load(path);
+            assert!(bytes.is_some(), "path={path:?}");
+            assert_ne!(mime, "application/octet-stream", "path={path:?}");
+        }
+    }
+
+    #[test]
+    fn load_dynamic_resource() {
+        let assets = Assets::new(&Config::default());
+
+        #[cfg(not(target_os = "windows"))]
+        let path = "assets/shibainu.png";
+        #[cfg(target_os = "windows")]
+        let path = r#"assets\shibainu.png"#;
+        let (bytes, mime) = assets.load(path);
+
+        assert!(bytes.is_some());
+        assert_eq!(mime, "image/png");
+    }
+
+    #[test]
+    fn load_hljs_css() {
+        let assets = Assets::new(&Config::default());
+        let (bytes, mime) = assets.load("/hljs-theme.css");
+        assert_eq!(mime, "text/css;charset=UTF-8");
+
+        let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
+        assert!(css.contains("Theme: GitHub"));
+        assert!(css.contains("Theme: GitHub Dark"));
+    }
+}
