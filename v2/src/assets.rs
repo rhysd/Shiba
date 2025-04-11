@@ -230,6 +230,7 @@ impl Assets {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::Options;
 
     #[test]
     fn load_bundled_resources() {
@@ -291,5 +292,61 @@ mod tests {
         let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
         assert!(css.contains("Theme: GitHub"));
         assert!(css.contains("Theme: GitHub Dark"));
+    }
+
+    #[test]
+    fn load_github_markdown_css() {
+        let assets = Assets::new(&Config::default());
+        let css = assets.markdown_css.as_ref();
+        assert!(css.starts_with(b".markdown-body{"));
+    }
+
+    #[test]
+    fn load_user_css() {
+        #[cfg(not(target_os = "windows"))]
+        let dir = "src/testdata/assets/config/user_css";
+        #[cfg(target_os = "windows")]
+        let dir = r#"src\testdata\assets\config\user_css"#;
+        let opts = Options { config_dir: Some(dir.into()), ..Default::default() };
+        let config = Config::load(opts).unwrap();
+        let assets = Assets::new(&config);
+        let css = assets.markdown_css.as_ref();
+        assert!(css.starts_with(b"/* this is test CSS file */"));
+    }
+
+    #[test]
+    fn load_non_default_hljs_themes() {
+        #[cfg(not(target_os = "windows"))]
+        let dir = "src/testdata/assets/config/theme";
+        #[cfg(target_os = "windows")]
+        let dir = r#"src\testdata\assets\config\theme"#;
+        let opts = Options { config_dir: Some(dir.into()), ..Default::default() };
+        let assets = Assets::new(&Config::load(opts).unwrap());
+        let (bytes, _) = assets.load("/hljs-theme.css");
+
+        let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
+        for part in [
+            "StackOverflow Dark",
+            "@media (prefers-color-scheme: dark)",
+            "StackOverflow Light",
+            "@media (prefers-color-scheme: light)",
+        ] {
+            assert!(css.contains(part), "CSS does not contain {:?}: {}", part, css);
+        }
+    }
+
+    #[test]
+    fn load_single_hljs_theme() {
+        #[cfg(not(target_os = "windows"))]
+        let dir = "src/testdata/assets/config/single_theme";
+        #[cfg(target_os = "windows")]
+        let dir = r#"src\testdata\assets\config\single_theme"#;
+        let opts = Options { config_dir: Some(dir.into()), ..Default::default() };
+        let assets = Assets::new(&Config::load(opts).unwrap());
+        let (bytes, _) = assets.load("/hljs-theme.css");
+        let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
+        assert!(!css.contains("@media (prefers-color-scheme: dark)"), "{css}");
+        assert!(!css.contains("@media (prefers-color-scheme: light)"), "{css}");
+        assert!(css.contains("Theme: Default"), "{css}");
     }
 }

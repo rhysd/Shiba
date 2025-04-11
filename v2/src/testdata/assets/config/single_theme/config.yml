@@ -1,0 +1,20 @@
+watch:
+  file_extensions:
+  debounce_throttle: 50
+keymaps:
+search:
+  matcher: SmartCase
+window:
+  restore: false
+  theme: System
+  always_on_top: false
+  default_size: null
+  menu_bar: false
+preview:
+  highlight:
+    light: Default
+    dark: Default
+  css: null
+  recent_files: 0
+dialog:
+  default_dir: null
