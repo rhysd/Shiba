@@ -434,11 +434,15 @@ mod tests {
     use super::*;
     use std::env;
 
-    const EXPECTED_CONFIG: &str = include_str!("testdata/config/Shiba/config.yml");
-    #[cfg(not(target_os = "windows"))]
-    const TEST_CONFIG_DIR: &str = "src/testdata/config/Shiba";
-    #[cfg(target_os = "windows")]
-    const TEST_CONFIG_DIR: &str = r"src\testdata\config\Shiba";
+    const CONFIG_OK: &str = include_str!("testdata/config/ok/config.yml");
+
+    fn test_config_dir(name: &str) -> PathBuf {
+        #[cfg(not(target_os = "windows"))]
+        const ROOT: &str = "src/testdata/config";
+        #[cfg(target_os = "windows")]
+        const ROOT: &str = r"src\testdata\config";
+        Path::new(ROOT).join(name)
+    }
 
     struct Env<'a>((&'a str, Option<String>));
 
@@ -499,18 +503,18 @@ mod tests {
 
     #[test]
     fn load_config_from_option_path() {
-        let expected: UserConfig = serde_yaml::from_str(EXPECTED_CONFIG).unwrap();
-        let dir = Path::new(TEST_CONFIG_DIR);
+        let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
+        let dir = test_config_dir("ok");
         let opts = Options {
-            config_dir: Some(dir.to_path_buf()),
-            data_dir: Some(dir.to_path_buf()),
+            config_dir: Some(dir.clone()),
+            data_dir: Some(dir.clone()),
             ..Default::default()
         };
 
         let cfg = Config::load(opts).unwrap();
         assert!(!cfg.debug());
-        assert_eq!(cfg.data_dir().path(), Some(dir));
-        assert_eq!(cfg.config_dir(), Some(dir));
+        assert_eq!(cfg.data_dir().path(), Some(dir.as_path()));
+        assert_eq!(cfg.config_dir(), Some(dir.as_path()));
         assert_eq!(expected, cfg.user_config);
     }
 
@@ -518,7 +522,7 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn load_config_from_xdg_config_dir() {
-        let expected: UserConfig = serde_yaml::from_str(EXPECTED_CONFIG).unwrap();
+        let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
         // XDG environment variable must be absolute paths
         let mut dir = env::current_dir().unwrap();
         dir.push("src");
@@ -538,16 +542,42 @@ mod tests {
 
     #[test]
     fn reflect_option_in_config() {
-        let dir = Path::new(TEST_CONFIG_DIR);
+        let dir = test_config_dir("ok");
         let opts = Options {
             debug: true,
             theme: Some(ThemeOption::Light), // Theme in config is overwritten
-            config_dir: Some(dir.to_path_buf()),
-            data_dir: Some(dir.to_path_buf()),
+            config_dir: Some(dir.clone()),
+            data_dir: Some(dir.clone()),
             ..Default::default()
         };
         let cfg = Config::load(opts).unwrap();
         assert!(cfg.debug());
         assert_eq!(cfg.window().theme, WindowTheme::Light);
+    }
+
+    #[test]
+    fn unknown_field_in_config() {
+        let dir = test_config_dir("unknown_field");
+        let opts = Options { config_dir: Some(dir), ..Default::default() };
+        let err = Config::load(opts).unwrap_err();
+        let msg = format!("{}", err.source().unwrap());
+        assert!(msg.contains("unknown field `unknown_field`"), "message={msg:?}");
+    }
+
+    #[test]
+    fn missing_field_in_config() {
+        let dir = test_config_dir("missing_field");
+        let opts = Options { config_dir: Some(dir), ..Default::default() };
+        let err = Config::load(opts).unwrap_err();
+        let msg = format!("{}", err.source().unwrap());
+        assert!(msg.contains("missing field"), "message={msg:?}");
+    }
+
+    #[test]
+    fn no_user_config() {
+        let dir = test_config_dir("no_config");
+        let opts = Options { config_dir: Some(dir), ..Default::default() };
+        let cfg = Config::load(opts).unwrap();
+        assert_eq!(cfg.user_config, UserConfig::default()); // When no config is found, load the default config
     }
 }
