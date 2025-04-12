@@ -97,6 +97,7 @@ impl FileExtensions {
 
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Watch {
     file_extensions: FileExtensions,
     debounce_throttle: u32,
@@ -130,6 +131,7 @@ pub enum SearchMatcher {
 
 #[non_exhaustive]
 #[derive(Deserialize, Serialize, Default, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Search {
     matcher: SearchMatcher,
 }
@@ -143,6 +145,7 @@ pub enum WindowTheme {
 }
 
 #[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct WindowSize {
     pub width: u32,
     pub height: u32,
@@ -150,6 +153,7 @@ pub struct WindowSize {
 
 #[non_exhaustive]
 #[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Window {
     pub restore: bool,
     pub theme: WindowTheme,
@@ -159,6 +163,7 @@ pub struct Window {
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct PreviewHighlight {
     pub dark: String,
     pub light: String,
@@ -172,6 +177,7 @@ impl Default for PreviewHighlight {
 
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Preview {
     highlight: PreviewHighlight,
     css: Option<PathBuf>,
@@ -226,6 +232,7 @@ fn resolve_path<'de, D: Deserializer<'de>>(
 }
 
 #[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Dialog {
     #[serde(deserialize_with = "resolve_path")]
     default_dir: Option<PathBuf>,
@@ -253,6 +260,7 @@ impl Dialog {
 
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct UserConfig {
     watch: Watch,
     keymaps: HashMap<String, KeyAction>,
