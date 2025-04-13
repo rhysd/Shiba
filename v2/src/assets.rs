@@ -19,8 +19,7 @@ const HLJS_DEFAULT_LIGHT_CSS: &[u8] =
 const HLJS_DEFAULT_DARK_CSS: &[u8] =
     include_bytes!("assets/node_modules/highlight.js/styles/github-dark.css");
 const LOGO_PNG: &[u8] = include_bytes!("assets/logo.png");
-const HLJS_DEFAULT_CSS: &[u8] =
-    include_bytes!("assets/node_modules/highlight.js/styles/shiba_default.css");
+const HLJS_DEFAULT_CSS: &[u8] = include_bytes!("assets/ui/hljs_default.css");
 
 #[rustfmt::skip]
 const HLJS_CSS_TABLE: phf::Map<&'static str, &'static [u8]> = phf_map! {

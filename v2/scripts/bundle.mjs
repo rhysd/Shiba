@@ -11,15 +11,15 @@ Options:
 --watch    : Watch file changes and bundle changed files automatically
 --minify   : Minify the bundled files
 --metafile : Output the bundle metadata file as meta.json
+--help     : Show this help
 `);
     process.exit(0);
 }
 
-console.log('Arguments:', process.argv);
-
 const absWorkingDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const hljsDefaultCssPlugin = {
     name: 'hljs-default-css',
+
     setup(build) {
         build.onEnd(async result => {
             if (result.errors.length > 0) {
@@ -29,12 +29,14 @@ const hljsDefaultCssPlugin = {
             const light = await readFile(join(stylesDir, 'github.css'), 'utf8');
             const dark = await readFile(join(stylesDir, 'github-dark.css'), 'utf8');
             const content = `@media(prefers-color-scheme:light){\n${light}}\n@media(prefers-color-scheme:dark){\n${dark}}\n`;
-            await writeFile(join(stylesDir, 'shiba_default.css'), content, 'utf8');
-            console.log('Generated shiba_default.css');
+            const out = join(absWorkingDir, 'src', 'assets', 'ui', 'hljs_default.css');
+            await writeFile(out, content, 'utf8');
+            console.log('Generated ' + out);
         });
     },
 };
 
+console.log('Arguments:', process.argv);
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
 const metafile = process.argv.includes('--metafile');
