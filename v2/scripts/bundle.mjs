@@ -89,7 +89,7 @@ if (watch) {
     if (metafile) {
         await writeFile('meta.json', JSON.stringify(ts.metafile));
         console.log(
-            'Meta file for the JS bundle was output to meta.json. Analyze it at https://esbuild.github.io/analyze/'
+            'Meta file for the JS bundle was output to meta.json. Analyze it at https://esbuild.github.io/analyze/',
         );
     }
 }
