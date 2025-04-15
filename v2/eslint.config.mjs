@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import security from 'eslint-plugin-security';
 import prettier from 'eslint-config-prettier/flat';
 import importPlugin from 'eslint-plugin-import';
+import n from 'eslint-plugin-n';
 import globals from 'globals';
 
 export default ts.config(
@@ -102,10 +103,20 @@ export default ts.config(
     },
     {
         files: ['scripts/bundle.mjs'],
+        extends: [n.configs['flat/recommended']],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'module',
             globals: globals.nodeBuiltin,
+        },
+        rules: {
+            'n/no-process-exit': 'off',
+            'n/handle-callback-err': 'error',
+            'n/prefer-promises/fs': 'error',
+            'n/prefer-global/buffer': ['error', 'never'],
+            'n/prefer-global/process': ['error', 'never'],
+            'n/prefer-node-protocol': 'error',
+            'n/no-sync': 'error',
         },
     }
 );

@@ -54,6 +54,7 @@
     "eslint-config-prettier": "^10.1.1",
     "eslint-import-resolver-typescript": "^4.3.2",
     "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-n": "^17.17.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-security": "^3.0.1",
     "globals": "^16.0.0",

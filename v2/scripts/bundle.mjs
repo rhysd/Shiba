@@ -1,6 +1,7 @@
 import { join, dirname } from 'node:path';
 import { copyFile, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import process from 'node:process';
 import esbuild from 'esbuild';
 
 if (process.argv.includes('--help')) {
