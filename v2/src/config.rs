@@ -581,4 +581,22 @@ mod tests {
         let cfg = Config::load(opts).unwrap();
         assert_eq!(cfg.user_config, UserConfig::default()); // When no config is found, load the default config
     }
+
+    #[test]
+    fn symlink_config_dir() {
+        let dir = test_config_dir("symlink_dir");
+        let opts = Options { config_dir: Some(dir), ..Default::default() };
+        let cfg = Config::load(opts).unwrap();
+        let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
+        assert_eq!(cfg.user_config, expected); // When no config is found, load the default config
+    }
+
+    #[test]
+    fn symlink_config_file() {
+        let dir = test_config_dir("symlink_config");
+        let opts = Options { config_dir: Some(dir), ..Default::default() };
+        let cfg = Config::load(opts).unwrap();
+        let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
+        assert_eq!(cfg.user_config, expected); // When no config is found, load the default config
+    }
 }
