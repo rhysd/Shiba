@@ -286,30 +286,30 @@ impl Default for UserConfig {
 impl UserConfig {
     const DEFAULT_CONFIG_YAML: &'static str = include_str!("assets/default_config.yml");
 
-    fn load(path: impl Into<PathBuf>) -> Result<Self> {
-        let mut path = path.into();
-
-        fn resolve_symlink(path: &Path) -> Cow<'_, Path> {
-            if let Ok(m) = path.symlink_metadata() {
-                if m.is_symlink() {
-                    if let Ok(p) = path.read_link() {
-                        return p.into();
-                    }
-                }
-            }
-            path.into()
-        }
+    fn load(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+        let mut path = fs::read_link(path).unwrap_or_else(|_| path.to_path_buf());
 
         if path.is_dir() {
-            for file in CONFIG_FILE_NAMES {
-                path.push(file);
+            for file_name in CONFIG_FILE_NAMES {
+                path.push(file_name);
 
-                let file = resolve_symlink(&path);
+                let file = if let Ok(path) = fs::read_link(&path) {
+                    Cow::Owned(path)
+                } else {
+                    Cow::Borrowed(&path)
+                };
+                let file = file.as_ref();
 
-                match fs::read(file.as_ref()) {
-                    Ok(bytes) =>
-                        return serde_yaml::from_slice(&bytes)
-                            .with_context(|| format!("Could not parse a configuration file at {file:?}. To reset config file, try --generate-config-file")),
+                match fs::read(file) {
+                    Ok(bytes) => {
+                        let config = serde_yaml::from_slice(&bytes)
+                            .with_context(|| {
+                                format!("Could not parse a configuration file at {file:?}. To reset config file, try --generate-config-file")
+                            })?;
+                        log::debug!("Loaded the user configuration from {file:?}");
+                        return Ok(config);
+                    }
                     Err(err) => log::debug!("Could not read config file from {file:?}: {err}"),
                 }
 
