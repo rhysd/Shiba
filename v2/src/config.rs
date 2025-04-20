@@ -289,17 +289,28 @@ impl UserConfig {
     fn load(path: impl Into<PathBuf>) -> Result<Self> {
         let mut path = path.into();
 
+        fn resolve_symlink(path: &Path) -> Cow<'_, Path> {
+            if let Ok(m) = path.symlink_metadata() {
+                if m.is_symlink() {
+                    if let Ok(p) = path.read_link() {
+                        return p.into();
+                    }
+                }
+            }
+            path.into()
+        }
+
         if path.is_dir() {
             for file in CONFIG_FILE_NAMES {
                 path.push(file);
 
-                match fs::read(&path) {
+                let file = resolve_symlink(&path);
+
+                match fs::read(file.as_ref()) {
                     Ok(bytes) =>
                         return serde_yaml::from_slice(&bytes)
-                            .with_context(|| format!("Could not parse a configuration file at {:?}. To reset config file, try --generate-config-file", path)),
-                    Err(err) => {
-                        log::debug!("Could not read config file from {:?}: {}", path, err);
-                    }
+                            .with_context(|| format!("Could not parse a configuration file at {file:?}. To reset config file, try --generate-config-file")),
+                    Err(err) => log::debug!("Could not read config file from {file:?}: {err}"),
                 }
 
                 path.pop();
