@@ -528,6 +528,7 @@ mod tests {
         dir.push("src");
         dir.push("testdata");
         dir.push("config");
+        dir.push("xdg");
 
         let _config_env = Env::new("XDG_CONFIG_HOME", &dir.to_string_lossy());
         let _data_env = Env::new("XDG_DATA_HOME", &dir.to_string_lossy());

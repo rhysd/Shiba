@@ -1,0 +1,29 @@
+watch:
+  file_extensions:
+    - md
+  debounce_throttle: 200
+
+keymaps:
+  Q: Quit
+
+search:
+  matcher: CaseSensitive
+
+window:
+  restore: true
+  theme: Dark
+  always_on_top: true
+  default_size:
+    width: 100
+    height: 200
+  menu_bar: true
+
+preview:
+  highlight:
+    light: Test Light
+    dark: Test Dark
+  css: /path/to/somewhere.css
+  recent_files: 1000
+
+dialog:
+  default_dir: /path/to/default_dir/
