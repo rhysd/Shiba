@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 shiba-preview = { path = "..", features = ["__bench"] }
 libfuzzer-sys = "0.4"
-arbitrary = { version = "1.3.2", default-features = false }
+arbitrary = { version = "1.4.1", default-features = false }
 
 # Prevent this from interfering with workspaces
 [workspace]
