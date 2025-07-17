@@ -1,114 +1,112 @@
 html {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji';
-    font-size: 14px;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 14px;
 }
 
 #shiba-root {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 main {
-    width: 100%;
-    height: 100%;
-    display: flex;
+  width: 100%;
+  height: 100%;
+  display: flex;
 }
 
 nav {
-    height: 100%;
-    min-width: 200px;
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+  height: 100%;
+  min-width: 200px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 article {
-    height: 100%;
-    box-sizing: border-box;
-    padding: 16px;
-    min-width: 273px;
-    overflow: auto;
-    flex-grow: 7;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  min-width: 273px;
+  overflow: auto;
+  flex-grow: 7;
 }
 
 /* Both <pre> from github-markdown.css and <code> from highlight.js are trying to add 1em padding. */
 pre code.hljs {
-    padding: 0;
+  padding: 0;
 }
 
 .tippy-content {
-    font-size: 0.8rem;
+  font-size: 0.8rem;
 }
 
 .code-fence-math {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 .math-expr-block {
-    display: flex;
-    justify-content: center;
-    margin: 16px;
+  display: flex;
+  justify-content: center;
+  margin: 16px;
 }
 
 .math-expr-inline {
-    display: inline;
+  display: inline;
 }
 
 /* `scrollIntoView` does not work when `display: none` is set */
 .last-modified-marker {
-    width: 0;
-    height: 0;
+  width: 0;
+  height: 0;
 }
 
 @media (prefers-color-scheme: light) {
-    body {
-        color-scheme: light;
-    }
+  body {
+    color-scheme: light;
+  }
 
-    .search-text-start,
-    .search-text {
-        background-color: #fffe54;
-    }
+  .search-text-start,
+  .search-text {
+    background-color: #fffe54;
+  }
 
-    .search-text-current-start,
-    .search-text-current {
-        background-color: #ef9a4a;
-    }
+  .search-text-current-start,
+  .search-text-current {
+    background-color: #ef9a4a;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
-    body {
-        color-scheme: dark;
-    }
+  body {
+    color-scheme: dark;
+  }
 
-    .search-text-start,
-    .search-text {
-        color: #fff;
-        background-color: #926821;
-    }
+  .search-text-start,
+  .search-text {
+    color: #fff;
+    background-color: #926821;
+  }
 
-    .search-text-current-start,
-    .search-text-current {
-        color: #fff;
-        background-color: #ad531f;
-    }
+  .search-text-current-start,
+  .search-text-current {
+    color: #fff;
+    background-color: #ad531f;
+  }
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
