@@ -4,6 +4,7 @@
     clippy::print_stderr,
     clippy::undocumented_unsafe_blocks
 )]
+#![allow(clippy::uninlined_format_args)]
 
 mod assets;
 mod cli;
