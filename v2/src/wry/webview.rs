@@ -35,7 +35,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
-    let mut builder = WebViewBuilder::with_web_context(&mut context);
+    let mut builder = WebViewBuilder::new_with_web_context(&mut context);
 
     builder = builder
         .with_url("shiba://localhost/index.html")
