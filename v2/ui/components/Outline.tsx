@@ -14,7 +14,7 @@ function collectHeadings(): Heading[] {
     const elems: NodeListOf<HTMLHeadingElement> = document.querySelectorAll('article > h1,h2,h3,h4,h5,h6');
     for (const elem of elems) {
         const prefix = '#'.repeat(parseInt(elem.tagName.slice(1), 10));
-        const text = elem.textContent ?? '';
+        const text = elem.textContent;
         ret.push({ prefix, text, elem });
     }
     return ret;
