@@ -37,7 +37,7 @@ export default ts.config(
         languageOptions: {
             parserOptions: {
                 projectService: true,
-                project: 'tsconfig.json',
+                tsconfigRootDir: import.meta.dirname,
             },
         },
         rules: {
@@ -118,5 +118,5 @@ export default ts.config(
             'n/prefer-node-protocol': 'error',
             'n/no-sync': 'error',
         },
-    }
+    },
 );
