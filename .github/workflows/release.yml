@@ -29,7 +29,7 @@ jobs:
       body: ${{ steps.get_info.outputs.body }}
       prerelease: ${{ steps.get_info.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Collect information
         id: get_info
         shell: bash
@@ -47,14 +47,14 @@ jobs:
           echo "prerelease=${{ github.event_name == 'workflow_dispatch' }}" >> "$GITHUB_OUTPUT"
   release-mac:
     name: Build and upload macOS package
-    runs-on: macos-13
+    runs-on: macos-15-intel
     needs: [info]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
@@ -90,9 +90,9 @@ jobs:
     runs-on: windows-latest
     needs: [info]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
@@ -127,9 +127,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [info]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
