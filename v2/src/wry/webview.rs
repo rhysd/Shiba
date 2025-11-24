@@ -17,7 +17,7 @@ use wry::http::header::CONTENT_TYPE;
 use wry::http::Response;
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
-use wry::{DragDropEvent, WebContext, WebView, WebViewBuilder};
+use wry::{DragDropEvent, NewWindowResponse, WebContext, WebView, WebViewBuilder};
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
 
@@ -102,9 +102,9 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
 
             false // Don't allow navigating to any external links
         })
-        .with_new_window_req_handler(|url| {
+        .with_new_window_req_handler(|url, _| {
             log::debug!("Rejected to open new window for URL: {}", url);
-            false
+            NewWindowResponse::Deny
         })
         .with_custom_protocol("shiba".into(), move |_webview_id, request| {
             let uri = request.uri();
