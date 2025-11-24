@@ -16,7 +16,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest, macos-15-intel]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -43,7 +43,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest, macos-15-intel]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -64,7 +64,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       # Clippy runs on each platforms in `test` job
       - uses: dtolnay/rust-toolchain@stable
         with:
