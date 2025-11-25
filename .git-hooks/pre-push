@@ -2,4 +2,4 @@
 
 set -e -o pipefail
 
-cd v2 && npm run lint && npm test
+npm run lint && npm test

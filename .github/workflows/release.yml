@@ -12,10 +12,6 @@ env:
   RUSTFLAGS: -D warnings
   RUST_BACKTRACE: 1
 
-defaults:
-  run:
-    working-directory: v2
-
 permissions:
   contents: write
 
@@ -60,7 +56,6 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: npm
-          cache-dependency-path: v2/package-lock.json
       - name: Build package
         run: |
           make Shiba.dmg
@@ -84,9 +79,9 @@ jobs:
           draft: false
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/Shiba_v${{ needs.info.outputs.version }}.dmg
-            v2/shiba_macos_x86_64_v${{ needs.info.outputs.version }}.zip
-            v2/shiba_macos_aarch64_v${{ needs.info.outputs.version }}.zip
+            Shiba_v${{ needs.info.outputs.version }}.dmg
+            shiba_macos_x86_64_v${{ needs.info.outputs.version }}.zip
+            shiba_macos_aarch64_v${{ needs.info.outputs.version }}.zip
   release-windows:
     name: Build and upload Windows installer and executable
     runs-on: windows-latest
@@ -98,7 +93,6 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: npm
-          cache-dependency-path: v2/package-lock.json
       - name: Install WiX
         run: |
           dotnet tool install --global wix
@@ -122,8 +116,8 @@ jobs:
           draft: false
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/shiba_windows_x86_64_v${{ needs.info.outputs.version }}.exe.zip
-            v2/shiba_x64_v${{ needs.info.outputs.version }}.msi
+            shiba_windows_x86_64_v${{ needs.info.outputs.version }}.exe.zip
+            shiba_x64_v${{ needs.info.outputs.version }}.msi
   release-linux:
     name: Build and upload Linux executable
     runs-on: ubuntu-latest
@@ -135,7 +129,6 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: npm
-          cache-dependency-path: v2/package-lock.json
       - run: sudo bash ./scripts/install_apt_deps.bash
       - run: make target/release/shiba
       - name: Archivfe executable
@@ -154,5 +147,5 @@ jobs:
           draft: false
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            v2/shiba_linux_x86_64_v${{ needs.info.outputs.version }}.zip
-            v2/target/debian/shiba_${{ needs.info.outputs.version }}-1_amd64.deb
+            shiba_linux_x86_64_v${{ needs.info.outputs.version }}.zip
+            target/debian/shiba_${{ needs.info.outputs.version }}-1_amd64.deb

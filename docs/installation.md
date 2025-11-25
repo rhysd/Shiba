@@ -1,72 +1,123 @@
-Install Shiba
-=============
+Installation
+============
 
-Installing and preparing Shiba is very easy.
-You can install Shiba in 3 ways.
-Almost all of you should follow [general way](#general).  If you want to manage Shiba with [npm](https://www.npmjs.com/), please consider to use [npm way](#npm).
+This document describes how to install Shiba.
 
+## Runtime dependencies
 
-## <a name="general"></a> General
+Shiba uses platform-specific WebView runtimes through [wry][] crate. You need to install runtime dependencies on some
+platforms.
 
-Shiba is released for Linux, OS X and Windows.
-Please download zip file from [release page](https://github.com/rhysd/Shiba/releases) and unzip the archive.
-Note that the file is a bit large because it includes a Chromium to execute Electron app.
+### Ubuntu or Debian
 
-### Linux
+On Linux, Shiba uses GTKWebKit. Some additional shared libraries need to be installed via system package manager.
 
-You can find `shiba` executable in the directory.  Please simply execute it.
+```sh
+# On Ubuntu or Debian
+sudo apt install libwebkit2gtk-4.1-dev libxdo-dev libgtk-3-dev
 
-### OS X
+# On Fedora
+sudo dnf install gtk3-devel webkit2gtk4.1-devel libxdo
 
-You can find `Shiba.app` in the directory.
-Please simply execute `open -a Shiba` to execute Shiba from command line.  Note that `open` command can't maintain the command line arguments.  If you want to pass command line arguments, please use executable `Shiba.app/Contents/MacOS/Shiba` directly.
-
-If you want to put Shiba.app in Dock and start with double click, put `Shiba.app` to your Application directory (`~/Applications` or `/Applications`).
-
-And you can also use [Homebrew Cask](https://caskroom.github.io/) to install Shiba.
-
+# On Arch Linux
+sudo pacman -S webkit2gtk-4.1 gtk3 xdotool
 ```
-$ brew install --cask shiba
-```
+
+Note: If you install `.deb` file through `dpkg` command, these dependencies are automatically installed.
 
 ### Windows
 
-You can find `shiba.exe` in the directory.  Please simply use it by double click or from command prompt.  You need to install nothing.
+Shiba uses [WebView2 component][webview2]. Usually it is already installed because Windows 11 and recent Windows 10
+install it by default. When you see Shiba crashes on startup, please check if WebView2 is installed.
 
+### macOS
 
-## <a name="npm"></a> Via npm
+Shiba uses [WKWebView][wkwebview] and it is installed by default on macOS. No additional dependency is necessary.
 
-I already registered Shiba to [npm](https://www.npmjs.com/).  You can install it via npm as below.
+## Use Pre-built binaries
 
-```
-$ npm install -g shiba
-```
+**:warning:These released artifacts are still experimental and built at some point of `main` branch. They may be buggy.**
 
-Then you can simply execute `shiba` command from command line.
+Pre-built binaries are hosted on [the release page](https://github.com/rhysd/Shiba/releases/tag/unreleased).
 
+- `.zip` files are archived single binaries for each platforms. Put the executable binary to your `$PATH` directory
+- `.msi` file is a Windows installer. Double-click it and follow the instructions
+- `.deb` file is a package for Debian and Ubuntu. Install it via `dpkg` and manage it with `apt`
+- `.dmg` file is a universal macOS package which supports both M1 Mac and Intel Mac. Double-click it and move the `.app`
+  file to `Applications` directory
 
-## For development
+**Note:** These executables are not signed. When your OS complains about it, go to 'Security' OS settings and allow the
+executable to run.
+
+## Build from source
+
+### Preparation
+
+Shiba is built with Rust and TypeScript. Install [Cargo package manager][cargo] via [rustup][] and [Node.js][nodejs] as
+build toolchain. Ensure that the latest stable Rust toolchain is installed.
+
+All build tasks are defined as `make` rules. On Windows, install Make via [winget][winget-make] or [chocolatey][choco-make].
+
+Finally clone the Shiba Git repository from GitHub.
 
 ```sh
-$ git clone https://github.com/rhysd/Shiba.git && cd Shiba
-
-$ gem install slim
-$ npm install -g typescript bower
-$ rake dep
-
-# Build Shiba
-$ rake build
-
-# Execute Shiba
-$ ./bin/cli.js README.md
-
-# With DevTools
-$ NODE_ENV=development ./bin/cli.js README.md
-
-# Watch and differential build
-$ rake watch
+git clone --depth=1 'https://github.com/rhysd/Shiba.git'
+cd ./Shiba
 ```
 
+### Build single-binary executable
 
------------------
-[installation](installation.md) | [usage](usage.md) | [customization](customization.md) | [shortcuts](shortcuts.md) | [tips](tips.md)
+To build `shiba` (or `shiba.exe` on Windows) single-binary executable as CLI application, run `make release`.
+It generates an executable in `target/release` directory. Put it to your `$PATH` directory.
+
+```sh
+make release
+./target/release/shiba --help
+```
+
+### Build macOS universal application
+
+Targets for both M1 Mac and Intel Mac are necessary. Install them via rustup:
+
+```sh
+rustup target add x86_64-apple-darwin aarch64-apple-darwin
+```
+
+`make` does everything to generate `Shiba.dmg` or `Shiba.app`.
+
+```sh
+make Shiba.dmg
+# or
+make Shiba.app
+```
+
+### Build Windows installer
+
+[WiX v4][wix] is needed. Ensure `wix` command works in your terminal.
+
+`make` does everything to generate `shiba.msi` installer file.
+
+```sh
+make shiba.msi
+```
+
+### Build Debian or Ubuntu package
+
+[cargo-deb][] is needed. Ensure `cargo deb` command works in your terminal.
+
+`make` does everything to generate `shiba_amd64.deb` package file.
+
+```sh
+make shiba_amd64.deb
+```
+
+[wry]: https://github.com/tauri-apps/wry
+[webview2]: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+[wkwebview]: https://developer.apple.com/documentation/webkit/wkwebview
+[cargo]: https://doc.rust-lang.org/cargo/
+[rustup]: https://rustup.rs/
+[nodejs]: https://nodejs.org/en
+[winget-make]: https://winget.run/pkg/GnuWin32/Make
+[choco-make]: https://community.chocolatey.org/packages/make
+[wix]: https://wixtoolset.org/
+[cargo-deb]: https://github.com/kornelski/cargo-deb
