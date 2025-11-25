@@ -5,9 +5,6 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
   RUST_BACKTRACE: 1
-defaults:
-  run:
-    working-directory: v2
 
 jobs:
   unit-test:
@@ -21,13 +18,10 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: v2 -> v2/target
       - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
-          cache-dependency-path: v2/package-lock.json
       - run: sudo bash ./scripts/install_apt_deps.bash
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: npm ci
@@ -35,7 +29,7 @@ jobs:
       - run: cargo clippy --all --all-features --benches --tests -- -D warnings
       - run: cargo test
       - run: cargo clippy -- -D warnings
-        working-directory: v2/fuzz
+        working-directory: fuzz
   sanity-test:
     needs: unit-test
     strategy:
@@ -46,13 +40,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: v2 -> v2/target
       - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
-          cache-dependency-path: v2/package-lock.json
       - run: sudo bash ./scripts/install_apt_deps.bash
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: npm ci
@@ -70,13 +61,10 @@ jobs:
         with:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: v2 -> v2/target
       - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
-          cache-dependency-path: v2/package-lock.json
       - uses: actions/setup-python@v6
         with:
           python-version: '3'

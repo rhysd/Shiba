@@ -207,7 +207,7 @@ This *is* a _sentence_ containing **emphasized text** for __testing__.
 
 ![simple image](../../../assets/icon.iconset/icon_64x64.png)
 ![image with title](../../../assets/icon.iconset/icon_64x64.png "this is title!")
-![external image](https://github.com/rhysd/Shiba/blob/main/v2/assets/icon.iconset/icon_64x64.png?raw=true)
+![external image](https://github.com/rhysd/Shiba/blob/main/assets/icon.iconset/icon_64x64.png?raw=true)
 [![image link](../../../assets/icon.iconset/icon_64x64.png)](https://example.com "image link")
 
 # Auto links

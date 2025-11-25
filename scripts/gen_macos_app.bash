@@ -7,8 +7,8 @@ if [[ "$OSTYPE" != darwin* ]]; then
     exit 1
 fi
 
-if [ ! -d ../.git ]; then
-    echo 'ERROR: This script must be run at v2 directory' 1>&2
+if [ ! -d .git ]; then
+    echo 'ERROR: This script must be run at repository root' 1>&2
     exit 1
 fi
 

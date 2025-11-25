@@ -1,6 +1,6 @@
-![icon](assets/icon.iconset/icon_64x64.png) Shiba v2
-====================================================
-[![CI for v2][ci-badge]][ci]
+![icon](assets/icon.iconset/icon_64x64.png) Shiba
+=================================================
+[![CI][ci-badge]][ci]
 [![dogs respected][shiba-badge]][shiba]
 
 > [!WARNING]

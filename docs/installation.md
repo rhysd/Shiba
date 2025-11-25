@@ -62,7 +62,7 @@ Finally clone the Shiba Git repository from GitHub.
 
 ```sh
 git clone --depth=1 'https://github.com/rhysd/Shiba.git'
-cd ./Shiba/v2
+cd ./Shiba
 ```
 
 ### Build single-binary executable

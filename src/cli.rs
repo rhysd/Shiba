@@ -82,7 +82,7 @@ Options:
         --version               Print application version
 
 Document:
-    https://github.com/rhysd/Shiba/v2/README.md
+    https://github.com/rhysd/Shiba/README.md
 "#;
 
     pub fn parse(args: impl IntoIterator<Item = impl Into<OsString>>) -> Result<Parsed> {

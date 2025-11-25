@@ -949,7 +949,7 @@ expression: json
           "c": [
             "external image"
           ],
-          "src": "https://github.com/rhysd/Shiba/blob/main/v2/assets/icon.iconset/icon_64x64.png?raw=true",
+          "src": "https://github.com/rhysd/Shiba/blob/main/assets/icon.iconset/icon_64x64.png?raw=true",
           "t": "img"
         },
         " ",
