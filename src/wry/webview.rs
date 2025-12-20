@@ -371,4 +371,13 @@ impl Renderer for WebViewRenderer {
     fn save_memory(&mut self, _minimized: bool) -> Result<()> {
         Ok(())
     }
+
+    fn delete_cookies(&self) -> Result<()> {
+        let cookies = self.webview.cookies()?;
+        log::debug!("Deleting {} cookies", cookies.len());
+        for cookie in cookies {
+            self.webview.delete_cookie(&cookie)?;
+        }
+        Ok(())
+    }
 }

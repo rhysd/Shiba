@@ -105,6 +105,7 @@ impl Menu {
         let zoom_out = accel("Zoom Out", MOD, Code::Minus);
         #[cfg(not(target_os = "macos"))]
         let toggle_menu_bar = no_accel("Toggle Menu Bar");
+        let delete_cookies = no_accel("Delete Cookies");
         let forward = accel("Forward", MOD, Code::BracketRight);
         let back = accel("Back", MOD, Code::BracketLeft);
         let history = accel("History…", MOD, Code::KeyY);
@@ -133,6 +134,7 @@ impl Menu {
                 &toggle_menu_bar,
                 #[cfg(not(target_os = "macos"))]
                 &PredefinedMenuItem::bring_all_to_front(None),
+                &delete_cookies,
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
@@ -238,6 +240,7 @@ impl Menu {
                 (settings.into_id(),      EditConfig),
                 #[cfg(not(target_os = "macos"))]
                 (toggle_menu_bar.into_id(), ToggleMenuBar),
+                (delete_cookies.into_id(), DeleteCookies),
             ]
         });
 
