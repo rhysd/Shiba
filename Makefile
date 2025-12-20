@@ -38,7 +38,7 @@ shiba.msi: target/release/shiba.exe assets/wix/shiba.wxs
 
 target/debian/shiba_%_amd64.deb: target/release/shiba assets/deb/shiba.desktop
 	cargo deb --no-build --verbose
-shiba_amd64.deb: target/debian/shiba_0.0.0_amd64.deb
+shiba_amd64.deb: target/debian/shiba_2.0.0-alpha.0_amd64.deb
 	mv target/debian/shiba_*_amd64.deb shiba_amd64.deb
 
 .PHONY: build release clean

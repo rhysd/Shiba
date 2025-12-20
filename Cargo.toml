@@ -1,6 +1,6 @@
 [package]
 name = "shiba-preview"
-version = "0.0.0"
+version = "2.0.0-alpha.0"
 authors = ["rhysd <lin90162@yahoo.co.jp>"]
 description = "Simple markdown previewer"
 edition = "2021"
