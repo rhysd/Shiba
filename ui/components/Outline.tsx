@@ -29,7 +29,7 @@ interface Props {
 }
 
 export const Outline: React.FC<Props> = ({ dispatch }) => {
-    const headings = useMemo(collectHeadings, []);
+    const headings = useMemo(() => collectHeadings(), []);
 
     const handleClose = useCallback((): void => {
         dispatch(closeOutline());

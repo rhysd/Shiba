@@ -28,7 +28,7 @@ export default ts.config(
     {
         files: ['ui/**/*.ts', 'ui/**/*.tsx'],
         extends: [
-            reactHooks.configs['recommended-latest'],
+            reactHooks.configs.flat['recommended-latest'],
             security.configs.recommended,
             importPlugin.flatConfigs.recommended,
             importPlugin.flatConfigs.typescript,
