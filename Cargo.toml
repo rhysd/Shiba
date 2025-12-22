@@ -7,7 +7,14 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/rhysd/Shiba"
 homepage = "https://://github.com/rhysd/Shiba#readme"
-include = ["/src", "/README.md", "/LICENSE"]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+    "/build.rs",
+    "/assets/icon.ico",
+    "!/src/testdata",  # Symlinks in `src/testdata` confuses cargo because cargo builds a crate in a temporary directory and the symlinks are relative.
+]
 
 [[bin]]
 name = "shiba"
