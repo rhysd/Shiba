@@ -13,7 +13,7 @@ bench = false
 shiba-preview = { path = "..", features = ["__bench"] }
 
 [dev-dependencies]
-criterion = "0.7.0"
+criterion = "0.8.1"
 
 [[bench]]
 name = "markdown"
