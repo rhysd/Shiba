@@ -1,6 +1,7 @@
 TS_SRC := $(wildcard ui/*.ts ui/*.tsx ui/components/*.tsx) ui/style.css ui/index.html
 RS_SRC := $(wildcard src/*.rs src/markdown/*.rs src/wry/*.rs) build.rs
 CSS := $(shell find -E src/assets -type f -regex .*\.css$ )
+MAC_APP_ASSETS := assets/Shiba.app/Contents/Info.plist assets/Shiba.app/Contents/Resources/icon.icns
 
 node_modules:
 	npm install
@@ -27,7 +28,7 @@ target/x86_64-apple-darwin/release/shiba: $(RS_SRC) src/assets/bundle.min.js src
 	cargo build --release --target=x86_64-apple-darwin
 target/aarch64-apple-darwin/release/shiba: $(RS_SRC) src/assets/bundle.min.js src/assets/index.html $(CSS)
 	cargo build --release --target=aarch64-apple-darwin
-Shiba.app: target/x86_64-apple-darwin/release/shiba target/aarch64-apple-darwin/release/shiba assets/Shiba.app/Contents/Info.plist
+Shiba.app: target/x86_64-apple-darwin/release/shiba target/aarch64-apple-darwin/release/shiba $(MAC_APP_ASSETS)
 	bash ./scripts/gen_macos_app.bash
 Shiba.dmg: Shiba.app README.md LICENSE
 	bash ./scripts/gen_macos_dmg.bash
