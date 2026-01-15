@@ -9,7 +9,7 @@ const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
 #[cfg(debug_assertions)]
 const BUNDLE_JS_MAP: &[u8] = include_bytes!("assets/bundle.js.map");
 #[cfg(not(debug_assertions))]
-const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.min.js");
+const BUNDLE_JS_ZSTD: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/bundle.min.js.zstd"));
 const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
 const GITHUB_MARKDOWN_CSS: &[u8] =
     include_bytes!("assets/node_modules/github-markdown-css/github-markdown.css");
@@ -180,6 +180,7 @@ fn guess_mime(path: &str) -> &'static str {
 pub struct Assets {
     hljs_css: Cow<'static, [u8]>,
     markdown_css: Cow<'static, [u8]>,
+    bundle_js: Cow<'static, [u8]>,
 }
 
 impl Assets {
@@ -191,7 +192,12 @@ impl Assets {
             Cow::Borrowed(GITHUB_MARKDOWN_CSS)
         };
 
-        Self { hljs_css, markdown_css }
+        #[cfg(debug_assertions)]
+        let bundle_js = BUNDLE_JS.into();
+        #[cfg(not(debug_assertions))]
+        let bundle_js = zstd::decode_all(BUNDLE_JS_ZSTD).unwrap().into();
+
+        Self { hljs_css, markdown_css, bundle_js }
     }
 
     pub fn load(&self, path: &str) -> (Option<Cow<'static, [u8]>>, &'static str) {
@@ -200,7 +206,7 @@ impl Assets {
         #[rustfmt::skip]
         let body = match path {
             "/index.html"          => INDEX_HTML.into(),
-            "/bundle.js"           => BUNDLE_JS.into(),
+            "/bundle.js"           => self.bundle_js.clone(),
             "/style.css"           => STYLE_CSS.into(),
             "/github-markdown.css" => self.markdown_css.clone(),
             "/hljs-theme.css"      => self.hljs_css.clone(),
