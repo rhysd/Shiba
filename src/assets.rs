@@ -8,8 +8,6 @@ use std::io::Write;
 const BUNDLE_JS: &[u8] = include_bytes!("assets/bundle.js");
 #[cfg(debug_assertions)]
 const BUNDLE_JS_MAP: &[u8] = include_bytes!("assets/bundle.js.map");
-#[cfg(not(debug_assertions))]
-const BUNDLE_JS_ZSTD: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/bundle.min.js.zstd"));
 const INDEX_HTML: &[u8] = include_bytes!("assets/index.html");
 const GITHUB_MARKDOWN_CSS: &[u8] =
     include_bytes!("assets/node_modules/github-markdown-css/github-markdown.css");
@@ -96,6 +94,11 @@ const HLJS_CSS_TABLE: phf::Map<&'static str, &'static [u8]> = phf_map! {
     "Xcode"                    => include_bytes!("assets/node_modules/highlight.js/styles/xcode.css"),
     "Xt256"                    => include_bytes!("assets/node_modules/highlight.js/styles/xt256.css"),
 };
+
+#[cfg(not(debug_assertions))]
+mod generated {
+    include!(concat!(env!("OUT_DIR"), "/bundle_js_loader.rs"));
+}
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
 // https://www.iana.org/assignments/media-types/media-types.xhtml
@@ -191,17 +194,9 @@ impl Assets {
             Cow::Borrowed(GITHUB_MARKDOWN_CSS)
         };
 
-        Self { hljs_css, markdown_css }
-    }
+        // Note: We don't keep bundle.js payload on memory because it's large.
 
-    // Don't load bundle.js in Assets::new and keep it on memory because it increases the memory usage
-    #[cfg(debug_assertions)]
-    fn load_bundle_js(&self) -> Cow<'static, [u8]> {
-        BUNDLE_JS.into()
-    }
-    #[cfg(not(debug_assertions))]
-    fn load_bundle_js(&self) -> Cow<'static, [u8]> {
-        zstd::bulk::decode_all(BUNDLE_JS_ZSTD).unwrap().into()
+        Self { hljs_css, markdown_css }
     }
 
     pub fn load(&self, path: &str) -> (Option<Cow<'static, [u8]>>, &'static str) {
@@ -210,7 +205,10 @@ impl Assets {
         #[rustfmt::skip]
         let body = match path {
             "/index.html"          => INDEX_HTML.into(),
-            "/bundle.js"           => self.load_bundle_js(),
+            #[cfg(debug_assertions)]
+            "/bundle.js"           => BUNDLE_JS.into(),
+            #[cfg(not(debug_assertions))]
+            "/bundle.js"           => generated::load_bundle_js().into(), // Assumes bundle.js is loaded only once
             "/style.css"           => STYLE_CSS.into(),
             "/github-markdown.css" => self.markdown_css.clone(),
             "/hljs-theme.css"      => self.hljs_css.clone(),
