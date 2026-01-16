@@ -180,7 +180,6 @@ fn guess_mime(path: &str) -> &'static str {
 pub struct Assets {
     hljs_css: Cow<'static, [u8]>,
     markdown_css: Cow<'static, [u8]>,
-    bundle_js: Cow<'static, [u8]>,
 }
 
 impl Assets {
@@ -192,12 +191,17 @@ impl Assets {
             Cow::Borrowed(GITHUB_MARKDOWN_CSS)
         };
 
-        #[cfg(debug_assertions)]
-        let bundle_js = BUNDLE_JS.into();
-        #[cfg(not(debug_assertions))]
-        let bundle_js = zstd::decode_all(BUNDLE_JS_ZSTD).unwrap().into();
+        Self { hljs_css, markdown_css }
+    }
 
-        Self { hljs_css, markdown_css, bundle_js }
+    // Don't load bundle.js in Assets::new and keep it on memory because it increases the memory usage
+    #[cfg(debug_assertions)]
+    fn load_bundle_js(&self) -> Cow<'static, [u8]> {
+        BUNDLE_JS.into()
+    }
+    #[cfg(not(debug_assertions))]
+    fn load_bundle_js(&self) -> Cow<'static, [u8]> {
+        zstd::bulk::decode_all(BUNDLE_JS_ZSTD).unwrap().into()
     }
 
     pub fn load(&self, path: &str) -> (Option<Cow<'static, [u8]>>, &'static str) {
@@ -206,7 +210,7 @@ impl Assets {
         #[rustfmt::skip]
         let body = match path {
             "/index.html"          => INDEX_HTML.into(),
-            "/bundle.js"           => self.bundle_js.clone(),
+            "/bundle.js"           => self.load_bundle_js(),
             "/style.css"           => STYLE_CSS.into(),
             "/github-markdown.css" => self.markdown_css.clone(),
             "/hljs-theme.css"      => self.hljs_css.clone(),
