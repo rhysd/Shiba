@@ -10,9 +10,9 @@ pub enum DialogMessageLevel {
 }
 
 pub trait Dialog {
-    fn pick_file(dir: &Path, extensions: &FileExtensions) -> Option<PathBuf>;
+    fn pick_files(dir: &Path, extensions: &FileExtensions) -> Vec<PathBuf>;
 
-    fn pick_dir(dir: &Path) -> Option<PathBuf>;
+    fn pick_dirs(dir: &Path) -> Vec<PathBuf>;
 
     fn message(level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>);
 
@@ -33,21 +33,23 @@ pub trait Dialog {
 pub struct SystemDialog;
 
 impl Dialog for SystemDialog {
-    fn pick_file(dir: &Path, extensions: &FileExtensions) -> Option<PathBuf> {
+    fn pick_files(dir: &Path, extensions: &FileExtensions) -> Vec<PathBuf> {
         FileDialog::new()
             .set_title("Open file to preview")
             .add_filter("Markdown", extensions.as_slice())
             .set_directory(dir)
             .set_can_create_directories(true)
-            .pick_file()
+            .pick_files()
+            .unwrap_or(vec![])
     }
 
-    fn pick_dir(dir: &Path) -> Option<PathBuf> {
+    fn pick_dirs(cwd: &Path) -> Vec<PathBuf> {
         FileDialog::new()
             .set_title("Choose directory to watch")
-            .set_directory(dir)
+            .set_directory(cwd)
             .set_can_create_directories(true)
-            .pick_folder()
+            .pick_folders()
+            .unwrap_or(vec![])
     }
 
     fn message(level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>) {

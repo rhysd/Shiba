@@ -226,29 +226,39 @@ where
         Ok(())
     }
 
-    fn open_file(&mut self) -> Result<()> {
+    fn open_files(&mut self) -> Result<()> {
         let extensions = self.config.watch().file_extensions();
         let dir = self.config.dialog().default_dir()?;
-        let file = D::pick_file(&dir, extensions);
+        #[cfg_attr(target_os = "windows", allow(unused_mut))]
+        let mut files = D::pick_files(&dir, extensions);
         #[cfg(target_os = "windows")]
-        let file = file.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
+        let mut files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
-        if let Some(file) = file {
-            log::debug!("Previewing file chosen by dialog: {:?}", file);
-            self.preview_new(file)?;
+        let Some(last) = files.pop() else {
+            log::debug!("No file was chosen by dialog");
+            return Ok(());
+        };
+
+        log::debug!("{} files were chosen by dialog", files.len());
+        for file in files {
+            self.watcher.watch(&file)?;
+            self.history.push(file);
         }
+        log::debug!("Previewing the last file chosen by dialog: {last:?}");
+        self.preview_new(last)?;
 
         Ok(())
     }
 
-    fn open_dir(&mut self) -> Result<()> {
+    fn open_dirs(&mut self) -> Result<()> {
         let dir = self.config.dialog().default_dir()?;
-        let dir = D::pick_dir(&dir);
+        let dirs = D::pick_dirs(&dir);
         #[cfg(target_os = "windows")]
-        let dir = dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
+        let dirs: Vec<_> = dirs.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
-        if let Some(dir) = dir {
-            log::debug!("Watching directory chosen by dialog: {:?}", dir);
+        log::debug!("{} directories were chosen by dialog", dirs.len());
+        for dir in dirs {
+            log::debug!("Watching a directory chosen by dialog: {:?}", dir);
             self.watcher.watch(&dir)?;
         }
 
@@ -326,8 +336,8 @@ where
             Forward => self.forward()?,
             Back => self.back()?,
             Reload => self.reload()?,
-            FileDialog => self.open_file()?,
-            DirDialog => self.open_dir()?,
+            FileDialog => self.open_files()?,
+            DirDialog => self.open_dirs()?,
             OpenFile { path } => {
                 let path = PathBuf::from(path);
                 if self.preview.show(&path, &self.renderer)? {
@@ -355,8 +365,8 @@ where
             Forward => self.forward()?,
             Back => self.back()?,
             Reload => self.reload()?,
-            OpenFile => self.open_file()?,
-            WatchDir => self.open_dir()?,
+            OpenFiles => self.open_files()?,
+            WatchDirs => self.open_dirs()?,
             Search => self.renderer.send_message(MessageToRenderer::Search)?,
             SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
             SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,

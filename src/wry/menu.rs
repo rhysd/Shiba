@@ -93,8 +93,8 @@ impl Menu {
         // Custom menu items
         let settings = no_accel("Settings…");
         let quit = accel("Quit", MOD, Code::KeyQ);
-        let open_file = accel("Open File…", MOD, Code::KeyO);
-        let watch_dir = accel("Watch Directory…", MOD | Modifiers::SHIFT, Code::KeyO);
+        let open_files = accel("Open Files…", MOD, Code::KeyO);
+        let watch_dirs = accel("Watch Directories…", MOD | Modifiers::SHIFT, Code::KeyO);
         let print = no_accel("Print…");
         let search = accel("Search…", MOD, Code::KeyF);
         let search_next = accel("Search Next", MOD, Code::KeyG);
@@ -161,8 +161,8 @@ impl Menu {
                 "&File",
                 true,
                 &[
-                    &open_file,
-                    &watch_dir,
+                    &open_files,
+                    &watch_dirs,
                     &reload,
                     &PredefinedMenuItem::separator(),
                     &print,
@@ -220,8 +220,8 @@ impl Menu {
         events.ids.extend({
             use AppMenuItem::*;
             [
-                (open_file.into_id(),     OpenFile),
-                (watch_dir.into_id(),     WatchDir),
+                (open_files.into_id(),    OpenFiles),
+                (watch_dirs.into_id(),    WatchDirs),
                 (quit.into_id(),          Quit),
                 (forward.into_id(),       Forward),
                 (back.into_id(),          Back),
