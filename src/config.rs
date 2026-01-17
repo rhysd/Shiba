@@ -77,6 +77,11 @@ pub struct FileExtensions(Vec<String>);
 
 impl Default for FileExtensions {
     fn default() -> Self {
+        // Note: Adding more extentions may be useful.
+        // - Other extentions historically used (.mdwn, .mdown, .mkdn, .mkdown)
+        // - Some tools have their own extentions built on top of Markdown (.livemd, .ronn, .scd)
+        //
+        // See: https://github.com/github-linguist/linguist/blob/e51c227048a02a8a1b0fae6e72214e7c5f327c73/lib/linguist/languages.yml#L4564-L4575
         Self(vec!["md".into(), "mkd".into(), "markdown".into()])
     }
 }
