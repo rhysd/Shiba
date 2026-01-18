@@ -1,7 +1,7 @@
 use super::{find_watch_path_fallback, should_watch_event, PathFilter, Watcher};
 use crate::renderer::{Event, EventSender};
 use anyhow::{Context as _, Result};
-use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
+use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as _};
 use std::collections::{HashMap, HashSet};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -49,7 +49,7 @@ impl WatchingPaths {
         }
     }
 
-    pub fn should_retain(&self, path: &Path) -> bool {
+    pub fn is_watching(&self, path: &Path) -> bool {
         let (Some(parent), Some(file_name)) = (path.parent(), path.file_name()) else {
             return true;
         };
@@ -77,7 +77,7 @@ impl Watcher for SystemWatcher {
                     let mut paths = event.paths;
                     {
                         let watching = watching.lock().unwrap();
-                        paths.retain(|p| filter.should_retain(p) && watching.should_retain(p));
+                        paths.retain(|p| filter.should_retain(p) && watching.is_watching(p));
                     }
 
                     if !paths.is_empty() {
@@ -98,12 +98,21 @@ impl Watcher for SystemWatcher {
     }
 
     fn watch(&mut self, path: &Path) -> Result<()> {
-        #[rustfmt::skip] // https://github.com/rust-lang/rustfmt/issues/5901
-        let Some((path, mode)) = self.watching.lock().unwrap().watched_path(path)? else {
-            return Ok(());
+        let watched = {
+            let mut watching = self.watching.lock().unwrap();
+            if watching.is_watching(path) {
+                log::debug!("Skip watching {:?} because it is already being watched", path);
+                return Ok(());
+            }
+            watching.watched_path(path)?
         };
-        log::debug!("Watching path {:?} with mode={:?}", path, mode);
-        self.inner.watch(path, mode).context("Error while starting to watch a path")
+
+        if let Some((path, mode)) = watched {
+            log::debug!("Watching path {:?} with mode={:?}", path, mode);
+            self.inner.watch(path, mode).context("Error while starting to watch a path")?;
+        }
+
+        Ok(())
     }
 }
 
@@ -140,8 +149,8 @@ mod tests {
         assert!(watching.files.contains_key(&foo));
         assert!(watching.dirs.is_empty());
 
-        assert!(watching.should_retain(&foo_bar_b));
-        assert!(watching.should_retain(&foo_a));
+        assert!(watching.is_watching(&foo_bar_b));
+        assert!(watching.is_watching(&foo_a));
 
         let (p, m) = watching.watched_path(&foo_bar).unwrap().unwrap();
         assert_eq!(m, RecursiveMode::Recursive);
@@ -152,8 +161,8 @@ mod tests {
         assert!(watching.files.contains_key(&foo));
         assert!(watching.dirs.contains(&foo_bar));
 
-        assert!(watching.should_retain(&foo_bar_b));
-        assert!(watching.should_retain(&foo_a));
+        assert!(watching.is_watching(&foo_bar_b));
+        assert!(watching.is_watching(&foo_a));
 
         let (p, m) = watching.watched_path(&foo).unwrap().unwrap();
         assert_eq!(m, RecursiveMode::Recursive);
@@ -164,8 +173,8 @@ mod tests {
         assert!(watching.dirs.contains(&foo_bar));
         assert!(watching.dirs.contains(&foo));
 
-        assert!(watching.should_retain(&foo_bar_b));
-        assert!(watching.should_retain(&foo_a));
+        assert!(watching.is_watching(&foo_bar_b));
+        assert!(watching.is_watching(&foo_a));
 
         let mut watching = WatchingPaths::default();
         watching.watched_path(&foo_bar_b).unwrap().unwrap();
@@ -176,8 +185,8 @@ mod tests {
         assert!(watching.files.is_empty());
         assert!(watching.dirs.contains(&foo));
 
-        assert!(watching.should_retain(&foo_bar_b));
-        assert!(watching.should_retain(&foo_a));
+        assert!(watching.is_watching(&foo_bar_b));
+        assert!(watching.is_watching(&foo_a));
     }
 
     #[test]
@@ -204,8 +213,8 @@ mod tests {
 
         assert!(!watching.files.contains_key(&foo_bar));
         assert!(watching.files.contains_key(&foo));
-        assert!(watching.should_retain(&foo_bar_b));
-        assert!(watching.should_retain(&foo_a));
+        assert!(watching.is_watching(&foo_bar_b));
+        assert!(watching.is_watching(&foo_a));
 
         let mut watching = WatchingPaths::default();
 
@@ -218,8 +227,8 @@ mod tests {
         assert_eq!(watching.watched_path(&foo_a).unwrap(), None);
 
         assert!(watching.files.is_empty());
-        assert!(watching.should_retain(&foo_bar_b));
-        assert!(watching.should_retain(&foo_a));
+        assert!(watching.is_watching(&foo_bar_b));
+        assert!(watching.is_watching(&foo_a));
     }
 
     #[test]
@@ -243,13 +252,13 @@ mod tests {
                 watching.watched_path(path).unwrap().unwrap();
             }
             assert_eq!(
-                watching.should_retain(&foo_bar_c),
+                watching.is_watching(&foo_bar_c),
                 expect_c,
                 "{:?} and {:?}",
                 paths,
                 watching,
             );
-            assert_eq!(watching.should_retain(&foo_d), expect_d, "{:?} and {:?}", paths, watching);
+            assert_eq!(watching.is_watching(&foo_d), expect_d, "{:?} and {:?}", paths, watching);
         }
     }
 

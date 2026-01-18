@@ -2,11 +2,17 @@ use super::{find_watch_path_fallback, should_watch_event, PathFilter, Watcher};
 use crate::renderer::{Event, EventSender};
 use anyhow::{Context as _, Result};
 use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
-impl Watcher for RecommendedWatcher {
+pub struct SystemWatcher {
+    inner: RecommendedWatcher,
+    watching: HashMap<PathBuf, RecursiveMode>,
+}
+
+impl Watcher for SystemWatcher {
     fn new<S: EventSender>(sender: S, mut filter: PathFilter) -> Result<Self> {
-        let watcher = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
+        let inner = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) if should_watch_event(event.kind) => {
                 log::debug!("Caught filesystem event: {:?}", event);
 
@@ -26,7 +32,8 @@ impl Watcher for RecommendedWatcher {
                 sender.send(Event::Error(err.into()));
             }
         })?;
-        Ok(watcher)
+
+        Ok(Self { inner, watching: HashMap::new() })
     }
 
     fn watch(&mut self, path: &Path) -> Result<()> {
@@ -38,10 +45,22 @@ impl Watcher for RecommendedWatcher {
                 (find_watch_path_fallback(path)?, RecursiveMode::Recursive)
             }
         };
-        log::debug!("Watching path {:?} with mode={:?}", path, mode);
-        <Self as NotifyWatcher>::watch(self, path, mode)
-            .context("Error while starting to watch a path")
+
+        match self.watching.get_mut(path) {
+            Some(prev) if mode == *prev => {
+                log::debug!("Skip watching {:?} because it is already being watched", path);
+                Ok(())
+            }
+            Some(prev) => {
+                log::debug!("Changing watch mode for path {:?}: {:?} -> {:?}", path, prev, mode);
+                self.inner.unwatch(path).context("Error while unwatching a path")?;
+                *prev = mode;
+                self.inner.watch(path, mode).context("Error while re-watching a path")
+            }
+            None => {
+                log::debug!("Watching path {:?} with mode={:?}", path, mode);
+                self.inner.watch(path, mode).context("Error while starting to watch a path")
+            }
+        }
     }
 }
-
-pub type SystemWatcher = RecommendedWatcher;

@@ -185,7 +185,7 @@ where
         })
     }
 
-    fn preview_new(&mut self, path: PathBuf) -> Result<()> {
+    fn preview(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         if self.preview.show(&path, &self.renderer)? {
             self.history.push(path);
@@ -245,7 +245,7 @@ where
             self.history.push(file);
         }
         log::debug!("Previewing the last file chosen by dialog: {last:?}");
-        self.preview_new(last)?;
+        self.preview(last)?;
 
         Ok(())
     }
@@ -322,7 +322,7 @@ where
                 self.renderer.show();
 
                 if let Some(path) = mem::take(&mut self.init_file) {
-                    self.preview_new(path)?;
+                    self.preview(path)?;
                 } else {
                     self.renderer.send_message(MessageToRenderer::Welcome)?;
                 }
@@ -338,12 +338,7 @@ where
             Reload => self.reload()?,
             FileDialog => self.open_files()?,
             DirDialog => self.open_dirs()?,
-            OpenFile { path } => {
-                let path = PathBuf::from(path);
-                if self.preview.show(&path, &self.renderer)? {
-                    self.history.push(path);
-                }
-            }
+            OpenFile { path } => self.preview(PathBuf::from(path))?,
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
@@ -395,7 +390,7 @@ where
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.preview_new(path)?;
+                self.preview(path)?;
             }
             Event::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
@@ -427,7 +422,7 @@ where
                 let is_markdown = self.config.watch().file_extensions().matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.preview_new(path)?;
+                    self.preview(path)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
                     self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
