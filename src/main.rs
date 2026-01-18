@@ -8,7 +8,7 @@
 
 use anyhow::Result;
 use log::LevelFilter;
-use shiba_preview::{run, Options, Parsed};
+use shiba_preview::{Options, Parsed, run};
 use std::env;
 
 fn main() -> Result<()> {

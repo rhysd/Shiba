@@ -362,7 +362,9 @@ impl Config {
             if let Some(dir) = &config_dir {
                 UserConfig::generate_default_config(dir)?;
             } else {
-                anyhow::bail!("Config directory cannot be determined on this system. Config file is not available");
+                anyhow::bail!(
+                    "Config directory cannot be determined on this system. Config file is not available",
+                );
             }
             UserConfig::default()
         } else if let Some(dir) = &config_dir {
@@ -449,6 +451,7 @@ impl Config {
 mod tests {
     use super::*;
     use std::env;
+    use std::sync::RwLock;
 
     const CONFIG_OK: &str = include_str!("testdata/config/ok/config.yml");
 
@@ -460,13 +463,19 @@ mod tests {
         Path::new(ROOT).join(name)
     }
 
+    // Lock to call `env::set_var` safely which was made unsafe since Rust 2024
+    static ENV_LOCK: RwLock<()> = RwLock::new(());
+
     struct Env<'a>((&'a str, Option<String>));
 
     impl<'a> Env<'a> {
         #[allow(dead_code)]
         fn new(name: &'a str, value: &str) -> Self {
             let saved = env::var(name).ok();
-            env::set_var(name, value);
+            // SAFETY: Writing to env vars is guarded by `ENV_LOCK`
+            unsafe {
+                env::set_var(name, value);
+            }
             Self((name, saved))
         }
     }
@@ -475,7 +484,10 @@ mod tests {
         fn drop(&mut self) {
             let Self((name, saved)) = &self;
             if let Some(saved) = saved {
-                env::set_var(name, saved);
+                // SAFETY: Writing to env vars is guarded by `ENV_LOCK`
+                unsafe {
+                    env::set_var(name, saved);
+                }
             }
         }
     }
@@ -519,6 +531,8 @@ mod tests {
 
     #[test]
     fn load_config_from_option_path() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
         let dir = test_config_dir("ok");
         let opts = Options {
@@ -538,6 +552,8 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn load_config_from_xdg_config_dir() {
+        let _lock = ENV_LOCK.read().unwrap(); // Writing to env vars must be in a single thread from Rust 2024
+
         let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
         // XDG environment variable must be absolute paths
         let mut dir = env::current_dir().unwrap();
@@ -546,12 +562,13 @@ mod tests {
         dir.push("config");
         dir.push("xdg");
 
-        let _config_env = Env::new("XDG_CONFIG_HOME", &dir.to_string_lossy());
-        let _data_env = Env::new("XDG_DATA_HOME", &dir.to_string_lossy());
+        let cfg = {
+            let _config_env = Env::new("XDG_CONFIG_HOME", &dir.to_string_lossy());
+            let _data_env = Env::new("XDG_DATA_HOME", &dir.to_string_lossy());
+            Config::load(Options::default()).unwrap()
+        };
 
         dir.push("Shiba");
-
-        let cfg = Config::load(Options::default()).unwrap();
         assert_eq!(cfg.data_dir().path(), Some(dir.as_path()));
         assert_eq!(cfg.config_dir(), Some(dir.as_path()));
         assert_eq!(expected, cfg.user_config);
@@ -559,6 +576,8 @@ mod tests {
 
     #[test]
     fn reflect_option_in_config() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let dir = test_config_dir("ok");
         let opts = Options {
             debug: true,
@@ -574,6 +593,8 @@ mod tests {
 
     #[test]
     fn unknown_field_in_config() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let dir = test_config_dir("unknown_field");
         let opts = Options { config_dir: Some(dir), ..Default::default() };
         let err = Config::load(opts).unwrap_err();
@@ -583,6 +604,8 @@ mod tests {
 
     #[test]
     fn missing_field_in_config() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let dir = test_config_dir("missing_field");
         let opts = Options { config_dir: Some(dir), ..Default::default() };
         let err = Config::load(opts).unwrap_err();
@@ -592,6 +615,8 @@ mod tests {
 
     #[test]
     fn no_user_config() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let dir = test_config_dir("no_config");
         let opts = Options { config_dir: Some(dir), ..Default::default() };
         let cfg = Config::load(opts).unwrap();
@@ -600,6 +625,8 @@ mod tests {
 
     #[test]
     fn symlink_config_dir() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let dir = test_config_dir("symlink_dir");
         let opts = Options { config_dir: Some(dir), ..Default::default() };
         let cfg = Config::load(opts).unwrap();
@@ -609,6 +636,8 @@ mod tests {
 
     #[test]
     fn symlink_config_file() {
+        let _lock = ENV_LOCK.read().unwrap();
+
         let dir = test_config_dir("symlink_config");
         let opts = Options { config_dir: Some(dir), ..Default::default() };
         let cfg = Config::load(opts).unwrap();

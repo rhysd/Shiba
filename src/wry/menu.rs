@@ -6,8 +6,8 @@ use muda::{
     AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
     PredefinedMenuItem, Submenu,
 };
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]

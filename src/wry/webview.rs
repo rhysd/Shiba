@@ -13,10 +13,10 @@ use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
 use tao::platform::unix::WindowExtUnix;
 use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
-use wry::http::header::CONTENT_TYPE;
-use wry::http::Response;
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
+use wry::http::Response;
+use wry::http::header::CONTENT_TYPE;
 use wry::{DragDropEvent, NewWindowResponse, WebContext, WebView, WebViewBuilder};
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
@@ -142,7 +142,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
 
     #[cfg(target_os = "macos")]
     {
-        use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+        use window_vibrancy::{NSVisualEffectMaterial, apply_vibrancy};
         apply_vibrancy(window, NSVisualEffectMaterial::Sidebar, None, None)?;
     }
 

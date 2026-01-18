@@ -141,7 +141,7 @@ Document:
 mod tests {
     use super::*;
 
-    fn cmdline(args: &[&str]) -> impl Iterator<Item = String> {
+    fn cmdline(args: &[&str]) -> impl Iterator<Item = String> + use<> {
         let mut c = vec!["shiba".to_string()];
         c.extend(args.iter().map(ToString::to_string));
         c.into_iter()

@@ -18,7 +18,9 @@ use std::time::{Duration, Instant};
 
 fn find_watch_path_fallback(path: &Path) -> Result<&Path> {
     if let Some(parent) = path.ancestors().skip(1).find(|p| p.is_dir()) {
-        log::warn!("Path {:?} does not exist. Watching the existing ancestor directory {:?} recursively instead", path, parent);
+        log::warn!(
+            "Path {path:?} does not exist. Watching the existing ancestor directory {parent:?} recursively instead",
+        );
         Ok(parent)
     } else {
         anyhow::bail!("Could not watch path {:?} since its ancestors cannot be watched", path)

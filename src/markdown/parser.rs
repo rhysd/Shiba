@@ -1,8 +1,8 @@
-use super::sanitizer::{should_rebase_url, Sanitizer, SlashPath};
+use super::sanitizer::{Sanitizer, SlashPath, should_rebase_url};
 use crate::renderer::RawMessageWriter;
 use aho_corasick::AhoCorasick;
 use emojis::Emoji;
-use memchr::{memchr_iter, Memchr};
+use memchr::{Memchr, memchr_iter};
 use pulldown_cmark::{
     Alignment, BlockQuoteKind, CodeBlockKind, CowStr, Event, HeadingLevel, LinkType, Options,
     Parser, Tag, TagEnd,

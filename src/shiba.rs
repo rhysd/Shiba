@@ -15,7 +15,7 @@ use anyhow::{Context as _, Error, Result};
 use std::fs;
 use std::marker::PhantomData;
 use std::mem;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR};
+use std::path::{MAIN_SEPARATOR, Path, PathBuf};
 
 enum Zoom {
     In,

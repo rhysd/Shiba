@@ -46,7 +46,7 @@ impl Rendering for Wry {
     fn new() -> Result<Self> {
         use std::ffi::c_void;
         use tao::platform::windows::EventLoopBuilderExtWindows;
-        use windows::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, HACCEL, MSG};
+        use windows::Win32::UI::WindowsAndMessaging::{HACCEL, MSG, TranslateAcceleratorW};
 
         let mut menu_events = MenuEvents::new();
         let menu = Menu::new(&mut menu_events)?;

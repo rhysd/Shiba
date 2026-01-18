@@ -1,7 +1,7 @@
-use super::{find_watch_path_fallback, should_watch_event, PathFilter, Watcher};
+use super::{PathFilter, Watcher, find_watch_path_fallback, should_watch_event};
 use crate::renderer::{Event, EventSender};
 use anyhow::{Context as _, Result};
-use notify::{recommended_watcher, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher, recommended_watcher};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 

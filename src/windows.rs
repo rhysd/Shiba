@@ -1,4 +1,4 @@
-use windows::Win32::System::Console::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
+use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, FreeConsole};
 
 pub struct WindowsConsole {
     attached: bool,
