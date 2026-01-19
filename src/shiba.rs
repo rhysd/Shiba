@@ -49,10 +49,10 @@ impl PreviewContent {
     }
 
     fn title(&self, path: &Path) -> String {
-        if let Some(home_dir) = &self.home_dir {
-            if let Ok(path) = path.strip_prefix(home_dir) {
-                return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
-            }
+        if let Some(home_dir) = &self.home_dir
+            && let Ok(path) = path.strip_prefix(home_dir)
+        {
+            return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
         }
         format!("Shiba: {}", path.display())
     }
@@ -394,11 +394,11 @@ where
             }
             Event::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
-                if let Some(current) = self.history.current() {
-                    if paths.contains(current) {
-                        self.preview.show(current, &self.renderer)?;
-                        return Ok(RenderingFlow::Continue);
-                    }
+                if let Some(current) = self.history.current()
+                    && paths.contains(current)
+                {
+                    self.preview.show(current, &self.renderer)?;
+                    return Ok(RenderingFlow::Continue);
                 }
                 // Choose the last one to preview if the current file is not included in `paths`
                 if let Some(mut path) = paths.pop() {
@@ -411,12 +411,11 @@ where
                 }
             }
             Event::OpenLocalPath(mut path) => {
-                if path.is_relative() {
-                    if let Some(current_file) = self.history.current() {
-                        if let Some(dir) = current_file.parent() {
-                            path = dir.join(path).canonicalize()?;
-                        }
-                    }
+                if path.is_relative()
+                    && let Some(current_file) = self.history.current()
+                    && let Some(dir) = current_file.parent()
+                {
+                    path = dir.join(path).canonicalize()?;
                 }
                 let path = path;
                 let is_markdown = self.config.watch().file_extensions().matches(&path);
@@ -445,13 +444,13 @@ where
         // Hide the window before destroying it to avoid flickering.
         self.renderer.hide();
 
-        if self.config.window().restore {
-            if let Some(state) = self.renderer.window_state() {
-                if state.height > 0.0 && state.width > 0.0 {
-                    log::debug!("Saving window state as persistent data: {:?}", state);
-                    self.config.data_dir().save(&state)?;
-                }
-            }
+        if self.config.window().restore
+            && let Some(state) = self.renderer.window_state()
+            && state.height > 0.0
+            && state.width > 0.0
+        {
+            log::debug!("Saving window state as persistent data: {:?}", state);
+            self.config.data_dir().save(&state)?;
         }
         self.history.save(&self.config)?;
         Ok(())

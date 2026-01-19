@@ -127,11 +127,11 @@ fn load_hljs_css(hl: &PreviewHighlight) -> Cow<'static, [u8]> {
     }
 
     log::debug!("Loading highlight.js theme from config: light={:?} dark={:?}", hl.light, hl.dark);
-    if hl.light == hl.dark {
-        if let Some(css) = HLJS_CSS_TABLE.get(&hl.light).copied() {
-            log::debug!("Loading highlight.js theme {:?}", hl.light);
-            return css.into();
-        }
+    if hl.light == hl.dark
+        && let Some(css) = HLJS_CSS_TABLE.get(&hl.light).copied()
+    {
+        log::debug!("Loading highlight.js theme {:?}", hl.light);
+        return css.into();
     }
 
     fn write(buf: &mut Vec<u8>, mode: &str, name: &str, default: &'static [u8]) {
@@ -171,10 +171,10 @@ fn load_user_css(config: &Config) -> Option<Vec<u8>> {
 }
 
 fn guess_mime(path: &str) -> &'static str {
-    if let Some(idx) = path.rfind('.') {
-        if let Some(mime) = MIME_TABLE.get(&path[idx + 1..]) {
-            return mime;
-        }
+    if let Some(idx) = path.rfind('.')
+        && let Some(mime) = MIME_TABLE.get(&path[idx + 1..])
+    {
+        return mime;
     }
     log::debug!("Unknown mime type for {:?}. Fallback to octet-stream", path);
     "application/octet-stream"

@@ -13,16 +13,16 @@ pub struct History {
 impl History {
     pub fn load(config: &Config) -> Self {
         let max_items = config.preview().recent_files;
-        if max_items > 0 {
-            if let Some(mut recent) = config.data_dir().load::<RecentFilesOwned>() {
-                recent.paths.truncate(max_items);
-                log::debug!("Loaded {} paths as recent files history", recent.paths.len());
-                return Self {
-                    max_items,
-                    index: recent.paths.len() - 1,
-                    items: VecDeque::from(recent.paths),
-                };
-            }
+        if max_items > 0
+            && let Some(mut recent) = config.data_dir().load::<RecentFilesOwned>()
+        {
+            recent.paths.truncate(max_items);
+            log::debug!("Loaded {} paths as recent files history", recent.paths.len());
+            return Self {
+                max_items,
+                index: recent.paths.len() - 1,
+                items: VecDeque::from(recent.paths),
+            };
         }
 
         Self { max_items, index: 0, items: VecDeque::new() }
@@ -33,14 +33,13 @@ impl History {
             return;
         }
 
-        if let Some(current) = self.current() {
-            if current == &item {
-                return; // Do not push the same path repeatedly
-            }
-        } else {
+        let Some(current) = self.current() else {
             log::debug!("Push first history item: {:?}", item);
             self.items.push_back(item);
             return;
+        };
+        if current == &item {
+            return; // Do not push the same path repeatedly
         }
 
         if self.items.len() == self.max_items {

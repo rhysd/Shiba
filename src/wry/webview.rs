@@ -50,10 +50,10 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
             if let DragDropEvent::Drop { paths, .. } = event {
                 log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
                 // TODO: Support dropping multiple files
-                if let Some(path) = paths.into_iter().next() {
-                    if let Err(err) = file_drop_proxy.send_event(Event::FileDrop(path)) {
-                        log::error!("Could not send user event for file drop: {err}");
-                    }
+                if let Some(path) = paths.into_iter().next()
+                    && let Err(err) = file_drop_proxy.send_event(Event::FileDrop(path))
+                {
+                    log::error!("Could not send user event for file drop: {err}");
                 }
             }
             true

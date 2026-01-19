@@ -253,10 +253,10 @@ impl Dialog {
         // When this app is started via Shiba.app, the current directory is `/` but it is not convenient as an initial
         // directory for open dialog.
         #[cfg(target_os = "macos")]
-        if dir.parent().is_none() {
-            if let Some(dir) = dirs::document_dir() {
-                return Ok(dir.into());
-            }
+        if dir.parent().is_none()
+            && let Some(dir) = dirs::document_dir()
+        {
+            return Ok(dir.into());
         }
 
         Ok(dir.into())
