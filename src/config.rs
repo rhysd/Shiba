@@ -552,7 +552,7 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn load_config_from_xdg_config_dir() {
-        let _lock = ENV_LOCK.read().unwrap(); // Writing to env vars must be in a single thread from Rust 2024
+        let _lock = ENV_LOCK.write().unwrap(); // Writing to env vars must be in a single thread from Rust 2024
 
         let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
         // XDG environment variable must be absolute paths
