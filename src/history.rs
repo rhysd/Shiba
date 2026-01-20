@@ -40,21 +40,11 @@ impl History {
 
         if self.items.len() == self.max_items {
             self.items.shift_remove_index(0);
-            self.index = self.index.saturating_sub(1);
         }
 
-        if self.index + 1 < self.items.len() {
-            self.items.truncate(self.index + 1);
-        }
-
-        self.index += 1;
-        log::debug!(
-            "Push new history item at index {} (size={}): {:?}",
-            self.index,
-            self.items.len(),
-            item,
-        );
+        log::debug!("Push new history item (size={}): {:?}", self.items.len(), item);
         self.items.insert(item);
+        self.index = self.items.len() - 1; // Reset index to put focus on the new item
     }
 
     pub fn current(&self) -> Option<&PathBuf> {
