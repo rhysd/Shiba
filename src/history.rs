@@ -1,13 +1,13 @@
 use crate::config::Config;
 use crate::persistent::{RecentFiles, RecentFilesOwned};
 use anyhow::Result;
-use std::collections::{HashSet, VecDeque};
+use indexmap::IndexSet;
 use std::path::{Path, PathBuf};
 
 pub struct History {
     max_items: usize,
     index: usize,
-    items: VecDeque<PathBuf>,
+    items: IndexSet<PathBuf>,
 }
 
 impl History {
@@ -18,14 +18,12 @@ impl History {
         {
             recent.paths.truncate(max_items);
             log::debug!("Loaded {} paths as recent files history", recent.paths.len());
-            return Self {
-                max_items,
-                index: recent.paths.len() - 1,
-                items: VecDeque::from(recent.paths),
-            };
+            let index = recent.paths.len() - 1;
+            let items = recent.paths.into_iter().collect();
+            return Self { max_items, index, items };
         }
 
-        Self { max_items, index: 0, items: VecDeque::new() }
+        Self { max_items, index: 0, items: IndexSet::new() }
     }
 
     pub fn push(&mut self, item: PathBuf) {
@@ -33,17 +31,15 @@ impl History {
             return;
         }
 
-        let Some(current) = self.current() else {
-            log::debug!("Push first history item: {:?}", item);
-            self.items.push_back(item);
+        if let Some(idx) = self.items.get_index_of(&item) {
+            // Move to the existing item instead of inserting a new item
+            log::debug!("Move to the index of existing history item {:?}: {}", item, idx);
+            self.index = idx;
             return;
-        };
-        if current == &item {
-            return; // Do not push the same path repeatedly
         }
 
         if self.items.len() == self.max_items {
-            self.items.pop_front();
+            self.items.shift_remove_index(0);
             self.index = self.index.saturating_sub(1);
         }
 
@@ -58,7 +54,11 @@ impl History {
             self.items.len(),
             item,
         );
-        self.items.push_back(item);
+        self.items.insert(item);
+    }
+
+    pub fn current(&self) -> Option<&PathBuf> {
+        self.items.get_index(self.index)
     }
 
     pub fn forward(&mut self) {
@@ -74,15 +74,11 @@ impl History {
     }
 
     pub fn next(&self) -> Option<&PathBuf> {
-        self.items.get(self.index + 1)
+        self.items.get_index(self.index + 1)
     }
 
     pub fn prev(&self) -> Option<&PathBuf> {
-        self.items.get(self.index.checked_sub(1)?)
-    }
-
-    pub fn current(&self) -> Option<&PathBuf> {
-        self.items.get(self.index)
+        self.items.get_index(self.index.checked_sub(1)?)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &'_ Path> {
@@ -94,14 +90,7 @@ impl History {
             return Ok(());
         }
 
-        let mut seen = HashSet::new();
-        let mut paths = vec![];
-        for path in self.items.iter().map(|p| p.as_path()) {
-            if seen.insert(path) {
-                paths.push(path);
-            }
-        }
-
+        let paths: Vec<_> = self.items.iter().map(PathBuf::as_path).collect();
         log::debug!("Saving {} paths as recent files history", paths.len());
         config.data_dir().save(&RecentFiles { paths })
     }

@@ -46,6 +46,7 @@ anyhow = "1.0.100"
 dirs = "6.0.0"
 emojis = "0.8.0"
 env_logger = { version = "0.11.8", default-features = false, features = ["auto-color"] }
+indexmap = "2.13.0"
 lexopt = "0.3.1"
 log = "0.4.28"
 memchr = "2.7.6"
