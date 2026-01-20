@@ -166,15 +166,17 @@ where
 
         let filter = PathFilter::new(config.watch());
         let mut watcher = W::new(rendering.create_sender(), filter)?;
+        let mut history = History::load(&config);
         for path in watch_paths {
             log::debug!("Watching initial path: {:?}", path);
             watcher.watch(&path)?;
+            history.push(path);
         }
 
         Ok(Self {
             renderer,
             opener: O::default(),
-            history: History::load(&config),
+            history,
             watcher,
             config,
             preview: PreviewContent::default(),
