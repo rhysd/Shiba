@@ -40,7 +40,7 @@ impl Dialog for SystemDialog {
             .set_directory(dir)
             .set_can_create_directories(true)
             .pick_files()
-            .unwrap_or(vec![])
+            .unwrap_or_default()
     }
 
     fn pick_dirs(cwd: &Path) -> Vec<PathBuf> {
@@ -49,7 +49,7 @@ impl Dialog for SystemDialog {
             .set_directory(cwd)
             .set_can_create_directories(true)
             .pick_folders()
-            .unwrap_or(vec![])
+            .unwrap_or_default()
     }
 
     fn message(level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>) {

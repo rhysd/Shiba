@@ -18,3 +18,7 @@ criterion = "0.8.1"
 [[bench]]
 name = "markdown"
 harness = false
+
+[[bench]]
+name = "history"
+harness = false

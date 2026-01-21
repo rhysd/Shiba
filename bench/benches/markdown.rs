@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use shiba_bench::asset;
-use shiba_preview::{MarkdownContent, MarkdownParser, RawMessageWriter};
+use shiba_preview::bench::{MarkdownContent, MarkdownParser, RawMessageWriter};
 
 #[inline]
 fn run(source: String, offset: Option<usize>) {

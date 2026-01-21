@@ -24,12 +24,15 @@ mod windows;
 mod wry;
 
 pub use cli::{Options, Parsed};
-#[cfg(feature = "__bench")]
-pub use markdown::{MarkdownContent, MarkdownParser};
-#[cfg(feature = "__bench")]
-pub use renderer::RawMessageWriter;
 #[cfg(target_os = "windows")]
 pub use windows::WindowsConsole;
+
+#[cfg(feature = "__bench")]
+pub mod bench {
+    pub use super::history::History;
+    pub use super::markdown::{MarkdownContent, MarkdownParser};
+    pub use super::renderer::RawMessageWriter;
+}
 
 use anyhow::Result;
 use dialog::SystemDialog;

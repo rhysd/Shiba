@@ -11,6 +11,10 @@ pub struct History {
 }
 
 impl History {
+    pub fn new(max_items: usize) -> Self {
+        Self { max_items, index: 0, items: IndexSet::new() }
+    }
+
     pub fn load(config: &Config) -> Self {
         let max_items = config.preview().recent_files;
         if max_items > 0
@@ -23,7 +27,7 @@ impl History {
             return Self { max_items, index, items };
         }
 
-        Self { max_items, index: 0, items: IndexSet::new() }
+        Self::new(max_items)
     }
 
     pub fn push(&mut self, item: PathBuf) {
