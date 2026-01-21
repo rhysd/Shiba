@@ -3,7 +3,7 @@
 
 use arbitrary::{Arbitrary, Unstructured};
 use libfuzzer_sys::fuzz_target;
-use shiba_preview::{MarkdownContent, MarkdownParser, RawMessageWriter};
+use shiba_preview::bench::{MarkdownContent, MarkdownParser, RawMessageWriter};
 
 fuzz_target!(|data: &[u8]| {
     let mut unstructured = Unstructured::new(data);
