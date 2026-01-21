@@ -7,6 +7,7 @@
 )]
 
 use anyhow::Result;
+use env_logger::{Builder, Env};
 use log::LevelFilter;
 use shiba_preview::{Options, Parsed, run};
 use std::env;
@@ -20,10 +21,12 @@ fn main() -> Result<()> {
     match Options::parse(env::args_os())? {
         Parsed::Options(options) => {
             let level = if options.debug { LevelFilter::Debug } else { LevelFilter::Info };
-            env_logger::builder()
+            let env = Env::new().filter("SHIBA_LOG").write_style("SHIBA_LOG_STYLE");
+            Builder::new()
                 .filter_level(level)
                 .format_timestamp(None)
                 .filter_module("html5ever", LevelFilter::Off)
+                .parse_env(env)
                 .init();
             run(options)
         }
