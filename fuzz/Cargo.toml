@@ -11,6 +11,9 @@ cargo-fuzz = true
 shiba-preview = { path = "..", features = ["__bench"] }
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1.4.1", default-features = false }
+oxc_parser = "0.110.0"
+oxc_allocator = "0.110.0"
+oxc_span = "0.110.0"
 
 # Prevent this from interfering with workspaces
 [workspace]
