@@ -1061,6 +1061,7 @@ mod tests {
     snapshot_test!(alert);
     snapshot_test!(url_inside_link);
     snapshot_test!(inline_html_inside_blockquote);
+    snapshot_test!(empty);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
