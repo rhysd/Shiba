@@ -54,16 +54,6 @@ impl TextTokenizer for () {
     }
 }
 
-// TODO: Use `str::floor_char_boundary` when it is stabilized.
-// https://doc.rust-lang.org/std/primitive.str.html#method.floor_char_boundary
-#[inline]
-fn floor_char_boundary(s: &str, mut i: usize) -> usize {
-    while !s.is_char_boundary(i) {
-        i -= 1;
-    }
-    i
-}
-
 #[derive(Default)]
 pub struct MarkdownContent {
     source: String,
@@ -72,8 +62,7 @@ pub struct MarkdownContent {
 
 impl MarkdownContent {
     pub fn new(source: String, base_dir: Option<&Path>) -> Self {
-        let base_dir =
-            if let Some(path) = base_dir { SlashPath::from(path) } else { SlashPath::default() };
+        let base_dir = base_dir.map(SlashPath::from).unwrap_or_default();
         Self { source, base_dir }
     }
 
@@ -107,7 +96,7 @@ impl MarkdownContent {
         if index == min_len {
             return (prev.len() != new.len()).then_some(min_len);
         }
-        Some(floor_char_boundary(new_source, index))
+        Some(new_source.floor_char_boundary(index))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -125,6 +114,8 @@ pub struct MarkdownParser<'input, V: TextVisitor, T: TextTokenizer> {
 
 impl<'input, V: TextVisitor, T: TextTokenizer> MarkdownParser<'input, V, T> {
     pub fn new(content: &'input MarkdownContent, offset: Option<usize>, text_tokenizer: T) -> Self {
+        // Note: `MarkdownContent::modified_utf8_offset` guarantees that `offset` is on UTF-8 char boundary so we don't
+        // need to check it here.
         let mut options = Options::empty();
         options.insert(
             Options::ENABLE_STRIKETHROUGH
