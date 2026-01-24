@@ -165,13 +165,14 @@ fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
     const DQ: u8 = b'"'; // \x22
     const SQ: u8 = b'\''; // \x27
     const BS: u8 = b'\\'; // \x5c
+    const RE: u8 = 2; // Replace with replacement character U+FFFD
     const XX: u8 = 1; // \x00...\x1f non-printable
     const __: u8 = 0;
 
     #[rustfmt::skip]
     const ESCAPE_TABLE: [u8; 256] = [
     //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-        XX, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
+        RE, XX, XX, XX, XX, XX, XX, XX, BB, TT, NN, XX, FF, RR, XX, XX, // 0
         XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 1
         __, __, DQ, __, __, __, __, SQ, __, __, __, __, __, __, __, __, // 2
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
@@ -194,6 +195,10 @@ fn encode_string_byte(mut out: impl Write, b: u8) -> Result<()> {
         BS => out.write_all(br"\\\\"), // Escape twice for JS and JSON (\\\\ → \\ → \)
         SQ => out.write_all(br"\'"), // JSON string will be put in '...' JS string. ' needs to be escaped
         XX => write!(out, r"\\u{:04x}", b),
+        // U+0000 must be replaced with U+FFFD according to https://spec.commonmark.org/0.31.2/#insecure-characters
+        // However pulldown-cmark doesn't conform the specification https://github.com/pulldown-cmark/pulldown-cmark/issues/1065
+        // Containing U+0000 actually made MathJax crash in math block so we need to handle it properly.
+        RE => write!(out, "\u{fffd}"),
         b => out.write_all(&[b'\\', b'\\', b]), // Escape \ itself: JSON.parse('\\n')
     }
 }
@@ -1264,5 +1269,16 @@ mod tests {
             buf.contains(r#"{"t":"html","raw":" <p>foo</p>"}"#),
             "expected HTML block is not contained: {buf:?}",
         );
+    }
+
+    #[test]
+    fn replace_nul_with_fffd() {
+        let target = MarkdownContent::new("\0 `\0` $\0$".to_string(), None);
+        let parser = MarkdownParser::new(&target, None, ());
+        let mut buf = Vec::new();
+        let () = parser.write_to(&mut buf).unwrap();
+        let buf = String::from_utf8(buf).unwrap();
+        assert_eq!(buf.matches("\u{fffd}").count(), 3, "output={buf:?}");
+        assert!(!buf.contains('\0'), "output={buf:?}");
     }
 }
