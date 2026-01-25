@@ -2,16 +2,15 @@ import * as React from 'react';
 import type { ReactNode, ReactElement } from 'react';
 import hljs from 'highlight.js';
 import mermaid from 'mermaid';
-import { mathjax } from 'mathjax-full/js/mathjax';
-import type { MathDocument } from 'mathjax-full/js/core/MathDocument';
-import { TeX } from 'mathjax-full/js/input/tex';
-import { SVG } from 'mathjax-full/js/output/svg';
-import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages';
-import { liteAdaptor, type LiteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor';
-import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html';
-import type { LiteElement } from 'mathjax-full/js/adaptors/lite/Element';
-import type { LiteText } from 'mathjax-full/js/adaptors/lite/Text';
-import type { LiteDocument } from 'mathjax-full/js/adaptors/lite/Document';
+import { mathjax } from '@mathjax/src/cjs/mathjax.js';
+import type { MathDocument } from '@mathjax/src/cjs/core/MathDocument.js';
+import { TeX } from '@mathjax/src/cjs/input/tex.js';
+import { SVG } from '@mathjax/src/cjs/output/svg.js';
+import { liteAdaptor, type LiteAdaptor } from '@mathjax/src/cjs/adaptors/liteAdaptor.js';
+import { RegisterHTMLHandler } from '@mathjax/src/cjs/handlers/html.js';
+import type { LiteElement } from '@mathjax/src/cjs/adaptors/lite/Element.js';
+import type { LiteText } from '@mathjax/src/cjs/adaptors/lite/Text.js';
+import type { LiteDocument } from '@mathjax/src/cjs/adaptors/lite/Document.js';
 import { InfoIcon, LightBulbIcon, AlertIcon, ReportIcon, StopIcon } from '@primer/octicons-react';
 import type {
     RenderTreeElem,
@@ -23,6 +22,9 @@ import type {
 import { colorScheme } from './css';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
+
+// TODO
+import '@mathjax/src/cjs/input/tex/ams/AmsConfiguration.js';
 
 class MermaidRenderer {
     private initialized = false;
@@ -77,10 +79,44 @@ class MathJaxRenderer {
             return this.state;
         }
 
+        const packages = [
+            'base',
+            'action',
+            'ams',
+            'amscd',
+            'bbox',
+            'boldsymbol',
+            'braket',
+            'bussproofs',
+            'cancel',
+            'cases',
+            'centernot',
+            'color',
+            'colortbl',
+            'empheq',
+            'enclose',
+            'extpfeil',
+            'gensymb',
+            'html',
+            'mathtools',
+            'mhchem',
+            'newcommand',
+            'noerrors',
+            'noundefined',
+            'upgreek',
+            'unicode',
+            'verb',
+            'configmacros',
+            'tagformat',
+            'textcomp',
+            'textmacros',
+        ];
+
         const adaptor = liteAdaptor();
         RegisterHTMLHandler(adaptor);
         const document = mathjax.document('', {
-            InputJax: new TeX({ packages: AllPackages }),
+            // InputJax: new TeX({ packages: allPackages }),
+            InputJax: new TeX({ packages }),
             OutputJax: new SVG({ fontCache: 'local' }),
         });
         this.state = [document, adaptor];
