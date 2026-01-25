@@ -1058,6 +1058,7 @@ mod tests {
     snapshot_test!(url_inside_link);
     snapshot_test!(inline_html_inside_blockquote);
     snapshot_test!(empty);
+    snapshot_test!(non_printable);
 
     // Offset
     snapshot_test!(offset_block, Some(30));
@@ -1280,5 +1281,20 @@ mod tests {
         let buf = String::from_utf8(buf).unwrap();
         assert_eq!(buf.matches("\u{fffd}").count(), 3, "output={buf:?}");
         assert!(!buf.contains('\0'), "output={buf:?}");
+    }
+
+    #[test]
+    fn encode_special_chars() {
+        let src = str::from_utf8(b"\x08\x22\x27\x5c").unwrap();
+        let target = MarkdownContent::new(src.to_string(), None);
+        let parser = MarkdownParser::new(&target, None, ());
+        let mut buf = Vec::new();
+        let () = parser.write_to(&mut buf).unwrap();
+        let buf = String::from_utf8(buf).unwrap();
+        // \t, \n, \f, \r are eaten by Markdown parser so they don't appear in the output
+        assert!(
+            buf.contains(r#"{"t":"p","c":["\\b\\"\'\\\\"]}"#),
+            "expected escaped special characters in {buf:?}",
+        );
     }
 }
