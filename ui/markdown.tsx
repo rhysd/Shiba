@@ -12,31 +12,6 @@ import type { LiteElement } from '@mathjax/src/cjs/adaptors/lite/Element.js';
 import type { LiteText } from '@mathjax/src/cjs/adaptors/lite/Text.js';
 import type { LiteDocument } from '@mathjax/src/cjs/adaptors/lite/Document.js';
 import { MathJaxTexFont } from '@mathjax/mathjax-tex-font/cjs/svg.js';
-import '@mathjax/src/cjs/input/tex/ams/AmsConfiguration.js';
-import '@mathjax/src/cjs/input/tex/amscd/AmsCdConfiguration.js';
-import '@mathjax/src/cjs/input/tex/boldsymbol/BoldsymbolConfiguration.js';
-import '@mathjax/src/cjs/input/tex/braket/BraketConfiguration.js';
-import '@mathjax/src/cjs/input/tex/bussproofs/BussproofsConfiguration.js';
-import '@mathjax/src/cjs/input/tex/cancel/CancelConfiguration.js';
-import '@mathjax/src/cjs/input/tex/cases/CasesConfiguration.js';
-import '@mathjax/src/cjs/input/tex/centernot/CenternotConfiguration.js';
-import '@mathjax/src/cjs/input/tex/color/ColorConfiguration.js';
-import '@mathjax/src/cjs/input/tex/empheq/EmpheqConfiguration.js';
-import '@mathjax/src/cjs/input/tex/enclose/EncloseConfiguration.js';
-import '@mathjax/src/cjs/input/tex/extpfeil/ExtpfeilConfiguration.js';
-import '@mathjax/src/cjs/input/tex/gensymb/GensymbConfiguration.js';
-import '@mathjax/src/cjs/input/tex/mathtools/MathtoolsConfiguration.js';
-import '@mathjax/src/cjs/input/tex/mhchem/MhchemConfiguration.js';
-import '@mathjax/src/cjs/input/tex/noundefined/NoUndefinedConfiguration.js';
-import '@mathjax/src/cjs/input/tex/upgreek/UpgreekConfiguration.js';
-import '@mathjax/src/cjs/input/tex/unicode/UnicodeConfiguration.js';
-import '@mathjax/src/cjs/input/tex/verb/VerbConfiguration.js';
-import '@mathjax/src/cjs/input/tex/configmacros/ConfigMacrosConfiguration.js';
-import '@mathjax/src/cjs/input/tex/tagformat/TagFormatConfiguration.js';
-import '@mathjax/src/cjs/input/tex/textcomp/TextcompConfiguration.js';
-import '@mathjax/src/cjs/input/tex/textmacros/TextMacrosConfiguration.js';
-import '@mathjax/src/cjs/input/tex/physics/PhysicsConfiguration.js';
-import '@mathjax/src/cjs/input/tex/newcommand/NewcommandConfiguration.js';
 import { InfoIcon, LightBulbIcon, AlertIcon, ReportIcon, StopIcon } from '@primer/octicons-react';
 import type {
     RenderTreeElem,
@@ -97,10 +72,36 @@ type MathClassName = 'math-expr-block' | 'math-expr-inline' | 'code-fence-math';
 class MathJaxRenderer {
     private state: MathJaxState | null = null;
 
-    private initMathJax(): MathJaxState {
+    private async initMathJax(): Promise<MathJaxState> {
         if (this.state !== null) {
             return this.state;
         }
+
+        await import('@mathjax/src/cjs/input/tex/ams/AmsConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/amscd/AmsCdConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/boldsymbol/BoldsymbolConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/braket/BraketConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/bussproofs/BussproofsConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/cancel/CancelConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/cases/CasesConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/centernot/CenternotConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/color/ColorConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/empheq/EmpheqConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/enclose/EncloseConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/extpfeil/ExtpfeilConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/gensymb/GensymbConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/mathtools/MathtoolsConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/mhchem/MhchemConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/noundefined/NoUndefinedConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/upgreek/UpgreekConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/unicode/UnicodeConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/verb/VerbConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/configmacros/ConfigMacrosConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/tagformat/TagFormatConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/textcomp/TextcompConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/textmacros/TextMacrosConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/physics/PhysicsConfiguration.js');
+        await import('@mathjax/src/cjs/input/tex/newcommand/NewcommandConfiguration.js');
 
         const packages = [
             // The list of TeX packages actually used on github.com. To retrieve this list
@@ -134,7 +135,7 @@ class MathJaxRenderer {
             'tagformat',
             'textcomp',
             'textmacros',
-            // Additional useful packages
+            // Additional popular packages
             'physics',
             'newcommand',
         ];
@@ -150,7 +151,7 @@ class MathJaxRenderer {
     }
 
     async render(expr: string, className: MathClassName, key: number | undefined): Promise<ReactElement> {
-        const [document, adaptor] = this.initMathJax();
+        const [document, adaptor] = await this.initMathJax();
         const node = await document.convertPromise(expr);
         const html = adaptor.innerHTML(node as LiteElement);
         return <span className={className} dangerouslySetInnerHTML={{ __html: html }} key={key} />; // eslint-disable-line @typescript-eslint/naming-convention
