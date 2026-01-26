@@ -1,0 +1,235 @@
+---
+source: src/markdown/parser.rs
+expression: json
+---
+{
+  "kind": "render_tree",
+  "tree": [
+    {
+      "c": [
+        "GitHub MathJax TeX extension samples"
+      ],
+      "level": 1,
+      "t": "h"
+    },
+    {
+      "c": [
+        "Basic"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        "inline",
+        ": ",
+        {
+          "expr": "a^2 + b^2 = c^2",
+          "inline": true,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "AMS（align / cases）"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\begin{align}\nf(x) &= x^2 + 2x + 1 \\\\\ng(x) &= \\frac{1}{x}\n\\end{align}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\begin{cases}\nx + y = 1 \\\\\nx - y = 3\n\\end{cases}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "braket / cancel / color"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\langle \\psi | H | \\psi \\rangle\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\frac{\\cancel{2}x^2}{\\cancel{2}x} = x\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\color{blue}{x} + \\color{red}{y} = z\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "mhchem"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\ce{2H2 + O2 -> 2H2O}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "newcommand"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\newcommand{\\R}{\\mathbb{R}}\nx \\in \\R\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "physics dv, pdv"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\dv{x} \\sin x = \\cos x\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\pdv{f}{x} = 2x\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "physics vb, va"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\vb{F} = m \\va{a}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "physics abs, norm"
+      ],
+      "level": 3,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\abs{x} = \\sqrt{x^2}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\norm{\\vb{v}} = \\sqrt{v_x^2 + v_y^2}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    }
+  ]
+}
