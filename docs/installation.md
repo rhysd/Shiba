@@ -5,8 +5,8 @@ This document describes how to install Shiba.
 
 ## Runtime dependencies
 
-Shiba uses platform-specific WebView runtimes through [wry][] crate. You need to install runtime dependencies on some
-platforms.
+Shiba uses platform-specific WebView runtimes through [wry][] crate. You may need to install runtime dependencies on
+some platforms.
 
 ### Ubuntu or Debian
 
@@ -27,8 +27,8 @@ Note: If you install `.deb` file through `dpkg` command, these dependencies are 
 
 ### Windows
 
-Shiba uses [WebView2 component][webview2]. Usually it is already installed because Windows 11 and recent Windows 10
-install it by default. When you see Shiba crashes on startup, please check if WebView2 is installed.
+Shiba uses [WebView2 component][webview2]. Usually it is already installed because Windows 11 and Windows 10 version
+1803 or later install it by default. When you see Shiba crashes on startup, please check if WebView2 is installed.
 
 ### macOS
 
@@ -36,7 +36,8 @@ Shiba uses [WKWebView][wkwebview] and it is installed by default on macOS. No ad
 
 ## Use Pre-built binaries
 
-**:warning:These released artifacts are still experimental and built at some point of `main` branch. They may be buggy.**
+> [!Warning]
+> These released artifacts are still experimental and built at some point of `main` branch. They may be buggy.
 
 Pre-built binaries are hosted on [the release page](https://github.com/rhysd/Shiba/releases/tag/unreleased).
 
@@ -54,11 +55,11 @@ executable to run.
 ### Preparation
 
 Shiba is built with Rust and TypeScript. Install [Cargo package manager][cargo] via [rustup][] and [Node.js][nodejs] as
-build toolchain. Ensure that the latest stable Rust toolchain is installed.
+build toolchain. Ensure that the latest stable Rust toolchain and the latest LTS version of Node.js are installed.
 
 All build tasks are defined as `make` rules. On Windows, install Make via [winget][winget-make] or [chocolatey][choco-make].
 
-Finally clone the Shiba Git repository from GitHub.
+Clone the Shiba Git repository from GitHub.
 
 ```sh
 git clone --depth=1 'https://github.com/rhysd/Shiba.git'
@@ -77,7 +78,7 @@ make release
 
 ### Build macOS universal application
 
-Targets for both M1 Mac and Intel Mac are necessary. Install them via rustup:
+Targets for both arm64 Mac and x86_64 Mac are necessary. Install them via rustup:
 
 ```sh
 rustup target add x86_64-apple-darwin aarch64-apple-darwin
