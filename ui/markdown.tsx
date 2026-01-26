@@ -23,6 +23,7 @@ import type {
 import { colorScheme } from './css';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
+import { loadTexPackages } from './mathjax_loader';
 
 class MermaidRenderer {
     private initialized = false;
@@ -77,69 +78,7 @@ class MathJaxRenderer {
             return this.state;
         }
 
-        await import('@mathjax/src/cjs/input/tex/ams/AmsConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/amscd/AmsCdConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/boldsymbol/BoldsymbolConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/braket/BraketConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/bussproofs/BussproofsConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/cancel/CancelConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/cases/CasesConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/centernot/CenternotConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/color/ColorConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/empheq/EmpheqConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/enclose/EncloseConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/extpfeil/ExtpfeilConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/gensymb/GensymbConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/mathtools/MathtoolsConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/mhchem/MhchemConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/noundefined/NoUndefinedConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/upgreek/UpgreekConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/unicode/UnicodeConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/verb/VerbConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/configmacros/ConfigMacrosConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/tagformat/TagFormatConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/textcomp/TextcompConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/textmacros/TextMacrosConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/physics/PhysicsConfiguration.js');
-        await import('@mathjax/src/cjs/input/tex/newcommand/NewcommandConfiguration.js');
-
-        const packages = [
-            // The list of TeX packages actually used on github.com. To retrieve this list
-            //
-            // 1. Open some Markdown text area
-            // 2. Input some math expressions and show the preview
-            // 3. Open DevTools and see `JSON.stringify(window.MathJax.config.tex.packages)`
-            //
-            // Note that github.com still seems to utilize MathJax v3.
-            'base',
-            'ams',
-            'amscd',
-            'boldsymbol',
-            'braket',
-            'bussproofs',
-            'cancel',
-            'cases',
-            'centernot',
-            'color',
-            'empheq',
-            'enclose',
-            'extpfeil',
-            'gensymb',
-            'mathtools',
-            'mhchem',
-            'noundefined',
-            'upgreek',
-            'unicode',
-            'verb',
-            'configmacros',
-            'tagformat',
-            'textcomp',
-            'textmacros',
-            // Additional popular packages
-            'physics',
-            'newcommand',
-        ];
-
+        const packages = await loadTexPackages();
         const adaptor = liteAdaptor();
         RegisterHTMLHandler(adaptor);
         const document = mathjax.document('', {

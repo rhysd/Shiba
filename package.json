@@ -29,7 +29,8 @@
     "lint:eslint": "eslint --max-warnings 0 ui scripts eslint.config.mjs",
     "lint:stylelint": "stylelint --max-warnings 0 ui/style.css",
     "lint:ui": "concurrently -c auto npm:lint:tsc npm:lint:prettier npm:lint:eslint npm:lint:stylelint",
-    "test": "cargo test"
+    "test": "cargo test",
+    "postinstall": "node scripts/mathjax.mjs"
   },
   "author": "rhysd <lin90162@yahoo.co.jp> (https://rhysd.github.io/)",
   "license": "MIT",

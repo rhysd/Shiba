@@ -3,6 +3,7 @@ import { copyFile, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import esbuild from 'esbuild';
+import { main as generateMathJaxLoader } from './mathjax.mjs';
 
 if (process.argv.includes('--help')) {
     console.log(`node bundle.mjs [OPTIONS]
@@ -33,6 +34,19 @@ const hljsDefaultCssPlugin = {
             const out = join(absWorkingDir, 'src', 'assets', 'ui', 'hljs_default.css');
             await writeFile(out, content, 'utf8');
             console.log('Generated ' + out);
+        });
+    },
+};
+const mathjaxLoaderPlugin = {
+    name: 'mathjax-loader',
+
+    setup(build) {
+        build.onEnd(async result => {
+            if (result.errors.length > 0) {
+                return;
+            }
+            const out = await generateMathJaxLoader();
+            console.log('Generated MathJax loader script:', out);
         });
     },
 };
@@ -74,7 +88,7 @@ const buildCssOptions = {
     logLevel: 'info',
     color: true,
     absWorkingDir,
-    plugins: [hljsDefaultCssPlugin],
+    plugins: [hljsDefaultCssPlugin, mathjaxLoaderPlugin],
 };
 
 await copyFile(join(absWorkingDir, 'ui', 'index.html'), join(absWorkingDir, 'src', 'assets', 'index.html'));
