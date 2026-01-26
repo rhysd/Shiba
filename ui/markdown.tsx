@@ -11,6 +11,7 @@ import { RegisterHTMLHandler } from '@mathjax/src/cjs/handlers/html.js';
 import type { LiteElement } from '@mathjax/src/cjs/adaptors/lite/Element.js';
 import type { LiteText } from '@mathjax/src/cjs/adaptors/lite/Text.js';
 import type { LiteDocument } from '@mathjax/src/cjs/adaptors/lite/Document.js';
+import { MathJaxTexFont } from '@mathjax/mathjax-tex-font/cjs/svg.js';
 import { InfoIcon, LightBulbIcon, AlertIcon, ReportIcon, StopIcon } from '@primer/octicons-react';
 import type {
     RenderTreeElem,
@@ -79,54 +80,22 @@ class MathJaxRenderer {
             return this.state;
         }
 
-        const packages = [
-            'base',
-            'action',
-            'ams',
-            'amscd',
-            'bbox',
-            'boldsymbol',
-            'braket',
-            'bussproofs',
-            'cancel',
-            'cases',
-            'centernot',
-            'color',
-            'colortbl',
-            'empheq',
-            'enclose',
-            'extpfeil',
-            'gensymb',
-            'html',
-            'mathtools',
-            'mhchem',
-            'newcommand',
-            'noerrors',
-            'noundefined',
-            'upgreek',
-            'unicode',
-            'verb',
-            'configmacros',
-            'tagformat',
-            'textcomp',
-            'textmacros',
-        ];
+        const packages = ['base', 'ams'];
 
         const adaptor = liteAdaptor();
         RegisterHTMLHandler(adaptor);
         const document = mathjax.document('', {
-            // InputJax: new TeX({ packages: allPackages }),
             InputJax: new TeX({ packages }),
-            OutputJax: new SVG({ fontCache: 'local' }),
+            OutputJax: new SVG({ fontCache: 'local', fontData: MathJaxTexFont }),
         });
         this.state = [document, adaptor];
         return this.state;
     }
 
-    render(expr: string, className: MathClassName, key: number | undefined): ReactElement {
+    async render(expr: string, className: MathClassName, key: number | undefined): Promise<ReactElement> {
         const [document, adaptor] = this.initMathJax();
-        const node = document.convert(expr) as LiteElement;
-        const html = adaptor.innerHTML(node);
+        const node = await document.convertPromise(expr);
+        const html = adaptor.innerHTML(node as LiteElement);
         return <span className={className} dangerouslySetInnerHTML={{ __html: html }} key={key} />; // eslint-disable-line @typescript-eslint/naming-convention
     }
 }
@@ -176,7 +145,7 @@ class FenceRenderer {
                 return null;
             }
             const [content, modified] = text;
-            const rendered = this.mathjax.render(content, 'code-fence-math', key);
+            const rendered = await this.mathjax.render(content, 'code-fence-math', key);
             return [rendered, modified];
         }
 
