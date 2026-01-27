@@ -7,34 +7,32 @@ expression: json
   "tree": [
     {
       "c": [
-        "GitHub MathJax TeX extension samples"
+        "MathJax TeX Packages"
       ],
       "level": 1,
       "t": "h"
     },
     {
       "c": [
-        "Basic"
+        "base"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
-        "inline",
+        "Inline",
         ": ",
-        {
-          "expr": "a^2 + b^2 = c^2",
-          "inline": true,
-          "t": "math"
-        }
+        "$",
+        " (a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3 ",
+        "$"
       ],
       "t": "p"
     },
     {
       "c": [
         {
-          "expr": "\n\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}\n",
+          "expr": "\n\\left(\\sum_{k=1}^{n} k\\right)^2\n= \\left(\\frac{n(n+1)}{2}\\right)^2\n",
           "inline": false,
           "t": "math"
         }
@@ -46,15 +44,15 @@ expression: json
     },
     {
       "c": [
-        "AMS（align / cases）"
+        "ams"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
         {
-          "expr": "\n\\begin{align}\nf(x) &= x^2 + 2x + 1 \\\\\ng(x) &= \\frac{1}{x}\n\\end{align}\n",
+          "expr": "\n\\begin{align}\n\\operatorname{Var}(X)\n&= \\mathbb{E}\\!\\left[(X-\\mathbb{E}[X])^2\\right] \\\\\n&= \\mathbb{E}[X^2] - \\left(\\mathbb{E}[X]\\right)^2\n\\end{align}\n",
           "inline": false,
           "t": "math"
         }
@@ -64,7 +62,7 @@ expression: json
     {
       "c": [
         {
-          "expr": "\n\\begin{cases}\nx + y = 1 \\\\\nx - y = 3\n\\end{cases}\n",
+          "expr": "\n\\begin{equation}\n\\begin{split}\n\\int_0^1 x^p(1-x)^q\\,dx\n&= \\frac{\\Gamma(p+1)\\Gamma(q+1)}{\\Gamma(p+q+2)} \\\\\n&\\eqqcolon \\mathrm{B}(p+1,q+1)\n\\end{split}\n\\end{equation}\n",
           "inline": false,
           "t": "math"
         }
@@ -76,15 +74,15 @@ expression: json
     },
     {
       "c": [
-        "braket / cancel / color"
+        "amscd"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
         {
-          "expr": "\n\\langle \\psi | H | \\psi \\rangle\n",
+          "expr": "\n\\begin{CD}\n0 @>>> A @>>> B @>>> C @>>> 0 \\\\\n@. @VV\\alpha V @VV\\beta V @VV\\gamma V @. \\\\\n0 @>>> A' @>>> B' @>>> C' @>>> 0\n\\end{CD}\n",
           "inline": false,
           "t": "math"
         }
@@ -92,9 +90,19 @@ expression: json
       "t": "p"
     },
     {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "boldsymbol"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
       "c": [
         {
-          "expr": "\n\\frac{\\cancel{2}x^2}{\\cancel{2}x} = x\n",
+          "expr": "\n\\boldsymbol{\\nabla} \\times \\boldsymbol{E}\n= -\\frac{\\partial \\boldsymbol{B}}{\\partial t}\n",
           "inline": false,
           "t": "math"
         }
@@ -102,9 +110,219 @@ expression: json
       "t": "p"
     },
     {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "braket"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
       "c": [
         {
-          "expr": "\n\\color{blue}{x} + \\color{red}{y} = z\n",
+          "expr": "\n\\langle \\psi | H | \\phi \\rangle\n= \\sum_n \\langle \\psi | n \\rangle \\langle n | \\phi \\rangle\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "bussproofs"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\begin{prooftree}\n\\AxiomC{$A \\rightarrow B$}\n\\AxiomC{$B \\rightarrow C$}\n\\BinaryInfC{$A \\rightarrow C$}\n\\RightLabel{\\scriptsize (Trans)}\n\\AxiomC{$A$}\n\\BinaryInfC{$C$}\n\\end{prooftree}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "cancel"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\frac{(x-1)\\cancel{(x+1)}}{\\cancel{(x+1)}} = x-1\n\\qquad\n\\bcancel{a+b}\n\\qquad\n\\xcancel{0}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "cases"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\nf(x)=\n\\begin{cases}\n\\displaystyle \\int_0^x t^2\\,dt & \\text{if } x \\ge 0 \\\\\n\\displaystyle -\\sum_{k=1}^{\\infty}\\frac{x^{2k-1}}{2k-1} & \\text{if } x < 0\n\\end{cases}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "centernot"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\nA \\centernot\\subseteq B\n\\qquad\nx \\centernot\\equiv y \\pmod{n}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "color"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n{\\color{red}{\\int_0^\\infty e^{-x}\\,dx}} = {\\color{blue}{1}}\n\\qquad\n{\\color{green}{(a+b)^2}} = a^2 + 2ab + b^2\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "empheq"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\begin{empheq}[left=\\empheqlbrace]{align}\ny &= mx + b \\\\\nm &= \\frac{y_2-y_1}{x_2-x_1}\n\\end{empheq}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "enclose"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\enclose{circle}{x}\n\\quad\n\\enclose{box}{x+1}\n\\quad\n\\enclose{roundedbox}{\\frac{a}{b}}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "extpfeil"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\nA \\xRightarrow[\\text{lower label}]{\\text{upper label}} B\n\\qquad\nX \\xleftrightarrow{\\text{iso}} Y\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "gensymb"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n45\\degree,\\quad 298\\,\\mathrm{K} \\approx 25\\celsius,\\quad 1\\,\\mathrm{\\ohm}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "mathtools"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\DeclarePairedDelimiter{\\normM}{\\lVert}{\\rVert}\n\\normM{x}_2 \\coloneqq \\sqrt{\\sum_{i=1}^n x_i^2}\n\\qquad\na \\eqqcolon b\n",
           "inline": false,
           "t": "math"
         }
@@ -118,13 +336,203 @@ expression: json
       "c": [
         "mhchem"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
         {
-          "expr": "\n\\ce{2H2 + O2 -> 2H2O}\n",
+          "expr": "\n\\ce{2H2(g) + O2(g) -> 2H2O(l)}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\ce{Fe^{2+} ->[\\text{oxidation}] Fe^{3+} + e-}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "noundefined"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\nE = mc^2\n\\quad\n\\ThisMacroIsNotDefined\n\\quad\n\\int_0^1 x\\,dx = \\frac12\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "upgreek"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\alpha,\\ \\beta,\\ \\gamma\n\\qquad\n\\upalpha,\\ \\upbeta,\\ \\upgamma\n\\qquad\n\\Delta,\\ \\updelta\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "unicode"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n∀x∈\\mathbb{R},\\ \\exists y≥0:\\ y^2 = x^2\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "verb"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\verb|git commit -m \"mathjax test\"|\n\\qquad\n\\verb|\\alpha + \\beta|\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "tagformat"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\begin{equation}\n\\label{eq:tagtest}\n\\int_0^\\infty e^{-x}\\,dx = 1\n\\tag{TAG-INT}\n\\end{equation}\n(\\ref{eq:tagtest})\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "textcomp"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\text{\\textnumero 123 \\texttrademark\\ \\textregistered}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "textmacros"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\textbf{Bold},\\ \\textit{Italic},\\ \\texttt{Monospace},\n\\text{and }\nx=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "physics"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\dv{x}{t} = v,\\qquad \\dv[2]{x}{t} = a\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\grad \\phi,\\ \\div \\vec{E},\\ \\curl \\vec{B}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\qty(\\frac{\\sin x}{x})^2\n\\qquad\n\\comm{A}{B}=AB-BA\n",
           "inline": false,
           "t": "math"
         }
@@ -138,13 +546,23 @@ expression: json
       "c": [
         "newcommand"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
         {
-          "expr": "\n\\newcommand{\\R}{\\mathbb{R}}\nx \\in \\R\n",
+          "expr": "\n\\newcommand{\\R}{\\mathbb{R}}\n\\newcommand{\\inner}[2]{\\langle #1,#2\\rangle}\n\\newcommand{\\normv}[1]{\\lVert #1\\rVert}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\nx\\in\\R,\\quad\n\\inner{x}{y}=x^\\mathsf{T}y,\\quad\n\\normv{x}^2=\\inner{x}{x}\n",
           "inline": false,
           "t": "math"
         }
@@ -156,25 +574,15 @@ expression: json
     },
     {
       "c": [
-        "physics dv, pdv"
+        "bbox"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
         {
-          "expr": "\n\\dv{x} \\sin x = \\cos x\n",
-          "inline": false,
-          "t": "math"
-        }
-      ],
-      "t": "p"
-    },
-    {
-      "c": [
-        {
-          "expr": "\n\\pdv{f}{x} = 2x\n",
+          "expr": "\n\\bbox[5px,border:2px solid red]{x^2 + y^2}\n\\qquad\n\\bbox[background:yellow]{\\int_0^\\infty e^{-x}\\,dx}\n",
           "inline": false,
           "t": "math"
         }
@@ -186,15 +594,47 @@ expression: json
     },
     {
       "c": [
-        "physics vb, va"
+        "require (NOT loaded",
+        ": negative test)"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
+        "The following should ",
         {
-          "expr": "\n\\vb{F} = m \\va{a}\n",
+          "c": [
+            "fail or be ignored"
+          ],
+          "t": "strong"
+        },
+        " if the ",
+        {
+          "c": [
+            "require"
+          ],
+          "t": "code"
+        },
+        " package is not loaded",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\require{physics}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\require{cancel}\n",
           "inline": false,
           "t": "math"
         }
@@ -206,15 +646,37 @@ expression: json
     },
     {
       "c": [
-        "physics abs, norm"
+        "action (NOT loaded",
+        ": negative test)"
       ],
-      "level": 3,
+      "level": 2,
       "t": "h"
     },
     {
       "c": [
+        "The following should ",
         {
-          "expr": "\n\\abs{x} = \\sqrt{x^2}\n",
+          "c": [
+            "fail or render as plain content"
+          ],
+          "t": "strong"
+        },
+        " if the ",
+        {
+          "c": [
+            "action"
+          ],
+          "t": "code"
+        },
+        " package is not loaded",
+        ":"
+      ],
+      "t": "p"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\action{toggle}{x^2 + y^2}\n",
           "inline": false,
           "t": "math"
         }
@@ -224,7 +686,27 @@ expression: json
     {
       "c": [
         {
-          "expr": "\n\\norm{\\vb{v}} = \\sqrt{v_x^2 + v_y^2}\n",
+          "expr": "\n\\action{tooltip}{E=mc^2}\n",
+          "inline": false,
+          "t": "math"
+        }
+      ],
+      "t": "p"
+    },
+    {
+      "t": "hr"
+    },
+    {
+      "c": [
+        "Integrated Stress Test"
+      ],
+      "level": 2,
+      "t": "h"
+    },
+    {
+      "c": [
+        {
+          "expr": "\n\\bbox[8px,border:1px solid grey]{\n\\begin{aligned}\n\\text{\\color{blue}{State}}:\\ \\ket{\\psi}\n&= \\sum_{n\\in\\mathbb{N}} c_n \\ket{n} \\\\\n\\text{\\color{red}{Energy}}:\\\nE &= \\mel{\\psi}{H}{\\psi}\n\\qquad\n\\dv{E}{t} \\centernot= 0 \\\\\n\\text{\\color{green}{Chem}}:\\\n&\\ce{2H2 + O2 -> 2H2O}\n\\end{aligned}\n}\n",
           "inline": false,
           "t": "math"
         }
