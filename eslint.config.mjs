@@ -111,7 +111,7 @@ export default ts.config(
         },
     },
     {
-        files: ['scripts/bundle.mjs'],
+        files: ['scripts/bundle.mjs', 'eslint.config.mjs'],
         extends: [n.configs['flat/recommended']],
         languageOptions: {
             ecmaVersion: 'latest',

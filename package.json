@@ -3,6 +3,9 @@
   "private": true,
   "version": "2.0.0-alpha.0",
   "description": "",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "main": "index.js",
   "scripts": {
     "watch": "concurrently -c auto npm:watch:bundle npm:watch:ts npm:watch:rs",
@@ -15,15 +18,15 @@
     "fix:clippy": "cargo clippy --fix --allow-dirty",
     "fix:rustfmt": "cargo fmt --all",
     "fix:rs": "concurrently -m 1 -c auto npm:fix:clippy npm:fix:rustfmt",
-    "fix:prettier": "prettier --write ui scripts",
-    "fix:eslint": "eslint --fix ui scripts",
+    "fix:prettier": "prettier --write ui scripts eslint.config.mjs",
+    "fix:eslint": "eslint --fix ui scripts eslint.config.mjs",
     "fix:ts": "concurrently -m 1 -c auto npm:fix:eslint npm:fix:prettier",
     "lint": "concurrently -c auto npm:lint:clippy npm:lint:rustfmt npm:lint:tsc npm:lint:prettier npm:lint:eslint npm:lint:stylelint",
     "lint:tsc": "tsc --noEmit -p . --pretty",
     "lint:clippy": "cargo clippy --color always --all-features --all --benches -- -D warnings",
-    "lint:prettier": "prettier --check ui scripts",
+    "lint:prettier": "prettier --check ui scripts eslint.config.mjs",
     "lint:rustfmt": "cargo fmt --all --check -- --color always",
-    "lint:eslint": "eslint --max-warnings 0 ui scripts",
+    "lint:eslint": "eslint --max-warnings 0 ui scripts eslint.config.mjs",
     "lint:stylelint": "stylelint --max-warnings 0 ui/style.css",
     "lint:ui": "concurrently -c auto npm:lint:tsc npm:lint:prettier npm:lint:eslint npm:lint:stylelint",
     "test": "cargo test"
