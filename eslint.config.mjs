@@ -1,4 +1,7 @@
 import eslint from '@eslint/js';
+// eslint-plugin-import does not look at `exports` in package.json and causes a false positive here.
+// https://github.com/import-js/eslint-plugin-import/issues/1810
+// eslint-disable-next-line import/no-unresolved
 import ts from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import security from 'eslint-plugin-security';
@@ -10,6 +13,7 @@ import globals from 'globals';
 export default ts.config(
     eslint.configs.recommended,
     prettier,
+    importPlugin.flatConfigs.recommended,
     {
         rules: {
             'prefer-spread': 'off',
@@ -24,6 +28,7 @@ export default ts.config(
                     caughtErrorsIgnorePattern: '^_',
                 },
             ],
+            'import/no-duplicates': 'error',
         },
     },
     {
@@ -31,7 +36,6 @@ export default ts.config(
         extends: [
             reactHooks.configs.flat['recommended-latest'],
             security.configs.recommended,
-            importPlugin.flatConfigs.recommended,
             importPlugin.flatConfigs.typescript,
             ...ts.configs.recommendedTypeChecked,
         ],
@@ -107,7 +111,6 @@ export default ts.config(
             'react-hooks/exhaustive-deps': 'error',
             'react-hooks/rules-of-hooks': 'error',
             'import/no-default-export': 'error',
-            'import/no-duplicates': 'error',
         },
     },
     {
