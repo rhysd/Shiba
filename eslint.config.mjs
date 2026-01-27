@@ -21,6 +21,7 @@ export default ts.config(
                 {
                     argsIgnorePattern: '^_',
                     varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
                 },
             ],
         },
@@ -39,6 +40,7 @@ export default ts.config(
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
             },
+            globals: globals.browser,
         },
         rules: {
             'no-unused-vars': 'off',
@@ -83,7 +85,14 @@ export default ts.config(
                     },
                 },
             ],
-            '@typescript-eslint/no-unused-vars': 'error',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                },
+            ],
             '@typescript-eslint/no-confusing-void-expression': 'error',
             '@typescript-eslint/non-nullable-type-assertion-style': 'error',
             '@typescript-eslint/return-await': ['error', 'in-try-catch'],
@@ -105,7 +114,7 @@ export default ts.config(
         files: ['scripts/bundle.mjs'],
         extends: [n.configs['flat/recommended']],
         languageOptions: {
-            ecmaVersion: 2022,
+            ecmaVersion: 'latest',
             sourceType: 'module',
             globals: globals.nodeBuiltin,
         },
