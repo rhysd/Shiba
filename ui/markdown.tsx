@@ -11,6 +11,8 @@ import { RegisterHTMLHandler } from '@mathjax/src/cjs/handlers/html.js';
 import type { LiteElement } from '@mathjax/src/cjs/adaptors/lite/Element.js';
 import type { LiteText } from '@mathjax/src/cjs/adaptors/lite/Text.js';
 import type { LiteDocument } from '@mathjax/src/cjs/adaptors/lite/Document.js';
+import { MathJaxTexFont } from '@mathjax/mathjax-tex-font/cjs/svg.js';
+import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/cjs/svg.js';
 import { InfoIcon, LightBulbIcon, AlertIcon, ReportIcon, StopIcon } from '@primer/octicons-react';
 import type {
     RenderTreeElem,
@@ -22,7 +24,7 @@ import type {
 import { colorScheme } from './css';
 import * as log from './log';
 import { Mermaid } from './components/Mermaid';
-import { loadTexPackages, loadFont } from './mathjax_loader';
+import { loadTexPackages } from './mathjax_loader';
 
 class MermaidRenderer {
     private initialized = false;
@@ -78,12 +80,12 @@ class MathJaxRenderer {
         }
 
         const packages = await loadTexPackages();
-        const fontData = await loadFont();
         const adaptor = liteAdaptor();
         RegisterHTMLHandler(adaptor);
+        MathJaxTexFont.addExtension(MathJaxMhchemFontExtension);
         const document = mathjax.document('', {
             InputJax: new TeX({ packages }),
-            OutputJax: new SVG({ fontCache: 'local', fontData }),
+            OutputJax: new SVG({ fontCache: 'local', fontData: MathJaxTexFont }),
         });
         this.state = [document, adaptor];
         return this.state;
