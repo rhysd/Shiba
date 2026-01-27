@@ -50,13 +50,14 @@ const packages = [
     'upgreek',
     'unicode',
     'verb',
-    'configmacros',
+    // 'configmacros', We don't predefine macros. So we don't need this package
     'tagformat',
     'textcomp',
     'textmacros',
     // Additional popular packages
     'physics',
     'newcommand',
+    'bbox',
 ];
 const texRoot = '@mathjax/src/cjs/input/tex';
 const myFileName = fileURLToPath(import.meta.url);
