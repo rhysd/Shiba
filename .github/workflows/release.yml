@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]'
+      - 'v[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+'
   workflow_dispatch:
 
 env:
@@ -41,7 +41,7 @@ jobs:
               echo "tag=${GITHUB_REF##refs/tags/}"
               echo "body="
             fi
-            echo "prerelease=${{ github.event_name == 'workflow_dispatch' }}"
+            echo "prerelease=${{ github.event_name == 'workflow_dispatch' || contains(github.ref, 'alpha') }}"
           } >> "$GITHUB_OUTPUT"
   release-mac:
     name: Build and upload macOS package
