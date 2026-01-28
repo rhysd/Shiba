@@ -1,7 +1,4 @@
 import eslint from '@eslint/js';
-// eslint-plugin-import does not look at `exports` in package.json and causes a false positive here.
-// https://github.com/import-js/eslint-plugin-import/issues/1810
-// eslint-disable-next-line import/no-unresolved
 import ts from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import security from 'eslint-plugin-security';
@@ -129,6 +126,16 @@ export default ts.config(
             'n/prefer-global/process': ['error', 'never'],
             'n/prefer-node-protocol': 'error',
             'n/no-sync': 'error',
+            'import/no-unresolved': [
+                'error',
+                {
+                    ignore: [
+                        // eslint-plugin-import does not look at `exports` in package.json and causes a false positive here.
+                        // https://github.com/import-js/eslint-plugin-import/issues/1810
+                        '^typescript-eslint$',
+                    ],
+                },
+            ],
         },
     },
 );
