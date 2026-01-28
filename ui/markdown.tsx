@@ -85,7 +85,7 @@ class MathJaxRenderer {
         MathJaxTexFont.addExtension(MathJaxMhchemFontExtension);
         const document = mathjax.document('', {
             InputJax: new TeX({ packages }),
-            OutputJax: new SVG({ fontCache: 'local', fontData: MathJaxTexFont }),
+            OutputJax: new SVG({ fontCache: 'local', useXlink: false, fontData: MathJaxTexFont }),
         });
         this.state = [document, adaptor];
         return this.state;

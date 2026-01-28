@@ -23,9 +23,11 @@ expression: json
       "c": [
         "Inline",
         ": ",
-        "$",
-        " (a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3 ",
-        "$"
+        {
+          "expr": "(a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3",
+          "inline": true,
+          "t": "math"
+        }
       ],
       "t": "p"
     },
@@ -552,17 +554,7 @@ expression: json
     {
       "c": [
         {
-          "expr": "\n\\newcommand{\\R}{\\mathbb{R}}\n\\newcommand{\\inner}[2]{\\langle #1,#2\\rangle}\n\\newcommand{\\normv}[1]{\\lVert #1\\rVert}\n",
-          "inline": false,
-          "t": "math"
-        }
-      ],
-      "t": "p"
-    },
-    {
-      "c": [
-        {
-          "expr": "\nx\\in\\R,\\quad\n\\inner{x}{y}=x^\\mathsf{T}y,\\quad\n\\normv{x}^2=\\inner{x}{x}\n",
+          "expr": "\n\\newcommand{\\R}{\\mathbb{R}}\n\\newcommand{\\inner}[2]{\\langle #1,#2\\rangle}\n\\newcommand{\\normv}[1]{\\lVert #1\\rVert}\nx\\in\\R,\\quad\n\\inner{x}{y}=x^\\mathsf{T}y,\\quad\n\\normv{x}^2=\\inner{x}{x}\n",
           "inline": false,
           "t": "math"
         }

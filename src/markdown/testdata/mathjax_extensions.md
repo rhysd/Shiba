@@ -2,7 +2,7 @@
 
 ## base
 
-Inline: $ (a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3 $
+Inline: $(a+b)^3 = a^3 + 3a^2b + 3ab^2 + b^3$
 
 $$
 \left(\sum_{k=1}^{n} k\right)^2
@@ -283,9 +283,6 @@ $$
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\inner}[2]{\langle #1,#2\rangle}
 \newcommand{\normv}[1]{\lVert #1\rVert}
-$$
-
-$$
 x\in\R,\quad
 \inner{x}{y}=x^\mathsf{T}y,\quad
 \normv{x}^2=\inner{x}{x}
