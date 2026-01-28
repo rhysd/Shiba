@@ -3,7 +3,7 @@ import { copyFile, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import esbuild from 'esbuild';
-import { main as generateMathJaxLoader } from './mathjax.mjs';
+import { generateMathJaxLoader } from './mathjax.mjs';
 
 if (process.argv.includes('--help')) {
     console.log(`node bundle.mjs [OPTIONS]
