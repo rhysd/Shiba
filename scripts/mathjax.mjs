@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { argv } from 'node:process';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
-import prettier from 'prettier';
+import { resolveConfig, format } from 'prettier';
 
 // MathJax v4 removed `AllPackages` API:
 // https://docs.mathjax.org/en/latest/upgrading/whats-new-4.0/breaking.html#removal-of-allpackages
@@ -85,8 +85,8 @@ export async function loadTexPackages(): Promise<string[]> {
 }
 `;
     const out = path.join(repoRoot, 'ui/mathjax_loader.ts');
-    const config = await prettier.resolveConfig(path.join(repoRoot, '.prettierrc.json'));
-    const formatted = await prettier.format(generated, { ...config, filepath: out });
+    const config = await resolveConfig(path.join(repoRoot, '.prettierrc.json'));
+    const formatted = await format(generated, { ...config, filepath: out });
     await fs.writeFile(out, formatted, 'utf-8');
     return out;
 }
