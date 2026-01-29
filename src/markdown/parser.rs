@@ -1059,6 +1059,7 @@ mod tests {
     snapshot_test!(inline_html_inside_blockquote);
     snapshot_test!(empty);
     snapshot_test!(non_printable);
+    snapshot_test!(mathjax_extensions);
 
     // Offset
     snapshot_test!(offset_block, Some(30));

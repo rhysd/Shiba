@@ -5,7 +5,7 @@
 /src/assets/**/*.css
 /src/assets/**/*.css.map
 /src/assets/*.html
-/web/*.js
+/ui/mathjax_loader.ts
 /Shiba.app
 /Shiba.dmg
 /shiba.msi

@@ -11,6 +11,8 @@ export default ts.config(
     eslint.configs.recommended,
     prettier,
     importPlugin.flatConfigs.recommended,
+
+    // Common configurations
     {
         rules: {
             'prefer-spread': 'off',
@@ -28,6 +30,8 @@ export default ts.config(
             'import/no-duplicates': 'error',
         },
     },
+
+    // Configurations for browser (WebView) environment
     {
         files: ['ui/**/*.ts', 'ui/**/*.tsx'],
         extends: [
@@ -110,8 +114,10 @@ export default ts.config(
             'import/no-default-export': 'error',
         },
     },
+
+    // Configurations for Node.js environment
     {
-        files: ['scripts/bundle.mjs', 'eslint.config.mjs'],
+        files: ['scripts/*.mjs', 'eslint.config.mjs'],
         extends: [n.configs['flat/recommended']],
         languageOptions: {
             ecmaVersion: 'latest',
@@ -130,7 +136,7 @@ export default ts.config(
                 'error',
                 {
                     ignore: [
-                        // eslint-plugin-import does not look at `exports` in package.json and causes a false positive here.
+                        // eslint-plugin-import does not look at `exports` in package.json and causes false positives.
                         // https://github.com/import-js/eslint-plugin-import/issues/1810
                         '^typescript-eslint$',
                     ],

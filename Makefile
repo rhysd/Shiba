@@ -3,7 +3,7 @@ RS_SRC := $(wildcard src/*.rs src/markdown/*.rs src/wry/*.rs) build.rs
 CSS := $(shell find -E src/assets -type f -regex .*\.css$ )
 MAC_APP_ASSETS := assets/Shiba.app/Contents/Info.plist assets/Shiba.app/Contents/Resources/icon.icns
 
-node_modules:
+node_modules: package.json
 	npm install
 
 src/assets/bundle.js src/assets/bundle.js.map: node_modules $(TS_SRC)
@@ -13,6 +13,9 @@ src/assets/bundle.js src/assets/bundle.js.map: node_modules $(TS_SRC)
 src/assets/bundle.min.js: node_modules $(TS_SRC)
 	npm run lint:tsc
 	npm run release
+
+ui/mathjax_loader.ts: node_modules
+	node ./scripts/mathjax.mjs
 
 target/debug/shiba: $(RS_SRC) src/assets/bundle.js src/assets/index.html $(CSS)
 	cargo build
