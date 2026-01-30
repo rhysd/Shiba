@@ -58,7 +58,7 @@ const packages = [
     'newcommand',
     'bbox',
 ];
-const texRoot = '@mathjax/src/cjs/input/tex';
+const texRoot = '@mathjax/src/mjs/input/tex';
 const repoRoot = path.dirname(import.meta.dirname);
 
 async function findTexPackageConfigurationModule(pkg) {

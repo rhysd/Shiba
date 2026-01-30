@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2022",
-    "module": "commonjs",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "jsx": "react",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -19,7 +20,8 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "isolatedModules": true
   },
   "include": [
     "ui/**/*.ts",

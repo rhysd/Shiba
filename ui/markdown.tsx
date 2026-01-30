@@ -2,17 +2,17 @@ import * as React from 'react';
 import type { ReactNode, ReactElement } from 'react';
 import hljs from 'highlight.js';
 import mermaid from 'mermaid';
-import { mathjax } from '@mathjax/src/cjs/mathjax.js';
-import type { MathDocument } from '@mathjax/src/cjs/core/MathDocument.js';
-import { TeX } from '@mathjax/src/cjs/input/tex.js';
-import { SVG } from '@mathjax/src/cjs/output/svg.js';
-import { liteAdaptor, type LiteAdaptor } from '@mathjax/src/cjs/adaptors/liteAdaptor.js';
-import { RegisterHTMLHandler } from '@mathjax/src/cjs/handlers/html.js';
-import type { LiteElement } from '@mathjax/src/cjs/adaptors/lite/Element.js';
-import type { LiteText } from '@mathjax/src/cjs/adaptors/lite/Text.js';
-import type { LiteDocument } from '@mathjax/src/cjs/adaptors/lite/Document.js';
-import { MathJaxTexFont } from '@mathjax/mathjax-tex-font/cjs/svg.js';
-import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/cjs/svg.js';
+import { mathjax } from '@mathjax/src/mjs/mathjax.js';
+import type { MathDocument } from '@mathjax/src/mjs/core/MathDocument.js';
+import { TeX } from '@mathjax/src/mjs/input/tex.js';
+import { SVG } from '@mathjax/src/mjs/output/svg.js';
+import { liteAdaptor, type LiteAdaptor } from '@mathjax/src/mjs/adaptors/liteAdaptor.js';
+import { RegisterHTMLHandler } from '@mathjax/src/mjs/handlers/html.js';
+import type { LiteElement } from '@mathjax/src/mjs/adaptors/lite/Element.js';
+import type { LiteText } from '@mathjax/src/mjs/adaptors/lite/Text.js';
+import type { LiteDocument } from '@mathjax/src/mjs/adaptors/lite/Document.js';
+import { MathJaxTexFont } from '@mathjax/mathjax-tex-font/mjs/svg.js';
+import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/mjs/svg.js';
 import { InfoIcon, LightBulbIcon, AlertIcon, ReportIcon, StopIcon } from '@primer/octicons-react';
 import type {
     RenderTreeElem,

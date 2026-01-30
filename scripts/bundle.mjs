@@ -62,7 +62,7 @@ const buildTsOptions = {
     absWorkingDir,
     metafile,
     alias: {
-        // This alias redirects an import in @mathjax/src/cjs/output/svg/DefaultFont.js.
+        // This alias redirects an import in @mathjax/src/mjs/output/svg/DefaultFont.js.
         // MathJax v4 adopts mathjax-newcm-font by default. Its SVG backend imports the font data statically so esbuild
         // always bundles the font data.
         //
@@ -72,7 +72,7 @@ const buildTsOptions = {
         // is not possible if bundling all JS sources. The mathjax-newcm-font package is actually unused in our use case.
         // This alias purges @mathjax/mathjax-tex-font dependency from @mathjax/src package and reduces the bundle size
         // by about 961KB.
-        '#default-font/svg/default.js': '@mathjax/mathjax-tex-font/cjs/svg/default.js',
+        '#default-font/svg/default.js': '@mathjax/mathjax-tex-font/mjs/svg/default.js',
     },
 };
 const buildCssOptions = {
