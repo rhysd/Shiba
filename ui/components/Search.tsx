@@ -68,7 +68,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => 
         sendMessage({ kind: 'search', query: '', index: null, matcher });
         dispatch(closeSearch());
     };
-    const handleChange = (e: React.FormEvent<HTMLInputElement>): void => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (debId !== null) {
             window.clearTimeout(debId);
         }

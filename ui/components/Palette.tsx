@@ -71,7 +71,7 @@ export function Palette<T extends Item>({
         }
     }, [index, items]);
 
-    const handleInput = (e: React.FormEvent<HTMLInputElement>): void => {
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>): void => {
         setQuery(e.currentTarget.value.toLowerCase());
         e.preventDefault();
     };
