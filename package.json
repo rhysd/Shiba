@@ -6,7 +6,7 @@
   "engines": {
     "node": ">=22.22.0"
   },
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "watch": "concurrently -c auto npm:watch:bundle npm:watch:ts npm:watch:rs",
     "watch:bundle": "npm run bundle -- --watch",
@@ -66,11 +66,11 @@
     "eslint-plugin-n": "^17.23.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-security": "^3.0.1",
-    "globals": "^16.5.0",
+    "globals": "^17.2.0",
     "prettier": "^3.7.4",
     "set-git-hooks-dir": "^1.0.0",
-    "stylelint": "^16.26.1",
-    "stylelint-config-standard": "^39.0.1",
+    "stylelint": "^17.1.0",
+    "stylelint-config-standard": "^40.0.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.0"
   }
