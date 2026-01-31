@@ -49,10 +49,11 @@ jobs:
           {
             echo "- Version: ${{ steps.get_info.outputs.version }}"
             echo "- Tag: ${{ steps.get_info.outputs.tag }}"
-            echo "- Pre-release?: ${{ steps.get_info.outputs.prerelease }}"
             echo "- Draft: ${{ steps.get_info.outputs.draft }}"
-            echo
-            echo "${{ steps.get_info.outputs.body }}"
+            if [[ "${{ steps.get_info.outputs.body }}" != "" ]]; then
+              echo
+              echo "${{ steps.get_info.outputs.body }}"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
   release-mac:
     name: Build and upload macOS package
@@ -88,7 +89,7 @@ jobs:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
           draft: ${{ needs.info.outputs.draft }}
-          prerelease: false
+          prerelease: true
           files: |
             Shiba_v${{ needs.info.outputs.version }}.dmg
             shiba_macos_x86_64_v${{ needs.info.outputs.version }}.zip
@@ -125,7 +126,7 @@ jobs:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
           draft: ${{ needs.info.outputs.draft }}
-          prerelease: false
+          prerelease: true
           files: |
             shiba_windows_x86_64_v${{ needs.info.outputs.version }}.exe.zip
             shiba_x64_v${{ needs.info.outputs.version }}.msi
@@ -156,7 +157,7 @@ jobs:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
           draft: ${{ needs.info.outputs.draft }}
-          prerelease: false
+          prerelease: true
           files: |
             shiba_linux_x86_64_*.zip
             target/debian/shiba_*-1_amd64.deb
