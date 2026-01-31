@@ -43,6 +43,15 @@ jobs:
             fi
             echo "prerelease=${{ github.event_name == 'workflow_dispatch' || contains(github.ref, 'alpha') }}"
           } >> "$GITHUB_OUTPUT"
+      - name: Print the information summary
+        run: |
+          {
+            echo "- Version: ${{ steps.get_info.outputs.version }}"
+            echo "- Tag: ${{ steps.get_info.outputs.tag }}"
+            echo "- Pre-release?: ${{ steps.get_info.outputs.prerelease }}"
+            echo
+            echo "${{ steps.get_info.outputs.body }}"
+          } >> "$GITHUB_STEP_SUMMARY"
   release-mac:
     name: Build and upload macOS package
     runs-on: macos-15-intel
