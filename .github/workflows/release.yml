@@ -23,7 +23,7 @@ jobs:
       version: ${{ steps.get_info.outputs.version }}
       tag: ${{ steps.get_info.outputs.tag }}
       body: ${{ steps.get_info.outputs.body }}
-      prerelease: ${{ steps.get_info.outputs.prerelease }}
+      draft: ${{ steps.get_info.outputs.draft }}
     steps:
       - uses: actions/checkout@v6
       - name: Collect information
@@ -36,12 +36,13 @@ jobs:
               echo "version=0.0.0"
               echo "tag=unreleased"
               echo "body=Pre-release assets for testing. Built at https://github.com/rhysd/Shiba/commit/$(git rev-parse HEAD)"
+              echo "draft=true"
             else
               echo "version=${GITHUB_REF##refs/tags/v}"
               echo "tag=${GITHUB_REF##refs/tags/}"
               echo "body="
+              echo "draft=false"
             fi
-            echo "prerelease=${{ github.event_name == 'workflow_dispatch' || contains(github.ref, 'alpha') }}"
           } >> "$GITHUB_OUTPUT"
       - name: Print the information summary
         run: |
@@ -49,6 +50,7 @@ jobs:
             echo "- Version: ${{ steps.get_info.outputs.version }}"
             echo "- Tag: ${{ steps.get_info.outputs.tag }}"
             echo "- Pre-release?: ${{ steps.get_info.outputs.prerelease }}"
+            echo "- Draft: ${{ steps.get_info.outputs.draft }}"
             echo
             echo "${{ steps.get_info.outputs.body }}"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -85,8 +87,8 @@ jobs:
         with:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
-          draft: false
-          prerelease: ${{ needs.info.outputs.prerelease }}
+          draft: ${{ needs.info.outputs.draft }}
+          prerelease: false
           files: |
             Shiba_v${{ needs.info.outputs.version }}.dmg
             shiba_macos_x86_64_v${{ needs.info.outputs.version }}.zip
@@ -122,8 +124,8 @@ jobs:
         with:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
-          draft: false
-          prerelease: ${{ needs.info.outputs.prerelease }}
+          draft: ${{ needs.info.outputs.draft }}
+          prerelease: false
           files: |
             shiba_windows_x86_64_v${{ needs.info.outputs.version }}.exe.zip
             shiba_x64_v${{ needs.info.outputs.version }}.msi
@@ -153,8 +155,8 @@ jobs:
         with:
           tag_name: ${{ needs.info.outputs.tag }}
           body: ${{ needs.info.outputs.body }}
-          draft: false
-          prerelease: ${{ needs.info.outputs.prerelease }}
+          draft: ${{ needs.info.outputs.draft }}
+          prerelease: false
           files: |
             shiba_linux_x86_64_*.zip
             target/debian/shiba_*-1_amd64.deb
