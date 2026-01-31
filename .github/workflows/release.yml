@@ -147,5 +147,5 @@ jobs:
           draft: false
           prerelease: ${{ needs.info.outputs.prerelease }}
           files: |
-            shiba_linux_x86_64_v${{ needs.info.outputs.version }}.zip
-            target/debian/shiba_${{ needs.info.outputs.version }}-1_amd64.deb
+            shiba_linux_x86_64_*.zip
+            target/debian/shiba_*-1_amd64.deb
