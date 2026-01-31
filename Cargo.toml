@@ -6,7 +6,7 @@ description = "Simple markdown previewer"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/rhysd/Shiba"
-homepage = "https://://github.com/rhysd/Shiba#readme"
+homepage = "https://github.com/rhysd/Shiba#readme"
 include = [
     "/src",
     "/README.md",
