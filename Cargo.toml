@@ -15,6 +15,8 @@ include = [
     "/assets/icon.ico",
     "!/src/testdata",  # Symlinks in `src/testdata` confuses cargo because cargo builds a crate in a temporary directory and the symlinks are relative.
 ]
+categories = ["gui", "text-processing"]
+keywords = ["markdown", "preview", "desktop-app"]
 
 [[bin]]
 name = "shiba"
