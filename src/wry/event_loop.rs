@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+use crate::assets::set_app_icon_to_dock;
 use crate::config::Config;
 use crate::renderer::{Event as AppEvent, EventHandler, EventSender, Rendering, RenderingFlow};
 use crate::wry::menu::{Menu, MenuEvents};
@@ -90,6 +92,12 @@ impl Rendering for Wry {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
+
+                    // App icon should be set to dock at `applicationDidFinishLaunching:` and `StartCause::Init` event
+                    // is emitted on the hook.
+                    #[cfg(target_os = "macos")]
+                    set_app_icon_to_dock();
+
                     RenderingFlow::Continue
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {

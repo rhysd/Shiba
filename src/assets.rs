@@ -233,6 +233,11 @@ impl Assets {
     }
 }
 
+#[cfg(target_os = "macos")]
+pub fn set_app_icon_to_dock() {
+    crate::macos::set_dock_icon(LOGO_PNG).expect("logo.png is a valid PNG image");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
