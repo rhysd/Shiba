@@ -41,9 +41,6 @@ fn try_main() -> Result<()> {
 // is already detatched on Windows (in release mode). In this case the error message is not output to console and users
 // cannot know what was the error.
 fn main() {
-    let x = Some(Vec::<i32>::new());
-    let _y = x.unwrap_or(vec![]);
-
     // When windows_subsystem is set to "windows", console outputs are detached from the process and no longer printed
     // on terminal. However we still want to see the logger output for debugging by running this binary from terminal.
     #[cfg(all(windows, not(debug_assertions)))]
