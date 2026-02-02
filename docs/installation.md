@@ -50,7 +50,30 @@ Pre-built binaries are hosted on [the release page](https://github.com/rhysd/Shi
 **Note:** These executables are not signed. When your OS complains about it, go to 'Security' OS settings and allow the
 executable to run.
 
-## Build from source
+## Use [Cargo][cargo] package manager
+
+Shiba is released on [crates.io][crate]. `shiba` executable can be installed as a crate.
+
+> [!Warning]
+> Packages uploaded to crates.io are **experimental** alpha releases. You need to specify the full version string at
+> `cargo install`.
+
+When you install version `2.0.0-alpha.1`, run the following command.
+
+```sh
+cargo install shiba-preview@2.0.0-alpha.1
+```
+
+After the installation check the version is what you expect.
+
+```sh
+shiba --version
+```
+
+> [!Note]
+> The executable is assumed to be used in command line. It is not packaged as application like `Shiba.app` on macOS.
+
+## Build from source and package as desktop app
 
 ### Preparation
 
@@ -64,6 +87,12 @@ Clone the Shiba Git repository from GitHub.
 ```sh
 git clone --depth=1 'https://github.com/rhysd/Shiba.git'
 cd ./Shiba
+```
+
+As an optional step check out specific tag to build.
+
+```sh
+git checkout v2.0.0-alpha.1
 ```
 
 ### Build single-binary executable
@@ -87,6 +116,7 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
 `make` does everything to generate `Shiba.dmg` or `Shiba.app`.
 
 ```sh
+# At the root of the repository
 make Shiba.dmg
 # or
 make Shiba.app
@@ -99,6 +129,7 @@ make Shiba.app
 `make` does everything to generate `shiba.msi` installer file.
 
 ```sh
+# At the root of the repository
 make shiba.msi
 ```
 
@@ -109,6 +140,7 @@ make shiba.msi
 `make` does everything to generate `shiba_amd64.deb` package file.
 
 ```sh
+# At the root of the repository
 make shiba_amd64.deb
 ```
 
@@ -116,6 +148,7 @@ make shiba_amd64.deb
 [webview2]: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
 [wkwebview]: https://developer.apple.com/documentation/webkit/wkwebview
 [cargo]: https://doc.rust-lang.org/cargo/
+[crate]: https://crates.io/crates/shiba-preview
 [rustup]: https://rustup.rs/
 [nodejs]: https://nodejs.org/en
 [winget-make]: https://winget.run/pkg/GnuWin32/Make

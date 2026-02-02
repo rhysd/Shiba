@@ -2,6 +2,7 @@
 =================================================
 [![CI][ci-badge]][ci]
 [![dogs respected][shiba-badge]][shiba]
+[![crates.io][crates-io-badge]][crates-io]
 
 > [!WARNING]
 > Shiba v2 is a work in progress
@@ -48,6 +49,8 @@ This software is distributed under [the MIT license](./LICENSE).
 [ci-badge]: https://github.com/rhysd/Shiba/actions/workflows/watchdogs.yml/badge.svg
 [shiba-badge]: https://img.shields.io/badge/dogs-respected-brightgreen.svg?longCache=true&style=flat
 [shiba]: https://github.com/rhysd/Shiba
+[crates-io-badge]: https://img.shields.io/crates/v/shiba-preview
+[crates-io]: https://crates.io/crates/shiba-preview
 [gh-markdown]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
 [gfm]: https://github.github.com/gfm/
 [mathjax]: https://www.mathjax.org/
