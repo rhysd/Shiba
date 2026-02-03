@@ -16,6 +16,7 @@ mod macos;
 mod markdown;
 mod opener;
 mod persistent;
+mod preview;
 mod renderer;
 #[cfg(feature = "__sanity")]
 mod sanity;

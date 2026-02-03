@@ -1,9 +1,9 @@
 use crate::cli::Options;
-use crate::config::{Config, SearchMatcher};
+use crate::config::Config;
 use crate::dialog::Dialog;
 use crate::history::History;
-use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::opener::Opener;
+use crate::preview::Preview;
 use crate::renderer::{
     Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
     RenderingFlow,
@@ -12,112 +12,13 @@ use crate::renderer::{
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
-use std::fs;
 use std::marker::PhantomData;
 use std::mem;
-use std::path::{MAIN_SEPARATOR, Path, PathBuf};
+use std::path::PathBuf;
 
 enum Zoom {
     In,
     Out,
-}
-
-struct PreviewContent {
-    home_dir: Option<PathBuf>,
-    content: MarkdownContent,
-    text: DisplayText,
-    title: String,
-}
-
-impl Default for PreviewContent {
-    fn default() -> Self {
-        let home_dir = dirs::home_dir();
-        #[cfg(target_os = "windows")]
-        let home_dir = home_dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
-        Self {
-            home_dir,
-            content: MarkdownContent::default(),
-            text: DisplayText::default(),
-            title: String::new(),
-        }
-    }
-}
-
-impl PreviewContent {
-    fn home_dir(&self) -> Option<&'_ Path> {
-        self.home_dir.as_deref()
-    }
-
-    fn title(&self, path: &Path) -> String {
-        if let Some(home_dir) = &self.home_dir
-            && let Ok(path) = path.strip_prefix(home_dir)
-        {
-            return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
-        }
-        format!("Shiba: {}", path.display())
-    }
-
-    pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
-        log::debug!("Opening markdown preview for {:?}", path);
-        let source = match fs::read_to_string(path) {
-            Ok(source) => source,
-            Err(err) => {
-                // Do not return error 'no such file' because the file might be renamed and no longer
-                // exists. This can happen when saving files on Vim. In this case, a file create event
-                // will follow so the preview can be updated with the event.
-                log::debug!("Could not open {:?} due to error: {}", path, err);
-                return Ok(false);
-            }
-        };
-
-        let title = self.title(path);
-        let is_new = self.title != title;
-        let new_content = MarkdownContent::new(source, path.parent());
-        let prev_content = std::mem::replace(&mut self.content, new_content);
-        let offset = if is_new { None } else { prev_content.modified_utf8_offset(&self.content) };
-        log::debug!("Last modified offset: {:?}", offset);
-
-        self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
-
-        if is_new {
-            renderer.set_title(&title);
-            self.title = title;
-            renderer.send_message(MessageToRenderer::PathChanged { path })?;
-        }
-
-        Ok(true)
-    }
-
-    pub fn rerender<R: Renderer>(&mut self, renderer: &R) -> Result<()> {
-        renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()))
-    }
-
-    pub fn search<R: Renderer>(
-        &mut self,
-        renderer: &R,
-        query: &str,
-        index: Option<usize>,
-        matcher: SearchMatcher,
-    ) -> Result<()> {
-        log::debug!("Re-rendering content with query {:?} and current index {:?}", query, index);
-        if query.is_empty() {
-            return self.rerender(renderer);
-        }
-
-        let matches = match self.text.search(query, matcher) {
-            Ok(m) => m,
-            Err(err) => {
-                log::debug!("Could not build {:?} matcher for query {:?}: {}", matcher, query, err);
-                return self.rerender(renderer);
-            }
-        };
-        log::debug!("Search hit {} matches", matches.len());
-
-        let Some(tokenizer) = matches.tokenizer(index) else {
-            return self.rerender(renderer);
-        };
-        renderer.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
-    }
 }
 
 pub struct Shiba<R: Rendering, O, W, D> {
@@ -126,7 +27,7 @@ pub struct Shiba<R: Rendering, O, W, D> {
     history: History,
     watcher: W,
     config: Config,
-    preview: PreviewContent,
+    preview: Preview,
     init_file: Option<PathBuf>,
     _dialog: PhantomData<D>,
     #[cfg(feature = "__sanity")]
@@ -179,7 +80,7 @@ where
             history,
             watcher,
             config,
-            preview: PreviewContent::default(),
+            preview: Preview::default(),
             init_file,
             _dialog: PhantomData,
             #[cfg(feature = "__sanity")]
@@ -214,7 +115,7 @@ where
     }
 
     fn reload(&mut self) -> Result<()> {
-        if self.preview.content.is_empty() {
+        if self.preview.content().is_empty() {
             // When content is empty, we don't need to reload the page. This happens when 'welcome' page displays just
             // after launching the app.
             log::debug!("Skipped to reload empty content");
