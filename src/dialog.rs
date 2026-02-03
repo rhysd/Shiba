@@ -35,7 +35,7 @@ pub struct SystemDialog;
 impl Dialog for SystemDialog {
     fn pick_files(dir: &Path, extensions: &FileExtensions) -> Vec<PathBuf> {
         FileDialog::new()
-            .set_title("Open file to preview")
+            .set_title("Open files to preview")
             .add_filter("Markdown", extensions.as_slice())
             .set_directory(dir)
             .set_can_create_directories(true)
@@ -45,7 +45,7 @@ impl Dialog for SystemDialog {
 
     fn pick_dirs(cwd: &Path) -> Vec<PathBuf> {
         FileDialog::new()
-            .set_title("Choose directory to watch")
+            .set_title("Choose directories to watch")
             .set_directory(cwd)
             .set_can_create_directories(true)
             .pick_folders()
