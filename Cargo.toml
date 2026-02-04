@@ -67,14 +67,14 @@ tao = { version = "0.34.5", default-features = false, features = [ "rwh_06" ] }
 zstd = "0.13.3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-wry = { version = "0.53.5", features = ["transparent"] }
+wry = { version = "0.54.1", features = ["transparent"] }
 window-vibrancy = "0.7.1"
 objc2 = "0.6.3"
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["NSApplication", "NSResponder", "NSImage"] }
 objc2-foundation = { version = "0.3.2", default-features = false, features = ["block2", "NSData"] }
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
-wry = "0.53.5"
+wry = "0.54.1"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
