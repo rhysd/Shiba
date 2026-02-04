@@ -3,6 +3,7 @@ use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::renderer::{MessageToRenderer, Renderer};
 use anyhow::Result;
 use std::fs;
+use std::mem;
 use std::path::{MAIN_SEPARATOR, Path, PathBuf};
 
 pub struct Preview {
@@ -46,8 +47,8 @@ impl Preview {
 
     pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
-        let source = match fs::read_to_string(path) {
-            Ok(source) => source,
+        let new_content = match fs::read_to_string(path) {
+            Ok(source) => MarkdownContent::new(source, path.parent()),
             Err(err) => {
                 // Do not return error 'no such file' because the file might be renamed and no longer
                 // exists. This can happen when saving files on Vim. In this case, a file create event
@@ -59,8 +60,7 @@ impl Preview {
 
         let title = self.title(path);
         let is_new = self.title != title;
-        let new_content = MarkdownContent::new(source, path.parent());
-        let prev_content = std::mem::replace(&mut self.content, new_content);
+        let prev_content = mem::replace(&mut self.content, new_content);
         let offset = if is_new { None } else { prev_content.modified_utf8_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);
 
@@ -92,7 +92,7 @@ impl Preview {
         }
 
         let matches = match self.text.search(query, matcher) {
-            Ok(m) => m,
+            Ok(matches) => matches,
             Err(err) => {
                 log::debug!("Could not build {:?} matcher for query {:?}: {}", matcher, query, err);
                 return self.rerender(renderer);
