@@ -1,5 +1,6 @@
 use crate::renderer::ZoomLevel;
 use anyhow::{Context, Result};
+use indexmap::IndexSet;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -90,7 +91,7 @@ impl PersistentData for WindowState {
 
 #[derive(Serialize, Debug)]
 pub struct RecentFiles<'a> {
-    pub paths: Vec<&'a Path>,
+    pub paths: &'a IndexSet<PathBuf>,
 }
 
 impl PersistentData for RecentFiles<'_> {
@@ -99,7 +100,7 @@ impl PersistentData for RecentFiles<'_> {
 
 #[derive(Deserialize, Debug)]
 pub struct RecentFilesOwned {
-    pub paths: Vec<PathBuf>,
+    pub paths: IndexSet<PathBuf>,
 }
 
 impl PersistentData for RecentFilesOwned {

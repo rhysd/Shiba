@@ -23,8 +23,7 @@ impl History {
             recent.paths.truncate(max_items);
             log::debug!("Loaded {} paths as recent files history", recent.paths.len());
             let index = recent.paths.len() - 1;
-            let items = recent.paths.into_iter().collect();
-            return Self { max_items, index, items };
+            return Self { max_items, index, items: recent.paths };
         }
 
         Self::new(max_items)
@@ -77,8 +76,8 @@ impl History {
             return Ok(());
         }
 
-        let paths: Vec<_> = self.items.iter().map(PathBuf::as_path).collect();
-        log::debug!("Saving {} paths as recent files history", paths.len());
-        config.data_dir().save(&RecentFiles { paths })
+        log::debug!("Saving {} paths as recent files history", self.items.len());
+        let data = RecentFiles { paths: &self.items };
+        config.data_dir().save(&data)
     }
 }
