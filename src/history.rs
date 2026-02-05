@@ -34,18 +34,16 @@ impl History {
             return;
         }
 
-        if let Some(idx) = self.items.get_index_of(&item) {
+        if self.items.shift_remove(&item) {
             // Move to the existing item instead of inserting a new item
-            log::debug!("Move to the index of existing history item {:?}: {}", item, idx);
-            self.index = idx;
-            return;
+            log::debug!("Move the existing item to top of history: {:?}", item);
+        } else {
+            if self.items.len() == self.max_items {
+                self.items.shift_remove_index(0);
+            }
+            log::debug!("Push the new item to history (size={}): {:?}", self.items.len() + 1, item);
         }
 
-        if self.items.len() == self.max_items {
-            self.items.shift_remove_index(0);
-        }
-
-        log::debug!("Push new history item (size={}): {:?}", self.items.len(), item);
         self.items.insert(item);
         self.index = self.items.len() - 1; // Reset index to put focus on the new item
     }
