@@ -55,24 +55,17 @@ impl History {
         self.items.get_index(self.index)
     }
 
-    pub fn forward(&mut self) {
-        if self.index + 1 < self.items.len() {
-            self.index += 1;
-        }
+    pub fn forward(&mut self) -> Option<&Path> {
+        let path = self.items.get_index(self.index + 1)?;
+        self.index += 1;
+        Some(path)
     }
 
-    pub fn back(&mut self) {
-        if let Some(i) = self.index.checked_sub(1) {
-            self.index = i;
-        }
-    }
-
-    pub fn next(&self) -> Option<&PathBuf> {
-        self.items.get_index(self.index + 1)
-    }
-
-    pub fn prev(&self) -> Option<&PathBuf> {
-        self.items.get_index(self.index.checked_sub(1)?)
+    pub fn back(&mut self) -> Option<&Path> {
+        let idx = self.index.checked_sub(1)?;
+        let path = self.items.get_index(idx)?;
+        self.index = idx;
+        Some(path)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &'_ Path> {

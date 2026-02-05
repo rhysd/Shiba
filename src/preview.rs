@@ -10,7 +10,7 @@ pub struct Preview {
     home_dir: Option<PathBuf>,
     content: MarkdownContent,
     text: DisplayText,
-    title: String,
+    path: PathBuf,
 }
 
 impl Default for Preview {
@@ -22,7 +22,7 @@ impl Default for Preview {
             home_dir,
             content: MarkdownContent::default(),
             text: DisplayText::default(),
-            title: String::new(),
+            path: PathBuf::new(),
         }
     }
 }
@@ -32,17 +32,17 @@ impl Preview {
         self.home_dir.as_deref()
     }
 
-    pub fn content(&self) -> &MarkdownContent {
-        &self.content
+    pub fn is_empty(&self) -> bool {
+        self.content.is_empty()
     }
 
-    fn title(&self, path: &Path) -> String {
+    fn title(&self) -> String {
         if let Some(home_dir) = &self.home_dir
-            && let Ok(path) = path.strip_prefix(home_dir)
+            && let Ok(path) = self.path.strip_prefix(home_dir)
         {
             return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());
         }
-        format!("Shiba: {}", path.display())
+        format!("Shiba: {}", self.path.display())
     }
 
     pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
@@ -58,8 +58,7 @@ impl Preview {
             }
         };
 
-        let title = self.title(path);
-        let is_new = self.title != title;
+        let is_new = self.path != path;
         let prev_content = mem::replace(&mut self.content, new_content);
         let offset = if is_new { None } else { prev_content.modified_utf8_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);
@@ -67,8 +66,10 @@ impl Preview {
         self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
 
         if is_new {
+            self.path = path.to_path_buf();
+            let title = self.title();
+            log::debug!("Preview title changed to {title:?}");
             renderer.set_title(&title);
-            self.title = title;
             renderer.send_message(MessageToRenderer::PathChanged { path })?;
         }
 

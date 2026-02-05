@@ -97,25 +97,23 @@ where
     }
 
     fn forward(&mut self) -> Result<()> {
-        if let Some(path) = self.history.next() {
+        if let Some(path) = self.history.forward() {
             log::debug!("Forward to next preview page: {:?}", path);
             self.preview.show(path, &self.renderer)?;
-            self.history.forward();
         }
         Ok(())
     }
 
     fn back(&mut self) -> Result<()> {
-        if let Some(path) = self.history.prev() {
+        if let Some(path) = self.history.back() {
             log::debug!("Back to previous preview page: {:?}", path);
             self.preview.show(path, &self.renderer)?;
-            self.history.back();
         }
         Ok(())
     }
 
     fn reload(&mut self) -> Result<()> {
-        if self.preview.content().is_empty() {
+        if self.preview.is_empty() {
             // When content is empty, we don't need to reload the page. This happens when 'welcome' page displays just
             // after launching the app.
             log::debug!("Skipped to reload empty content");
