@@ -23,7 +23,7 @@ impl History {
         {
             data.paths.truncate(max_items);
             log::debug!("Loaded {} paths from persistent history data", data.paths.len());
-            let index = data.paths.len() - 1;
+            let index = data.paths.len().saturating_sub(1);
             return Self { max_items, index, items: data.paths };
         }
 
