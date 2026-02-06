@@ -12,6 +12,7 @@ import {
     openSearch,
     previewContent,
     searchNext,
+    setPath,
     searchPrevious,
     setSearchMatcher,
     welcome,
@@ -69,6 +70,10 @@ export class GlobalDispatcher {
                 case 'render_tree': {
                     const tree = await this.markdown.render(msg.tree);
                     this.dispatch(previewContent(tree));
+                    break;
+                }
+                case 'path': {
+                    this.dispatch(setPath(msg.path));
                     break;
                 }
                 case 'config':

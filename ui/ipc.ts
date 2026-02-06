@@ -201,6 +201,10 @@ export type MessageFromMain =
           tree: RenderTreeElem[];
       }
     | {
+          kind: 'path';
+          path: string;
+      }
+    | {
           kind: 'config';
           keymaps: KeyMaps;
           search: {

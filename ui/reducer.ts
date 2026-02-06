@@ -2,6 +2,7 @@ import * as log from './log';
 import type { SearchMatcher } from './ipc';
 import { searchNextIndex, searchPreviousIndex } from './search';
 import type { MarkdownReactTree } from './markdown';
+import { displayPath } from './path';
 
 export type Theme = 'light' | 'dark';
 
@@ -35,6 +36,7 @@ export interface Config {
 
 export interface State {
     previewTree: MarkdownReactTree;
+    path: string | null;
     searching: boolean;
     searchIndex: number | null;
     matcher: SearchMatcher;
@@ -46,7 +48,6 @@ export interface State {
     notification: NotificationContent;
     welcome: boolean;
     headings: Heading[];
-    currentPath: string | null;
 }
 
 export const INITIAL_CONFIG: Config = {
@@ -63,6 +64,7 @@ export const INITIAL_STATE: State = {
         lastModified: null,
         matchCount: 0,
     },
+    path: null,
     searching: false,
     searchIndex: null,
     matcher: 'SmartCase',
@@ -74,13 +76,16 @@ export const INITIAL_STATE: State = {
     notification: { kind: 'reload' },
     welcome: false,
     headings: [],
-    currentPath: null,
 };
 
 type Action =
     | {
           kind: 'preview_content';
           tree: MarkdownReactTree;
+      }
+    | {
+          kind: 'set_path';
+          path: string;
       }
     | {
           kind: 'open_search';
@@ -130,6 +135,8 @@ export function reducer(state: State, action: Action): State {
     switch (action.kind) {
         case 'preview_content':
             return { ...state, previewTree: action.tree, welcome: false };
+        case 'set_path':
+            return { ...state, path: displayPath(action.path, state.config.homeDir) };
         case 'headings':
             return { ...state, headings: action.headings };
         case 'open_search':
@@ -174,6 +181,10 @@ export function reducer(state: State, action: Action): State {
 
 export function previewContent(tree: MarkdownReactTree): Action {
     return { kind: 'preview_content', tree };
+}
+
+export function setPath(path: string): Action {
+    return { kind: 'set_path', path };
 }
 
 export function openSearch(): Action {

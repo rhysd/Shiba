@@ -27,6 +27,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const {
         previewTree,
+        path,
         searching,
         searchIndex,
         matcher,
@@ -38,7 +39,6 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         notification,
         welcome,
         headings,
-        currentPath,
     } = state;
 
     let searchInput;
@@ -78,7 +78,7 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     return (
         <ThemeProvider theme={THEME}>
             <ConfigContext.Provider value={config}>
-                <Preview tree={previewTree} headings={headings} path={currentPath} dispatch={dispatch} />
+                <Preview tree={previewTree} headings={headings} path={path} dispatch={dispatch} />
                 {searchInput}
                 {outlineDialog}
                 {historyDialog}

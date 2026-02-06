@@ -5,6 +5,7 @@ import { ConfigContext } from './ConfigContext';
 import { type Dispatch, closeHistory } from '../reducer';
 import { sendMessage } from '../ipc';
 import * as log from '../log';
+import { displayPath } from '../path';
 
 interface HistoryItem {
     text: string;
@@ -20,20 +21,10 @@ function renderHistoryItem(item: HistoryItem): React.ReactNode {
     return item.text;
 }
 
-function text(path: string, homeDir: string | null): string {
-    if (homeDir && path.startsWith(homeDir)) {
-        return `~${path.slice(homeDir.length)}`;
-    }
-    if (path.startsWith('\\\\?\\')) {
-        return path.slice(4); // Strip UNC path
-    }
-    return path;
-}
-
 export const History: React.FC<Props> = ({ history, dispatch }) => {
     const { homeDir } = useContext(ConfigContext);
     const items = useMemo(() => {
-        const items = history.map(path => ({ text: text(path, homeDir), path }));
+        const items = history.map(path => ({ text: displayPath(path, homeDir), path }));
         return items.reverse();
     }, [history, homeDir]);
 

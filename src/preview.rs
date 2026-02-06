@@ -1,6 +1,6 @@
 use crate::config::SearchMatcher;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
-use crate::renderer::Renderer;
+use crate::renderer::{MessageToRenderer, Renderer};
 use anyhow::Result;
 use std::fs;
 use std::mem;
@@ -66,6 +66,7 @@ impl Preview {
         self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
 
         if is_new {
+            renderer.send_message(MessageToRenderer::Path { path })?;
             self.path = path.to_path_buf();
             let title = self.title();
             log::debug!("Preview title changed to {title:?}");

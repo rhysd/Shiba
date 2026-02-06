@@ -26,6 +26,9 @@ pub enum MessageToRenderer<'a> {
         home: Option<&'a Path>,
         window: WindowAppearance,
     },
+    Path {
+        path: &'a Path,
+    },
     Search,
     SearchNext,
     SearchPrevious,
