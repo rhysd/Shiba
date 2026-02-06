@@ -1,5 +1,5 @@
 import { bind as bindKey } from 'mousetrap';
-import { openOutline, openHistory, openHelp } from './reducer';
+import { openOutline, openHelp } from './reducer';
 import type { GlobalDispatcher } from './dispatcher';
 import { sendMessage, type KeyMaps, type KeyAction } from './ipc';
 import * as log from './log';
@@ -194,8 +194,8 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
 
     History: {
         description: 'Open a palette to incrementally search files in history.',
-        dispatch(dispatcher: GlobalDispatcher): void {
-            dispatcher.dispatch(openHistory());
+        dispatch(): void {
+            sendMessage({ kind: 'history' });
         },
     },
 

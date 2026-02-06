@@ -10,11 +10,9 @@ import {
     openHistory,
     openOutline,
     openSearch,
-    pathChanged,
     previewContent,
     searchNext,
     searchPrevious,
-    setRecentFiles,
     setSearchMatcher,
     welcome,
 } from './reducer';
@@ -73,9 +71,6 @@ export class GlobalDispatcher {
                     this.dispatch(previewContent(tree));
                     break;
                 }
-                case 'path_changed':
-                    this.dispatch(pathChanged(msg.path));
-                    break;
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
                     this.dispatch(
@@ -88,7 +83,6 @@ export class GlobalDispatcher {
                         }),
                     );
                     this.dispatch(setSearchMatcher(msg.search.matcher));
-                    this.dispatch(setRecentFiles(msg.recent));
                     break;
                 case 'search':
                     this.openSearch();
@@ -103,7 +97,7 @@ export class GlobalDispatcher {
                     this.dispatch(openOutline());
                     break;
                 case 'history':
-                    this.dispatch(openHistory());
+                    this.dispatch(openHistory(msg.paths));
                     break;
                 case 'welcome':
                     this.dispatch(welcome());

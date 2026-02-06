@@ -33,7 +33,6 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         outline,
         config,
         history,
-        files,
         help,
         notifying,
         notification,
@@ -60,8 +59,8 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     }
 
     let historyDialog;
-    if (history) {
-        historyDialog = <History history={files} dispatch={dispatch} />;
+    if (history.length > 0) {
+        historyDialog = <History history={history} dispatch={dispatch} />;
     }
 
     let guideDialog;

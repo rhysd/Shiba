@@ -40,8 +40,7 @@ export interface State {
     matcher: SearchMatcher;
     outline: boolean;
     config: Config;
-    history: boolean;
-    files: string[];
+    history: string[];
     help: boolean;
     notifying: boolean;
     notification: NotificationContent;
@@ -69,8 +68,7 @@ export const INITIAL_STATE: State = {
     matcher: 'SmartCase',
     outline: false,
     config: INITIAL_CONFIG,
-    history: false,
-    files: [],
+    history: [],
     help: false,
     notifying: false,
     notification: { kind: 'reload' },
@@ -78,8 +76,6 @@ export const INITIAL_STATE: State = {
     headings: [],
     currentPath: null,
 };
-
-const MAX_HISTORIES = 50;
 
 type Action =
     | {
@@ -106,11 +102,7 @@ type Action =
       }
     | {
           kind: 'history';
-          open: boolean;
-      }
-    | {
-          kind: 'new_path';
-          path: string;
+          paths: string[];
       }
     | {
           kind: 'help';
@@ -119,10 +111,6 @@ type Action =
     | {
           kind: 'notification';
           notification: NotificationContent | null;
-      }
-    | {
-          kind: 'recent_files';
-          paths: string[];
       }
     | {
           kind: 'init';
@@ -142,38 +130,13 @@ export function reducer(state: State, action: Action): State {
     switch (action.kind) {
         case 'preview_content':
             return { ...state, previewTree: action.tree, welcome: false };
-        case 'new_path': {
-            const currentPath = action.path;
-            const index = state.files.indexOf(currentPath);
-            if (index >= 0) {
-                const files = state.files.slice(0, index);
-                for (let i = index + 1; i < state.files.length; i++) {
-                    files.push(state.files[i]);
-                }
-                files.push(state.files[index]);
-                return { ...state, files, currentPath };
-            } else if (state.files.length >= MAX_HISTORIES) {
-                state.files.push(currentPath);
-                return {
-                    ...state,
-                    files: state.files.slice(1),
-                    currentPath,
-                };
-            } else {
-                return {
-                    ...state,
-                    files: [...state.files, currentPath],
-                    currentPath,
-                };
-            }
-        }
         case 'headings':
             return { ...state, headings: action.headings };
         case 'open_search':
             if (state.searching) {
                 return state;
             }
-            return { ...state, searching: true, searchIndex: null, outline: false, history: false, help: false };
+            return { ...state, searching: true, searchIndex: null, outline: false, history: [], help: false };
         case 'close_search':
             return { ...state, searching: false, searchIndex: null };
         case 'search_index':
@@ -187,11 +150,11 @@ export function reducer(state: State, action: Action): State {
         case 'search_matcher':
             return { ...state, matcher: action.matcher };
         case 'outline':
-            return { ...state, outline: action.open, searching: false, history: false, help: false };
+            return { ...state, outline: action.open, searching: false, history: [], help: false };
         case 'history':
-            return { ...state, history: action.open, searching: false, outline: false, help: false };
+            return { ...state, history: action.paths, searching: false, outline: false, help: false };
         case 'help':
-            return { ...state, help: action.open, searching: false, outline: false, history: false };
+            return { ...state, help: action.open, searching: false, outline: false, history: [] };
         case 'notification':
             if (action.notification === null) {
                 return { ...state, notifying: false };
@@ -200,8 +163,6 @@ export function reducer(state: State, action: Action): State {
             }
         case 'init':
             return { ...state, config: action.config };
-        case 'recent_files':
-            return { ...state, files: action.paths };
         case 'welcome':
             return { ...state, welcome: true };
         default:
@@ -247,16 +208,12 @@ export function closeOutline(): Action {
     return { kind: 'outline', open: false };
 }
 
-export function openHistory(): Action {
-    return { kind: 'history', open: true };
+export function openHistory(paths: string[]): Action {
+    return { kind: 'history', paths };
 }
 
 export function closeHistory(): Action {
-    return { kind: 'history', open: false };
-}
-
-export function pathChanged(path: string): Action {
-    return { kind: 'new_path', path };
+    return { kind: 'history', paths: [] };
 }
 
 export function openHelp(): Action {
@@ -281,10 +238,6 @@ export function notifyReload(): Action {
 
 export function notifyAlwaysOnTop(pinned: boolean): Action {
     return { kind: 'notification', notification: { kind: 'alwaysOnTop', pinned } };
-}
-
-export function setRecentFiles(paths: string[]): Action {
-    return { kind: 'recent_files', paths };
 }
 
 export function welcome(): Action {

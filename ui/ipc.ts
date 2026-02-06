@@ -201,10 +201,6 @@ export type MessageFromMain =
           tree: RenderTreeElem[];
       }
     | {
-          kind: 'path_changed';
-          path: string;
-      }
-    | {
           kind: 'config';
           keymaps: KeyMaps;
           search: {
@@ -236,6 +232,7 @@ export type MessageFromMain =
       }
     | {
           kind: 'history';
+          paths: string[];
       }
     | {
           kind: 'help';
@@ -266,6 +263,9 @@ export type MessageToMain =
       }
     | {
           kind: 'back';
+      }
+    | {
+          kind: 'history';
       }
     | {
           kind: 'reload';

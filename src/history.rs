@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::persistent::{RecentFiles, RecentFilesOwned};
+use crate::renderer::{MessageToRenderer, Renderer};
 use anyhow::Result;
 use indexmap::IndexSet;
 use std::path::{Path, PathBuf};
@@ -65,10 +66,6 @@ impl History {
         Some(path)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &'_ Path> {
-        self.items.iter().map(PathBuf::as_path)
-    }
-
     pub fn save(&self, config: &Config) -> Result<()> {
         if self.max_items == 0 {
             return Ok(());
@@ -77,5 +74,10 @@ impl History {
         log::debug!("Saving {} paths as recent files history", self.items.len());
         let data = RecentFiles { paths: &self.items };
         config.data_dir().save(&data)
+    }
+
+    pub fn send_paths<R: Renderer>(&self, renderer: &R) -> Result<()> {
+        log::debug!("Send {} history paths to renderer", self.items.len());
+        renderer.send_message(MessageToRenderer::History { paths: &self.items })
     }
 }

@@ -1,6 +1,7 @@
 use crate::config::{Config, KeyAction, Search as SearchConfig, SearchMatcher};
 use crate::persistent::WindowState;
 use anyhow::{Error, Result};
+use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
@@ -22,7 +23,6 @@ pub enum MessageToRenderer<'a> {
     Config {
         keymaps: &'a HashMap<String, KeyAction>,
         search: &'a SearchConfig,
-        recent: &'a [&'a Path],
         home: Option<&'a Path>,
         window: WindowAppearance,
     },
@@ -31,10 +31,9 @@ pub enum MessageToRenderer<'a> {
     SearchPrevious,
     Welcome,
     Outline,
-    PathChanged {
-        path: &'a Path,
+    History {
+        paths: &'a IndexSet<PathBuf>,
     },
-    History,
     Help,
     Zoomed {
         percent: u16,
@@ -56,6 +55,7 @@ pub enum MessageFromRenderer {
     DirDialog,
     Forward,
     Back,
+    History,
     Quit,
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
     OpenFile { path: String },

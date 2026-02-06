@@ -214,7 +214,6 @@ where
                 self.renderer.send_message(MessageToRenderer::Config {
                     keymaps: self.config.keymaps(),
                     search: self.config.search(),
-                    recent: &self.history.iter().collect::<Vec<_>>(),
                     home: self.preview.home_dir(),
                     window: self.renderer.window_appearance(),
                 })?;
@@ -236,6 +235,7 @@ where
             }
             Forward => self.forward()?,
             Back => self.back()?,
+            History => self.history.send_paths(&self.renderer)?,
             Reload => self.reload()?,
             FileDialog => self.open_files()?,
             DirDialog => self.open_dirs()?,
@@ -272,7 +272,7 @@ where
             ZoomOut => self.zoom(Zoom::Out)?,
             #[cfg(not(target_os = "macos"))]
             ToggleMenuBar => self.renderer.toggle_menu()?,
-            History => self.renderer.send_message(MessageToRenderer::History)?,
+            History => self.history.send_paths(&self.renderer)?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
