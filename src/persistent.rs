@@ -90,21 +90,21 @@ impl PersistentData for WindowState {
 }
 
 #[derive(Serialize, Debug)]
-pub struct RecentFiles<'a> {
+pub struct HistoryData<'a> {
     pub paths: &'a IndexSet<PathBuf>,
 }
 
-impl PersistentData for RecentFiles<'_> {
-    const FILE: &'static str = "recent_files.json";
+impl PersistentData for HistoryData<'_> {
+    const FILE: &'static str = "history.json";
 }
 
 #[derive(Deserialize, Debug)]
-pub struct RecentFilesOwned {
+pub struct HistoryDataOwned {
     pub paths: IndexSet<PathBuf>,
 }
 
-impl PersistentData for RecentFilesOwned {
-    const FILE: &'static str = RecentFiles::FILE;
+impl PersistentData for HistoryDataOwned {
+    const FILE: &'static str = HistoryData::FILE;
 }
 
 #[cfg(test)]

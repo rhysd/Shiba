@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::persistent::{RecentFiles, RecentFilesOwned};
+use crate::persistent::{HistoryData, HistoryDataOwned};
 use crate::renderer::{MessageToRenderer, Renderer};
 use anyhow::Result;
 use indexmap::IndexSet;
@@ -17,14 +17,14 @@ impl History {
     }
 
     pub fn load(config: &Config) -> Self {
-        let max_items = config.preview().recent_files;
+        let max_items = config.preview().history_size;
         if max_items > 0
-            && let Some(mut recent) = config.data_dir().load::<RecentFilesOwned>()
+            && let Some(mut data) = config.data_dir().load::<HistoryDataOwned>()
         {
-            recent.paths.truncate(max_items);
-            log::debug!("Loaded {} paths as recent files history", recent.paths.len());
-            let index = recent.paths.len() - 1;
-            return Self { max_items, index, items: recent.paths };
+            data.paths.truncate(max_items);
+            log::debug!("Loaded {} paths from persistent history data", data.paths.len());
+            let index = data.paths.len() - 1;
+            return Self { max_items, index, items: data.paths };
         }
 
         Self::new(max_items)
@@ -71,8 +71,8 @@ impl History {
             return Ok(());
         }
 
-        log::debug!("Saving {} paths as recent files history", self.items.len());
-        let data = RecentFiles { paths: &self.items };
+        log::debug!("Saving {} paths as persistent history data", self.items.len());
+        let data = HistoryData { paths: &self.items };
         config.data_dir().save(&data)
     }
 

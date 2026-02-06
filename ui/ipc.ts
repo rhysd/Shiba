@@ -206,7 +206,6 @@ export type MessageFromMain =
           search: {
               matcher: SearchMatcher;
           };
-          recent: string[];
           home: string | null;
           window: {
               title: boolean;

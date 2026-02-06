@@ -23,7 +23,7 @@ preview:
     light: Test Light
     dark: Test Dark
   css: /path/to/somewhere.css
-  recent_files: 1000
+  history_size: 1000
 
 dialog:
   default_dir: /path/to/default_dir/

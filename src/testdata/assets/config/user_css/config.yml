@@ -15,6 +15,6 @@ preview:
     light: GitHub
     dark: GitHub Dark
   css: "test.css"
-  recent_files: 0
+  history_size: 0
 dialog:
   default_dir: null

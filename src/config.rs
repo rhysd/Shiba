@@ -186,12 +186,12 @@ impl Default for PreviewHighlight {
 pub struct Preview {
     highlight: PreviewHighlight,
     css: Option<PathBuf>,
-    pub recent_files: usize,
+    pub history_size: usize,
 }
 
 impl Default for Preview {
     fn default() -> Self {
-        Self { highlight: PreviewHighlight::default(), css: None, recent_files: 100 }
+        Self { highlight: PreviewHighlight::default(), css: None, history_size: 100 }
     }
 }
 

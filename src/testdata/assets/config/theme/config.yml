@@ -15,6 +15,6 @@ preview:
     light: Stackoverflow Light
     dark: Stackoverflow Dark
   css: null
-  recent_files: 0
+  history_size: 0
 dialog:
   default_dir: null
