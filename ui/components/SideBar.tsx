@@ -14,6 +14,7 @@ import { ConfigContext } from './ConfigContext';
 import { MenuButton } from './MenuButton';
 import type { Heading } from '../reducer';
 import { sendMessage } from '../ipc';
+import { fileName } from '../path';
 
 function scrollIntoSideBar(focused: HTMLLIElement, list: HTMLUListElement): void {
     const needle = focused.getBoundingClientRect();
@@ -26,19 +27,6 @@ function scrollIntoSideBar(focused: HTMLLIElement, list: HTMLUListElement): void
         block: 'nearest',
         inline: 'nearest',
     });
-}
-
-function fileName(path: string | null): string {
-    if (path === null) {
-        return '';
-    }
-    for (const sep of ['/', '\\']) {
-        const i = path.lastIndexOf(sep);
-        if (i >= 0) {
-            return path.slice(i + 1);
-        }
-    }
-    return path;
 }
 
 function onHeaderClick(e: React.MouseEvent<HTMLElement>): void {

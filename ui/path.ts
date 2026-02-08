@@ -7,3 +7,16 @@ export function displayPath(path: string, homeDir: string | null): string {
     }
     return path;
 }
+
+export function fileName(path: string | null): string {
+    if (path === null) {
+        return '';
+    }
+    for (const sep of ['/', '\\']) {
+        const i = path.lastIndexOf(sep);
+        if (i >= 0) {
+            return path.slice(i + 1);
+        }
+    }
+    return path;
+}

@@ -120,6 +120,7 @@ type Action =
     | {
           kind: 'init';
           config: Config;
+          searcher: SearchMatcher;
       }
     | {
           kind: 'headings';
@@ -169,7 +170,7 @@ export function reducer(state: State, action: Action): State {
                 return { ...state, notifying: true, notification: action.notification };
             }
         case 'init':
-            return { ...state, config: action.config };
+            return { ...state, config: action.config, matcher: action.searcher };
         case 'welcome':
             return { ...state, welcome: true };
         default:
@@ -259,9 +260,10 @@ export function updateHeadings(headings: Heading[]): Action {
     return { kind: 'headings', headings };
 }
 
-export function initConfig(config: Config): Action {
+export function initialize(config: Config, searcher: SearchMatcher): Action {
     return {
         kind: 'init',
         config,
+        searcher,
     };
 }

@@ -2,7 +2,7 @@ import {
     type Dispatch,
     type State,
     INITIAL_STATE,
-    initConfig,
+    initialize,
     notifyAlwaysOnTop,
     notifyReload,
     notifyZoom,
@@ -14,7 +14,6 @@ import {
     searchNext,
     setPath,
     searchPrevious,
-    setSearchMatcher,
     welcome,
 } from './reducer';
 import type { MessageFromMain } from './ipc';
@@ -79,15 +78,17 @@ export class GlobalDispatcher {
                 case 'config':
                     this.keymap.register(msg.keymaps, this);
                     this.dispatch(
-                        initConfig({
-                            titleBar: !msg.window.title,
-                            vibrant: msg.window.vibrancy,
-                            hideScrollBar: !msg.window.scrollBar,
-                            borderTop: msg.window.borderTop,
-                            homeDir: msg.home,
-                        }),
+                        initialize(
+                            {
+                                titleBar: !msg.window.title,
+                                vibrant: msg.window.vibrancy,
+                                hideScrollBar: !msg.window.scrollBar,
+                                borderTop: msg.window.borderTop,
+                                homeDir: msg.home,
+                            },
+                            msg.search.matcher,
+                        ),
                     );
-                    this.dispatch(setSearchMatcher(msg.search.matcher));
                     break;
                 case 'search':
                     this.openSearch();
