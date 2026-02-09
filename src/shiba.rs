@@ -5,14 +5,13 @@ use crate::history::History;
 use crate::opener::Opener;
 use crate::preview::Preview;
 use crate::renderer::{
-    Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow,
+    Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, NullRenderer, Renderer,
+    Rendering, RenderingFlow,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
-use std::marker::PhantomData;
 use std::mem;
 use std::path::PathBuf;
 
@@ -26,10 +25,10 @@ pub struct Shiba<R: Rendering, O, W, D> {
     opener: O,
     history: History,
     watcher: W,
+    dialog: D,
     config: Config,
     preview: Preview,
     init_file: Option<PathBuf>,
-    _dialog: PhantomData<D>,
     #[cfg(feature = "__sanity")]
     sanity: SanityTest<R::EventSender>,
 }
@@ -47,7 +46,9 @@ where
     {
         fn on_err<D: Dialog>(err: Error) -> Error {
             let err = err.context("Could not launch application");
-            D::alert(&err);
+            if let Ok(dialog) = D::new(&Config::default()) {
+                dialog.alert(&err, &NullRenderer);
+            }
             err
         }
         let mut rendering = R::new().map_err(on_err::<D>)?;
@@ -79,10 +80,10 @@ where
             opener: O::default(),
             history,
             watcher,
+            dialog: D::new(&config)?,
             config,
             preview: Preview::default(),
             init_file,
-            _dialog: PhantomData,
             #[cfg(feature = "__sanity")]
             sanity: SanityTest::new(rendering.create_sender()),
         })
@@ -128,10 +129,8 @@ where
     }
 
     fn open_files(&mut self) -> Result<()> {
-        let extensions = self.config.watch().file_extensions();
-        let dir = self.config.dialog().default_dir()?;
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
-        let mut files = D::pick_files(&dir, extensions);
+        let mut files = self.dialog.pick_files(&self.renderer);
         #[cfg(target_os = "windows")]
         let mut files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
@@ -152,8 +151,7 @@ where
     }
 
     fn open_dirs(&mut self) -> Result<()> {
-        let dir = self.config.dialog().default_dir()?;
-        let dirs = D::pick_dirs(&dir);
+        let dirs = self.dialog.pick_dirs(&self.renderer);
         #[cfg(target_os = "windows")]
         let dirs: Vec<_> = dirs.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
@@ -334,7 +332,7 @@ where
             }
             Event::Menu(item) => return self.handle_menu_item(item),
             Event::Minimized(is_minimized) => self.renderer.save_memory(is_minimized)?,
-            Event::Error(err) => D::alert(&err),
+            Event::Error(err) => self.dialog.alert(&err, &self.renderer),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -367,14 +365,16 @@ where
 {
     fn on_event(&mut self, event: Event) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
-            D::alert(&err.context("Could not handle event"));
+            let err = err.context("Could not handle event");
+            self.dialog.alert(&err, &self.renderer);
             RenderingFlow::Continue
         })
     }
 
     fn on_exit(&mut self) -> i32 {
         if let Err(err) = self.shutdown() {
-            D::alert(&err.context("Could not shutdown application"));
+            let err = err.context("Could not shutdown application");
+            self.dialog.alert(&err, &self.renderer);
             1
         } else {
             0

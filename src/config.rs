@@ -8,6 +8,7 @@ use std::env;
 use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 
 #[non_exhaustive]
@@ -71,9 +72,8 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
 const DEFAULT_CONFIG_FILE_NAME: &str = "config.yml";
 const CONFIG_FILE_NAMES: [&str; 2] = [DEFAULT_CONFIG_FILE_NAME, "config.yaml"];
 
-#[repr(transparent)]
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct FileExtensions(Vec<String>);
+pub struct FileExtensions(Arc<[String]>); // Use `Arc` because this config is referred from watcher and dialog respectively
 
 impl Default for FileExtensions {
     fn default() -> Self {
@@ -82,7 +82,7 @@ impl Default for FileExtensions {
         // - Some tools have their own extentions built on top of Markdown (.livemd, .ronn, .scd)
         //
         // See: https://github.com/github-linguist/linguist/blob/e51c227048a02a8a1b0fae6e72214e7c5f327c73/lib/linguist/languages.yml#L4564-L4575
-        Self(vec!["md".into(), "mkd".into(), "markdown".into()])
+        Self(Arc::new(["md".into(), "mkd".into(), "markdown".into()]))
     }
 }
 
@@ -244,9 +244,9 @@ pub struct Dialog {
 }
 
 impl Dialog {
-    pub fn default_dir(&self) -> Result<Cow<'_, Path>> {
-        if let Some(path) = self.default_dir.as_deref() {
-            return Ok(path.into());
+    pub fn default_dir(&self) -> Result<PathBuf> {
+        if let Some(path) = &self.default_dir {
+            return Ok(path.to_path_buf());
         }
         let dir = env::current_dir().context("Error while opening a file dialog")?;
 
@@ -256,10 +256,10 @@ impl Dialog {
         if dir.parent().is_none()
             && let Some(dir) = dirs::document_dir()
         {
-            return Ok(dir.into());
+            return Ok(dir);
         }
 
-        Ok(dir.into())
+        Ok(dir)
     }
 }
 

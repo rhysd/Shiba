@@ -2,12 +2,15 @@ use crate::config::{Config, KeyAction, Search as SearchConfig, SearchMatcher};
 use crate::persistent::WindowState;
 use anyhow::{Error, Result};
 use indexmap::IndexSet;
+use raw_window_handle::{
+    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
 
-#[derive(Clone, Copy, Serialize, Debug)]
+#[derive(Clone, Copy, Default, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowAppearance {
     pub title: bool,
@@ -148,6 +151,28 @@ impl Default for ZoomLevel {
     }
 }
 
+pub struct WindowHandles<'a> {
+    window_handle: WindowHandle<'a>,
+    display_handle: DisplayHandle<'a>,
+}
+impl<'a> HasWindowHandle for WindowHandles<'a> {
+    fn window_handle(&self) -> Result<WindowHandle<'a>, HandleError> {
+        Ok(self.window_handle)
+    }
+}
+impl<'a> HasDisplayHandle for WindowHandles<'a> {
+    fn display_handle(&self) -> Result<DisplayHandle<'a>, HandleError> {
+        Ok(self.display_handle)
+    }
+}
+impl<'a> WindowHandles<'a> {
+    pub fn new<W: HasWindowHandle + HasDisplayHandle>(window: &'a W) -> Result<Self, HandleError> {
+        let window_handle = window.window_handle()?;
+        let display_handle = window.display_handle()?;
+        Ok(Self { window_handle, display_handle })
+    }
+}
+
 #[derive(Debug)]
 pub enum RenderingFlow {
     Continue,
@@ -181,6 +206,60 @@ pub trait Renderer {
     fn toggle_menu(&mut self) -> Result<()>;
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cookies(&self) -> Result<()>;
+    fn window_handles(&self) -> Option<WindowHandles<'_>>;
+}
+
+pub struct NullRenderer;
+
+impl Renderer for NullRenderer {
+    fn send_message(&self, _message: MessageToRenderer<'_>) -> Result<()> {
+        Ok(())
+    }
+    fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output> {
+        Ok(writer.write_to(&mut io::sink())?)
+    }
+    fn set_title(&self, _title: &str) {}
+    fn window_state(&self) -> Option<WindowState> {
+        None
+    }
+    fn show(&self) {}
+    fn hide(&self) {}
+    fn print(&self) -> Result<()> {
+        Ok(())
+    }
+    fn zoom(&mut self, _level: ZoomLevel) -> Result<()> {
+        Ok(())
+    }
+    fn zoom_level(&self) -> ZoomLevel {
+        ZoomLevel::default()
+    }
+    fn set_always_on_top(&mut self, _enabled: bool) {}
+    fn always_on_top(&self) -> bool {
+        false
+    }
+    fn drag_window(&self) -> Result<()> {
+        Ok(())
+    }
+    fn is_maximized(&self) -> bool {
+        false
+    }
+    fn set_maximized(&mut self, _maximized: bool) {}
+    fn window_appearance(&self) -> WindowAppearance {
+        WindowAppearance::default()
+    }
+    fn show_menu_at(&self, _position: Option<(f64, f64)>) {}
+    fn toggle_menu(&mut self) -> Result<()> {
+        Ok(())
+    }
+    fn save_memory(&mut self, _is_low: bool) -> Result<()> {
+        Ok(())
+    }
+    fn delete_cookies(&self) -> Result<()> {
+        Ok(())
+    }
+    fn window_handles(&self) -> Option<WindowHandles<'_>> {
+        None
+    }
 }
 
 /// Context to execute rendering.

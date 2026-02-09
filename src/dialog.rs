@@ -1,22 +1,31 @@
-use crate::config::FileExtensions;
-use anyhow::Error;
+use crate::config::{Config, FileExtensions};
+use crate::renderer::Renderer;
+use anyhow::{Error, Result};
 use rfd::{FileDialog, MessageDialog, MessageLevel};
 use std::fmt::Write as _;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[non_exhaustive]
 pub enum DialogMessageLevel {
     Error,
 }
 
-pub trait Dialog {
-    fn pick_files(dir: &Path, extensions: &FileExtensions) -> Vec<PathBuf>;
+pub trait Dialog: Default {
+    fn new(config: &Config) -> Result<Self>;
 
-    fn pick_dirs(dir: &Path) -> Vec<PathBuf>;
+    fn pick_files<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf>;
 
-    fn message(level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>);
+    fn pick_dirs<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf>;
 
-    fn alert(error: &Error) {
+    fn message<R: Renderer>(
+        &self,
+        level: DialogMessageLevel,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        renderer: &R,
+    );
+
+    fn alert<R: Renderer>(&self, error: &Error, renderer: &R) {
         let mut errs = error.chain();
         let title = format!("Error: {}", errs.next().unwrap());
         let mut message = title.clone();
@@ -24,42 +33,66 @@ pub trait Dialog {
             write!(message, "\n  Caused by: {}", err).unwrap();
         }
         log::error!("{}", message);
-        Self::message(DialogMessageLevel::Error, title, message);
+        self.message(DialogMessageLevel::Error, title, message, renderer);
     }
 }
 
-// TODO: Consider to set parent window of dialog. rfd provides `set_parent` methods to dialogs.
+#[derive(Default)]
+pub struct SystemDialog {
+    extensions: FileExtensions,
+    dir: PathBuf,
+}
 
-pub struct SystemDialog;
+impl SystemDialog {
+    fn file_dialog<R: Renderer>(&self, renderer: &R) -> FileDialog {
+        let mut dialog =
+            FileDialog::new().set_directory(&self.dir).set_can_create_directories(true);
+        if let Some(handles) = renderer.window_handles() {
+            dialog = dialog.set_parent(&handles);
+        }
+        dialog
+    }
+}
 
 impl Dialog for SystemDialog {
-    fn pick_files(dir: &Path, extensions: &FileExtensions) -> Vec<PathBuf> {
-        FileDialog::new()
+    fn new(config: &Config) -> Result<Self> {
+        let extensions = config.watch().file_extensions().clone();
+        let dir = config.dialog().default_dir()?;
+        Ok(Self { extensions, dir })
+    }
+
+    fn pick_files<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf> {
+        self.file_dialog(renderer)
             .set_title("Open files to preview")
-            .add_filter("Markdown", extensions.as_slice())
-            .set_directory(dir)
-            .set_can_create_directories(true)
+            .add_filter("Markdown", self.extensions.as_slice())
             .pick_files()
             .unwrap_or_default()
     }
 
-    fn pick_dirs(cwd: &Path) -> Vec<PathBuf> {
-        FileDialog::new()
+    fn pick_dirs<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf> {
+        self.file_dialog(renderer)
             .set_title("Choose directories to watch")
-            .set_directory(cwd)
-            .set_can_create_directories(true)
             .pick_folders()
             .unwrap_or_default()
     }
 
-    fn message(level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>) {
+    fn message<R: Renderer>(
+        &self,
+        level: DialogMessageLevel,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        renderer: &R,
+    ) {
         let level = match level {
             DialogMessageLevel::Error => MessageLevel::Error,
         };
-        MessageDialog::new()
+        let mut dialog = MessageDialog::new()
             .set_level(level)
             .set_title(title.into())
-            .set_description(body.into())
-            .show();
+            .set_description(body.into());
+        if let Some(handles) = renderer.window_handles() {
+            dialog = dialog.set_parent(&handles);
+        }
+        dialog.show();
     }
 }

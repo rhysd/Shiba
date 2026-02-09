@@ -2806,6 +2806,7 @@ dependencies = [
  "open",
  "phf 0.13.1",
  "pulldown-cmark",
+ "raw-window-handle",
  "regex",
  "rfd",
  "serde",

@@ -3,7 +3,7 @@ use crate::config::{Config, WindowTheme as ThemeConfig};
 use crate::persistent::WindowState;
 use crate::renderer::{
     Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
-    ZoomLevel,
+    WindowHandles, ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
@@ -379,5 +379,9 @@ impl Renderer for WebViewRenderer {
             self.webview.delete_cookie(&cookie)?;
         }
         Ok(())
+    }
+
+    fn window_handles(&self) -> Option<WindowHandles<'_>> {
+        WindowHandles::new(&self.window).ok()
     }
 }
