@@ -17,15 +17,9 @@ pub trait Dialog: Default {
 
     fn pick_dirs<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf>;
 
-    fn message<R: Renderer>(
-        &self,
-        level: DialogMessageLevel,
-        title: impl Into<String>,
-        body: impl Into<String>,
-        renderer: &R,
-    );
+    fn message(&self, level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>);
 
-    fn alert<R: Renderer>(&self, error: &Error, renderer: &R) {
+    fn alert(&self, error: &Error) {
         let mut errs = error.chain();
         let title = format!("Error: {}", errs.next().unwrap());
         let mut message = title.clone();
@@ -33,7 +27,7 @@ pub trait Dialog: Default {
             write!(message, "\n  Caused by: {}", err).unwrap();
         }
         log::error!("{}", message);
-        self.message(DialogMessageLevel::Error, title, message, renderer);
+        self.message(DialogMessageLevel::Error, title, message);
     }
 }
 
@@ -76,23 +70,19 @@ impl Dialog for SystemDialog {
             .unwrap_or_default()
     }
 
-    fn message<R: Renderer>(
+    fn message(
         &self,
         level: DialogMessageLevel,
         title: impl Into<String>,
         body: impl Into<String>,
-        renderer: &R,
     ) {
         let level = match level {
             DialogMessageLevel::Error => MessageLevel::Error,
         };
-        let mut dialog = MessageDialog::new()
+        MessageDialog::new()
             .set_level(level)
             .set_title(title.into())
-            .set_description(body.into());
-        if let Some(handles) = renderer.window_handles() {
-            dialog = dialog.set_parent(&handles);
-        }
-        dialog.show();
+            .set_description(body.into())
+            .show();
     }
 }

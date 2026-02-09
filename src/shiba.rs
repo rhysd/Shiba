@@ -5,8 +5,8 @@ use crate::history::History;
 use crate::opener::Opener;
 use crate::preview::Preview;
 use crate::renderer::{
-    Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, NullRenderer, Renderer,
-    Rendering, RenderingFlow,
+    Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
+    RenderingFlow,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -47,7 +47,7 @@ where
         fn on_err<D: Dialog>(err: Error) -> Error {
             let err = err.context("Could not launch application");
             if let Ok(dialog) = D::new(&Config::default()) {
-                dialog.alert(&err, &NullRenderer);
+                dialog.alert(&err);
             }
             err
         }
@@ -332,7 +332,7 @@ where
             }
             Event::Menu(item) => return self.handle_menu_item(item),
             Event::Minimized(is_minimized) => self.renderer.save_memory(is_minimized)?,
-            Event::Error(err) => self.dialog.alert(&err, &self.renderer),
+            Event::Error(err) => self.dialog.alert(&err),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -366,7 +366,7 @@ where
     fn on_event(&mut self, event: Event) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
             let err = err.context("Could not handle event");
-            self.dialog.alert(&err, &self.renderer);
+            self.dialog.alert(&err);
             RenderingFlow::Continue
         })
     }
@@ -374,7 +374,7 @@ where
     fn on_exit(&mut self) -> i32 {
         if let Err(err) = self.shutdown() {
             let err = err.context("Could not shutdown application");
-            self.dialog.alert(&err, &self.renderer);
+            self.dialog.alert(&err);
             1
         } else {
             0
