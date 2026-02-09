@@ -48,9 +48,11 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
         );
     }
 
-    let welcomePage;
+    let main;
     if (welcome) {
-        welcomePage = <Welcome />;
+        main = <Welcome />;
+    } else {
+        main = <Preview tree={previewTree} headings={headings} path={path} dispatch={dispatch} />;
     }
 
     let outlineDialog;
@@ -78,12 +80,11 @@ export const App: React.FC<Props> = ({ dispatcher }) => {
     return (
         <ThemeProvider theme={THEME}>
             <ConfigContext.Provider value={config}>
-                <Preview tree={previewTree} headings={headings} path={path} dispatch={dispatch} />
+                {main}
                 {searchInput}
                 {outlineDialog}
                 {historyDialog}
                 {guideDialog}
-                {welcomePage}
                 <Notification open={notifying} content={notification} dispatch={dispatch} />
             </ConfigContext.Provider>
         </ThemeProvider>

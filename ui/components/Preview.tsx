@@ -37,10 +37,6 @@ export interface Props {
 export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => {
     const { titleBar, vibrant, borderTop } = useContext(ConfigContext);
 
-    if (tree.root === null) {
-        return <></>;
-    }
-
     // Note: `SxProps` type is useless here
     const sx: {
         bgcolor?: string;
@@ -55,6 +51,10 @@ export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => 
         sx.borderTop = 1;
         sx.borderColor = 'divider';
         sx.boxSizing = 'border-box';
+    }
+
+    if (tree.root === null) {
+        return <Box component="main" sx={sx}></Box>; // Reaches here while loading the first preview
     }
 
     return (

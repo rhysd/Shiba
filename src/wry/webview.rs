@@ -134,6 +134,11 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     {
         builder = builder.with_transparent(true);
     }
+    #[cfg(not(target_os = "macos"))]
+    if window.theme() == Theme::Dark {
+        // Avoid flicking window with white screen while loading webview
+        builder = builder.with_background_color((0, 0, 0, 255));
+    }
 
     #[cfg(not(target_os = "linux"))]
     let webview = builder.build(window)?;
