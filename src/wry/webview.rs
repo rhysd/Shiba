@@ -143,7 +143,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     #[cfg(not(target_os = "linux"))]
     let webview = builder.build(window)?;
     #[cfg(target_os = "linux")]
-    let webview = builder.build_gtk(window.gtk_window())?;
+    let webview = builder.build_gtk(window.default_vbox().unwrap())?;
 
     #[cfg(target_os = "macos")]
     {
