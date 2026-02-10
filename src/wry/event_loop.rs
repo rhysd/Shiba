@@ -29,10 +29,12 @@ impl Rendering for Wry {
 
     #[cfg(target_os = "linux")]
     fn new() -> Result<Self> {
-        use tao::platform::unix::EventLoopBuilderExtUnix as _;
+        // `EventLoopBuilder::with_app_id` is not usable because it can cause SEGV.
+        // See https://github.com/tauri-apps/tao/issues/1186
+        // use tao::platform::unix::EventLoopBuilderExtUnix as _;
+        // const APP_ID: &str = "io.github.rhysd.Shiba";
 
-        const APP_ID: &str = "io.github.rhysd.Shiba";
-        let event_loop = EventLoopBuilder::with_user_event().with_app_id(APP_ID).build();
+        let event_loop = EventLoopBuilder::with_user_event().build();
         let menu_events = MenuEvents::new();
         Ok(Self { event_loop, menu_events })
     }
