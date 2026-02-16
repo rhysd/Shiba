@@ -1,9 +1,12 @@
 use crate::config::Config;
-use crate::persistent::{HistoryData, HistoryDataOwned};
+use crate::persistent::PersistentData;
 use crate::renderer::{MessageToRenderer, Renderer};
 use anyhow::Result;
 use indexmap::IndexSet;
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+
+const DATA_FILE: &str = "history.json";
 
 #[derive(Clone, Copy, Debug)]
 pub enum Direction {
@@ -31,9 +34,17 @@ impl History {
     }
 
     pub fn load(config: &Config) -> Self {
+        #[derive(Deserialize)]
+        struct Data {
+            paths: IndexSet<PathBuf>,
+        }
+        impl PersistentData for Data {
+            const FILE: &str = DATA_FILE;
+        }
+
         let max_items = config.preview().history_size;
         if max_items > 0
-            && let Some(data) = config.data_dir().load::<HistoryDataOwned>()
+            && let Some(data) = config.data_dir().load::<Data>()
         {
             Self::with_paths(data.paths, max_items)
         } else {
@@ -94,12 +105,20 @@ impl History {
     }
 
     pub fn save(&self, config: &Config) -> Result<()> {
+        #[derive(Serialize)]
+        struct Data<'a> {
+            paths: &'a IndexSet<PathBuf>,
+        }
+        impl PersistentData for Data<'_> {
+            const FILE: &'static str = DATA_FILE;
+        }
+
         if self.max_items == 0 {
             return Ok(());
         }
 
         log::debug!("Saving {} paths as persistent history data", self.items.len());
-        let data = HistoryData { paths: &self.items };
+        let data = Data { paths: &self.items };
         config.data_dir().save(&data)
     }
 

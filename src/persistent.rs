@@ -1,8 +1,6 @@
-use crate::renderer::ZoomLevel;
 use anyhow::{Context, Result};
-use indexmap::IndexSet;
+use serde::Serialize;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -71,40 +69,6 @@ impl DataDir {
         fs::write(&path, s)
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
     }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct WindowState {
-    pub x: f64,
-    pub y: f64,
-    pub width: f64,
-    pub height: f64,
-    pub fullscreen: bool,
-    pub zoom_level: ZoomLevel,
-    pub always_on_top: bool,
-    pub maximized: bool,
-}
-
-impl PersistentData for WindowState {
-    const FILE: &'static str = "window.json";
-}
-
-#[derive(Serialize, Debug)]
-pub struct HistoryData<'a> {
-    pub paths: &'a IndexSet<PathBuf>,
-}
-
-impl PersistentData for HistoryData<'_> {
-    const FILE: &'static str = "history.json";
-}
-
-#[derive(Deserialize, Debug)]
-pub struct HistoryDataOwned {
-    pub paths: IndexSet<PathBuf>,
-}
-
-impl PersistentData for HistoryDataOwned {
-    const FILE: &'static str = HistoryData::FILE;
 }
 
 #[cfg(test)]

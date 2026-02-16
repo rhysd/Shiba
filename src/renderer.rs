@@ -1,5 +1,5 @@
 use crate::config::{Config, KeyAction, Search as SearchConfig, SearchMatcher};
-use crate::persistent::WindowState;
+use crate::persistent::PersistentData;
 use anyhow::{Error, Result};
 use indexmap::IndexSet;
 use raw_window_handle::{
@@ -9,6 +9,22 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct WindowState {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub fullscreen: bool,
+    pub zoom_level: ZoomLevel,
+    pub always_on_top: bool,
+    pub maximized: bool,
+}
+
+impl PersistentData for WindowState {
+    const FILE: &'static str = "window.json";
+}
 
 #[derive(Clone, Copy, Default, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]

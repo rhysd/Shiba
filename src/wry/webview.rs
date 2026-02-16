@@ -1,9 +1,8 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowTheme as ThemeConfig};
-use crate::persistent::WindowState;
 use crate::renderer::{
     Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
-    WindowHandles, ZoomLevel,
+    WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
