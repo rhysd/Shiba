@@ -82,6 +82,7 @@ windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_System_Co
 
 [dev-dependencies]
 insta = { version = "1.44.1", features = ["json"] }
+tempfile = "3.25.0"
 
 [build-dependencies]
 zstd = "0.13.3"

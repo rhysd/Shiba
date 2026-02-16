@@ -6,7 +6,7 @@ use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-const DATA_FILE: &str = "history.json";
+const DATA_FILE_NAME: &str = "history.json";
 
 #[derive(Clone, Copy, Debug)]
 pub enum Direction {
@@ -39,7 +39,7 @@ impl History {
             paths: IndexSet<PathBuf>,
         }
         impl PersistentData for Data {
-            const FILE: &str = DATA_FILE;
+            const FILE: &str = DATA_FILE_NAME;
         }
 
         let max_items = config.preview().history_size;
@@ -110,7 +110,7 @@ impl History {
             paths: &'a IndexSet<PathBuf>,
         }
         impl PersistentData for Data<'_> {
-            const FILE: &'static str = DATA_FILE;
+            const FILE: &'static str = DATA_FILE_NAME;
         }
 
         if self.max_items == 0 {
@@ -125,5 +125,42 @@ impl History {
     pub fn send_paths<R: Renderer>(&self, renderer: &R) -> Result<()> {
         log::debug!("Send {} history paths to renderer", self.items.len());
         renderer.send_message(MessageToRenderer::History { paths: &self.items })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cli::Options;
+    use crate::test::TestRenderer;
+
+    #[test]
+    fn send_paths_to_renderer() {
+        let history = History::with_paths(["foo.txt".into(), "bar.txt".into()].into(), 10);
+        let renderer = TestRenderer::default();
+        history.send_paths(&renderer).unwrap();
+        let msg = renderer.messages.take().pop().unwrap();
+        let json: serde_json::Value = serde_json::from_str(&msg).unwrap();
+        insta::assert_json_snapshot!(json);
+    }
+
+    #[test]
+    fn load_save_persistent_data() {
+        let dir = tempfile::tempdir().unwrap();
+        let opts = Options {
+            config_dir: Some(dir.path().to_path_buf()),
+            data_dir: Some(dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let config = Config::load(opts).unwrap();
+
+        let paths = ["foo.txt".into(), "bar.txt".into()];
+        let history = History::with_paths(paths.clone().into(), 10);
+        history.save(&config).unwrap();
+        assert!(dir.path().join(DATA_FILE_NAME).exists());
+
+        let history = History::load(&config);
+        let items: Vec<_> = history.items.into_iter().collect();
+        assert_eq!(items, paths);
     }
 }

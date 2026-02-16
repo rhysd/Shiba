@@ -21,6 +21,8 @@ mod renderer;
 #[cfg(feature = "__sanity")]
 mod sanity;
 mod shiba;
+#[cfg(test)]
+mod test;
 mod watcher;
 #[cfg(target_os = "windows")]
 mod windows;

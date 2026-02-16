@@ -1,0 +1,11 @@
+---
+source: src/history.rs
+expression: json
+---
+{
+  "kind": "history",
+  "paths": [
+    "foo.txt",
+    "bar.txt"
+  ]
+}

@@ -1010,12 +1010,7 @@ mod tests {
                 let buf = buf.strip_prefix("JSON.parse('").unwrap();
                 let buf = buf.strip_suffix("')").unwrap();
                 // Check if the written output is in the valid JSON format
-                let json: serde_json::Value = match serde_json::from_str(buf) {
-                    Ok(value) => value,
-                    Err(err) => {
-                        panic!("Invalid JSON input with error \"{}\": {}", err, buf);
-                    }
-                };
+                let json: serde_json::Value = serde_json::from_str(buf).unwrap();
                 insta::assert_json_snapshot!(json);
             }
         };
