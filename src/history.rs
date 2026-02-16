@@ -5,6 +5,13 @@ use anyhow::Result;
 use indexmap::IndexSet;
 use std::path::{Path, PathBuf};
 
+#[derive(Clone, Copy, Debug)]
+pub enum Direction {
+    Forward,
+    Back,
+    // Note: Adding Direction::Top and Direction::Bottom may be useful
+}
+
 pub struct History {
     max_items: usize,
     index: usize,
@@ -53,17 +60,33 @@ impl History {
         self.items.get_index(self.index)
     }
 
-    pub fn forward(&mut self) -> Option<&Path> {
+    fn forward(&mut self) -> Option<&Path> {
         let path = self.items.get_index(self.index + 1)?;
         self.index += 1;
         Some(path)
     }
 
-    pub fn back(&mut self) -> Option<&Path> {
+    fn back(&mut self) -> Option<&Path> {
         let idx = self.index.checked_sub(1)?;
         let path = self.items.get_index(idx)?;
         self.index = idx;
         Some(path)
+    }
+
+    pub fn navigate(&mut self, dir: Direction) -> Option<&Path> {
+        match dir {
+            Direction::Forward => self.forward(),
+            Direction::Back => self.back(),
+        }
+    }
+
+    pub fn delete(&mut self, dir: Direction) -> Option<&Path> {
+        let removed = self.items.shift_remove_index(self.index)?;
+        log::debug!("Removed from history: {removed:?}");
+        match dir {
+            Direction::Forward => self.current().map(PathBuf::as_path),
+            Direction::Back => self.back(),
+        }
     }
 
     pub fn save(&self, config: &Config) -> Result<()> {

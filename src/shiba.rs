@@ -1,7 +1,7 @@
 use crate::cli::Options;
 use crate::config::Config;
 use crate::dialog::Dialog;
-use crate::history::History;
+use crate::history::{Direction, History};
 use crate::opener::Opener;
 use crate::preview::Preview;
 use crate::renderer::{
@@ -97,19 +97,16 @@ where
         Ok(())
     }
 
-    fn forward(&mut self) -> Result<()> {
-        if let Some(path) = self.history.forward() {
-            log::debug!("Forward to next preview page: {:?}", path);
-            self.preview.show(path, &self.renderer)?;
+    fn navigate(&mut self, dir: Direction) -> Result<()> {
+        let mut path = self.history.navigate(dir);
+        while let Some(p) = path {
+            log::debug!("Try to navigate preview page {dir:?}: {path:?}");
+            if self.preview.show(p, &self.renderer)? {
+                return Ok(());
+            }
+            path = self.history.delete(dir);
         }
-        Ok(())
-    }
-
-    fn back(&mut self) -> Result<()> {
-        if let Some(path) = self.history.back() {
-            log::debug!("Back to previous preview page: {:?}", path);
-            self.preview.show(path, &self.renderer)?;
-        }
+        log::debug!("No page found in history with directory {dir:?}");
         Ok(())
     }
 
@@ -231,8 +228,8 @@ where
             Search { query, index, matcher } => {
                 self.preview.search(&self.renderer, &query, index, matcher)?;
             }
-            Forward => self.forward()?,
-            Back => self.back()?,
+            Forward => self.navigate(Direction::Forward)?,
+            Back => self.navigate(Direction::Back)?,
             History => self.history.send_paths(&self.renderer)?,
             Reload => self.reload()?,
             FileDialog => self.open_files()?,
@@ -256,8 +253,8 @@ where
         log::debug!("Menu item was clicked: {:?}", item);
         match item {
             Quit => return Ok(RenderingFlow::Exit),
-            Forward => self.forward()?,
-            Back => self.back()?,
+            Forward => self.navigate(Direction::Forward)?,
+            Back => self.navigate(Direction::Back)?,
             Reload => self.reload()?,
             OpenFiles => self.open_files()?,
             WatchDirs => self.open_dirs()?,
