@@ -22,9 +22,9 @@ Features:
 - All features can be accessed via keyboard shortcuts (scroll the article, search text, jump to section, go forward/back history...).
   Type `?` to know all shortcuts
 - Sections outline in side navigation bar highlighting the current section
-- Both CLI and GUI friendly; Available as a single binary executable as well as a desktop application installed to your system
+- Both CLI and GUI friendly; Available as a single binary executable as well as an installable desktop application
 - Performance critical part (parsing Markdown text, searching Markdown AST, calculating the last modified position, ...) and
-  core application logic are written in [Rust][rust]. View logic written in [TypeScript][ts] and [React][react] runs on
+  core application logic are written in [Rust][rust]. Thin view logic is written in [TypeScript][ts] & [React][react] and runs on
   platform-specific WebView
 - Cross platform; macOS, Windows, Linux are supported
 - Customizable with [a YAML config file](./src/assets/default_config.yml) (color theme, keyboard shortcuts, custom CSS, ...)

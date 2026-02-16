@@ -37,9 +37,9 @@ Shiba uses [WKWebView][wkwebview] and it is installed by default on macOS. No ad
 ## Use Pre-built binaries
 
 > [!Warning]
-> These released artifacts are still experimental and built at some point of `main` branch. They may be buggy.
+> These artifacts are still alpha releases. They may be buggy.
 
-Pre-built binaries are hosted on [the release page](https://github.com/rhysd/Shiba/releases/tag/unreleased).
+Pre-built binaries are hosted on [the release page](https://github.com/rhysd/Shiba/releases).
 
 - `.zip` files are archived single binaries for each platforms. Put the executable binary to your `$PATH` directory
 - `.msi` file is a Windows installer. Double-click it and follow the instructions
