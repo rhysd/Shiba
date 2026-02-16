@@ -10,7 +10,7 @@ fn push(c: &mut Criterion) {
             let mut history = History::new(10000);
             for path in &paths {
                 history.push(path.clone());
-                assert_eq!(history.current(), Some(path));
+                assert_eq!(history.current(), Some(path.as_path()));
             }
         });
     });
@@ -22,7 +22,7 @@ fn push(c: &mut Criterion) {
             let mut history = History::new(100);
             for path in &paths {
                 history.push(path.clone());
-                assert_eq!(history.current(), Some(path));
+                assert_eq!(history.current(), Some(path.as_path()));
             }
         });
     });
@@ -35,7 +35,7 @@ fn push(c: &mut Criterion) {
             for _ in 0..100 {
                 for path in &paths {
                     history.push(path.clone());
-                    assert_eq!(history.current(), Some(path));
+                    assert_eq!(history.current(), Some(path.as_path()));
                 }
             }
         });

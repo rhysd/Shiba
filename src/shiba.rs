@@ -89,7 +89,7 @@ where
         })
     }
 
-    fn preview(&mut self, path: PathBuf) -> Result<()> {
+    fn open_preview(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         if self.preview.show(&path, &self.renderer)? {
             self.history.push(path);
@@ -98,7 +98,16 @@ where
     }
 
     fn navigate(&mut self, dir: Direction) -> Result<()> {
-        let mut path = self.history.navigate(dir);
+        let mut path = if self.preview.is_empty() {
+            // When the welcome page is displayed, the history already indicates the latest history item.
+            match dir {
+                Direction::Forward => None,
+                Direction::Back => self.history.current(),
+            }
+        } else {
+            self.history.navigate(dir)
+        };
+
         while let Some(p) = path {
             log::debug!("Try to navigate preview page {dir:?}: {path:?}");
             if self.preview.show(p, &self.renderer)? {
@@ -106,6 +115,7 @@ where
             }
             path = self.history.delete(dir);
         }
+
         log::debug!("No page found in history with directory {dir:?}");
         Ok(())
     }
@@ -142,7 +152,7 @@ where
             self.history.push(file);
         }
         log::debug!("Previewing the last file chosen by dialog: {last:?}");
-        self.preview(last)?;
+        self.open_preview(last)?;
 
         Ok(())
     }
@@ -217,7 +227,7 @@ where
                 self.renderer.show();
 
                 if let Some(path) = mem::take(&mut self.init_file) {
-                    self.preview(path)?;
+                    self.open_preview(path)?;
                 } else {
                     self.renderer.send_message(MessageToRenderer::Welcome)?;
                 }
@@ -234,7 +244,7 @@ where
             Reload => self.reload()?,
             FileDialog => self.open_files()?,
             DirDialog => self.open_dirs()?,
-            OpenFile { path } => self.preview(PathBuf::from(path))?,
+            OpenFile { path } => self.open_preview(PathBuf::from(path))?,
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
@@ -286,12 +296,12 @@ where
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.preview(path)?;
+                self.open_preview(path)?;
             }
             Event::WatchedFilesChanged(mut paths) => {
                 log::debug!("Files changed: {:?}", paths);
                 if let Some(current) = self.history.current()
-                    && paths.contains(current)
+                    && paths.iter().any(|p| p == current)
                 {
                     self.preview.show(current, &self.renderer)?;
                     return Ok(RenderingFlow::Continue);
@@ -317,7 +327,7 @@ where
                 let is_markdown = self.config.watch().file_extensions().matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.preview(path)?;
+                    self.open_preview(path)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
                     self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;

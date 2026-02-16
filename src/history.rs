@@ -23,18 +23,22 @@ impl History {
         Self { max_items, index: 0, items: IndexSet::new() }
     }
 
+    pub fn with_paths(mut items: IndexSet<PathBuf>, max_items: usize) -> Self {
+        items.truncate(max_items);
+        log::debug!("Loaded {} paths from persistent history data", items.len());
+        let index = items.len().saturating_sub(1);
+        Self { max_items, index, items }
+    }
+
     pub fn load(config: &Config) -> Self {
         let max_items = config.preview().history_size;
         if max_items > 0
-            && let Some(mut data) = config.data_dir().load::<HistoryDataOwned>()
+            && let Some(data) = config.data_dir().load::<HistoryDataOwned>()
         {
-            data.paths.truncate(max_items);
-            log::debug!("Loaded {} paths from persistent history data", data.paths.len());
-            let index = data.paths.len().saturating_sub(1);
-            return Self { max_items, index, items: data.paths };
+            Self::with_paths(data.paths, max_items)
+        } else {
+            Self::new(max_items)
         }
-
-        Self::new(max_items)
     }
 
     pub fn push(&mut self, item: PathBuf) {
@@ -56,8 +60,8 @@ impl History {
         self.index = self.items.len() - 1; // Reset index to put focus on the new item
     }
 
-    pub fn current(&self) -> Option<&PathBuf> {
-        self.items.get_index(self.index)
+    pub fn current(&self) -> Option<&Path> {
+        Some(self.items.get_index(self.index)?)
     }
 
     fn forward(&mut self) -> Option<&Path> {
@@ -82,9 +86,9 @@ impl History {
 
     pub fn delete(&mut self, dir: Direction) -> Option<&Path> {
         let removed = self.items.shift_remove_index(self.index)?;
-        log::debug!("Removed from history: {removed:?}");
+        log::debug!("Deleted path from history: {removed:?}");
         match dir {
-            Direction::Forward => self.current().map(PathBuf::as_path),
+            Direction::Forward => self.current(),
             Direction::Back => self.back(),
         }
     }
