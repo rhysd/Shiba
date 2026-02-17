@@ -241,7 +241,12 @@ pub fn set_app_icon_to_dock() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::Options;
+    use crate::config::UserConfig;
+
+    #[cfg(not(target_os = "windows"))]
+    const TESTDATA_DIR: &str = "src/testdata/assets";
+    #[cfg(target_os = "windows")]
+    const TESTDATA_DIR: &str = r#"src\testdata\assets"#;
 
     #[test]
     fn load_bundled_resources() {
@@ -254,8 +259,7 @@ mod tests {
             "/github-markdown.css",
             "/hljs-theme.css",
             "/logo.png",
-            #[cfg(debug_assertions)]
-            "/bundle.js.map",
+            "/bundle.js.map", // Debug build only
         ] {
             let (bytes, mime) = assets.load(path);
             assert!(bytes.is_some(), "path={path:?}");
@@ -316,12 +320,9 @@ mod tests {
 
     #[test]
     fn load_user_css() {
-        #[cfg(not(target_os = "windows"))]
-        let dir = "src/testdata/assets/config/user_css";
-        #[cfg(target_os = "windows")]
-        let dir = r#"src\testdata\assets\config\user_css"#;
-        let opts = Options { config_dir: Some(dir.into()), ..Default::default() };
-        let config = Config::load(opts).unwrap();
+        let mut user = UserConfig::default();
+        user.preview.css = Some("test.css".into());
+        let config = Config::new(user, TESTDATA_DIR, TESTDATA_DIR);
         let assets = Assets::new(&config);
         let (css, mime) = assets.load("/github-markdown.css");
         let css = css.unwrap();
@@ -331,12 +332,11 @@ mod tests {
 
     #[test]
     fn load_non_default_hljs_themes() {
-        #[cfg(not(target_os = "windows"))]
-        let dir = "src/testdata/assets/config/theme";
-        #[cfg(target_os = "windows")]
-        let dir = r#"src\testdata\assets\config\theme"#;
-        let opts = Options { config_dir: Some(dir.into()), ..Default::default() };
-        let assets = Assets::new(&Config::load(opts).unwrap());
+        let mut user = UserConfig::default();
+        user.preview.highlight.light = "Stackoverflow Light".into();
+        user.preview.highlight.dark = "Stackoverflow Dark".into();
+        let config = Config::new(user, TESTDATA_DIR, TESTDATA_DIR);
+        let assets = Assets::new(&config);
         let (bytes, mime) = assets.load("/hljs-theme.css");
         let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
         for part in [
@@ -352,17 +352,36 @@ mod tests {
 
     #[test]
     fn load_single_hljs_theme() {
-        #[cfg(not(target_os = "windows"))]
-        let dir = "src/testdata/assets/config/single_theme";
-        #[cfg(target_os = "windows")]
-        let dir = r#"src\testdata\assets\config\single_theme"#;
-        let opts = Options { config_dir: Some(dir.into()), ..Default::default() };
-        let assets = Assets::new(&Config::load(opts).unwrap());
+        let mut user = UserConfig::default();
+        user.preview.highlight.light = "Default".into();
+        user.preview.highlight.dark = "Default".into();
+        let config = Config::new(user, TESTDATA_DIR, TESTDATA_DIR);
+        let assets = Assets::new(&config);
         let (bytes, mime) = assets.load("/hljs-theme.css");
         let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
         assert!(!css.contains("@media (prefers-color-scheme: dark)"), "{css}");
         assert!(!css.contains("@media (prefers-color-scheme: light)"), "{css}");
         assert!(css.contains("Theme: Default"), "{css}");
+        assert_eq!(mime, "text/css;charset=UTF-8");
+    }
+
+    #[test]
+    fn load_uknown_hljs_theme_fall_back_to_default() {
+        let mut user = UserConfig::default();
+        user.preview.highlight.light = "This light theme does not exist".into();
+        user.preview.highlight.dark = "This dark theme does not exist".into();
+        let config = Config::new(user, TESTDATA_DIR, TESTDATA_DIR);
+        let assets = Assets::new(&config);
+        let (bytes, mime) = assets.load("/hljs-theme.css");
+        let css = String::from_utf8(bytes.unwrap().into_owned()).unwrap();
+        for part in [
+            "GitHub Dark",
+            "@media (prefers-color-scheme: dark)",
+            "GitHub",
+            "@media (prefers-color-scheme: light)",
+        ] {
+            assert!(css.contains(part), "CSS does not contain {:?}: {}", part, css);
+        }
         assert_eq!(mime, "text/css;charset=UTF-8");
     }
 }

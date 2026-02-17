@@ -87,6 +87,16 @@ impl Default for FileExtensions {
 }
 
 impl FileExtensions {
+    #[cfg_attr(not(test), allow(unused))]
+    pub fn new<I, T>(iter: I) -> Self
+    where
+        T: Into<String>,
+        I: IntoIterator<Item = T>,
+    {
+        let v: Vec<_> = iter.into_iter().map(Into::into).collect();
+        Self(Arc::from(v))
+    }
+
     pub fn matches(&self, path: &Path) -> bool {
         if let Some(ext) = path.extension() {
             self.0.iter().any(|e| ext == e.as_str())
@@ -539,6 +549,14 @@ mod tests {
         assert!(!exts.matches(Path::new("foo.txt")));
         assert!(!exts.matches(Path::new("/path/to/foo")));
         assert!(!exts.matches(Path::new("/path/to/foo.txt")));
+        assert!(!exts.matches(Path::new(".md")));
+        assert!(!exts.matches(Path::new("/path/to/.md")));
+
+        let exts = FileExtensions::new(["md", "scd", "ronn"]);
+        assert!(exts.matches(Path::new("foo.md")));
+        assert!(!exts.matches(Path::new("foo.mkd")));
+        assert!(exts.matches(Path::new("foo.scd")));
+        assert!(exts.matches(Path::new("foo.ronn")));
     }
 
     #[test]
