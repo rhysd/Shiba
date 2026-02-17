@@ -187,7 +187,7 @@ pub struct Assets {
 
 impl Assets {
     pub fn new(config: &Config) -> Self {
-        let hljs_css = load_hljs_css(config.preview().highlight());
+        let hljs_css = load_hljs_css(&config.preview().highlight);
         let markdown_css = if let Some(css) = load_user_css(config) {
             Cow::Owned(css)
         } else {

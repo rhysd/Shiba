@@ -324,7 +324,7 @@ where
                     path = dir.join(path).canonicalize()?;
                 }
                 let path = path;
-                let is_markdown = self.config.watch().file_extensions().matches(&path);
+                let is_markdown = self.config.watch().file_extensions.matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
                     self.open_preview(path)?;

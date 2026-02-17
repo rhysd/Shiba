@@ -45,7 +45,7 @@ pub struct PathFilter {
 
 impl PathFilter {
     pub fn new(config: &Config) -> Self {
-        let extensions = config.file_extensions().clone();
+        let extensions = config.file_extensions.clone();
         let debounce_throttle = config.debounce_throttle();
         Self { extensions, last_changed: HashMap::new(), debounce_throttle }
     }

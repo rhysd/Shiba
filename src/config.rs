@@ -104,8 +104,8 @@ impl FileExtensions {
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Watch {
-    file_extensions: FileExtensions,
-    debounce_throttle: u32,
+    pub file_extensions: FileExtensions,
+    pub debounce_throttle: u32,
 }
 
 impl Default for Watch {
@@ -117,10 +117,6 @@ impl Default for Watch {
 impl Watch {
     pub fn debounce_throttle(&self) -> Duration {
         Duration::from_millis(self.debounce_throttle as u64)
-    }
-
-    pub fn file_extensions(&self) -> &FileExtensions {
-        &self.file_extensions
     }
 }
 
@@ -138,7 +134,7 @@ pub enum SearchMatcher {
 #[derive(Deserialize, Serialize, Default, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Search {
-    matcher: SearchMatcher,
+    pub matcher: SearchMatcher,
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Copy, Debug, PartialEq, Eq)]
@@ -184,8 +180,8 @@ impl Default for PreviewHighlight {
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Preview {
-    highlight: PreviewHighlight,
-    css: Option<PathBuf>,
+    pub highlight: PreviewHighlight,
+    pub css: Option<PathBuf>,
     pub history_size: usize,
 }
 
@@ -196,10 +192,6 @@ impl Default for Preview {
 }
 
 impl Preview {
-    pub fn highlight(&self) -> &PreviewHighlight {
-        &self.highlight
-    }
-
     pub fn css_path(&self) -> Option<&Path> {
         self.css.as_deref()
     }
@@ -267,12 +259,12 @@ impl Dialog {
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct UserConfig {
-    watch: Watch,
-    keymaps: HashMap<String, KeyAction>,
-    search: Search,
-    window: Window,
-    preview: Preview,
-    dialog: Dialog,
+    pub watch: Watch,
+    pub keymaps: HashMap<String, KeyAction>,
+    pub search: Search,
+    pub window: Window,
+    pub preview: Preview,
+    pub dialog: Dialog,
 }
 
 impl Default for UserConfig {
@@ -351,6 +343,20 @@ pub struct Config {
 }
 
 impl Config {
+    #[cfg_attr(not(test), allow(unused))]
+    pub(crate) fn new(
+        user: UserConfig,
+        path: impl Into<PathBuf>,
+        data_dir: impl Into<PathBuf>,
+    ) -> Self {
+        Self {
+            user_config: user,
+            path: Some(path.into()),
+            data_dir: DataDir::new(data_dir),
+            debug: false,
+        }
+    }
+
     pub fn load(mut options: Options) -> Result<Self> {
         let config_dir = mem::take(&mut options.config_dir).or_else(|| {
             let mut dir = dirs::config_dir()?;
@@ -418,6 +424,16 @@ impl Config {
         &self.data_dir
     }
 
+    pub fn debug(&self) -> bool {
+        self.debug
+    }
+
+    // Note: `Config` instance is immutable. `Config` does not expose the internal `UserConfig` instance so that it
+    // cannot be modified by user once `Config` instance is created. This is important not to unexpectedly modify the
+    // configuration while the application is running.
+    // On the other hand all fields of `UserConfig` are public recursively because it is safe to modify the config
+    // until the application starts to run. This is useful for testing.
+
     pub fn watch(&self) -> &Watch {
         &self.user_config.watch
     }
@@ -440,10 +456,6 @@ impl Config {
 
     pub fn dialog(&self) -> &Dialog {
         &self.user_config.dialog
-    }
-
-    pub fn debug(&self) -> bool {
-        self.debug
     }
 }
 
