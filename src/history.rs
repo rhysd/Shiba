@@ -26,7 +26,7 @@ impl History {
         Self { max_items, index: 0, items: IndexSet::new() }
     }
 
-    pub fn with_paths(mut items: IndexSet<PathBuf>, max_items: usize) -> Self {
+    pub fn with_items(mut items: IndexSet<PathBuf>, max_items: usize) -> Self {
         items.truncate(max_items);
         log::debug!("Loaded {} paths from persistent history data", items.len());
         let index = items.len().saturating_sub(1);
@@ -46,7 +46,7 @@ impl History {
         if max_items > 0
             && let Some(data) = config.data_dir().load::<Data>()
         {
-            Self::with_paths(data.paths, max_items)
+            Self::with_items(data.paths, max_items)
         } else {
             Self::new(max_items)
         }
@@ -54,6 +54,12 @@ impl History {
 
     pub fn push(&mut self, item: PathBuf) {
         if self.max_items == 0 {
+            return;
+        }
+
+        // Skip removing the last item and inserting it again
+        if self.items.last() == Some(&item) {
+            self.index = self.items.len() - 1;
             return;
         }
 
@@ -131,12 +137,34 @@ impl History {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::Options;
+    use crate::config::UserConfig;
     use crate::test::TestRenderer;
+
+    #[track_caller]
+    fn history_with(max_items: usize, paths: &[&str]) -> History {
+        let mut history = History::new(max_items);
+        for path in paths {
+            history.push(path.into());
+        }
+        history
+    }
+
+    #[track_caller]
+    fn assert_history(history: &History, expected: &[&str], current: Option<&str>) {
+        let expected: Vec<_> = expected.iter().map(Path::new).collect();
+        assert_eq!(history.items.as_slice(), expected.as_slice());
+
+        let size = history.items.len();
+        let max = history.max_items;
+        assert!(size <= max, "size {size} is larger than max {max}");
+
+        let current = current.map(Path::new);
+        assert_eq!(history.current(), current);
+    }
 
     #[test]
     fn send_paths_to_renderer() {
-        let history = History::with_paths(["foo.txt".into(), "bar.txt".into()].into(), 10);
+        let history = History::with_items(["foo.txt".into(), "bar.txt".into()].into(), 10);
         let renderer = TestRenderer::default();
         history.send_paths(&renderer).unwrap();
         let msg = renderer.messages.take().pop().unwrap();
@@ -147,20 +175,174 @@ mod tests {
     #[test]
     fn load_save_persistent_data() {
         let dir = tempfile::tempdir().unwrap();
-        let opts = Options {
-            config_dir: Some(dir.path().to_path_buf()),
-            data_dir: Some(dir.path().to_path_buf()),
-            ..Default::default()
-        };
-        let config = Config::load(opts).unwrap();
+        let config = Config::new(UserConfig::default(), dir.path(), dir.path());
 
         let paths = ["foo.txt".into(), "bar.txt".into()];
-        let history = History::with_paths(paths.clone().into(), 10);
+        let history = History::with_items(paths.clone().into(), 10);
         history.save(&config).unwrap();
         assert!(dir.path().join(DATA_FILE_NAME).exists());
 
         let history = History::load(&config);
-        let items: Vec<_> = history.items.into_iter().collect();
-        assert_eq!(items, paths);
+        assert_eq!(history.items.as_slice(), &paths);
+    }
+
+    #[test]
+    fn load_without_persistent_data_returns_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = Config::new(UserConfig::default(), dir.path(), dir.path());
+
+        let history = History::load(&config);
+        assert!(history.items.is_empty());
+        assert_eq!(history.current(), None);
+    }
+
+    #[test]
+    fn save_with_zero_max_items() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = Config::new(UserConfig::default(), dir.path(), dir.path());
+        History::new(0).save(&config).unwrap();
+        assert!(!dir.path().join(DATA_FILE_NAME).exists());
+    }
+
+    #[test]
+    fn push_items() {
+        let mut history = history_with(3, &["a.txt", "b.txt"]);
+
+        history.push("c.txt".into());
+        assert_history(&history, &["a.txt", "b.txt", "c.txt"], Some("c.txt"));
+
+        history.push("b.txt".into());
+        assert_history(&history, &["a.txt", "c.txt", "b.txt"], Some("b.txt"));
+
+        history.push("d.txt".into()); // Removes oldest item
+        assert_history(&history, &["c.txt", "b.txt", "d.txt"], Some("d.txt"));
+
+        history.push("a.txt".into());
+        assert_history(&history, &["b.txt", "d.txt", "a.txt"], Some("a.txt"));
+
+        history.push("a.txt".into()); // Does nothing
+        assert_history(&history, &["b.txt", "d.txt", "a.txt"], Some("a.txt"));
+    }
+
+    #[test]
+    fn navigate_forward_back() {
+        let items = &["a.txt", "b.txt", "c.txt"];
+
+        let mut history = history_with(3, items);
+        assert_history(&history, items, Some("c.txt"));
+
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "b.txt");
+        assert_history(&history, items, Some("b.txt"));
+
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "a.txt");
+        assert_history(&history, items, Some("a.txt"));
+
+        assert_eq!(history.navigate(Direction::Back), None);
+        assert_history(&history, items, Some("a.txt"));
+
+        assert_eq!(history.navigate(Direction::Forward).unwrap(), "b.txt");
+        assert_history(&history, items, Some("b.txt"));
+
+        assert_eq!(history.navigate(Direction::Forward).unwrap(), "c.txt");
+        assert_history(&history, items, Some("c.txt"));
+
+        assert_eq!(history.navigate(Direction::Forward), None);
+        assert_history(&history, items, Some("c.txt"));
+    }
+
+    #[test]
+    fn push_navigate_to_top() {
+        let mut history = history_with(3, &["a.txt", "b.txt"]);
+
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "a.txt");
+        assert_history(&history, &["a.txt", "b.txt"], Some("a.txt"));
+        history.push("c.txt".into()); // Push new item
+        assert_history(&history, &["a.txt", "b.txt", "c.txt"], Some("c.txt"));
+
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "b.txt");
+        assert_history(&history, &["a.txt", "b.txt", "c.txt"], Some("b.txt"));
+        history.push("a.txt".into()); // Push existing item
+        assert_history(&history, &["b.txt", "c.txt", "a.txt"], Some("a.txt"));
+
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "c.txt");
+        assert_history(&history, &["b.txt", "c.txt", "a.txt"], Some("c.txt"));
+        history.push("a.txt".into()); // Push last item
+        assert_history(&history, &["b.txt", "c.txt", "a.txt"], Some("a.txt"));
+    }
+
+    #[test]
+    fn delete_back() {
+        let mut history = history_with(3, &["a.txt", "b.txt", "c.txt"]);
+        assert_history(&history, &["a.txt", "b.txt", "c.txt"], Some("c.txt"));
+
+        assert_eq!(history.delete(Direction::Back).unwrap(), "b.txt");
+        assert_history(&history, &["a.txt", "b.txt"], Some("b.txt"));
+
+        assert_eq!(history.delete(Direction::Back).unwrap(), "a.txt");
+        assert_history(&history, &["a.txt"], Some("a.txt"));
+
+        assert_eq!(history.delete(Direction::Back), None);
+        assert_history(&history, &[], None);
+
+        assert_eq!(history.delete(Direction::Back), None);
+        assert_history(&history, &[], None);
+    }
+
+    #[test]
+    fn delete_forward() {
+        let mut history = history_with(3, &["a.txt", "b.txt", "c.txt"]);
+        while history.navigate(Direction::Back).is_some() {}
+        assert_history(&history, &["a.txt", "b.txt", "c.txt"], Some("a.txt"));
+
+        assert_eq!(history.delete(Direction::Forward).unwrap(), "b.txt");
+        assert_history(&history, &["b.txt", "c.txt"], Some("b.txt"));
+
+        assert_eq!(history.delete(Direction::Forward).unwrap(), "c.txt");
+        assert_history(&history, &["c.txt"], Some("c.txt"));
+
+        assert_eq!(history.delete(Direction::Forward), None);
+        assert_history(&history, &[], None);
+
+        assert_eq!(history.delete(Direction::Forward), None);
+        assert_history(&history, &[], None);
+    }
+
+    #[test]
+    fn with_items_truncates_to_max_items() {
+        let history = History::with_items(
+            ["a.txt".into(), "b.txt".into(), "c.txt".into(), "d.txt".into()].into(),
+            2,
+        );
+        assert_history(&history, &["a.txt", "b.txt"], Some("b.txt"));
+    }
+
+    #[test]
+    fn zero_max_items() {
+        let mut history = History::new(0);
+        assert_history(&history, &[], None);
+        history.push("a.txt".into());
+        assert_history(&history, &[], None);
+        assert_eq!(history.navigate(Direction::Back), None);
+        assert_history(&history, &[], None);
+        assert_eq!(history.navigate(Direction::Forward), None);
+        assert_history(&history, &[], None);
+        assert_eq!(history.delete(Direction::Back), None);
+        assert_history(&history, &[], None);
+        assert_eq!(history.delete(Direction::Forward), None);
+        assert_history(&history, &[], None);
+    }
+
+    #[test]
+    fn empty_history() {
+        let mut history = History::new(5);
+        assert_history(&history, &[], None);
+        assert_eq!(history.navigate(Direction::Back), None);
+        assert_history(&history, &[], None);
+        assert_eq!(history.navigate(Direction::Forward), None);
+        assert_history(&history, &[], None);
+        assert_eq!(history.delete(Direction::Back), None);
+        assert_history(&history, &[], None);
+        assert_eq!(history.delete(Direction::Forward), None);
+        assert_history(&history, &[], None);
     }
 }

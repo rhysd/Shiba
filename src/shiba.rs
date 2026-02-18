@@ -98,7 +98,7 @@ where
     }
 
     fn navigate(&mut self, dir: Direction) -> Result<()> {
-        let mut path = if self.preview.is_empty() {
+        let mut current = if self.preview.is_empty() {
             // When the welcome page is displayed, the history already indicates the latest history item.
             match dir {
                 Direction::Forward => None,
@@ -108,12 +108,12 @@ where
             self.history.navigate(dir)
         };
 
-        while let Some(p) = path {
+        while let Some(path) = current {
             log::debug!("Try to navigate preview page {dir:?}: {path:?}");
-            if self.preview.show(p, &self.renderer)? {
+            if self.preview.show(path, &self.renderer)? {
                 return Ok(());
             }
-            path = self.history.delete(dir);
+            current = self.history.delete(dir);
         }
 
         log::debug!("No page found in history with directory {dir:?}");
