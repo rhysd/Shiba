@@ -13,9 +13,9 @@ pub enum DialogMessageLevel {
 pub trait Dialog: Default {
     fn new(config: &Config) -> Result<Self>;
 
-    fn pick_files(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
+    fn pick_files(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
 
-    fn pick_dirs(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
+    fn pick_dirs(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
 
     fn message(
         &self,
@@ -45,6 +45,7 @@ pub struct SystemDialog {
 
 impl SystemDialog {
     fn file_dialog(&self, handles: &WindowHandles<'_>) -> FileDialog {
+        log::debug!("Opening file dialog at directory {:?}", self.dir);
         FileDialog::new()
             .set_directory(&self.dir)
             .set_can_create_directories(true)
@@ -59,19 +60,31 @@ impl Dialog for SystemDialog {
         Ok(Self { extensions, dir })
     }
 
-    fn pick_files(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
-        self.file_dialog(handles)
+    fn pick_files(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
+        let files = self
+            .file_dialog(handles)
             .set_title("Open files to preview")
             .add_filter("Markdown", self.extensions.as_slice())
             .pick_files()
-            .unwrap_or_default()
+            .unwrap_or_default();
+        if let Some(file) = files.first()
+            && let Some(dir) = file.parent()
+        {
+            self.dir = dir.to_path_buf();
+        }
+        files
     }
 
-    fn pick_dirs(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
-        self.file_dialog(handles)
+    fn pick_dirs(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
+        let dirs = self
+            .file_dialog(handles)
             .set_title("Choose directories to watch")
             .pick_folders()
-            .unwrap_or_default()
+            .unwrap_or_default();
+        if let Some(dir) = dirs.first() {
+            self.dir = dir.clone();
+        }
+        dirs
     }
 
     fn message(
