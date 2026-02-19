@@ -167,25 +167,31 @@ impl Default for ZoomLevel {
     }
 }
 
-pub struct WindowHandles<'a> {
-    window_handle: WindowHandle<'a>,
-    display_handle: DisplayHandle<'a>,
+pub enum WindowHandles<'a> {
+    Available(WindowHandle<'a>, DisplayHandle<'a>),
+    Unavailable,
 }
 impl<'a> HasWindowHandle for WindowHandles<'a> {
     fn window_handle(&self) -> Result<WindowHandle<'a>, HandleError> {
-        Ok(self.window_handle)
+        match self {
+            Self::Available(w, _) => Ok(*w),
+            Self::Unavailable => Err(HandleError::NotSupported),
+        }
     }
 }
 impl<'a> HasDisplayHandle for WindowHandles<'a> {
     fn display_handle(&self) -> Result<DisplayHandle<'a>, HandleError> {
-        Ok(self.display_handle)
+        match self {
+            Self::Available(_, d) => Ok(*d),
+            Self::Unavailable => Err(HandleError::NotSupported),
+        }
     }
 }
 impl<'a> WindowHandles<'a> {
-    pub fn new<W: HasWindowHandle + HasDisplayHandle>(window: &'a W) -> Result<Self, HandleError> {
-        let window_handle = window.window_handle()?;
-        let display_handle = window.display_handle()?;
-        Ok(Self { window_handle, display_handle })
+    pub fn new<W: HasWindowHandle + HasDisplayHandle>(window: &'a W) -> Self {
+        let Ok(w) = window.window_handle() else { return Self::Unavailable };
+        let Ok(d) = window.display_handle() else { return Self::Unavailable };
+        Self::Available(w, d)
     }
 }
 
@@ -222,7 +228,7 @@ pub trait Renderer {
     fn toggle_menu(&mut self) -> Result<()>;
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cookies(&self) -> Result<()>;
-    fn window_handles(&self) -> Option<WindowHandles<'_>>;
+    fn window_handles(&self) -> WindowHandles<'_>;
 }
 
 /// Context to execute rendering.

@@ -385,7 +385,7 @@ impl Renderer for WebViewRenderer {
         Ok(())
     }
 
-    fn window_handles(&self) -> Option<WindowHandles<'_>> {
-        WindowHandles::new(&self.window).ok()
+    fn window_handles(&self) -> WindowHandles<'_> {
+        WindowHandles::new(&self.window)
     }
 }

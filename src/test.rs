@@ -113,8 +113,8 @@ impl Renderer for TestRenderer {
         Ok(())
     }
 
-    fn window_handles(&self) -> Option<WindowHandles<'_>> {
+    fn window_handles(&self) -> WindowHandles<'_> {
         self.window_handles_requested.store(true, Ordering::Relaxed);
-        None // No way to create dummy handles
+        WindowHandles::Unavailable
     }
 }

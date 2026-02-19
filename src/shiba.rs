@@ -6,7 +6,7 @@ use crate::opener::Opener;
 use crate::preview::Preview;
 use crate::renderer::{
     Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow,
+    RenderingFlow, WindowHandles,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -47,7 +47,7 @@ where
         fn on_err<D: Dialog>(err: Error) -> Error {
             let err = err.context("Could not launch application");
             if let Ok(dialog) = D::new(&Config::default()) {
-                dialog.alert(&err);
+                dialog.alert(&err, &WindowHandles::Unavailable);
             }
             err
         }
@@ -137,7 +137,7 @@ where
 
     fn open_files(&mut self) -> Result<()> {
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
-        let mut files = self.dialog.pick_files(&self.renderer);
+        let mut files = self.dialog.pick_files(&self.renderer.window_handles());
         #[cfg(target_os = "windows")]
         let mut files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
@@ -158,7 +158,7 @@ where
     }
 
     fn open_dirs(&mut self) -> Result<()> {
-        let dirs = self.dialog.pick_dirs(&self.renderer);
+        let dirs = self.dialog.pick_dirs(&self.renderer.window_handles());
         #[cfg(target_os = "windows")]
         let dirs: Vec<_> = dirs.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
@@ -339,7 +339,7 @@ where
             }
             Event::Menu(item) => return self.handle_menu_item(item),
             Event::Minimized(is_minimized) => self.renderer.save_memory(is_minimized)?,
-            Event::Error(err) => self.dialog.alert(&err),
+            Event::Error(err) => self.dialog.alert(&err, &self.renderer.window_handles()),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -373,7 +373,7 @@ where
     fn on_event(&mut self, event: Event) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
             let err = err.context("Could not handle event");
-            self.dialog.alert(&err);
+            self.dialog.alert(&err, &self.renderer.window_handles());
             RenderingFlow::Continue
         })
     }
@@ -381,7 +381,8 @@ where
     fn on_exit(&mut self) -> i32 {
         if let Err(err) = self.shutdown() {
             let err = err.context("Could not shutdown application");
-            self.dialog.alert(&err);
+            // Don't pass window handles because the window is already hidden in `self.shutdown` call.
+            self.dialog.alert(&err, &WindowHandles::Unavailable);
             1
         } else {
             0

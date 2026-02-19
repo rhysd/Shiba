@@ -1,5 +1,5 @@
 use crate::config::{Config, FileExtensions};
-use crate::renderer::Renderer;
+use crate::renderer::WindowHandles;
 use anyhow::{Error, Result};
 use rfd::{FileDialog, MessageDialog, MessageLevel};
 use std::fmt::Write as _;
@@ -13,13 +13,19 @@ pub enum DialogMessageLevel {
 pub trait Dialog: Default {
     fn new(config: &Config) -> Result<Self>;
 
-    fn pick_files<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf>;
+    fn pick_files(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
 
-    fn pick_dirs<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf>;
+    fn pick_dirs(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
 
-    fn message(&self, level: DialogMessageLevel, title: impl Into<String>, body: impl Into<String>);
+    fn message(
+        &self,
+        level: DialogMessageLevel,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        handles: &WindowHandles<'_>,
+    );
 
-    fn alert(&self, error: &Error) {
+    fn alert(&self, error: &Error, handles: &WindowHandles<'_>) {
         let mut errs = error.chain();
         let title = format!("Error: {}", errs.next().unwrap());
         let mut message = title.clone();
@@ -27,7 +33,7 @@ pub trait Dialog: Default {
             write!(message, "\n  Caused by: {}", err).unwrap();
         }
         log::error!("{}", message);
-        self.message(DialogMessageLevel::Error, title, message);
+        self.message(DialogMessageLevel::Error, title, message, handles);
     }
 }
 
@@ -38,13 +44,11 @@ pub struct SystemDialog {
 }
 
 impl SystemDialog {
-    fn file_dialog<R: Renderer>(&self, renderer: &R) -> FileDialog {
-        let mut dialog =
-            FileDialog::new().set_directory(&self.dir).set_can_create_directories(true);
-        if let Some(handles) = renderer.window_handles() {
-            dialog = dialog.set_parent(&handles);
-        }
-        dialog
+    fn file_dialog(&self, handles: &WindowHandles<'_>) -> FileDialog {
+        FileDialog::new()
+            .set_directory(&self.dir)
+            .set_can_create_directories(true)
+            .set_parent(handles)
     }
 }
 
@@ -55,16 +59,16 @@ impl Dialog for SystemDialog {
         Ok(Self { extensions, dir })
     }
 
-    fn pick_files<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf> {
-        self.file_dialog(renderer)
+    fn pick_files(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
+        self.file_dialog(handles)
             .set_title("Open files to preview")
             .add_filter("Markdown", self.extensions.as_slice())
             .pick_files()
             .unwrap_or_default()
     }
 
-    fn pick_dirs<R: Renderer>(&self, renderer: &R) -> Vec<PathBuf> {
-        self.file_dialog(renderer)
+    fn pick_dirs(&self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
+        self.file_dialog(handles)
             .set_title("Choose directories to watch")
             .pick_folders()
             .unwrap_or_default()
@@ -75,6 +79,7 @@ impl Dialog for SystemDialog {
         level: DialogMessageLevel,
         title: impl Into<String>,
         body: impl Into<String>,
+        handles: &WindowHandles<'_>,
     ) {
         let level = match level {
             DialogMessageLevel::Error => MessageLevel::Error,
@@ -83,6 +88,7 @@ impl Dialog for SystemDialog {
             .set_level(level)
             .set_title(title.into())
             .set_description(body.into())
+            .set_parent(handles)
             .show();
     }
 }
