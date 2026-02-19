@@ -140,13 +140,12 @@ where
         let mut files = self.dialog.pick_files(&self.renderer.window_handles());
         #[cfg(target_os = "windows")]
         let mut files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
+        log::debug!("{} files were chosen by dialog", files.len());
 
         let Some(last) = files.pop() else {
-            log::debug!("No file was chosen by dialog");
             return Ok(());
         };
 
-        log::debug!("{} files were chosen by dialog", files.len());
         for file in files {
             self.watcher.watch(&file)?;
             self.history.push(file);
