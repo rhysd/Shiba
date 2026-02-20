@@ -47,7 +47,7 @@ where
         fn on_err<D: Dialog>(err: Error) -> Error {
             let err = err.context("Could not launch application");
             if let Ok(dialog) = D::new(&Config::default()) {
-                dialog.alert(&err, &WindowHandles::Unavailable);
+                dialog.alert(&err, &WindowHandles::unsupported());
             }
             err
         }
@@ -381,7 +381,7 @@ where
         if let Err(err) = self.shutdown() {
             let err = err.context("Could not shutdown application");
             // Don't pass window handles because the window is already hidden in `self.shutdown` call.
-            self.dialog.alert(&err, &WindowHandles::Unavailable);
+            self.dialog.alert(&err, &WindowHandles::unsupported());
             1
         } else {
             0

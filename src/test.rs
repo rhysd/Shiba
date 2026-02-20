@@ -11,7 +11,7 @@ pub struct TestRenderer {
     pub messages: RefCell<Vec<String>>,
     pub title: RefCell<String>,
     pub window_state: Option<WindowState>,
-    pub showing: AtomicBool,
+    pub is_visible: AtomicBool,
     pub print_called: AtomicBool,
     pub zoom_level: ZoomLevel,
     pub always_on_top: bool,
@@ -48,11 +48,11 @@ impl Renderer for TestRenderer {
     }
 
     fn show(&self) {
-        self.showing.store(true, Ordering::Relaxed);
+        self.is_visible.store(true, Ordering::Relaxed);
     }
 
     fn hide(&self) {
-        self.showing.store(false, Ordering::Relaxed);
+        self.is_visible.store(false, Ordering::Relaxed);
     }
 
     fn print(&self) -> Result<()> {
@@ -115,6 +115,6 @@ impl Renderer for TestRenderer {
 
     fn window_handles(&self) -> WindowHandles<'_> {
         self.window_handles_requested.store(true, Ordering::Relaxed);
-        WindowHandles::Unavailable
+        WindowHandles::unsupported()
     }
 }

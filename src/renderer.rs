@@ -167,31 +167,27 @@ impl Default for ZoomLevel {
     }
 }
 
-pub enum WindowHandles<'a> {
-    Available(WindowHandle<'a>, DisplayHandle<'a>),
-    Unavailable,
+// Renderer-agnostic window handles type considering the case where no handles are available.
+pub struct WindowHandles<'a> {
+    window: Result<WindowHandle<'a>, HandleError>,
+    display: Result<DisplayHandle<'a>, HandleError>,
 }
 impl<'a> HasWindowHandle for WindowHandles<'a> {
     fn window_handle(&self) -> Result<WindowHandle<'a>, HandleError> {
-        match self {
-            Self::Available(w, _) => Ok(*w),
-            Self::Unavailable => Err(HandleError::NotSupported),
-        }
+        self.window.clone()
     }
 }
 impl<'a> HasDisplayHandle for WindowHandles<'a> {
     fn display_handle(&self) -> Result<DisplayHandle<'a>, HandleError> {
-        match self {
-            Self::Available(_, d) => Ok(*d),
-            Self::Unavailable => Err(HandleError::NotSupported),
-        }
+        self.display.clone()
     }
 }
 impl<'a> WindowHandles<'a> {
     pub fn new<W: HasWindowHandle + HasDisplayHandle>(window: &'a W) -> Self {
-        let Ok(w) = window.window_handle() else { return Self::Unavailable };
-        let Ok(d) = window.display_handle() else { return Self::Unavailable };
-        Self::Available(w, d)
+        Self { window: window.window_handle(), display: window.display_handle() }
+    }
+    pub fn unsupported() -> Self {
+        Self { window: Err(HandleError::NotSupported), display: Err(HandleError::NotSupported) }
     }
 }
 
