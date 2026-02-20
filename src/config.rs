@@ -239,7 +239,22 @@ fn resolve_path<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Pat
 #[serde(deny_unknown_fields)]
 pub struct Dialog {
     #[serde(deserialize_with = "resolve_path")]
-    pub default_dir: Option<PathBuf>,
+    default_dir: Option<PathBuf>,
+}
+
+impl Dialog {
+    pub fn default_dir(&self) -> Option<PathBuf> {
+        if let Some(path) = &self.default_dir {
+            return Some(path.clone());
+        }
+
+        #[cfg(target_os = "macos")]
+        if !crate::macos::is_app_process() {
+            return std::env::current_dir().ok();
+        }
+
+        None
+    }
 }
 
 #[non_exhaustive]

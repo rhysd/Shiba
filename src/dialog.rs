@@ -57,7 +57,7 @@ impl SystemDialog {
 impl Dialog for SystemDialog {
     fn new(config: &Config) -> Result<Self> {
         let extensions = config.watch().file_extensions.clone();
-        let start_dir = config.dialog().default_dir.clone();
+        let start_dir = config.dialog().default_dir();
         Ok(Self { extensions, start_dir })
     }
 
