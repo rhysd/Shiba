@@ -40,51 +40,40 @@ pub trait Dialog: Default {
 #[derive(Default)]
 pub struct SystemDialog {
     extensions: FileExtensions,
-    dir: PathBuf,
+    start_dir: Option<PathBuf>,
 }
 
 impl SystemDialog {
-    fn file_dialog(&self, handles: &WindowHandles<'_>) -> FileDialog {
-        log::debug!("Opening file dialog at directory {:?}", self.dir);
-        FileDialog::new()
-            .set_directory(&self.dir)
-            .set_can_create_directories(true)
-            .set_parent(handles)
+    fn file_dialog(&mut self, handles: &WindowHandles<'_>) -> FileDialog {
+        let mut dialog = FileDialog::new().set_can_create_directories(true).set_parent(handles);
+        if let Some(dir) = self.start_dir.take() {
+            log::debug!("Opening file dialog at start directory {:?}", dir);
+            dialog = dialog.set_directory(dir);
+        }
+        dialog
     }
 }
 
 impl Dialog for SystemDialog {
     fn new(config: &Config) -> Result<Self> {
         let extensions = config.watch().file_extensions.clone();
-        let dir = config.dialog().default_dir()?;
-        Ok(Self { extensions, dir })
+        let start_dir = config.dialog().default_dir.clone();
+        Ok(Self { extensions, start_dir })
     }
 
     fn pick_files(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
-        let files = self
-            .file_dialog(handles)
+        self.file_dialog(handles)
             .set_title("Open files to preview")
             .add_filter("Markdown", self.extensions.as_slice())
             .pick_files()
-            .unwrap_or_default();
-        if let Some(file) = files.first()
-            && let Some(dir) = file.parent()
-        {
-            self.dir = dir.to_path_buf();
-        }
-        files
+            .unwrap_or_default()
     }
 
     fn pick_dirs(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf> {
-        let dirs = self
-            .file_dialog(handles)
+        self.file_dialog(handles)
             .set_title("Choose directories to watch")
             .pick_folders()
-            .unwrap_or_default();
-        if let Some(dir) = dirs.first() {
-            self.dir = dir.clone();
-        }
-        dirs
+            .unwrap_or_default()
     }
 
     fn message(

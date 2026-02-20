@@ -4,7 +4,6 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::env;
 use std::fs;
 use std::mem;
 use std::path::{Path, PathBuf};
@@ -207,9 +206,7 @@ impl Preview {
     }
 }
 
-fn resolve_path<'de, D: Deserializer<'de>>(
-    deserializer: D,
-) -> std::result::Result<Option<PathBuf>, D::Error> {
+fn resolve_path<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<PathBuf>, D::Error> {
     #[cfg(not(target_os = "windows"))]
     const PREFIX: &str = "~/";
     #[cfg(target_os = "windows")]
@@ -242,27 +239,7 @@ fn resolve_path<'de, D: Deserializer<'de>>(
 #[serde(deny_unknown_fields)]
 pub struct Dialog {
     #[serde(deserialize_with = "resolve_path")]
-    default_dir: Option<PathBuf>,
-}
-
-impl Dialog {
-    pub fn default_dir(&self) -> Result<PathBuf> {
-        if let Some(path) = &self.default_dir {
-            return Ok(path.to_path_buf());
-        }
-        let dir = env::current_dir().context("Error while opening a file dialog")?;
-
-        // When this app is started via Shiba.app, the current directory is `/` but it is not convenient as an initial
-        // directory for open dialog.
-        #[cfg(target_os = "macos")]
-        if dir.parent().is_none()
-            && let Some(dir) = dirs::document_dir()
-        {
-            return Ok(dir);
-        }
-
-        Ok(dir)
-    }
+    pub default_dir: Option<PathBuf>,
 }
 
 #[non_exhaustive]

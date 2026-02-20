@@ -113,7 +113,8 @@ preview:
 # Configuration related to dialog to open a file or watch a directory.
 dialog:
   # Default directory path to open when selecting a file to preview or a directory to watch. The
-  # following example opens `~/Documents` by default.
+  # following example opens `~/Documents` by default. When `null` is specified, OS will determine
+  # the default directory.
   #
   # ```
   # default_dir: ~/Documents
