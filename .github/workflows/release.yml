@@ -109,7 +109,8 @@ jobs:
         run: |
           dotnet tool install --global wix
           wix --version
-          wix extension add WixToolset.UI.wixext WixToolset.Util.wixext
+          # Fix the version of extentions because the latest version 7.0.0-rc1 is not compatible with the latest stable version v6.0.2 of WiX
+          wix extension add WixToolset.UI.wixext/6.0.2 WixToolset.Util.wixext/6.0.2
       - name: Build executable
         run: |
           npm ci
