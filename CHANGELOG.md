@@ -1,3 +1,33 @@
+<a id="v2.0.0-alpha.2"></a>
+# [v2.0.0-alpha.2](https://github.com/rhysd/Shiba/releases/tag/v2.0.0-alpha.2) - 2026-02-21
+
+- **BREAKING CHANGE**: Rename `preview.recent_files` setting to `preview.history_size`. This needs fix in the configuration file. Please fix it manually or re-generate it by the `--generate-config-file` command line option.
+  ```diff
+   preview:
+  -  recent_files: 100
+  +  history_size: 100
+  ```
+- Move the reopened history item to the top of the history so that it can be easily accessed later.
+- Set the application icon in dock when Shiba is run from terminal on macOS.
+- Avoid a white screen flicker when opening the application with a large Markdown file in dark mode.
+- Remove file paths which don't exist while navigating the history with `Forward`/`Back`.
+- Set the parent window to the dialogs.
+- Let OS determine the default current directory of file dialogs unless `dialog.default_dir` setting is specified. Note that Shiba launched from terminal still prioritizes the terminal's current working directory on macOS.
+- Shiba is now released on [crates.io](https://crates.io/crates/shiba-preview). Shiba can be installed via `cargo` command.
+  ```sh
+  cargo install shiba-preview@2.0.0-alpha.2
+  ```
+- Add categories and keywords to Cargo.toml.
+- Fix webview is not rendered on Linux because the webview panel is inserted to an incorrect box.
+- Avoid app crash when creating two Shiba processes on Linux by removing the application ID.
+- Fix the latest history item is skipped when navigating with `Back` from the welcome page.
+- Fix titles of file dialogs.
+- Update cargo dependencies including wry v0.54 and the security fix for `time` crate.
+- Update npm dependencies including mermaid security fix.
+
+[Changes][v2.0.0-alpha.2]
+
+
 <a id="v2.0.0-alpha.1"></a>
 # [v2.0.0-alpha.1](https://github.com/rhysd/Shiba/releases/tag/v2.0.0-alpha.1) - 2026-01-31
 
@@ -255,6 +285,7 @@ First experimental alpha release of Shiba.
 [Changes][v0.1.0]
 
 
+[v2.0.0-alpha.2]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
 [v2.0.0-alpha.1]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.0...v2.0.0-alpha.1
 [v2.0.0-alpha.0]: https://github.com/rhysd/Shiba/compare/v1.2.1...v2.0.0-alpha.0
 [v1.2.1]: https://github.com/rhysd/Shiba/compare/v1.2.0...v1.2.1
