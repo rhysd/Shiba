@@ -264,6 +264,26 @@ mod tests {
     }
 
     #[test]
+    fn navigate_to_top() {
+        let items = &["a.txt", "b.txt", "c.txt"];
+        let mut history = history_with(3, items);
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "b.txt");
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "a.txt");
+        assert_eq!(history.navigate(Direction::Top).unwrap(), "c.txt");
+        assert_history(&history, items, Some("c.txt"));
+        assert_eq!(history.navigate(Direction::Top).unwrap(), "c.txt");
+        assert_history(&history, items, Some("c.txt"));
+    }
+
+    #[test]
+    fn history_is_top() {
+        let mut history = history_with(3, &["a.txt", "b.txt"]);
+        assert!(history.is_top());
+        assert_eq!(history.navigate(Direction::Back).unwrap(), "a.txt");
+        assert!(!history.is_top());
+    }
+
+    #[test]
     fn push_navigate_to_top() {
         let mut history = history_with(3, &["a.txt", "b.txt"]);
 
@@ -327,6 +347,7 @@ mod tests {
             2,
         );
         assert_history(&history, &["a.txt", "b.txt"], Some("b.txt"));
+        assert!(history.is_top());
     }
 
     #[test]
@@ -339,10 +360,15 @@ mod tests {
         assert_history(&history, &[], None);
         assert_eq!(history.navigate(Direction::Forward), None);
         assert_history(&history, &[], None);
+        assert_eq!(history.navigate(Direction::Top), None);
+        assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Back), None);
         assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Forward), None);
         assert_history(&history, &[], None);
+        assert_eq!(history.delete(Direction::Top), None);
+        assert_history(&history, &[], None);
+        assert!(history.is_top());
     }
 
     #[test]
@@ -353,9 +379,14 @@ mod tests {
         assert_history(&history, &[], None);
         assert_eq!(history.navigate(Direction::Forward), None);
         assert_history(&history, &[], None);
+        assert_eq!(history.navigate(Direction::Top), None);
+        assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Back), None);
         assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Forward), None);
         assert_history(&history, &[], None);
+        assert_eq!(history.delete(Direction::Top), None);
+        assert_history(&history, &[], None);
+        assert!(history.is_top());
     }
 }
