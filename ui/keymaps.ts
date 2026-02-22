@@ -129,24 +129,24 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
-    Forward: {
+    GoForward: {
         description: 'Go forawrd to the next document in preview history.',
         dispatch(): void {
-            sendMessage({ kind: 'forward' });
+            sendMessage({ kind: 'go_forward' });
         },
     },
 
-    Back: {
+    GoBack: {
         description: 'Go backward to the previous document in preview history.',
         dispatch(): void {
-            sendMessage({ kind: 'back' });
+            sendMessage({ kind: 'go_back' });
         },
     },
 
-    Top: {
+    GoTop: {
         description: 'Go to the latest item in preview history.',
         dispatch(): void {
-            sendMessage({ kind: 'top' });
+            sendMessage({ kind: 'go_top' });
         },
     },
 

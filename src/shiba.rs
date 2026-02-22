@@ -237,12 +237,12 @@ where
             Search { query, index, matcher } => {
                 self.preview.search(&self.renderer, &query, index, matcher)?;
             }
-            Forward => self.navigate(Direction::Forward)?,
-            Back => self.navigate(Direction::Back)?,
-            Top if !self.preview.is_empty() && self.history.is_top() => {
+            GoForward => self.navigate(Direction::Forward)?,
+            GoBack => self.navigate(Direction::Back)?,
+            GoTop if !self.preview.is_empty() && self.history.is_top() => {
                 log::debug!("The current item is already top of the history");
             }
-            Top => self.navigate(Direction::Top)?,
+            GoTop => self.navigate(Direction::Top)?,
             History => self.history.send_paths(&self.renderer)?,
             Reload => self.reload()?,
             FileDialog => self.open_files()?,

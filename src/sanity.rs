@@ -28,8 +28,8 @@ impl<S: EventSender> SanityTest<S> {
                     #[cfg(not(target_os = "windows"))]
                     path: "docs/installation.md".to_string(),
                 },
-                Back,
-                Forward,
+                GoBack,
+                GoForward,
                 Reload,
                 ToggleMaximized,
                 ToggleMaximized,

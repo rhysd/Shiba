@@ -13,9 +13,9 @@ use std::time::Duration;
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum KeyAction {
-    Forward,
-    Back,
-    Top,
+    GoForward,
+    GoBack,
+    GoTop,
     Reload,
     OpenFile,
     OpenDir,
@@ -50,8 +50,8 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
         ("k",         ScrollUp),
         ("h",         ScrollLeft),
         ("l",         ScrollRight),
-        ("ctrl+b",    Back),
-        ("ctrl+f",    Forward),
+        ("ctrl+b",    GoBack),
+        ("ctrl+f",    GoForward),
         ("ctrl+o",    OpenFile),
         ("ctrl+d",    ScrollPageDown),
         ("ctrl+u",    ScrollPageUp),

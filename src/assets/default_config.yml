@@ -21,8 +21,8 @@ keymaps:
   k: ScrollUp
   h: ScrollLeft
   l: ScrollRight
-  ctrl+b: Back
-  ctrl+f: Forward
+  ctrl+b: GoBack
+  ctrl+f: GoForward
   ctrl+o: OpenFile
   ctrl+d: ScrollPageDown
   ctrl+u: ScrollPageUp

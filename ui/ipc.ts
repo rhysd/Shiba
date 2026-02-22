@@ -15,9 +15,9 @@ export type KeyAction =
     | 'ScrollRight'
     | 'ScrollPageDown'
     | 'ScrollPageUp'
-    | 'Forward'
-    | 'Back'
-    | 'Top'
+    | 'GoForward'
+    | 'GoBack'
+    | 'GoTop'
     | 'Reload'
     | 'OpenFile'
     | 'OpenDir'
@@ -263,13 +263,13 @@ export type MessageToMain =
           kind: 'quit';
       }
     | {
-          kind: 'forward';
+          kind: 'go_forward';
       }
     | {
-          kind: 'back';
+          kind: 'go_back';
       }
     | {
-          kind: 'top';
+          kind: 'go_top';
       }
     | {
           kind: 'history';
