@@ -239,6 +239,9 @@ where
             }
             Forward => self.navigate(Direction::Forward)?,
             Back => self.navigate(Direction::Back)?,
+            Top if !self.preview.is_empty() && self.history.is_top() => {
+                log::debug!("The current item is already top of the history");
+            }
             Top => self.navigate(Direction::Top)?,
             History => self.history.send_paths(&self.renderer)?,
             Reload => self.reload()?,

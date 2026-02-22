@@ -81,6 +81,10 @@ impl History {
         Some(self.items.get_index(self.index)?)
     }
 
+    pub fn is_top(&self) -> bool {
+        self.items.is_empty() || self.index == self.items.len() - 1
+    }
+
     fn forward(&mut self) -> Option<&Path> {
         let path = self.items.get_index(self.index + 1)?;
         self.index += 1;
