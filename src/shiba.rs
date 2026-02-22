@@ -102,7 +102,7 @@ where
             // When the welcome page is displayed, the history already indicates the latest history item.
             match dir {
                 Direction::Forward => None,
-                Direction::Back => self.history.current(),
+                Direction::Back | Direction::Top => self.history.current(),
             }
         } else {
             self.history.navigate(dir)
@@ -239,6 +239,7 @@ where
             }
             Forward => self.navigate(Direction::Forward)?,
             Back => self.navigate(Direction::Back)?,
+            Top => self.navigate(Direction::Top)?,
             History => self.history.send_paths(&self.renderer)?,
             Reload => self.reload()?,
             FileDialog => self.open_files()?,

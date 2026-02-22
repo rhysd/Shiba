@@ -143,6 +143,13 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    Top: {
+        description: 'Go to the latest item in preview history.',
+        dispatch(): void {
+            sendMessage({ kind: 'top' });
+        },
+    },
+
     Reload: {
         description: 'Reload the current document preview.',
         dispatch(): void {

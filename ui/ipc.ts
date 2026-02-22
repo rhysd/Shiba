@@ -17,6 +17,7 @@ export type KeyAction =
     | 'ScrollPageUp'
     | 'Forward'
     | 'Back'
+    | 'Top'
     | 'Reload'
     | 'OpenFile'
     | 'OpenDir'
@@ -266,6 +267,9 @@ export type MessageToMain =
       }
     | {
           kind: 'back';
+      }
+    | {
+          kind: 'top';
       }
     | {
           kind: 'history';

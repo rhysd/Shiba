@@ -77,6 +77,7 @@ pub enum MessageFromRenderer {
     DirDialog,
     Forward,
     Back,
+    Top,
     History,
     Quit,
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },

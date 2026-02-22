@@ -15,6 +15,7 @@ use std::time::Duration;
 pub enum KeyAction {
     Forward,
     Back,
+    Top,
     Reload,
     OpenFile,
     OpenDir,

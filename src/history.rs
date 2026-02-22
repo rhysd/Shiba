@@ -12,7 +12,7 @@ const DATA_FILE_NAME: &str = "history.json";
 pub enum Direction {
     Forward,
     Back,
-    // Note: Adding Direction::Top and Direction::Bottom may be useful
+    Top,
 }
 
 pub struct History {
@@ -94,10 +94,18 @@ impl History {
         Some(path)
     }
 
+    fn top(&mut self) -> Option<&Path> {
+        let idx = self.items.len().checked_sub(1)?;
+        let path = self.items.get_index(idx)?;
+        self.index = idx;
+        Some(path)
+    }
+
     pub fn navigate(&mut self, dir: Direction) -> Option<&Path> {
         match dir {
             Direction::Forward => self.forward(),
             Direction::Back => self.back(),
+            Direction::Top => self.top(),
         }
     }
 
@@ -107,6 +115,7 @@ impl History {
         match dir {
             Direction::Forward => self.current(),
             Direction::Back => self.back(),
+            Direction::Top => self.top(),
         }
     }
 
