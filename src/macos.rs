@@ -47,3 +47,15 @@ pub fn set_dock_icon(icon: &[u8]) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn is_app_process() {
+        assert!(!super::is_app_process());
+        assert!(!super::is_app_process());
+    }
+
+    // Note: set_dock_icon cannot be tested easily because it requires to be run in the main thread but `cargo test`
+    // runs tests in worker threads.
+}
