@@ -45,11 +45,16 @@ target/debian/shiba_%_amd64.deb: target/release/shiba assets/deb/shiba.desktop
 shiba_amd64.deb: target/debian/shiba_2.0.0-alpha.0_amd64.deb
 	mv target/debian/shiba_*_amd64.deb shiba_amd64.deb
 
+coverage: $(RS_SRC)
+	rm -rf coverage
+	cargo llvm-cov --html
+	cp -R ./target/llvm-cov/html ./coverage
+
 .PHONY: build release clean
 
 build: target/debug/shiba
 release: target/release/shiba
 clean:
-	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target Shiba.app Shiba.dmg shiba.msi shiba_amd64.deb
+	rm -rf src/assets/**/*.css src/assets/*.js src/assets/*.html node_modules target Shiba.app Shiba.dmg shiba.msi shiba_amd64.deb coverage
 
 .DEFAULT_GOAL := build
