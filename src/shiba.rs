@@ -109,14 +109,14 @@ where
         };
 
         while let Some(path) = current {
-            log::debug!("Try to navigate preview page {dir:?}: {path:?}");
+            log::debug!("Try to navigate preview page with direction {dir:?}: {path:?}");
             if self.preview.show(path, &self.renderer)? {
                 return Ok(());
             }
             current = self.history.delete(dir);
         }
 
-        log::debug!("No page found in history with directory {dir:?}");
+        log::debug!("No page found in history with direction {dir:?}");
         Ok(())
     }
 
@@ -239,9 +239,7 @@ where
             }
             GoForward => self.navigate(Direction::Forward)?,
             GoBack => self.navigate(Direction::Back)?,
-            GoTop if !self.preview.is_empty() && self.history.is_top() => {
-                log::debug!("The current item is already top of the history");
-            }
+            GoTop if self.preview.is_empty() => self.navigate(Direction::Back)?,
             GoTop => self.navigate(Direction::Top)?,
             History => self.history.send_paths(&self.renderer)?,
             Reload => self.reload()?,
@@ -268,7 +266,7 @@ where
             Quit => return Ok(RenderingFlow::Exit),
             Forward => self.navigate(Direction::Forward)?,
             Back => self.navigate(Direction::Back)?,
-            Top if !self.preview.is_empty() && self.history.is_top() => {}
+            Top if self.preview.is_empty() => self.navigate(Direction::Back)?,
             Top => self.navigate(Direction::Top)?,
             Reload => self.reload()?,
             OpenFiles => self.open_files()?,

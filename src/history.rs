@@ -81,10 +81,6 @@ impl History {
         Some(self.items.get_index(self.index)?)
     }
 
-    pub fn is_top(&self) -> bool {
-        self.items.is_empty() || self.index == self.items.len() - 1
-    }
-
     fn forward(&mut self) -> Option<&Path> {
         let path = self.items.get_index(self.index + 1)?;
         self.index += 1;
@@ -100,6 +96,9 @@ impl History {
 
     fn top(&mut self) -> Option<&Path> {
         let idx = self.items.len().checked_sub(1)?;
+        if self.index == idx {
+            return None;
+        }
         let path = self.items.get_index(idx)?;
         self.index = idx;
         Some(path)
@@ -267,20 +266,13 @@ mod tests {
     fn navigate_to_top() {
         let items = &["a.txt", "b.txt", "c.txt"];
         let mut history = history_with(3, items);
+        assert_eq!(history.navigate(Direction::Top), None);
         assert_eq!(history.navigate(Direction::Back).unwrap(), "b.txt");
         assert_eq!(history.navigate(Direction::Back).unwrap(), "a.txt");
         assert_eq!(history.navigate(Direction::Top).unwrap(), "c.txt");
         assert_history(&history, items, Some("c.txt"));
-        assert_eq!(history.navigate(Direction::Top).unwrap(), "c.txt");
+        assert_eq!(history.navigate(Direction::Top), None);
         assert_history(&history, items, Some("c.txt"));
-    }
-
-    #[test]
-    fn history_is_top() {
-        let mut history = history_with(3, &["a.txt", "b.txt"]);
-        assert!(history.is_top());
-        assert_eq!(history.navigate(Direction::Back).unwrap(), "a.txt");
-        assert!(!history.is_top());
     }
 
     #[test]
@@ -347,7 +339,6 @@ mod tests {
             2,
         );
         assert_history(&history, &["a.txt", "b.txt"], Some("b.txt"));
-        assert!(history.is_top());
     }
 
     #[test]
@@ -368,7 +359,6 @@ mod tests {
         assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Top), None);
         assert_history(&history, &[], None);
-        assert!(history.is_top());
     }
 
     #[test]
@@ -387,6 +377,5 @@ mod tests {
         assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Top), None);
         assert_history(&history, &[], None);
-        assert!(history.is_top());
     }
 }
