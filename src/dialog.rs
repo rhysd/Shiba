@@ -10,7 +10,7 @@ pub enum DialogMessageLevel {
     Error,
 }
 
-pub trait Dialog: Default {
+pub trait Dialog: Sized {
     fn new(config: &Config) -> Result<Self>;
 
     fn pick_files(&mut self, handles: &WindowHandles<'_>) -> Vec<PathBuf>;
@@ -37,7 +37,6 @@ pub trait Dialog: Default {
     }
 }
 
-#[derive(Default)]
 pub struct SystemDialog {
     extensions: FileExtensions,
     start_dir: Option<PathBuf>,
@@ -88,8 +87,8 @@ impl Dialog for SystemDialog {
         };
         MessageDialog::new()
             .set_level(level)
-            .set_title(title.into())
-            .set_description(body.into())
+            .set_title(title)
+            .set_description(body)
             .set_parent(handles)
             .show();
     }
