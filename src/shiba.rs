@@ -268,6 +268,8 @@ where
             Quit => return Ok(RenderingFlow::Exit),
             Forward => self.navigate(Direction::Forward)?,
             Back => self.navigate(Direction::Back)?,
+            Top if !self.preview.is_empty() && self.history.is_top() => {}
+            Top => self.navigate(Direction::Top)?,
             Reload => self.reload()?,
             OpenFiles => self.open_files()?,
             WatchDirs => self.open_dirs()?,

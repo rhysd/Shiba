@@ -108,6 +108,7 @@ impl Menu {
         let delete_cookies = no_accel("Delete Cookies");
         let forward = accel("Forward", MOD, Code::BracketRight);
         let back = accel("Back", MOD, Code::BracketLeft);
+        let top = accel("Latest", MOD | Modifiers::SHIFT, Code::KeyT);
         let history = accel("History…", MOD, Code::KeyY);
         let always_on_top = no_accel("Pin/Unpin On Top");
         let guide = no_accel("Show Guide…");
@@ -210,7 +211,7 @@ impl Menu {
             &Submenu::with_items(
                 "History",
                 true,
-                &[&forward, &back, &PredefinedMenuItem::separator(), &history],
+                &[&forward, &back, &top, &PredefinedMenuItem::separator(), &history],
             )?,
             &window_menu,
             &help_menu,
@@ -225,6 +226,7 @@ impl Menu {
                 (quit.into_id(),            Quit),
                 (forward.into_id(),         Forward),
                 (back.into_id(),            Back),
+                (top.into_id(),             Top),
                 (reload.into_id(),          Reload),
                 (search.into_id(),          Search),
                 (search_next.into_id(),     SearchNext),

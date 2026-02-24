@@ -108,6 +108,7 @@ pub enum MenuItem {
     Quit,
     Forward,
     Back,
+    Top,
     Reload,
     OpenFiles,
     WatchDirs,
