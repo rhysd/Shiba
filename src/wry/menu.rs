@@ -1,20 +1,18 @@
-use crate::renderer::MenuItem as AppMenuItem;
+use crate::renderer::{Event, EventSender, MenuItem as AppMenuItem};
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::dpi::{LogicalPosition, Position};
 use muda::{
-    AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
-    PredefinedMenuItem, Submenu,
+    AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuItem, PredefinedMenuItem, Submenu,
 };
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]
 use tao::platform::unix::WindowExtUnix as _;
 #[cfg(target_os = "windows")]
 use tao::platform::windows::WindowExtWindows as _;
-use tao::window::{Window, WindowId};
+use tao::window::Window;
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
@@ -43,39 +41,25 @@ fn metadata() -> AboutMetadata {
     m
 }
 
-pub struct MenuEvents {
-    ids: HashMap<MenuId, AppMenuItem>,
-    receiver: &'static MenuEventReceiver,
-}
-
-impl MenuEvents {
-    pub fn new() -> Self {
-        Self { ids: HashMap::new(), receiver: MenuEvent::receiver() }
-    }
-
-    pub fn try_receive(&self) -> Result<Option<AppMenuItem>> {
-        let Ok(event) = self.receiver.try_recv() else {
-            return Ok(None);
-        };
-        let Some(id) = self.ids.get(&event.id).copied() else {
-            anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids);
-        };
-        Ok(Some(id))
-    }
-}
-
 #[derive(Clone)]
 pub struct Menu {
     menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
-    visibility: HashMap<WindowId, bool>,
-    #[cfg(target_os = "macos")]
-    window_menu: Submenu,
-    #[cfg(target_os = "macos")]
-    help_menu: Submenu,
+    #[cfg(not(target_os = "macos"))]
+    visibility: Option<bool>,
+}
+
+impl Default for Menu {
+    fn default() -> Self {
+        Self {
+            menu_bar: MenuBar::new(),
+            #[cfg(not(target_os = "macos"))]
+            visibility: None,
+        }
+    }
 }
 
 impl Menu {
-    pub fn new(events: &mut MenuEvents) -> Result<Self> {
+    pub fn create<S: EventSender + Sync>(&self, sender: S) -> Result<()> {
         fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
             MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
         }
@@ -87,8 +71,6 @@ impl Menu {
         const MOD: Modifiers = Modifiers::SUPER;
         #[cfg(not(target_os = "macos"))]
         const MOD: Modifiers = Modifiers::CONTROL;
-
-        let menu_bar = MenuBar::new();
 
         // Custom menu items
         let settings = no_accel("Settings…");
@@ -139,7 +121,7 @@ impl Menu {
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
-        menu_bar.append_items(&[
+        self.menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
                 "Shiba",
@@ -218,9 +200,9 @@ impl Menu {
         ])?;
 
         #[rustfmt::skip]
-        events.ids.extend({
+        let ids = {
             use AppMenuItem::*;
-            [
+            HashMap::from([
                 (open_files.into_id(),      OpenFiles),
                 (watch_dirs.into_id(),      WatchDirs),
                 (quit.into_id(),            Quit),
@@ -243,18 +225,32 @@ impl Menu {
                 #[cfg(not(target_os = "macos"))]
                 (toggle_menu_bar.into_id(), ToggleMenuBar),
                 (delete_cookies.into_id(),  DeleteCookies),
-            ]
-        });
+            ])
+        };
+        log::debug!("Registered menu items: {:?}", ids);
 
-        log::debug!("Registered menu items: {:?}", events.ids);
-        Ok(Self {
-            menu_bar,
-            visibility: HashMap::new(),
-            #[cfg(target_os = "macos")]
-            window_menu,
-            #[cfg(target_os = "macos")]
-            help_menu,
-        })
+        let num_ids = ids.len();
+        MenuEvent::set_event_handler(Some(move |event: MenuEvent| {
+            let event = if let Some(item) = ids.get(&event.id).copied() {
+                Event::Menu(item)
+            } else {
+                let err = anyhow::anyhow!("Unknown menu item ID in event {:?}: {:?}", event, ids);
+                Event::Error(err)
+            };
+            sender.send(event);
+        }));
+        log::debug!("Set menu event handler with {} menu items", num_ids);
+
+        // Menu bar on macOS is always visible
+        #[cfg(target_os = "macos")]
+        {
+            self.menu_bar.init_for_nsapp();
+            window_menu.set_as_windows_menu_for_nsapp();
+            help_menu.set_as_help_menu_for_nsapp();
+            log::debug!("Initialized menubar for macOS");
+        }
+
+        Ok(())
     }
 
     #[cfg(target_os = "windows")]
@@ -262,10 +258,19 @@ impl Menu {
         &self.menu_bar
     }
 
+    #[cfg(target_os = "macos")]
+    pub fn is_visible(&self) -> bool {
+        true
+    }
+    #[cfg(not(target_os = "macos"))]
+    pub fn is_visible(&self) -> bool {
+        self.visibility.unwrap_or(false)
+    }
+
+    #[cfg(not(target_os = "macos"))]
     pub fn toggle(&mut self, window: &Window) -> Result<()> {
-        let id = window.id();
-        match self.visibility.entry(id) {
-            Entry::Vacant(entry) => {
+        let is_visible = match self.visibility {
+            None => {
                 // Safety: Using the handle returned from `Window::hwnd`.
                 #[cfg(target_os = "windows")]
                 unsafe {
@@ -273,44 +278,38 @@ impl Menu {
                 }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
-                #[cfg(target_os = "macos")]
-                {
-                    self.menu_bar.init_for_nsapp();
-                    self.window_menu.set_as_windows_menu_for_nsapp();
-                    self.help_menu.set_as_help_menu_for_nsapp();
-                }
-                entry.insert(true);
-                log::debug!("Initialized menubar for window (id={:?})", id);
-                Ok(())
+                log::debug!("Initialized menubar for window: {:?}", window.id());
+                true
             }
-            #[cfg(target_os = "macos")]
-            Entry::Occupied(_) => Ok(()), // On macOS, menu bar is always visible
-            #[cfg(not(target_os = "macos"))]
-            Entry::Occupied(entry) => {
-                let visible = entry.into_mut();
-                if *visible {
-                    // Safety: The handle is valid because it is returned from `Window::hwnd`.
-                    #[cfg(target_os = "windows")]
-                    unsafe {
-                        self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
-                    }
-                    #[cfg(target_os = "linux")]
-                    self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
-                    log::debug!("Hide menu on window (id={:?})", id);
-                } else {
-                    // Safety: The handle is valid because it is returned from `Window::hwnd`.
-                    #[cfg(target_os = "windows")]
-                    unsafe {
-                        self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
-                    }
-                    #[cfg(target_os = "linux")]
-                    self.menu_bar.show_for_gtk_window(window.gtk_window())?;
-                    log::debug!("Show menu on window (id={:?})", id);
+            Some(true) => {
+                // Safety: The handle is valid because it is returned from `Window::hwnd`.
+                #[cfg(target_os = "windows")]
+                unsafe {
+                    self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
                 }
-                *visible = !*visible;
-                Ok(())
+                #[cfg(target_os = "linux")]
+                self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
+                log::debug!("Hide menu on window (id={:?})", window.id());
+                false
             }
-        }
+            Some(false) => {
+                // Safety: The handle is valid because it is returned from `Window::hwnd`.
+                #[cfg(target_os = "windows")]
+                unsafe {
+                    self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
+                }
+                #[cfg(target_os = "linux")]
+                self.menu_bar.show_for_gtk_window(window.gtk_window())?;
+                log::debug!("Show menu on window (id={:?})", window.id());
+                true
+            }
+        };
+        self.visibility = Some(is_visible);
+        Ok(())
+    }
+    #[cfg(target_os = "macos")]
+    pub fn toggle(&mut self, _window: &Window) -> Result<()> {
+        Ok(()) // Menu bar on macOS is always visible
     }
 
     pub fn show_at(&self, position: Option<(f64, f64)>, window: &Window) {
