@@ -7,14 +7,15 @@ use muda::{
     PredefinedMenuItem, Submenu,
 };
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]
 use tao::platform::unix::WindowExtUnix as _;
 #[cfg(target_os = "windows")]
 use tao::platform::windows::WindowExtWindows as _;
-use tao::window::{Window, WindowId};
+use tao::window::Window;
+#[cfg(not(target_os = "macos"))]
+use tao::window::WindowId;
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
@@ -67,11 +68,8 @@ impl MenuEvents {
 #[derive(Clone)]
 pub struct Menu {
     menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
+    #[cfg(not(target_os = "macos"))]
     visibility: HashMap<WindowId, bool>,
-    #[cfg(target_os = "macos")]
-    window_menu: Submenu,
-    #[cfg(target_os = "macos")]
-    help_menu: Submenu,
 }
 
 impl Menu {
@@ -246,14 +244,19 @@ impl Menu {
             ]
         });
 
+        // Menu bar on macOS is always visible
+        #[cfg(target_os = "macos")]
+        {
+            menu_bar.init_for_nsapp();
+            window_menu.set_as_windows_menu_for_nsapp();
+            help_menu.set_as_help_menu_for_nsapp();
+        }
+
         log::debug!("Registered menu items: {:?}", events.ids);
         Ok(Self {
             menu_bar,
+            #[cfg(not(target_os = "macos"))]
             visibility: HashMap::new(),
-            #[cfg(target_os = "macos")]
-            window_menu,
-            #[cfg(target_os = "macos")]
-            help_menu,
         })
     }
 
@@ -262,7 +265,10 @@ impl Menu {
         &self.menu_bar
     }
 
+    #[cfg(not(target_os = "macos"))]
     pub fn toggle(&mut self, window: &Window) -> Result<()> {
+        use std::collections::hash_map::Entry;
+
         let id = window.id();
         match self.visibility.entry(id) {
             Entry::Vacant(entry) => {
@@ -273,12 +279,6 @@ impl Menu {
                 }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
-                #[cfg(target_os = "macos")]
-                {
-                    self.menu_bar.init_for_nsapp();
-                    self.window_menu.set_as_windows_menu_for_nsapp();
-                    self.help_menu.set_as_help_menu_for_nsapp();
-                }
                 entry.insert(true);
                 log::debug!("Initialized menubar for window (id={:?})", id);
                 Ok(())
@@ -311,6 +311,11 @@ impl Menu {
                 Ok(())
             }
         }
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn toggle(&mut self, _window: &Window) -> Result<()> {
+        Ok(()) // Menu bar on macOS is always visible
     }
 
     pub fn show_at(&self, position: Option<(f64, f64)>, window: &Window) {

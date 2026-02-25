@@ -27,20 +27,11 @@ impl Rendering for Wry {
     type EventSender = EventLoopProxy<AppEvent>;
     type Renderer = WebViewRenderer;
 
-    #[cfg(target_os = "linux")]
+    #[cfg(not(target_os = "windows"))]
     fn new() -> Result<Self> {
-        // `EventLoopBuilder::with_app_id` is not usable because it can cause SEGV.
+        // `EventLoopBuilder::with_app_id` on Linux is not usable because it can cause SEGV.
         // See https://github.com/tauri-apps/tao/issues/1186
-        // use tao::platform::unix::EventLoopBuilderExtUnix as _;
-        // const APP_ID: &str = "io.github.rhysd.Shiba";
 
-        let event_loop = EventLoopBuilder::with_user_event().build();
-        let menu_events = MenuEvents::new();
-        Ok(Self { event_loop, menu_events })
-    }
-
-    #[cfg(target_os = "macos")]
-    fn new() -> Result<Self> {
         let event_loop = EventLoopBuilder::with_user_event().build();
         let menu_events = MenuEvents::new();
         Ok(Self { event_loop, menu_events })
