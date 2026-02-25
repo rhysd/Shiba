@@ -66,7 +66,7 @@ impl Rendering for Wry {
         self.event_loop.create_proxy()
     }
 
-    fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer> {
+    fn create_renderer(&self, config: &Config) -> Result<Self::Renderer> {
         WebViewRenderer::new(config, &self.event_loop, self.menu.clone())
     }
 

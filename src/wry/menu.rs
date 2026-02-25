@@ -13,8 +13,6 @@ use tao::platform::unix::WindowExtUnix as _;
 #[cfg(target_os = "windows")]
 use tao::platform::windows::WindowExtWindows as _;
 use tao::window::Window;
-#[cfg(not(target_os = "macos"))]
-use tao::window::WindowId;
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
@@ -47,7 +45,7 @@ fn metadata() -> AboutMetadata {
 pub struct Menu {
     menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
     #[cfg(not(target_os = "macos"))]
-    visibility: HashMap<WindowId, bool>,
+    visibility: Option<bool>,
 }
 
 impl Default for Menu {
@@ -55,7 +53,7 @@ impl Default for Menu {
         Self {
             menu_bar: MenuBar::new(),
             #[cfg(not(target_os = "macos"))]
-            visibility: HashMap::new(),
+            visibility: None,
         }
     }
 }
@@ -262,11 +260,8 @@ impl Menu {
 
     #[cfg(not(target_os = "macos"))]
     pub fn toggle(&mut self, window: &Window) -> Result<()> {
-        use std::collections::hash_map::Entry;
-
-        let id = window.id();
-        match self.visibility.entry(id) {
-            Entry::Vacant(entry) => {
+        self.visibility = match self.visibility {
+            None => {
                 // Safety: Using the handle returned from `Window::hwnd`.
                 #[cfg(target_os = "windows")]
                 unsafe {
@@ -274,38 +269,33 @@ impl Menu {
                 }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
-                entry.insert(true);
-                log::debug!("Initialized menubar for window (id={:?})", id);
-                Ok(())
+                log::debug!("Initialized menubar for window: {:?}", window.id());
+                Some(true)
             }
-            #[cfg(target_os = "macos")]
-            Entry::Occupied(_) => Ok(()), // On macOS, menu bar is always visible
-            #[cfg(not(target_os = "macos"))]
-            Entry::Occupied(entry) => {
-                let visible = entry.into_mut();
-                if *visible {
-                    // Safety: The handle is valid because it is returned from `Window::hwnd`.
-                    #[cfg(target_os = "windows")]
-                    unsafe {
-                        self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
-                    }
-                    #[cfg(target_os = "linux")]
-                    self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
-                    log::debug!("Hide menu on window (id={:?})", id);
-                } else {
-                    // Safety: The handle is valid because it is returned from `Window::hwnd`.
-                    #[cfg(target_os = "windows")]
-                    unsafe {
-                        self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
-                    }
-                    #[cfg(target_os = "linux")]
-                    self.menu_bar.show_for_gtk_window(window.gtk_window())?;
-                    log::debug!("Show menu on window (id={:?})", id);
+            Some(true) => {
+                // Safety: The handle is valid because it is returned from `Window::hwnd`.
+                #[cfg(target_os = "windows")]
+                unsafe {
+                    self.menu_bar.hide_for_hwnd(window.hwnd() as _)?;
                 }
-                *visible = !*visible;
-                Ok(())
+                #[cfg(target_os = "linux")]
+                self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
+                log::debug!("Hide menu on window (id={:?})", window.id());
+                Some(false)
             }
-        }
+            Some(false) => {
+                // Safety: The handle is valid because it is returned from `Window::hwnd`.
+                #[cfg(target_os = "windows")]
+                unsafe {
+                    self.menu_bar.show_for_hwnd(window.hwnd() as _)?;
+                }
+                #[cfg(target_os = "linux")]
+                self.menu_bar.show_for_gtk_window(window.gtk_window())?;
+                log::debug!("Show menu on window (id={:?})", window.id());
+                Some(true)
+            }
+        };
+        Ok(())
     }
 
     #[cfg(target_os = "macos")]

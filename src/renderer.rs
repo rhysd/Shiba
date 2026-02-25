@@ -236,7 +236,7 @@ pub trait Rendering: Sized {
 
     fn new() -> Result<Self>;
     fn create_sender(&self) -> Self::EventSender;
-    fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer>;
+    fn create_renderer(&self, config: &Config) -> Result<Self::Renderer>;
     /// Starts the rendering execution and runs until the process exits.
     fn start<H: EventHandler + 'static>(self, handler: H) -> !;
 }
