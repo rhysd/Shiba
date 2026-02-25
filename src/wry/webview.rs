@@ -225,7 +225,7 @@ impl WebViewRenderer {
         }
 
         let window = builder.build(event_loop)?;
-        if config.window().menu_bar {
+        if config.window().menu_bar != menu.is_visible() {
             menu.toggle(&window)?;
         }
 

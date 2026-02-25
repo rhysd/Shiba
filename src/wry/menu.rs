@@ -258,9 +258,18 @@ impl Menu {
         &self.menu_bar
     }
 
+    #[cfg(target_os = "macos")]
+    pub fn is_visible(&self) -> bool {
+        true
+    }
+    #[cfg(not(target_os = "macos"))]
+    pub fn is_visible(&self) -> bool {
+        self.visibility.unwrap_or(false)
+    }
+
     #[cfg(not(target_os = "macos"))]
     pub fn toggle(&mut self, window: &Window) -> Result<()> {
-        self.visibility = match self.visibility {
+        let is_visible = match self.visibility {
             None => {
                 // Safety: Using the handle returned from `Window::hwnd`.
                 #[cfg(target_os = "windows")]
@@ -270,7 +279,7 @@ impl Menu {
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
                 log::debug!("Initialized menubar for window: {:?}", window.id());
-                Some(true)
+                true
             }
             Some(true) => {
                 // Safety: The handle is valid because it is returned from `Window::hwnd`.
@@ -281,7 +290,7 @@ impl Menu {
                 #[cfg(target_os = "linux")]
                 self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
                 log::debug!("Hide menu on window (id={:?})", window.id());
-                Some(false)
+                false
             }
             Some(false) => {
                 // Safety: The handle is valid because it is returned from `Window::hwnd`.
@@ -292,12 +301,12 @@ impl Menu {
                 #[cfg(target_os = "linux")]
                 self.menu_bar.show_for_gtk_window(window.gtk_window())?;
                 log::debug!("Show menu on window (id={:?})", window.id());
-                Some(true)
+                true
             }
         };
+        self.visibility = Some(is_visible);
         Ok(())
     }
-
     #[cfg(target_os = "macos")]
     pub fn toggle(&mut self, _window: &Window) -> Result<()> {
         Ok(()) // Menu bar on macOS is always visible
