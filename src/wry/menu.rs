@@ -1,10 +1,9 @@
-use crate::renderer::MenuItem as AppMenuItem;
+use crate::renderer::{Event, EventSender, MenuItem as AppMenuItem};
 use anyhow::Result;
 use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::dpi::{LogicalPosition, Position};
 use muda::{
-    AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuEventReceiver, MenuId, MenuItem,
-    PredefinedMenuItem, Submenu,
+    AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuItem, PredefinedMenuItem, Submenu,
 };
 use std::collections::HashMap;
 #[cfg(target_os = "macos")]
@@ -44,27 +43,6 @@ fn metadata() -> AboutMetadata {
     m
 }
 
-pub struct MenuEvents {
-    ids: HashMap<MenuId, AppMenuItem>,
-    receiver: &'static MenuEventReceiver,
-}
-
-impl MenuEvents {
-    pub fn new() -> Self {
-        Self { ids: HashMap::new(), receiver: MenuEvent::receiver() }
-    }
-
-    pub fn try_receive(&self) -> Result<Option<AppMenuItem>> {
-        let Ok(event) = self.receiver.try_recv() else {
-            return Ok(None);
-        };
-        let Some(id) = self.ids.get(&event.id).copied() else {
-            anyhow::bail!("Unknown menu item ID in event {:?}: {:?}", event, self.ids);
-        };
-        Ok(Some(id))
-    }
-}
-
 #[derive(Clone)]
 pub struct Menu {
     menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
@@ -72,8 +50,18 @@ pub struct Menu {
     visibility: HashMap<WindowId, bool>,
 }
 
+impl Default for Menu {
+    fn default() -> Self {
+        Self {
+            menu_bar: MenuBar::new(),
+            #[cfg(not(target_os = "macos"))]
+            visibility: HashMap::new(),
+        }
+    }
+}
+
 impl Menu {
-    pub fn new(events: &mut MenuEvents) -> Result<Self> {
+    pub fn create<S: EventSender + Sync>(&self, sender: S) -> Result<()> {
         fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
             MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
         }
@@ -85,8 +73,6 @@ impl Menu {
         const MOD: Modifiers = Modifiers::SUPER;
         #[cfg(not(target_os = "macos"))]
         const MOD: Modifiers = Modifiers::CONTROL;
-
-        let menu_bar = MenuBar::new();
 
         // Custom menu items
         let settings = no_accel("Settings…");
@@ -137,7 +123,7 @@ impl Menu {
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
-        menu_bar.append_items(&[
+        self.menu_bar.append_items(&[
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
                 "Shiba",
@@ -216,9 +202,9 @@ impl Menu {
         ])?;
 
         #[rustfmt::skip]
-        events.ids.extend({
+        let ids = {
             use AppMenuItem::*;
-            [
+            HashMap::from([
                 (open_files.into_id(),      OpenFiles),
                 (watch_dirs.into_id(),      WatchDirs),
                 (quit.into_id(),            Quit),
@@ -241,23 +227,32 @@ impl Menu {
                 #[cfg(not(target_os = "macos"))]
                 (toggle_menu_bar.into_id(), ToggleMenuBar),
                 (delete_cookies.into_id(),  DeleteCookies),
-            ]
-        });
+            ])
+        };
+        log::debug!("Registered menu items: {:?}", ids);
+
+        let num_ids = ids.len();
+        MenuEvent::set_event_handler(Some(move |event: MenuEvent| {
+            let event = if let Some(item) = ids.get(&event.id).copied() {
+                Event::Menu(item)
+            } else {
+                let err = anyhow::anyhow!("Unknown menu item ID in event {:?}: {:?}", event, ids);
+                Event::Error(err)
+            };
+            sender.send(event);
+        }));
+        log::debug!("Set menu event handler with {} menu items", num_ids);
 
         // Menu bar on macOS is always visible
         #[cfg(target_os = "macos")]
         {
-            menu_bar.init_for_nsapp();
+            self.menu_bar.init_for_nsapp();
             window_menu.set_as_windows_menu_for_nsapp();
             help_menu.set_as_help_menu_for_nsapp();
+            log::debug!("Initialized menubar for macOS");
         }
 
-        log::debug!("Registered menu items: {:?}", events.ids);
-        Ok(Self {
-            menu_bar,
-            #[cfg(not(target_os = "macos"))]
-            visibility: HashMap::new(),
-        })
+        Ok(())
     }
 
     #[cfg(target_os = "windows")]

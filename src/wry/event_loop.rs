@@ -2,7 +2,7 @@
 use crate::assets::set_app_icon_to_dock;
 use crate::config::Config;
 use crate::renderer::{Event as AppEvent, EventHandler, EventSender, Rendering, RenderingFlow};
-use crate::wry::menu::{Menu, MenuEvents};
+use crate::wry::menu::Menu;
 use crate::wry::webview::{EventLoop, WebViewRenderer};
 use anyhow::Result;
 use tao::event::{Event, StartCause, WindowEvent};
@@ -10,9 +10,7 @@ use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 
 pub struct Wry {
     event_loop: EventLoop,
-    menu_events: MenuEvents,
-    #[cfg(target_os = "windows")]
-    menu: Menu, // On Windows, Menu instance needs to be created before creating the event loop
+    menu: Menu,
 }
 
 impl EventSender for EventLoopProxy<AppEvent> {
@@ -33,8 +31,9 @@ impl Rendering for Wry {
         // See https://github.com/tauri-apps/tao/issues/1186
 
         let event_loop = EventLoopBuilder::with_user_event().build();
-        let menu_events = MenuEvents::new();
-        Ok(Self { event_loop, menu_events })
+        let menu = Menu::default();
+        menu.create(event_loop.create_proxy())?;
+        Ok(Self { event_loop, menu })
     }
 
     #[cfg(target_os = "windows")]
@@ -43,8 +42,7 @@ impl Rendering for Wry {
         use tao::platform::windows::EventLoopBuilderExtWindows;
         use windows::Win32::UI::WindowsAndMessaging::{HACCEL, MSG, TranslateAcceleratorW};
 
-        let mut menu_events = MenuEvents::new();
-        let menu = Menu::new(&mut menu_events)?;
+        let menu = Menu::default();
         let event_loop = {
             let menu = menu.menu_bar().clone();
             EventLoopBuilder::with_user_event()
@@ -60,8 +58,8 @@ impl Rendering for Wry {
                 })
                 .build()
         };
-
-        Ok(Self { event_loop, menu_events, menu })
+        menu.create(event_loop.create_proxy())?;
+        Ok(Self { event_loop, menu })
     }
 
     fn create_sender(&self) -> Self::EventSender {
@@ -69,11 +67,7 @@ impl Rendering for Wry {
     }
 
     fn create_renderer(&mut self, config: &Config) -> Result<Self::Renderer> {
-        #[cfg(not(target_os = "windows"))]
-        let menu = Menu::new(&mut self.menu_events)?;
-        #[cfg(target_os = "windows")]
-        let menu = self.menu.clone();
-        WebViewRenderer::new(config, &self.event_loop, menu)
+        WebViewRenderer::new(config, &self.event_loop, self.menu.clone())
     }
 
     fn start<H>(self, mut handler: H) -> !
@@ -108,13 +102,7 @@ impl Rendering for Wry {
                         RenderingFlow::Continue
                     }
                 }
-                _ => match self.menu_events.try_receive() {
-                    Ok(Some(item)) => handler.on_event(AppEvent::Menu(item)),
-                    Ok(None) => RenderingFlow::Continue,
-                    Err(err) => handler.on_event(AppEvent::Error(
-                        err.context("Could not receive menu item event"),
-                    )),
-                },
+                _ => RenderingFlow::Continue,
             };
 
             *control = match flow {
