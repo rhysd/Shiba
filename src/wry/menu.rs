@@ -73,7 +73,7 @@ impl Menu {
         const MOD: Modifiers = Modifiers::CONTROL;
 
         // Custom menu items
-        let settings = no_accel("Settings…");
+        let settings = accel("Settings…", MOD, Code::Comma);
         let quit = accel("Quit", MOD, Code::KeyQ);
         let open_files = accel("Open Files…", MOD, Code::KeyO);
         let watch_dirs = accel("Watch Directories…", MOD | Modifiers::SHIFT, Code::KeyO);
