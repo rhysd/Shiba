@@ -35,6 +35,7 @@ export type KeyAction =
     | 'ZoomOut'
     | 'ShowMenu'
     | 'ToggleMenuBar'
+    | 'ToggleAlwaysOnTop'
     | 'Quit';
 
 export type KeyMaps = Record<string, KeyAction>;
@@ -311,6 +312,9 @@ export type MessageToMain =
       }
     | {
           kind: 'toggle_menu_bar';
+      }
+    | {
+          kind: 'toggle_always_on_top';
       }
     | {
           kind: 'error';

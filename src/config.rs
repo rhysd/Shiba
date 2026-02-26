@@ -39,6 +39,7 @@ pub enum KeyAction {
     ZoomOut,
     ShowMenu,
     ToggleMenuBar,
+    ToggleAlwaysOnTop,
     Quit,
 }
 

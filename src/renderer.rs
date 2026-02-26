@@ -88,6 +88,7 @@ pub enum MessageFromRenderer {
     ToggleMaximized,
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
+    ToggleAlwaysOnTop,
     Error { message: String },
 }
 
