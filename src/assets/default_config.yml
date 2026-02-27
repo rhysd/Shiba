@@ -66,7 +66,7 @@ search:
 # Configuration related to application window.
 window:
   # Remember the window state (position, size, ...) and restore it when opening Shiba at next time.
-  restore: false
+  restore: true
   # Theme to apply to the application window. The following predefined values are available.
   #
   # - System: use theme set to the system settings
@@ -75,17 +75,18 @@ window:
   theme: System
   # Application window is always on top of other windows.
   always_on_top: false
-  # Default window size (width and height) in physical pixels. When `null` is set, the default window
-  # size 800x600 pixels is used. When `restore` is set to `true` and there is a saved window state,
-  # the window size in the state is used.
-  # The following example creates a window with 1000x2000 pixels.
+  # Default window size (width and height) in logical pixels. When `restore` is set to `true` and there
+  # is a saved window state, the window size in the state is used. The following example creates a
+  # window with 1200x1600 pixels.
   #
   # ```
   # default_size:
-  #   width: 1000
-  #   height: 2000
+  #   width: 1200
+  #   height: 1600
   # ```
-  default_size: null
+  default_size:
+    width: 600
+    height: 800
   # Setting `true` shows a menu bar at the top of application window. Setting `false` hides the menu bar.
   # This configuration is effective only on Linux and Windows. On macOS, the menu bar is always set.
   menu_bar: false

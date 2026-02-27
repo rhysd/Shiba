@@ -191,10 +191,9 @@ impl WebViewRenderer {
             }
             (zoom_level, always_on_top)
         } else {
-            if let Some(size) = config.window().default_size {
-                let size = LogicalSize { width: size.width as f64, height: size.height as f64 };
-                builder = builder.with_inner_size(size);
-            }
+            let size = config.window().default_size;
+            let size = LogicalSize { width: size.width as f64, height: size.height as f64 };
+            builder = builder.with_inner_size(size);
             (ZoomLevel::default(), config.window().always_on_top)
         };
 

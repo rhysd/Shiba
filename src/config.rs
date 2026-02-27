@@ -180,15 +180,33 @@ pub struct WindowSize {
     pub height: u32,
 }
 
+impl Default for WindowSize {
+    fn default() -> Self {
+        Self { width: 600, height: 800 }
+    }
+}
+
 #[non_exhaustive]
-#[derive(Default, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Window {
     pub restore: bool,
     pub theme: WindowTheme,
     pub always_on_top: bool,
-    pub default_size: Option<WindowSize>,
+    pub default_size: WindowSize,
     pub menu_bar: bool,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Self {
+            restore: true,
+            theme: WindowTheme::default(),
+            always_on_top: false,
+            default_size: WindowSize::default(),
+            menu_bar: false,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
