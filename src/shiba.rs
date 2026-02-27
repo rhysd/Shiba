@@ -202,7 +202,7 @@ where
     }
 
     fn toggle_minimized(&mut self) {
-        let minimized = !self.renderer.is_maximized();
+        let minimized = !self.renderer.is_minimized();
         log::debug!("Toggle minimized window (minimized={})", minimized);
         self.renderer.set_minimized(minimized);
     }
@@ -292,6 +292,7 @@ where
             History => self.history.send_paths(&self.renderer)?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             ToggleMinimizeWindow => self.toggle_minimized(),
+            ToggleMaximizeWindow => self.toggle_maximized(),
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,

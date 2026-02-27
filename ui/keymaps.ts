@@ -260,6 +260,13 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    MaximizeWindow: {
+        description: 'Maximize/Unmaximize the window.',
+        dispatch(): void {
+            sendMessage({ kind: 'toggle_maximized' });
+        },
+    },
+
     EditConfig: {
         description: 'Edit configuration with a default text editor.',
         dispatch(): void {

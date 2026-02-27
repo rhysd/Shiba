@@ -43,6 +43,7 @@ keymaps:
   ctrl+k: ScrollPrevSection
   plus: ZoomIn
   -: ZoomOut
+  ctrl+m: MaximizeWindow
   mod+q: Quit
   ?: Help
 

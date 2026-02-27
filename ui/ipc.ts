@@ -37,6 +37,7 @@ export type KeyAction =
     | 'ToggleMenuBar'
     | 'ToggleAlwaysOnTop'
     | 'MinimizeWindow'
+    | 'MaximizeWindow'
     | 'EditConfig'
     | 'Quit';
 

@@ -127,6 +127,7 @@ pub enum MenuItem {
     OpenRepo,
     ToggleAlwaysOnTop,
     ToggleMinimizeWindow,
+    ToggleMaximizeWindow,
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,

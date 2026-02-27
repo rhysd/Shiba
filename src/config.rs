@@ -41,6 +41,7 @@ pub enum KeyAction {
     ToggleMenuBar,
     ToggleAlwaysOnTop,
     MinimizeWindow,
+    MaximizeWindow,
     EditConfig,
     Quit,
 }
@@ -75,6 +76,7 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
         ("ctrl+k",       ScrollPrevSection),
         ("plus",         ZoomIn),
         ("-",            ZoomOut),
+        ("ctrl+m",       MaximizeWindow),
         ("mod+q",        Quit),
         ("?",            Help),
     ]
