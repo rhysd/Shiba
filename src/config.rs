@@ -40,6 +40,7 @@ pub enum KeyAction {
     ShowMenu,
     ToggleMenuBar,
     ToggleAlwaysOnTop,
+    MinimizeWindow,
     EditConfig,
     Quit,
 }

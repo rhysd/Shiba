@@ -83,6 +83,7 @@ impl Menu {
         let back = item("Back");
         let top = item("Latest");
         let history = item("History…");
+        let minimize = item("Minimize");
         let always_on_top = item("Pin/Unpin On Top");
         let guide = item("Show Key Guide…");
         let open_repo = item("Open Repository Page");
@@ -93,8 +94,7 @@ impl Menu {
             "&Window",
             true,
             &[
-                #[cfg(not(target_os = "linux"))]
-                &PredefinedMenuItem::minimize(None),
+                &minimize,
                 #[cfg(target_os = "windows")]
                 &PredefinedMenuItem::maximize(None),
                 #[cfg(target_os = "macos")]
@@ -210,6 +210,7 @@ impl Menu {
                 (zoom_out.into_id(),        ZoomOut),
                 (history.into_id(),         History),
                 (always_on_top.into_id(),   ToggleAlwaysOnTop),
+                (minimize.into_id(),        ToggleMinimizeWindow),
                 (guide.into_id(),           Help),
                 (open_repo.into_id(),       OpenRepo),
                 (settings.into_id(),        EditConfig),

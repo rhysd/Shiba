@@ -17,6 +17,7 @@ pub struct TestRenderer {
     pub always_on_top: bool,
     pub drag_started: AtomicBool,
     pub is_maximized: bool,
+    pub is_minimized: bool,
     pub window_appearance: WindowAppearance,
     pub context_menu_pos: RefCell<Option<(f64, f64)>>,
     pub menu_visible: bool,
@@ -88,6 +89,14 @@ impl Renderer for TestRenderer {
 
     fn set_maximized(&mut self, maximized: bool) {
         self.is_maximized = maximized;
+    }
+
+    fn is_minimized(&self) -> bool {
+        self.is_minimized
+    }
+
+    fn set_minimized(&mut self, minimized: bool) {
+        self.is_minimized = minimized;
     }
 
     fn window_appearance(&self) -> WindowAppearance {

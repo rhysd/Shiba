@@ -36,6 +36,7 @@ export type KeyAction =
     | 'ShowMenu'
     | 'ToggleMenuBar'
     | 'ToggleAlwaysOnTop'
+    | 'MinimizeWindow'
     | 'EditConfig'
     | 'Quit';
 
@@ -316,6 +317,9 @@ export type MessageToMain =
       }
     | {
           kind: 'toggle_always_on_top';
+      }
+    | {
+          kind: 'toggle_minimized';
       }
     | {
           kind: 'edit_config';

@@ -253,6 +253,13 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    MinimizeWindow: {
+        description: 'Minimize the window.',
+        dispatch(): void {
+            sendMessage({ kind: 'toggle_minimized' });
+        },
+    },
+
     EditConfig: {
         description: 'Edit configuration with a default text editor.',
         dispatch(): void {

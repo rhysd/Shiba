@@ -347,6 +347,14 @@ impl Renderer for WebViewRenderer {
         self.window.set_maximized(maximized);
     }
 
+    fn is_minimized(&self) -> bool {
+        self.window.is_minimized()
+    }
+
+    fn set_minimized(&mut self, minimized: bool) {
+        self.window.set_minimized(minimized);
+    }
+
     fn window_appearance(&self) -> WindowAppearance {
         WindowAppearance {
             title: cfg!(not(target_os = "macos")),

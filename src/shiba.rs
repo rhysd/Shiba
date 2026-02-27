@@ -201,6 +201,12 @@ where
         self.renderer.set_maximized(maximized);
     }
 
+    fn toggle_minimized(&mut self) {
+        let minimized = !self.renderer.is_maximized();
+        log::debug!("Toggle minimized window (minimized={})", minimized);
+        self.renderer.set_minimized(minimized);
+    }
+
     fn open_config(&mut self) -> Result<()> {
         let path = self.config.config_file()?;
         log::debug!("Opening config file via menu item: {:?}", path);
@@ -250,6 +256,7 @@ where
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
             ToggleMaximized => self.toggle_maximized(),
+            ToggleMinimized => self.toggle_minimized(),
             Quit => return Ok(RenderingFlow::Exit),
             OpenMenu { position } => self.renderer.show_menu_at(position),
             ToggleMenuBar => self.renderer.toggle_menu()?,
@@ -284,6 +291,7 @@ where
             ToggleMenuBar => self.renderer.toggle_menu()?,
             History => self.history.send_paths(&self.renderer)?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
+            ToggleMinimizeWindow => self.toggle_minimized(),
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,

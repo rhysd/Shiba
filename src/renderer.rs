@@ -86,6 +86,7 @@ pub enum MessageFromRenderer {
     ZoomOut,
     DragWindow,
     ToggleMaximized,
+    ToggleMinimized,
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
     ToggleAlwaysOnTop,
@@ -125,6 +126,7 @@ pub enum MenuItem {
     Help,
     OpenRepo,
     ToggleAlwaysOnTop,
+    ToggleMinimizeWindow,
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,
@@ -223,6 +225,8 @@ pub trait Renderer {
     fn drag_window(&self) -> Result<()>;
     fn is_maximized(&self) -> bool;
     fn set_maximized(&mut self, maximized: bool);
+    fn is_minimized(&self) -> bool;
+    fn set_minimized(&mut self, minimized: bool);
     fn window_appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
