@@ -254,6 +254,7 @@ where
             OpenMenu { position } => self.renderer.show_menu_at(position),
             ToggleMenuBar => self.renderer.toggle_menu()?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
+            EditConfig => self.open_config()?,
             Error { message } => anyhow::bail!("Error reported from renderer: {}", message),
         }
         Ok(RenderingFlow::Continue)

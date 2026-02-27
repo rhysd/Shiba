@@ -253,6 +253,13 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    EditConfig: {
+        description: 'Edit configuration with a default text editor.',
+        dispatch(): void {
+            sendMessage({ kind: 'edit_config' });
+        },
+    },
+
     Quit: {
         description: 'Quit the application.',
         dispatch(): void {

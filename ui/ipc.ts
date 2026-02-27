@@ -36,6 +36,7 @@ export type KeyAction =
     | 'ShowMenu'
     | 'ToggleMenuBar'
     | 'ToggleAlwaysOnTop'
+    | 'EditConfig'
     | 'Quit';
 
 export type KeyMaps = Record<string, KeyAction>;
@@ -315,6 +316,9 @@ export type MessageToMain =
       }
     | {
           kind: 'toggle_always_on_top';
+      }
+    | {
+          kind: 'edit_config';
       }
     | {
           kind: 'error';

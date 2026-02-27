@@ -89,6 +89,7 @@ pub enum MessageFromRenderer {
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
     ToggleAlwaysOnTop,
+    EditConfig,
     Error { message: String },
 }
 
