@@ -21,6 +21,23 @@ keymaps:
   k: ScrollUp
   h: ScrollLeft
   l: ScrollRight
+  g: ScrollTop
+  G: ScrollBottom
+  d: ScrollPageDown
+  u: ScrollPageUp
+  space: ScrollPageDown
+  down: ScrollDown
+  up: ScrollUp
+  left: ScrollLeft
+  right: ScrollRight
+  pagedown: ScrollPageDown
+  pageup: ScrollPageUp
+  ctrl+down: ScrollPageDown
+  ctrl+up: ScrollPageUp
+  ctrl+shift+down: ScrollBottom
+  ctrl+shift+up: ScrollTop
+  ctrl+j: ScrollNextSection
+  ctrl+k: ScrollPrevSection
   ctrl+b: GoBack
   ctrl+f: GoForward
   ctrl+o: OpenFile
@@ -29,18 +46,6 @@ keymaps:
   ctrl+r: Reload
   o: Outline
   s: Search
-  ctrl+d: ScrollPageDown
-  ctrl+u: ScrollPageUp
-  down: ScrollDown
-  up: ScrollUp
-  left: ScrollLeft
-  right: ScrollRight
-  pagedown: ScrollPageDown
-  pageup: ScrollPageUp
-  ctrl+down: ScrollBottom
-  ctrl+up: ScrollTop
-  ctrl+j: ScrollNextSection
-  ctrl+k: ScrollPrevSection
   plus: ZoomIn
   -: ZoomOut
   ctrl+m: MaximizeWindow
