@@ -40,6 +40,8 @@ pub enum KeyAction {
     ShowMenu,
     ToggleMenuBar,
     ToggleAlwaysOnTop,
+    MinimizeWindow,
+    MaximizeWindow,
     EditConfig,
     Quit,
 }
@@ -48,26 +50,40 @@ pub enum KeyAction {
 const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
     use KeyAction::*;
     &[
-        ("j",         ScrollDown),
-        ("k",         ScrollUp),
-        ("h",         ScrollLeft),
-        ("l",         ScrollRight),
-        ("ctrl+b",    GoBack),
-        ("ctrl+f",    GoForward),
-        ("ctrl+o",    OpenFile),
-        ("ctrl+d",    ScrollPageDown),
-        ("ctrl+u",    ScrollPageUp),
-        ("down",      ScrollDown),
-        ("up",        ScrollUp),
-        ("left",      ScrollLeft),
-        ("right",     ScrollRight),
-        ("pagedown",  ScrollPageDown),
-        ("pageup",    ScrollPageUp),
-        ("ctrl+down", ScrollBottom),
-        ("ctrl+up",   ScrollTop),
-        ("ctrl+j",    ScrollNextSection),
-        ("ctrl+k",    ScrollPrevSection),
-        ("?",         Help),
+        ("j",               ScrollDown),
+        ("k",               ScrollUp),
+        ("h",               ScrollLeft),
+        ("l",               ScrollRight),
+        ("g",               ScrollTop),
+        ("G",               ScrollBottom),
+        ("d",               ScrollPageDown),
+        ("u",               ScrollPageUp),
+        ("space",           ScrollPageDown),
+        ("down",            ScrollDown),
+        ("up",              ScrollUp),
+        ("left",            ScrollLeft),
+        ("right",           ScrollRight),
+        ("pagedown",        ScrollPageDown),
+        ("pageup",          ScrollPageUp),
+        ("ctrl+down",       ScrollPageDown),
+        ("ctrl+up",         ScrollPageUp),
+        ("ctrl+shift+down", ScrollBottom),
+        ("ctrl+shift+up",   ScrollTop),
+        ("ctrl+j",          ScrollNextSection),
+        ("ctrl+k",          ScrollPrevSection),
+        ("ctrl+b",          GoBack),
+        ("ctrl+f",          GoForward),
+        ("ctrl+o",          OpenFile),
+        ("ctrl+shift+o",    OpenDir),
+        ("ctrl+h",          History),
+        ("ctrl+r",          Reload),
+        ("o",               Outline),
+        ("s",               Search),
+        ("plus",            ZoomIn),
+        ("-",               ZoomOut),
+        ("ctrl+m",          MaximizeWindow),
+        ("mod+q",           Quit),
+        ("?",               Help),
     ]
 };
 
@@ -524,7 +540,10 @@ mod tests {
             }
             if let Some(i) = bind.find('+') {
                 let modifier = &bind[..i];
-                assert!(matches!(modifier, "ctrl" | "alt"), "invalid modifier {:?}", modifier);
+                assert!(
+                    matches!(modifier, "ctrl" | "alt" | "mod"),
+                    "invalid modifier {modifier:?}",
+                );
             }
             m.insert(*bind, *a1);
         }

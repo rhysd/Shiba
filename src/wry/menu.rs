@@ -1,6 +1,5 @@
 use crate::renderer::{Event, EventSender, MenuItem as AppMenuItem};
 use anyhow::Result;
-use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::dpi::{LogicalPosition, Position};
 use muda::{
     AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuItem, PredefinedMenuItem, Submenu,
@@ -60,41 +59,35 @@ impl Default for Menu {
 
 impl Menu {
     pub fn create<S: EventSender + Sync>(&self, sender: S) -> Result<()> {
-        fn accel(text: &str, m: Modifiers, c: Code) -> MenuItem {
-            MenuItem::new(text, true, Some(Accelerator::new(Some(m), c)))
-        }
-        fn no_accel(text: &str) -> MenuItem {
+        fn item(text: &str) -> MenuItem {
             MenuItem::new(text, true, None)
         }
 
-        #[cfg(target_os = "macos")]
-        const MOD: Modifiers = Modifiers::SUPER;
-        #[cfg(not(target_os = "macos"))]
-        const MOD: Modifiers = Modifiers::CONTROL;
-
         // Custom menu items
-        let settings = accel("Settings…", MOD, Code::Comma);
-        let quit = accel("Quit", MOD, Code::KeyQ);
-        let open_files = accel("Open Files…", MOD, Code::KeyO);
-        let watch_dirs = accel("Watch Directories…", MOD | Modifiers::SHIFT, Code::KeyO);
-        let print = no_accel("Print…");
-        let search = accel("Search…", MOD, Code::KeyF);
-        let search_next = accel("Search Next", MOD, Code::KeyG);
-        let search_prev = accel("Search Previous", MOD | Modifiers::SHIFT, Code::KeyG);
-        let outline = accel("Section Outline…", MOD, Code::KeyS);
-        let reload = accel("Reload", MOD, Code::KeyR);
-        let zoom_in = accel("Zoom In", MOD | Modifiers::SHIFT, Code::Equal); // XXX: US keyboard only
-        let zoom_out = accel("Zoom Out", MOD, Code::Minus);
+        let settings = item("Settings…");
+        let quit = item("Quit");
+        let open_files = item("Open Files…");
+        let watch_dirs = item("Watch Directories…");
+        let print = item("Print…");
+        let search = item("Search…");
+        let search_next = item("Search Next");
+        let search_prev = item("Search Previous");
+        let outline = item("Section Outline…");
+        let reload = item("Reload");
+        let zoom_in = item("Zoom In");
+        let zoom_out = item("Zoom Out");
         #[cfg(not(target_os = "macos"))]
-        let toggle_menu_bar = no_accel("Toggle Menu Bar");
-        let delete_cookies = no_accel("Delete Cookies");
-        let forward = accel("Forward", MOD, Code::BracketRight);
-        let back = accel("Back", MOD, Code::BracketLeft);
-        let top = accel("Latest", MOD | Modifiers::SHIFT, Code::KeyT);
-        let history = accel("History…", MOD, Code::KeyY);
-        let always_on_top = no_accel("Pin/Unpin On Top");
-        let guide = no_accel("Show Guide…");
-        let open_repo = no_accel("Open Repository Page");
+        let toggle_menu_bar = item("Toggle Menu Bar");
+        let delete_cookies = item("Delete Cookies");
+        let forward = item("Forward");
+        let back = item("Back");
+        let top = item("Latest");
+        let history = item("History…");
+        let minimize = item("Minimize");
+        let maximize = item("Maximize");
+        let always_on_top = item("Pin/Unpin On Top");
+        let guide = item("Show Key Guide…");
+        let open_repo = item("Open Repository Page");
         let about = PredefinedMenuItem::about(Some("About Shiba"), Some(metadata()));
 
         // Menu bar structure
@@ -102,10 +95,8 @@ impl Menu {
             "&Window",
             true,
             &[
-                #[cfg(not(target_os = "linux"))]
-                &PredefinedMenuItem::minimize(None),
-                #[cfg(target_os = "windows")]
-                &PredefinedMenuItem::maximize(None),
+                &minimize,
+                &maximize,
                 #[cfg(target_os = "macos")]
                 &PredefinedMenuItem::fullscreen(None),
                 &always_on_top,
@@ -219,6 +210,8 @@ impl Menu {
                 (zoom_out.into_id(),        ZoomOut),
                 (history.into_id(),         History),
                 (always_on_top.into_id(),   ToggleAlwaysOnTop),
+                (minimize.into_id(),        ToggleMinimizeWindow),
+                (maximize.into_id(),        ToggleMaximizeWindow),
                 (guide.into_id(),           Help),
                 (open_repo.into_id(),       OpenRepo),
                 (settings.into_id(),        EditConfig),
