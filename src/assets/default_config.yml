@@ -24,6 +24,11 @@ keymaps:
   ctrl+b: GoBack
   ctrl+f: GoForward
   ctrl+o: OpenFile
+  ctrl+shift+o: OpenDir
+  ctrl+h: History
+  ctrl+r: Reload
+  o: Outline
+  s: Search
   ctrl+d: ScrollPageDown
   ctrl+u: ScrollPageUp
   down: ScrollDown
@@ -36,6 +41,9 @@ keymaps:
   ctrl+up: ScrollTop
   ctrl+j: ScrollNextSection
   ctrl+k: ScrollPrevSection
+  plus: ZoomIn
+  -: ZoomOut
+  mod+q: Quit
   ?: Help
 
 # Configuration related to text search.
