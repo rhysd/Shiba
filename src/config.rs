@@ -1,11 +1,12 @@
 use crate::cli::{Options, ThemeOption};
 use crate::persistent::DataDir;
 use anyhow::{Context, Result};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs;
 use std::mem;
+use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
@@ -173,16 +174,52 @@ pub enum WindowTheme {
     Light,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WindowLength {
+    Max,
+    Fixed(NonZeroU32),
+}
+
+impl<'de> Deserialize<'de> for WindowLength {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Repr<'a> {
+            Str(&'a str),
+            Num(NonZeroU32),
+        }
+
+        match Repr::deserialize(deserializer)? {
+            Repr::Num(n) => Ok(Self::Fixed(n)),
+            Repr::Str(s) if s.eq_ignore_ascii_case("max") => Ok(Self::Max),
+            Repr::Str(_) => {
+                Err(serde::de::Error::custom("expected non-zero integer or keyword \"max\""))
+            }
+        }
+    }
+}
+
+impl Serialize for WindowLength {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Max => serializer.serialize_str("max"),
+            Self::Fixed(n) => n.serialize(serializer),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct WindowSize {
-    pub width: u32,
-    pub height: u32,
+    pub width: WindowLength,
+    pub height: WindowLength,
 }
 
 impl Default for WindowSize {
     fn default() -> Self {
-        Self { width: 600, height: 800 }
+        let width = WindowLength::Fixed(NonZeroU32::new(600).unwrap());
+        let height = WindowLength::Fixed(NonZeroU32::new(800).unwrap());
+        Self { width, height }
     }
 }
 

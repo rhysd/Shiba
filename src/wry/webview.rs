@@ -1,12 +1,13 @@
 use crate::assets::Assets;
-use crate::config::{Config, WindowTheme as ThemeConfig};
+use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
     Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
     WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
-use tao::dpi::{LogicalPosition, LogicalSize};
+use std::num::NonZeroU32;
+use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -150,7 +151,56 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         apply_vibrancy(window, NSVisualEffectMaterial::Sidebar, None, None)?;
     }
 
+    #[cfg(any(debug_assertions, feature = "devtools"))]
+    if config.debug() {
+        webview.open_devtools(); // This method is defined in debug build only
+        log::debug!("Opened DevTools for debugging");
+    }
+
     Ok(webview)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum MaximizeWindow {
+    Vertical { width: NonZeroU32 },
+    Horizontal { height: NonZeroU32 },
+}
+
+impl MaximizeWindow {
+    fn maximize(self, window: &Window) {
+        let Some(monitor) = window.current_monitor() else {
+            log::error!(
+                "Could not reisize window {self:?} because current monitor is unavailable for {window:?}"
+            );
+            return;
+        };
+
+        let factor = monitor.scale_factor();
+        let monitor_size = monitor.size();
+        let monitor_pos = monitor.position();
+        let outer_size = window.outer_size();
+        let inner_size = window.inner_size();
+        let (size, pos) = match self {
+            Self::Vertical { width } => {
+                let width = (width.get() as f64 * factor) as u32;
+                let height = monitor_size.height - (outer_size.height - inner_size.height);
+                let x = monitor_pos.x + (monitor_size.width as i32 / 2) - width as i32 / 2;
+                let y = monitor_pos.y;
+                (PhysicalSize { width, height }, PhysicalPosition { x, y })
+            }
+            Self::Horizontal { height } => {
+                let height = (height.get() as f64 * factor) as u32;
+                let width = monitor_size.width - (outer_size.width - inner_size.width);
+                let y = monitor_pos.y + (monitor_size.height as i32 / 2) - height as i32 / 2;
+                let x = monitor_pos.x;
+                (PhysicalSize { width, height }, PhysicalPosition { x, y })
+            }
+        };
+
+        log::debug!("Resize window to size {size:?} at position {pos:?}");
+        window.set_inner_size(size);
+        window.set_outer_position(pos);
+    }
 }
 
 pub struct WebViewRenderer {
@@ -169,7 +219,7 @@ impl WebViewRenderer {
             .with_min_inner_size(LogicalSize { width: 100.0, height: 100.0 });
 
         let window_state = if config.window().restore { config.data_dir().load() } else { None };
-        let (zoom_level, always_on_top) = if let Some(state) = window_state {
+        let (zoom_level, always_on_top, delayed_maximize) = if let Some(state) = window_state {
             log::debug!("Restoring window state: {state:?}");
             let WindowState {
                 height,
@@ -189,12 +239,27 @@ impl WebViewRenderer {
             } else if maximized {
                 builder = builder.with_maximized(true);
             }
-            (zoom_level, always_on_top)
+            (zoom_level, always_on_top, None)
         } else {
             let size = config.window().default_size;
-            let size = LogicalSize { width: size.width as f64, height: size.height as f64 };
-            builder = builder.with_inner_size(size);
-            (ZoomLevel::default(), config.window().always_on_top)
+            let delayed = match (size.width, size.height) {
+                (WindowLength::Fixed(w), WindowLength::Fixed(h)) => {
+                    let size = LogicalSize { width: w.get() as f64, height: h.get() as f64 };
+                    builder = builder.with_inner_size(size);
+                    None
+                }
+                (WindowLength::Max, WindowLength::Max) => {
+                    builder = builder.with_maximized(true);
+                    None
+                }
+                (WindowLength::Fixed(width), WindowLength::Max) => {
+                    Some(MaximizeWindow::Vertical { width })
+                }
+                (WindowLength::Max, WindowLength::Fixed(height)) => {
+                    Some(MaximizeWindow::Horizontal { height })
+                }
+            };
+            (ZoomLevel::default(), config.window().always_on_top, delayed)
         };
 
         if always_on_top {
@@ -228,6 +293,10 @@ impl WebViewRenderer {
             menu.toggle(&window)?;
         }
 
+        if let Some(delayed) = delayed_maximize {
+            delayed.maximize(&window);
+        }
+
         let webview = create_webview(&window, event_loop, config)?;
         log::debug!("WebView was created successfully");
 
@@ -235,12 +304,6 @@ impl WebViewRenderer {
         if zoom_factor != 1.0 {
             webview.zoom(zoom_factor)?;
             log::debug!("Zoom factor was set to {}", zoom_factor);
-        }
-
-        #[cfg(any(debug_assertions, feature = "devtools"))]
-        if config.debug() {
-            webview.open_devtools(); // This method is defined in debug build only
-            log::debug!("Opened DevTools for debugging");
         }
 
         Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
