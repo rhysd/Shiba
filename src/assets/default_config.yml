@@ -66,7 +66,7 @@ search:
 # Configuration related to application window.
 window:
   # Remember the window state (position, size, ...) and restore it when opening Shiba at next time.
-  restore: true
+  restore: false
   # Theme to apply to the application window. The following predefined values are available.
   #
   # - System: use theme set to the system settings
@@ -75,15 +75,26 @@ window:
   theme: System
   # Application window is always on top of other windows.
   always_on_top: false
-  # Default window size (width and height) in logical pixels. When `restore` is set to `true` and there
-  # is a saved window state, the window size in the state is used. The following example creates a
-  # window with 1200x1600 pixels.
+  # Default window size (width and height) in logical pixels or "max" to maximize the window in the
+  # specified direction. For example, the following configuration creates a window with a maximized
+  # height and a width of 800px.
   #
   # ```
   # default_size:
-  #   width: 1200
-  #   height: 1600
+  #   width: 800
+  #   height: max
   # ```
+  #
+  # For another example, the following configuration maximizes the window in the both directions.
+  #
+  # ```
+  # default_size:
+  #   width: max
+  #   height: max
+  # ```
+  #
+  # When `restore` is set to `true` and a saved window state exists, the window size from the saved
+  # state is used.
   default_size:
     width: 600
     height: 800

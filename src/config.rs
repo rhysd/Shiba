@@ -224,7 +224,7 @@ impl Default for WindowSize {
 }
 
 #[non_exhaustive]
-#[derive(Deserialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Default, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Window {
     pub restore: bool,
@@ -232,18 +232,6 @@ pub struct Window {
     pub always_on_top: bool,
     pub default_size: WindowSize,
     pub menu_bar: bool,
-}
-
-impl Default for Window {
-    fn default() -> Self {
-        Self {
-            restore: true,
-            theme: WindowTheme::default(),
-            always_on_top: false,
-            default_size: WindowSize::default(),
-            menu_bar: false,
-        }
-    }
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
