@@ -43,6 +43,8 @@ pub enum KeyAction {
     ToggleAlwaysOnTop,
     MinimizeWindow,
     MaximizeWindow,
+    MaximizeWindowVertical,
+    MaximizeWindowHorizontal,
     EditConfig,
     Quit,
 }

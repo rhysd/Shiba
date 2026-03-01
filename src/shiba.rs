@@ -5,8 +5,8 @@ use crate::history::{Direction, History};
 use crate::opener::Opener;
 use crate::preview::Preview;
 use crate::renderer::{
-    Event, EventHandler, MenuItem, MessageFromRenderer, MessageToRenderer, Renderer, Rendering,
-    RenderingFlow, WindowHandles,
+    Event, EventHandler, Maximize, MaximizeDirection, MenuItem, MessageFromRenderer,
+    MessageToRenderer, Renderer, Rendering, RenderingFlow, WindowHandles,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -196,9 +196,9 @@ where
     }
 
     fn toggle_maximized(&mut self) {
-        let maximized = !self.renderer.is_maximized();
-        log::debug!("Toggle maximized window (maximized={})", maximized);
-        self.renderer.set_maximized(maximized);
+        let max = if self.renderer.is_maximized() { Maximize::Unmaximize } else { Maximize::Full };
+        log::debug!("Toggle maximized window (maximize={:?})", max);
+        self.renderer.set_maximized(max);
     }
 
     fn toggle_minimized(&mut self) {
@@ -255,7 +255,13 @@ where
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,
             DragWindow => self.renderer.drag_window()?,
-            ToggleMaximized => self.toggle_maximized(),
+            Maximized { dir: MaximizeDirection::Both } => self.toggle_maximized(),
+            Maximized { dir: MaximizeDirection::Vertical } => {
+                self.renderer.set_maximized(Maximize::Vertical)
+            }
+            Maximized { dir: MaximizeDirection::Horizontal } => {
+                self.renderer.set_maximized(Maximize::Horizontal)
+            }
             ToggleMinimized => self.toggle_minimized(),
             Quit => return Ok(RenderingFlow::Exit),
             OpenMenu { position } => self.renderer.show_menu_at(position),
@@ -293,6 +299,8 @@ where
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             ToggleMinimizeWindow => self.toggle_minimized(),
             ToggleMaximizeWindow => self.toggle_maximized(),
+            MaximizeWindowVertical => self.renderer.set_maximized(Maximize::Vertical),
+            MaximizeWindowHorizontal => self.renderer.set_maximized(Maximize::Horizontal),
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,

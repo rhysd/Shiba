@@ -1,6 +1,6 @@
 use crate::renderer::{
-    MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance, WindowHandles, WindowState,
-    ZoomLevel,
+    Maximize, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance, WindowHandles,
+    WindowState, ZoomLevel,
 };
 use anyhow::Result;
 use std::cell::RefCell;
@@ -16,7 +16,7 @@ pub struct TestRenderer {
     pub zoom_level: ZoomLevel,
     pub always_on_top: bool,
     pub drag_started: AtomicBool,
-    pub is_maximized: bool,
+    pub last_maximized: Option<Maximize>,
     pub is_minimized: bool,
     pub window_appearance: WindowAppearance,
     pub context_menu_pos: RefCell<Option<(f64, f64)>>,
@@ -84,11 +84,11 @@ impl Renderer for TestRenderer {
     }
 
     fn is_maximized(&self) -> bool {
-        self.is_maximized
+        self.last_maximized == Some(Maximize::Full)
     }
 
-    fn set_maximized(&mut self, maximized: bool) {
-        self.is_maximized = maximized;
+    fn set_maximized(&mut self, max: Maximize) {
+        self.last_maximized = Some(max);
     }
 
     fn is_minimized(&self) -> bool {

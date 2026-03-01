@@ -1,4 +1,4 @@
-use crate::renderer::{Event, EventSender, MessageFromRenderer};
+use crate::renderer::{Event, EventSender, MaximizeDirection, MessageFromRenderer};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -31,8 +31,8 @@ impl<S: EventSender> SanityTest<S> {
                 GoBack,
                 GoForward,
                 Reload,
-                ToggleMaximized,
-                ToggleMaximized,
+                Maximized { dir: MaximizeDirection::Both },
+                Maximized { dir: MaximizeDirection::Both },
                 Quit,
             ];
 

@@ -263,7 +263,21 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
     MaximizeWindow: {
         description: 'Maximize/Unmaximize the window.',
         dispatch(): void {
-            sendMessage({ kind: 'toggle_maximized' });
+            sendMessage({ kind: 'maximized', dir: 'Both' });
+        },
+    },
+
+    MaximizeWindowVertical: {
+        description: 'Vertically maximize the window.',
+        dispatch(): void {
+            sendMessage({ kind: 'maximized', dir: 'Vertical' });
+        },
+    },
+
+    MaximizeWindowHorizontal: {
+        description: 'Horizontally maximize the window.',
+        dispatch(): void {
+            sendMessage({ kind: 'maximized', dir: 'Horizontal' });
         },
     },
 
