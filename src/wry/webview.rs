@@ -34,9 +34,9 @@ enum MaximizeWindow {
 
 impl MaximizeWindow {
     fn maximize(self, window: &Window) {
-        let Some(monitor) = window.current_monitor() else {
+        let Some(monitor) = window.current_monitor().or_else(|| window.primary_monitor()) else {
             log::error!(
-                "Could not reisize window {self:?} because current monitor is unavailable for {window:?}"
+                "Could not maximize window {self:?} because current/primary monitor is unavailable for {window:?}"
             );
             return;
         };
