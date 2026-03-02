@@ -1,8 +1,8 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, Maximize, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer,
-    WindowAppearance, WindowHandles, WindowState, ZoomLevel,
+    Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
+    WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use anyhow::{Context as _, Result};
@@ -404,19 +404,8 @@ impl Renderer for WebViewRenderer {
         self.window.is_maximized() // Note: Window is unmaximized when a user changes the window size manually
     }
 
-    fn set_maximized(&mut self, max: Maximize) {
-        match max {
-            Maximize::Unmaximize => self.window.set_minimized(false),
-            Maximize::Full => self.window.set_minimized(true),
-            Maximize::Horizontal => {
-                let height = NonZeroU32::new(self.window.outer_size().height / 2).unwrap();
-                MaximizeWindow::Horizontal { height }.maximize(&self.window);
-            }
-            Maximize::Vertical => {
-                let width = NonZeroU32::new(self.window.outer_size().width / 2).unwrap();
-                MaximizeWindow::Vertical { width }.maximize(&self.window);
-            }
-        }
+    fn set_maximized(&mut self, maximized: bool) {
+        self.window.set_maximized(maximized);
     }
 
     fn is_minimized(&self) -> bool {

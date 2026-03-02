@@ -68,13 +68,6 @@ pub enum MessageToRenderer<'a> {
 }
 
 #[derive(Deserialize, Debug)]
-pub enum MaximizeDirection {
-    Vertical,
-    Horizontal,
-    Both,
-}
-
-#[derive(Deserialize, Debug)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageFromRenderer {
@@ -92,7 +85,7 @@ pub enum MessageFromRenderer {
     ZoomIn,
     ZoomOut,
     DragWindow,
-    Maximized { dir: MaximizeDirection },
+    ToggleMaximized,
     ToggleMinimized,
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
@@ -135,8 +128,6 @@ pub enum MenuItem {
     ToggleAlwaysOnTop,
     ToggleMinimizeWindow,
     ToggleMaximizeWindow,
-    MaximizeWindowVertical,
-    MaximizeWindowHorizontal,
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,
@@ -207,14 +198,6 @@ impl<'a> WindowHandles<'a> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Maximize {
-    Unmaximize,
-    Horizontal,
-    Vertical,
-    Full,
-}
-
 #[derive(Debug)]
 pub enum RenderingFlow {
     Continue,
@@ -242,7 +225,7 @@ pub trait Renderer {
     fn always_on_top(&self) -> bool;
     fn drag_window(&self) -> Result<()>;
     fn is_maximized(&self) -> bool;
-    fn set_maximized(&mut self, max: Maximize);
+    fn set_maximized(&mut self, maximized: bool);
     fn is_minimized(&self) -> bool;
     fn set_minimized(&mut self, minimized: bool);
     fn window_appearance(&self) -> WindowAppearance;

@@ -85,8 +85,6 @@ impl Menu {
         let history = item("History…");
         let minimize = item("Minimize");
         let maximize = item("Maximize");
-        let maximize_vertical = item("Maximize Vertical");
-        let maximize_horizontal = item("Maximize Horizontal");
         let always_on_top = item("Pin/Unpin On Top");
         let guide = item("Show Key Guide…");
         let open_repo = item("Open Repository Page");
@@ -99,8 +97,6 @@ impl Menu {
             &[
                 &minimize,
                 &maximize,
-                &maximize_vertical,
-                &maximize_horizontal,
                 #[cfg(target_os = "macos")]
                 &PredefinedMenuItem::fullscreen(None),
                 &always_on_top,
@@ -198,32 +194,30 @@ impl Menu {
         let ids = {
             use AppMenuItem::*;
             HashMap::from([
-                (open_files.into_id(),          OpenFiles),
-                (watch_dirs.into_id(),          WatchDirs),
-                (quit.into_id(),                Quit),
-                (forward.into_id(),             Forward),
-                (back.into_id(),                Back),
-                (top.into_id(),                 Top),
-                (reload.into_id(),              Reload),
-                (search.into_id(),              Search),
-                (search_next.into_id(),         SearchNext),
-                (search_prev.into_id(),         SearchPrevious),
-                (outline.into_id(),             Outline),
-                (print.into_id(),               Print),
-                (zoom_in.into_id(),             ZoomIn),
-                (zoom_out.into_id(),            ZoomOut),
-                (history.into_id(),             History),
-                (always_on_top.into_id(),       ToggleAlwaysOnTop),
-                (minimize.into_id(),            ToggleMinimizeWindow),
-                (maximize.into_id(),            ToggleMaximizeWindow),
-                (maximize_vertical.into_id(),   MaximizeWindowVertical),
-                (maximize_horizontal.into_id(), MaximizeWindowHorizontal),
-                (guide.into_id(),               Help),
-                (open_repo.into_id(),           OpenRepo),
-                (settings.into_id(),            EditConfig),
+                (open_files.into_id(),      OpenFiles),
+                (watch_dirs.into_id(),      WatchDirs),
+                (quit.into_id(),            Quit),
+                (forward.into_id(),         Forward),
+                (back.into_id(),            Back),
+                (top.into_id(),             Top),
+                (reload.into_id(),          Reload),
+                (search.into_id(),          Search),
+                (search_next.into_id(),     SearchNext),
+                (search_prev.into_id(),     SearchPrevious),
+                (outline.into_id(),         Outline),
+                (print.into_id(),           Print),
+                (zoom_in.into_id(),         ZoomIn),
+                (zoom_out.into_id(),        ZoomOut),
+                (history.into_id(),         History),
+                (always_on_top.into_id(),   ToggleAlwaysOnTop),
+                (minimize.into_id(),        ToggleMinimizeWindow),
+                (maximize.into_id(),        ToggleMaximizeWindow),
+                (guide.into_id(),           Help),
+                (open_repo.into_id(),       OpenRepo),
+                (settings.into_id(),        EditConfig),
                 #[cfg(not(target_os = "macos"))]
-                (toggle_menu_bar.into_id(),     ToggleMenuBar),
-                (delete_cookies.into_id(),      DeleteCookies),
+                (toggle_menu_bar.into_id(), ToggleMenuBar),
+                (delete_cookies.into_id(),  DeleteCookies),
             ])
         };
         log::debug!("Registered menu items: {:?}", ids);

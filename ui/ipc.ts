@@ -38,8 +38,6 @@ export type KeyAction =
     | 'ToggleAlwaysOnTop'
     | 'MinimizeWindow'
     | 'MaximizeWindow'
-    | 'MaximizeWindowVertical'
-    | 'MaximizeWindowHorizontal'
     | 'EditConfig'
     | 'Quit';
 
@@ -309,8 +307,7 @@ export type MessageToMain =
           kind: 'drag_window';
       }
     | {
-          kind: 'maximized';
-          dir: 'Both' | 'Vertical' | 'Horizontal';
+          kind: 'toggle_maximized';
       }
     | {
           kind: 'open_menu';
