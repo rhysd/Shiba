@@ -5,7 +5,7 @@ use crate::renderer::{
     WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
-use crate::wry::monitor::MonitorExt;
+use crate::wry::monitor::MonitorExtWorkArea as _;
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
