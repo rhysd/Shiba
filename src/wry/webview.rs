@@ -5,6 +5,7 @@ use crate::renderer::{
     WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
+use crate::wry::monitor::MonitorExt;
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
@@ -42,8 +43,7 @@ impl MaximizeWindow {
         };
 
         let factor = monitor.scale_factor();
-        let monitor_size = monitor.size();
-        let monitor_pos = monitor.position();
+        let (monitor_size, monitor_pos) = monitor.work_area();
         let outer_size = window.outer_size();
         let inner_size = window.inner_size();
         let (size, pos) = match self {
