@@ -64,13 +64,20 @@ mod windows_impl {
 }
 
 #[cfg(target_os = "linux")]
-mod macos {
+mod linux_impl {
     use super::*;
+    use gdk::prelude::MonitorExt;
+    use tao::dpi::{LogicalPosition, LogicalSize};
+    use tao::platform::unix::MonitorHandleExtUnix;
 
     impl MonitorExtWorkArea for MonitorHandle {
         fn work_area(&self) -> (PhysicalSize<u32>, PhysicalPosition<i32>) {
-            // TODO
-            (self.size(), self.position())
+            // https://gtk-rs.org/gtk3-rs/git/docs/gdk/struct.Monitor.html
+            let rect = self.gdk_monitor().workarea();
+            let factor = self.scale_factor();
+            let size = LogicalSize::new(rect.width(), rect.height()).to_physical(factor);
+            let position = LogicalPosition::new(rect.x(), rect.y()).to_physical(factor);
+            (size, position)
         }
     }
 }
