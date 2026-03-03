@@ -2835,6 +2835,7 @@ dependencies = [
  "dirs",
  "emojis",
  "env_logger",
+ "gdk",
  "indexmap",
  "insta",
  "lexopt",

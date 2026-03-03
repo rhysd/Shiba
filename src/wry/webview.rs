@@ -1,12 +1,14 @@
 use crate::assets::Assets;
-use crate::config::{Config, WindowTheme as ThemeConfig};
+use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
     Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
     WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
+use crate::wry::monitor::MonitorExtWorkArea as _;
 use anyhow::{Context as _, Result};
-use tao::dpi::{LogicalPosition, LogicalSize};
+use std::num::NonZeroU32;
+use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -24,6 +26,134 @@ pub type EventLoop = tao::event_loop::EventLoop<Event>;
 
 #[cfg(not(target_os = "macos"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum MaximizeWindow {
+    Vertical { width: NonZeroU32 },
+    Horizontal { height: NonZeroU32 },
+}
+
+impl MaximizeWindow {
+    fn maximize(self, window: &Window) {
+        let Some(monitor) = window.current_monitor().or_else(|| window.primary_monitor()) else {
+            log::error!(
+                "Could not maximize window {self:?} because current/primary monitor is unavailable for {:?}",
+                window.id(),
+            );
+            return;
+        };
+
+        let factor = monitor.scale_factor();
+        let (monitor_size, monitor_pos) = monitor.work_area();
+        let outer_size = window.outer_size();
+        let inner_size = window.inner_size();
+        let (size, pos) = match self {
+            Self::Vertical { width } => {
+                let width = (width.get() as f64 * factor) as u32;
+                let height =
+                    monitor_size.height - (outer_size.height.saturating_sub(inner_size.height));
+                let x = monitor_pos.x + (monitor_size.width as i32 / 2) - width as i32 / 2;
+                let y = monitor_pos.y;
+                (PhysicalSize { width, height }, PhysicalPosition { x, y })
+            }
+            Self::Horizontal { height } => {
+                let height = (height.get() as f64 * factor) as u32;
+                let width =
+                    monitor_size.width - (outer_size.width.saturating_sub(inner_size.width));
+                let y = monitor_pos.y + (monitor_size.height as i32 / 2) - height as i32 / 2;
+                let x = monitor_pos.x;
+                (PhysicalSize { width, height }, PhysicalPosition { x, y })
+            }
+        };
+
+        log::debug!("Resize window to size {size:?} at position {pos:?}");
+        window.set_inner_size(size);
+        window.set_outer_position(pos);
+    }
+}
+
+fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, ZoomLevel, bool)> {
+    let mut builder = WindowBuilder::new()
+        .with_title("Shiba")
+        .with_visible(false)
+        .with_min_inner_size(LogicalSize { width: 100.0, height: 100.0 });
+
+    let window_state = if config.window().restore { config.data_dir().load() } else { None };
+    let (zoom_level, always_on_top, delayed_maximize) = if let Some(state) = window_state {
+        log::debug!("Restoring window state: {state:?}");
+        let WindowState { height, width, x, y, fullscreen, zoom_level, always_on_top, maximized } =
+            state;
+        builder = builder
+            .with_inner_size(LogicalSize { width, height })
+            .with_position(LogicalPosition { x, y });
+        if fullscreen {
+            builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+        } else if maximized {
+            builder = builder.with_maximized(true);
+        }
+        (zoom_level, always_on_top, None)
+    } else {
+        let size = config.window().default_size;
+        let delayed = match (size.width, size.height) {
+            (WindowLength::Fixed(w), WindowLength::Fixed(h)) => {
+                let size = LogicalSize { width: w.get() as f64, height: h.get() as f64 };
+                builder = builder.with_inner_size(size);
+                None
+            }
+            (WindowLength::Max, WindowLength::Max) => {
+                builder = builder.with_maximized(true);
+                None
+            }
+            (WindowLength::Fixed(width), WindowLength::Max) => {
+                Some(MaximizeWindow::Vertical { width })
+            }
+            (WindowLength::Max, WindowLength::Fixed(height)) => {
+                Some(MaximizeWindow::Horizontal { height })
+            }
+        };
+        (ZoomLevel::default(), config.window().always_on_top, delayed)
+    };
+
+    if always_on_top {
+        builder = builder.with_always_on_top(true);
+    }
+
+    match config.window().theme {
+        ThemeConfig::System => {}
+        ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
+        ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        use tao::window::Icon;
+        let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
+        builder = builder.with_window_icon(Some(icon));
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder
+            .with_transparent(true)
+            .with_fullsize_content_view(true)
+            .with_titlebar_transparent(true)
+            .with_title_hidden(true);
+    }
+
+    // GTK does not return monitor information until the window is displayed.
+    #[cfg(target_os = "linux")]
+    if delayed_maximize.is_some() {
+        builder = builder.with_visible(true);
+    }
+
+    let window = builder.build(event_loop)?;
+
+    if let Some(delayed) = delayed_maximize {
+        delayed.maximize(&window);
+    }
+
+    Ok((window, zoom_level, always_on_top))
+}
 
 fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
     let ipc_proxy = event_loop.create_proxy();
@@ -150,6 +280,12 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         apply_vibrancy(window, NSVisualEffectMaterial::Sidebar, None, None)?;
     }
 
+    #[cfg(any(debug_assertions, feature = "devtools"))]
+    if config.debug() {
+        webview.open_devtools(); // This method is defined in debug build only
+        log::debug!("Opened DevTools for debugging");
+    }
+
     Ok(webview)
 }
 
@@ -163,67 +299,8 @@ pub struct WebViewRenderer {
 
 impl WebViewRenderer {
     pub fn new(config: &Config, event_loop: &EventLoop, mut menu: Menu) -> Result<Self> {
-        let mut builder = WindowBuilder::new()
-            .with_title("Shiba")
-            .with_visible(false)
-            .with_min_inner_size(LogicalSize { width: 100.0, height: 100.0 });
+        let (window, zoom_level, always_on_top) = create_window(event_loop, config)?;
 
-        let window_state = if config.window().restore { config.data_dir().load() } else { None };
-        let (zoom_level, always_on_top) = if let Some(state) = window_state {
-            log::debug!("Restoring window state: {state:?}");
-            let WindowState {
-                height,
-                width,
-                x,
-                y,
-                fullscreen,
-                zoom_level,
-                always_on_top,
-                maximized,
-            } = state;
-            builder = builder
-                .with_inner_size(LogicalSize { width, height })
-                .with_position(LogicalPosition { x, y });
-            if fullscreen {
-                builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
-            } else if maximized {
-                builder = builder.with_maximized(true);
-            }
-            (zoom_level, always_on_top)
-        } else {
-            let size = config.window().default_size;
-            let size = LogicalSize { width: size.width as f64, height: size.height as f64 };
-            builder = builder.with_inner_size(size);
-            (ZoomLevel::default(), config.window().always_on_top)
-        };
-
-        if always_on_top {
-            builder = builder.with_always_on_top(true);
-        }
-
-        match config.window().theme {
-            ThemeConfig::System => {}
-            ThemeConfig::Dark => builder = builder.with_theme(Some(Theme::Dark)),
-            ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
-        }
-
-        #[cfg(not(target_os = "macos"))]
-        {
-            use tao::window::Icon;
-            let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
-            builder = builder.with_window_icon(Some(icon));
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            builder = builder
-                .with_transparent(true)
-                .with_fullsize_content_view(true)
-                .with_titlebar_transparent(true)
-                .with_title_hidden(true);
-        }
-
-        let window = builder.build(event_loop)?;
         if config.window().menu_bar != menu.is_visible() {
             menu.toggle(&window)?;
         }
@@ -235,12 +312,6 @@ impl WebViewRenderer {
         if zoom_factor != 1.0 {
             webview.zoom(zoom_factor)?;
             log::debug!("Zoom factor was set to {}", zoom_factor);
-        }
-
-        #[cfg(any(debug_assertions, feature = "devtools"))]
-        if config.debug() {
-            webview.open_devtools(); // This method is defined in debug build only
-            log::debug!("Opened DevTools for debugging");
         }
 
         Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })

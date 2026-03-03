@@ -1,11 +1,12 @@
 use crate::cli::{Options, ThemeOption};
 use crate::persistent::DataDir;
 use anyhow::{Context, Result};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs;
 use std::mem;
+use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
@@ -173,21 +174,69 @@ pub enum WindowTheme {
     Light,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WindowLength {
+    Max,
+    Fixed(NonZeroU32),
+}
+
+impl WindowLength {
+    pub const fn fixed(v: u32) -> Self {
+        Self::Fixed(NonZeroU32::new(v).expect("length should not be zero"))
+    }
+}
+
+impl<'de> Deserialize<'de> for WindowLength {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum StrOrNonZeroInt<'a> {
+            Str(&'a str),
+            Num(NonZeroU32),
+        }
+
+        match StrOrNonZeroInt::deserialize(deserializer) {
+            Ok(StrOrNonZeroInt::Num(n)) => Ok(Self::Fixed(n)),
+            Ok(StrOrNonZeroInt::Str(s)) if s.eq_ignore_ascii_case("max") => Ok(Self::Max),
+            // Error message from serde is not friendly
+            Ok(StrOrNonZeroInt::Str(s)) => {
+                let msg =
+                    format!("Expected non-zero integer or keyword \"max\" but got string {s:?}");
+                Err(serde::de::Error::custom(msg))
+            }
+            Err(err) => {
+                let msg =
+                    format!("Expected non-zero integer or keyword \"max\" but got error: {err}");
+                Err(serde::de::Error::custom(msg))
+            }
+        }
+    }
+}
+
+impl Serialize for WindowLength {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Max => serializer.serialize_str("max"),
+            Self::Fixed(n) => n.serialize(serializer),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct WindowSize {
-    pub width: u32,
-    pub height: u32,
+    pub width: WindowLength,
+    pub height: WindowLength,
 }
 
 impl Default for WindowSize {
     fn default() -> Self {
-        Self { width: 600, height: 800 }
+        Self { width: WindowLength::fixed(600), height: WindowLength::fixed(800) }
     }
 }
 
 #[non_exhaustive]
-#[derive(Deserialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Default, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Window {
     pub restore: bool,
@@ -195,18 +244,6 @@ pub struct Window {
     pub always_on_top: bool,
     pub default_size: WindowSize,
     pub menu_bar: bool,
-}
-
-impl Default for Window {
-    fn default() -> Self {
-        Self {
-            restore: true,
-            theme: WindowTheme::default(),
-            always_on_top: false,
-            default_size: WindowSize::default(),
-            menu_bar: false,
-        }
-    }
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
@@ -705,5 +742,26 @@ mod tests {
         let cfg = Config::load(opts).unwrap();
         let expected: UserConfig = serde_yaml::from_str(CONFIG_OK).unwrap();
         assert_eq!(cfg.user_config, expected); // When no config is found, load the default config
+    }
+
+    #[test]
+    fn serialize_deserialize_window_length() {
+        let len: WindowLength = serde_json::from_str("800").unwrap();
+        assert_eq!(len, WindowLength::fixed(800));
+        let len: WindowLength = serde_json::from_str("\"max\"").unwrap();
+        assert_eq!(len, WindowLength::Max);
+        let len: WindowLength = serde_json::from_str("\"Max\"").unwrap();
+        assert_eq!(len, WindowLength::Max);
+
+        let err = serde_json::from_str::<WindowLength>("0").unwrap_err();
+        assert_eq!(
+            format!("{err}"),
+            "Expected non-zero integer or keyword \"max\" but got error: data did not match any variant of untagged enum StrOrNonZeroInt",
+        );
+        let err = serde_json::from_str::<WindowLength>("\"maximized\"").unwrap_err();
+        assert_eq!(
+            format!("{err}"),
+            "Expected non-zero integer or keyword \"max\" but got string \"maximized\"",
+        );
     }
 }
