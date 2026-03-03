@@ -37,7 +37,8 @@ impl MaximizeWindow {
     fn maximize(self, window: &Window) {
         let Some(monitor) = window.current_monitor().or_else(|| window.primary_monitor()) else {
             log::error!(
-                "Could not maximize window {self:?} because current/primary monitor is unavailable for {window:?}"
+                "Could not maximize window {self:?} because current/primary monitor is unavailable for {:?}",
+                window.id(),
             );
             return;
         };
@@ -49,14 +50,16 @@ impl MaximizeWindow {
         let (size, pos) = match self {
             Self::Vertical { width } => {
                 let width = (width.get() as f64 * factor) as u32;
-                let height = monitor_size.height - (outer_size.height - inner_size.height);
+                let height =
+                    monitor_size.height - (outer_size.height.saturating_sub(inner_size.height));
                 let x = monitor_pos.x + (monitor_size.width as i32 / 2) - width as i32 / 2;
                 let y = monitor_pos.y;
                 (PhysicalSize { width, height }, PhysicalPosition { x, y })
             }
             Self::Horizontal { height } => {
                 let height = (height.get() as f64 * factor) as u32;
-                let width = monitor_size.width - (outer_size.width - inner_size.width);
+                let width =
+                    monitor_size.width - (outer_size.width.saturating_sub(inner_size.width));
                 let y = monitor_pos.y + (monitor_size.height as i32 / 2) - height as i32 / 2;
                 let x = monitor_pos.x;
                 (PhysicalSize { width, height }, PhysicalPosition { x, y })
@@ -135,6 +138,12 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
             .with_fullsize_content_view(true)
             .with_titlebar_transparent(true)
             .with_title_hidden(true);
+    }
+
+    // GTK does not return monitor information until the window is displayed.
+    #[cfg(target_os = "linux")]
+    if delayed_maximize.is_some() {
+        builder = builder.with_visible(true);
     }
 
     let window = builder.build(event_loop)?;
