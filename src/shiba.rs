@@ -284,6 +284,7 @@ where
             SearchNext => self.renderer.send_message(MessageToRenderer::SearchNext)?,
             SearchPrevious => self.renderer.send_message(MessageToRenderer::SearchPrevious)?,
             Outline => self.renderer.send_message(MessageToRenderer::Outline)?,
+            Print if self.preview.is_empty() => {}
             Print => self.renderer.print()?,
             ZoomIn => self.zoom(Zoom::In)?,
             ZoomOut => self.zoom(Zoom::Out)?,

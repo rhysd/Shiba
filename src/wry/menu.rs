@@ -40,21 +40,11 @@ fn metadata() -> AboutMetadata {
     m
 }
 
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct Menu {
     menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
     #[cfg(not(target_os = "macos"))]
     visibility: Option<bool>,
-}
-
-impl Default for Menu {
-    fn default() -> Self {
-        Self {
-            menu_bar: MenuBar::new(),
-            #[cfg(not(target_os = "macos"))]
-            visibility: None,
-        }
-    }
 }
 
 impl Menu {
