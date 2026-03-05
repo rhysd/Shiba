@@ -63,7 +63,7 @@ export const Preview: React.FC<Props> = ({ tree, headings, path, dispatch }) => 
                 {titleBar && <WindowBar />}
                 <SideBar headings={headings} path={path} />
             </Resizable>
-            <Divider orientation="vertical" />
+            <Divider id="preview-separator" orientation="vertical" />
             <Article tree={tree} dispatch={dispatch} />
         </Box>
     );

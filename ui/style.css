@@ -110,3 +110,19 @@ pre code.hljs {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+@media print {
+  html,
+  body,
+  #shiba-root,
+  main {
+    height: auto !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  nav,
+  #preview-separator {
+    display: none !important;
+  }
+}
