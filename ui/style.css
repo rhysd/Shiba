@@ -125,4 +125,8 @@ pre code.hljs {
   #preview-separator {
     display: none !important;
   }
+
+  .markdown-body {
+    padding: 2rem !important;
+  }
 }
