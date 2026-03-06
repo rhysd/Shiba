@@ -252,11 +252,12 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     {
         use wry::Theme;
         builder = builder.with_browser_accelerator_keys(false);
-        match config.window().theme {
-            ThemeConfig::System => {}
-            ThemeConfig::Dark => builder = builder.with_theme(Theme::Dark),
-            ThemeConfig::Light => builder = builder.with_theme(Theme::Light),
-        }
+        let theme = match config.window().theme {
+            ThemeConfig::System => Theme::Auto,
+            ThemeConfig::Dark => Theme::Dark,
+            ThemeConfig::Light => Theme::Light,
+        };
+        builder = builder.with_theme(theme);
     }
 
     #[cfg(target_os = "macos")]
