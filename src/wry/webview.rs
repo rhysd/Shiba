@@ -167,12 +167,6 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
         delayed.maximize(&window);
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        use window_vibrancy::{NSVisualEffectMaterial, apply_vibrancy};
-        apply_vibrancy(&window, NSVisualEffectMaterial::Sidebar, None, None)?;
-    }
-
     #[cfg(target_os = "windows")]
     {
         let is_dark = match config.window().theme {
@@ -314,6 +308,14 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     let webview = builder.build(window)?;
     #[cfg(target_os = "linux")]
     let webview = builder.build_gtk(window.default_vbox().unwrap())?;
+
+    #[cfg(target_os = "macos")]
+    {
+        use window_vibrancy::{NSVisualEffectMaterial, apply_vibrancy};
+        // This function must be called after the webview is inserted to the window. So this call cannot
+        // be moved to `create_window` function.
+        apply_vibrancy(window, NSVisualEffectMaterial::Sidebar, None, None)?;
+    }
 
     #[cfg(any(debug_assertions, feature = "devtools"))]
     if config.debug() {
