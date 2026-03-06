@@ -13,6 +13,10 @@ use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
 use tao::platform::unix::WindowExtUnix;
+#[cfg(target_os = "windows")]
+use tao::platform::windows::WindowBuilderExtWindows as _;
+#[cfg(target_os = "windows")]
+use tao::platform::windows::WindowExtWindows as _;
 use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
@@ -131,13 +135,24 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
         builder = builder.with_window_icon(Some(icon));
     }
 
+    #[cfg(not(target_os = "linux"))]
+    {
+        builder = builder.with_transparent(true);
+    }
+
     #[cfg(target_os = "macos")]
     {
         builder = builder
-            .with_transparent(true)
             .with_fullsize_content_view(true)
             .with_titlebar_transparent(true)
             .with_title_hidden(true);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Applying Mica effect requires a visible window, no decorations and no shadow. The decorations
+        // and shadow will be enabled again after applying the effect.
+        builder = builder.with_visible(true).with_decorations(false).with_undecorated_shadow(false);
     }
 
     // GTK does not return monitor information until the window is displayed.
@@ -150,6 +165,31 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
 
     if let Some(delayed) = delayed_maximize {
         delayed.maximize(&window);
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        use window_vibrancy::{NSVisualEffectMaterial, apply_vibrancy};
+        apply_vibrancy(&window, NSVisualEffectMaterial::Sidebar, None, None)?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let is_dark = match config.window().theme {
+            ThemeConfig::System => None,
+            ThemeConfig::Dark => Some(true),
+            ThemeConfig::Light => Some(false),
+        };
+
+        if let Err(err) = window_vibrancy::apply_mica(&window, is_dark) {
+            log::debug!("Could not apply Mica effect. Fall back to solid window: {err}");
+            let color =
+                if window.theme() == Theme::Light { (255, 255, 255, 255) } else { (0, 0, 0, 255) };
+            window.set_background_color(Some(color));
+        }
+
+        window.set_undecorated_shadow(true);
+        window.set_decorations(true);
     }
 
     Ok((window, zoom_level, always_on_top))
@@ -260,11 +300,11 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         builder = builder.with_theme(theme);
     }
 
-    #[cfg(target_os = "macos")]
+    #[cfg(not(target_os = "linux"))]
     {
         builder = builder.with_transparent(true);
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     if window.theme() == Theme::Dark {
         // Avoid flicking window with white screen while loading webview
         builder = builder.with_background_color((0, 0, 0, 255));
@@ -274,12 +314,6 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     let webview = builder.build(window)?;
     #[cfg(target_os = "linux")]
     let webview = builder.build_gtk(window.default_vbox().unwrap())?;
-
-    #[cfg(target_os = "macos")]
-    {
-        use window_vibrancy::{NSVisualEffectMaterial, apply_vibrancy};
-        apply_vibrancy(window, NSVisualEffectMaterial::Sidebar, None, None)?;
-    }
 
     #[cfg(any(debug_assertions, feature = "devtools"))]
     if config.debug() {
@@ -429,7 +463,7 @@ impl Renderer for WebViewRenderer {
     fn window_appearance(&self) -> WindowAppearance {
         WindowAppearance {
             title: cfg!(not(target_os = "macos")),
-            vibrancy: cfg!(target_os = "macos"),
+            vibrancy: cfg!(not(target_os = "linux")),
             scroll_bar: cfg!(target_os = "macos"),
             border_top: cfg!(target_os = "windows"),
         }
