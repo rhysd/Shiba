@@ -17,6 +17,7 @@ window:
     width: 100
     height: 200
   menu_bar: true
+  vibrant: false
 
 preview:
   highlight:

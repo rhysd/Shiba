@@ -236,7 +236,7 @@ impl Default for WindowSize {
 }
 
 #[non_exhaustive]
-#[derive(Deserialize, Default, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Window {
     pub restore: bool,
@@ -244,6 +244,26 @@ pub struct Window {
     pub always_on_top: bool,
     pub default_size: WindowSize,
     pub menu_bar: bool,
+    pub vibrant: bool,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Self {
+            restore: false,
+            theme: WindowTheme::default(),
+            always_on_top: false,
+            default_size: WindowSize::default(),
+            menu_bar: false,
+            vibrant: true,
+        }
+    }
+}
+
+impl Window {
+    pub fn is_vibrant(&self) -> bool {
+        cfg!(any(target_os = "macos", target_os = "windows")) && self.vibrant
+    }
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
@@ -762,6 +782,15 @@ mod tests {
         assert_eq!(
             format!("{err}"),
             "Expected non-zero integer or keyword \"max\" but got string \"maximized\"",
+        );
+    }
+
+    #[test]
+    fn vibrant_window_config() {
+        let config = Config::default();
+        assert_eq!(
+            config.window().is_vibrant(),
+            cfg!(any(target_os = "macos", target_os = "windows")),
         );
     }
 }

@@ -72,7 +72,7 @@ objc2 = "0.6.3"
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["NSApplication", "NSResponder", "NSImage"] }
 objc2-foundation = { version = "0.3.2", default-features = false, features = ["block2", "NSData"] }
 
-[target.'cfg(not(target_os = "linux"))'.dependencies]
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 wry = { version = "0.54.1", features = ["transparent"] }
 window-vibrancy = "0.7.1"
 

@@ -98,9 +98,19 @@ window:
   default_size:
     width: 600
     height: 800
-  # Setting `true` shows a menu bar at the top of application window. Setting `false` hides the menu bar.
-  # This configuration is effective only on Linux and Windows. On macOS, the menu bar is always set.
+  # Setting `true` shows a menu bar at the top of application window. Setting `false` hides the menu
+  # bar. This configuration is effective only on Linux and Windows. On macOS, the menu bar is always
+  # set.
   menu_bar: false
+  # Setting `true` enables platform-specific vibrant effects on the window.
+  # On macOS it uses `NSVisualEffectView`[1]. On Windows it uses Mica material[2]. It is available
+  # on Windows 11 or later. On Linux this option has no effect.
+  # When `false` is set, Shiba uses solid background colors. It may slightly improve the performance
+  # of the application rendering and launch.
+  #
+  # [1]: https://developer.apple.com/design/human-interface-guidelines/materials
+  # [2]: https://learn.microsoft.com/en-us/windows/apps/design/style/mica
+  vibrant: true
 
 # Configuration related to Markdown preview content.
 preview:

@@ -28,7 +28,7 @@ use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
 
 pub type EventLoop = tao::event_loop::EventLoop<Event>;
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -128,16 +128,24 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
         ThemeConfig::Light => builder = builder.with_theme(Some(Theme::Light)),
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     {
         use tao::window::Icon;
         let icon = Icon::from_rgba(ICON_RGBA.into(), 32, 32).unwrap();
         builder = builder.with_window_icon(Some(icon));
     }
 
-    #[cfg(not(target_os = "linux"))]
-    {
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    if config.window().is_vibrant() {
         builder = builder.with_transparent(true);
+
+        #[cfg(target_os = "windows")]
+        {
+            // Applying Mica effect requires a visible window, no decorations and no shadow. The decorations
+            // and shadow will be enabled again after applying the effect.
+            builder =
+                builder.with_visible(true).with_decorations(false).with_undecorated_shadow(false);
+        }
     }
 
     #[cfg(target_os = "macos")]
@@ -146,13 +154,6 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
             .with_fullsize_content_view(true)
             .with_titlebar_transparent(true)
             .with_title_hidden(true);
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        // Applying Mica effect requires a visible window, no decorations and no shadow. The decorations
-        // and shadow will be enabled again after applying the effect.
-        builder = builder.with_visible(true).with_decorations(false).with_undecorated_shadow(false);
     }
 
     // GTK does not return monitor information until the window is displayed.
@@ -168,7 +169,7 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
     }
 
     #[cfg(target_os = "windows")]
-    {
+    if config.window().is_vibrant() {
         let is_dark = match config.window().theme {
             ThemeConfig::System => None,
             ThemeConfig::Dark => Some(true),
@@ -294,23 +295,20 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         builder = builder.with_theme(theme);
     }
 
-    #[cfg(not(target_os = "linux"))]
-    {
+    if config.window().is_vibrant() {
         builder = builder.with_transparent(true);
-    }
-    #[cfg(target_os = "linux")]
-    if window.theme() == Theme::Dark {
+    } else if window.theme() == Theme::Dark {
         // Avoid flicking window with white screen while loading webview
         builder = builder.with_background_color((0, 0, 0, 255));
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     let webview = builder.build(window)?;
     #[cfg(target_os = "linux")]
     let webview = builder.build_gtk(window.default_vbox().unwrap())?;
 
     #[cfg(target_os = "macos")]
-    {
+    if config.window().is_vibrant() {
         use window_vibrancy::{NSVisualEffectMaterial, apply_vibrancy};
         // This function must be called after the webview is inserted to the window. So this call cannot
         // be moved to `create_window` function.
@@ -332,6 +330,7 @@ pub struct WebViewRenderer {
     zoom_level: ZoomLevel,
     always_on_top: bool,
     menu: Menu,
+    is_vibrant: bool,
 }
 
 impl WebViewRenderer {
@@ -351,7 +350,8 @@ impl WebViewRenderer {
             log::debug!("Zoom factor was set to {}", zoom_factor);
         }
 
-        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu })
+        let is_vibrant = config.window().is_vibrant();
+        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu, is_vibrant })
     }
 }
 
@@ -465,7 +465,7 @@ impl Renderer for WebViewRenderer {
     fn window_appearance(&self) -> WindowAppearance {
         WindowAppearance {
             title: cfg!(not(target_os = "macos")),
-            vibrancy: cfg!(not(target_os = "linux")),
+            vibrancy: self.is_vibrant,
             scroll_bar: cfg!(target_os = "macos"),
             border_top: cfg!(target_os = "windows"),
         }
