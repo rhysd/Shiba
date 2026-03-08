@@ -161,6 +161,7 @@ mod tests {
     use super::*;
     use crate::config::UserConfig;
     use crate::test::TestRenderer;
+    use std::fs;
 
     #[track_caller]
     fn history_with(max_items: usize, paths: &[&str]) -> History {
@@ -386,6 +387,22 @@ mod tests {
         assert_eq!(history.delete(Direction::Forward), None);
         assert_history(&history, &[], None);
         assert_eq!(history.delete(Direction::Top), None);
+        assert_history(&history, &[], None);
+    }
+
+    #[test]
+    fn clear_history() {
+        let dir = tempfile::tempdir().unwrap();
+        let data_file = dir.path().join(DATA_FILE_NAME);
+        fs::write(&data_file, "this is test").unwrap();
+
+        let config = Config::new(UserConfig::default(), dir.path(), dir.path());
+        let mut history = history_with(3, &["a.txt", "b.txt", "c.txt"]);
+
+        history.clear(&config).unwrap();
+        assert_history(&history, &[], None);
+        assert!(!fs::exists(&data_file).unwrap(), "path={data_file:?}");
+        history.clear(&config).unwrap();
         assert_history(&history, &[], None);
     }
 }
