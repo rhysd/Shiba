@@ -298,8 +298,14 @@ where
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
             DeleteHistory => {
-                self.history.clear(&self.config)?;
-                self.renderer.delete_cache()?;
+                if self.dialog.yes_no(
+                    "Deleting history...",
+                    "Are you sure you want to delete all history?",
+                    &self.renderer.window_handles(),
+                ) {
+                    self.history.clear(&self.config)?;
+                    self.renderer.delete_cache()?;
+                }
             }
         }
         Ok(RenderingFlow::Continue)
