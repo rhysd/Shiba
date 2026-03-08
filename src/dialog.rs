@@ -1,7 +1,7 @@
 use crate::config::{Config, FileExtensions};
 use crate::renderer::WindowHandles;
 use anyhow::{Error, Result};
-use rfd::{FileDialog, MessageDialog, MessageLevel};
+use rfd::{FileDialog, MessageButtons, MessageDialog, MessageDialogResult, MessageLevel};
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
@@ -35,6 +35,13 @@ pub trait Dialog: Sized {
         log::error!("{}", message);
         self.message(DialogMessageLevel::Error, title, message, handles);
     }
+
+    fn yes_no(
+        &self,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        handles: &WindowHandles<'_>,
+    ) -> bool;
 }
 
 pub struct SystemDialog {
@@ -91,5 +98,20 @@ impl Dialog for SystemDialog {
             .set_description(body)
             .set_parent(handles)
             .show();
+    }
+
+    fn yes_no(
+        &self,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        handles: &WindowHandles<'_>,
+    ) -> bool {
+        let result = MessageDialog::new()
+            .set_title(title)
+            .set_description(body)
+            .set_parent(handles)
+            .set_buttons(MessageButtons::YesNo)
+            .show();
+        matches!(result, MessageDialogResult::Yes)
     }
 }

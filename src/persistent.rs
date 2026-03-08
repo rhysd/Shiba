@@ -1,7 +1,8 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 pub trait PersistentData {
@@ -71,6 +72,23 @@ impl DataDir {
         fs::write(&path, s)
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
     }
+
+    pub fn delete<D: PersistentData>(&self) -> Result<()> {
+        let Some(dir) = &self.path else {
+            return Ok(());
+        };
+        let path = dir.join(D::FILE);
+        log::debug!("Deleting persistent data at {path:?}");
+        fs::remove_file(&path).or_else(|err| {
+            if err.kind() == ErrorKind::NotFound {
+                log::debug!("Persistent data to delete was not found: {path:?}");
+                Ok(())
+            } else {
+                let msg = format!("Could not delete the persistent data at {path:?}");
+                Err(Error::new(err).context(msg))
+            }
+        })
+    }
 }
 
 #[cfg(test)]
@@ -86,7 +104,7 @@ mod tests {
     }
 
     #[test]
-    fn save_and_load() {
+    fn save_and_load_and_delete() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = DataDir::new(tmp.path());
         assert_eq!(dir.path(), Some(tmp.path()));
@@ -96,6 +114,9 @@ mod tests {
         assert!(file.exists(), "path={file:?}");
         let actual = dir.load().unwrap();
         assert_eq!(expected, actual);
+        assert!(file.exists(), "path={file:?}");
+        dir.delete::<Test>().unwrap();
+        assert!(!file.exists(), "path={file:?}");
     }
 
     #[test]

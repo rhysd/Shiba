@@ -297,7 +297,16 @@ where
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
-            DeleteCookies => self.renderer.delete_cookies()?,
+            DeleteHistory => {
+                if self.dialog.yes_no(
+                    "Deleting history...",
+                    "Are you sure you want to delete all history?",
+                    &self.renderer.window_handles(),
+                ) {
+                    self.history.clear(&self.config)?;
+                    self.renderer.delete_cache()?;
+                }
+            }
         }
         Ok(RenderingFlow::Continue)
     }

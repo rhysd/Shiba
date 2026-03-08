@@ -131,8 +131,7 @@ pub enum MenuItem {
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,
-    // TODO: Remove all data including history instead of only cookies
-    DeleteCookies,
+    DeleteHistory,
 }
 
 pub trait RawMessageWriter {
@@ -232,7 +231,7 @@ pub trait Renderer {
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
-    fn delete_cookies(&self) -> Result<()>;
+    fn delete_cache(&mut self) -> Result<()>;
     fn window_handles(&self) -> WindowHandles<'_>;
 }
 
