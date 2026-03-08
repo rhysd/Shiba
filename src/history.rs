@@ -144,6 +144,16 @@ impl History {
         log::debug!("Send {} history paths to renderer", self.items.len());
         renderer.send_message(MessageToRenderer::History { paths: &self.items })
     }
+
+    pub fn clear(&mut self, config: &Config) -> Result<()> {
+        struct Data;
+        impl PersistentData for Data {
+            const FILE: &str = DATA_FILE_NAME;
+        }
+        self.index = 0;
+        self.items.clear();
+        config.data_dir().delete::<Data>()
+    }
 }
 
 #[cfg(test)]

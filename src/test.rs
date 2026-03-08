@@ -22,7 +22,7 @@ pub struct TestRenderer {
     pub context_menu_pos: RefCell<Option<(f64, f64)>>,
     pub menu_visible: bool,
     pub is_low_memory: bool,
-    pub cookie_deleted: AtomicBool,
+    pub cache_deleted: bool,
     pub window_handles_requested: AtomicBool,
 }
 
@@ -117,8 +117,8 @@ impl Renderer for TestRenderer {
         Ok(())
     }
 
-    fn delete_cookies(&self) -> Result<()> {
-        self.cookie_deleted.store(true, Ordering::Relaxed);
+    fn delete_cache(&mut self) -> Result<()> {
+        self.cache_deleted = true;
         Ok(())
     }
 

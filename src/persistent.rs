@@ -1,7 +1,8 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 pub trait PersistentData {
@@ -70,6 +71,23 @@ impl DataDir {
         log::debug!("Saved persistent data at {path:?}");
         fs::write(&path, s)
             .with_context(|| format!("Could not save persistent data to file {path:?}"))
+    }
+
+    pub fn delete<D: PersistentData>(&self) -> Result<()> {
+        let Some(dir) = &self.path else {
+            return Ok(());
+        };
+        let path = dir.join(D::FILE);
+        log::debug!("Deleting persistent data at {path:?}");
+        fs::remove_file(&path).or_else(|err| {
+            if err.kind() == ErrorKind::NotFound {
+                log::debug!("Persistent data to delete was not found: {path:?}");
+                Ok(())
+            } else {
+                let msg = format!("Could not delete the persistent data at {path:?}");
+                Err(Error::new(err).context(msg))
+            }
+        })
     }
 }
 

@@ -491,7 +491,7 @@ impl Renderer for WebViewRenderer {
         Ok(())
     }
 
-    fn delete_cookies(&self) -> Result<()> {
+    fn delete_cache(&mut self) -> Result<()> {
         let cookies = self.webview.cookies()?;
         log::debug!("Deleting {} cookies", cookies.len());
         for cookie in cookies {

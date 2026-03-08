@@ -68,7 +68,7 @@ impl Menu {
         let zoom_out = item("Zoom Out");
         #[cfg(not(target_os = "macos"))]
         let toggle_menu_bar = item("Toggle Menu Bar");
-        let delete_cookies = item("Delete Cookies");
+        let delete_history = item("Delete History");
         let forward = item("Forward");
         let back = item("Back");
         let top = item("Latest");
@@ -98,7 +98,6 @@ impl Menu {
                 &toggle_menu_bar,
                 #[cfg(not(target_os = "macos"))]
                 &PredefinedMenuItem::bring_all_to_front(None),
-                &delete_cookies,
             ],
         )?;
         let help_menu = Submenu::with_items("&Help", true, &[&guide, &open_repo])?;
@@ -174,7 +173,14 @@ impl Menu {
             &Submenu::with_items(
                 "History",
                 true,
-                &[&forward, &back, &top, &PredefinedMenuItem::separator(), &history],
+                &[
+                    &forward,
+                    &back,
+                    &top,
+                    &PredefinedMenuItem::separator(),
+                    &history,
+                    &delete_history,
+                ],
             )?,
             &window_menu,
             &help_menu,
@@ -207,7 +213,7 @@ impl Menu {
                 (settings.into_id(),        EditConfig),
                 #[cfg(not(target_os = "macos"))]
                 (toggle_menu_bar.into_id(), ToggleMenuBar),
-                (delete_cookies.into_id(),  DeleteCookies),
+                (delete_history.into_id(),  DeleteHistory),
             ])
         };
         log::debug!("Registered menu items: {:?}", ids);

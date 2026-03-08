@@ -297,7 +297,10 @@ where
             Help => self.renderer.send_message(MessageToRenderer::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
-            DeleteCookies => self.renderer.delete_cookies()?,
+            DeleteHistory => {
+                self.history.clear(&self.config)?;
+                self.renderer.delete_cache()?;
+            }
         }
         Ok(RenderingFlow::Continue)
     }
