@@ -1,6 +1,6 @@
 use crate::config::SearchMatcher;
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
-use crate::renderer::{MessageToRenderer, Renderer};
+use crate::renderer::{MessageToWindow, Window};
 use anyhow::Result;
 use std::fs;
 use std::mem;
@@ -45,7 +45,7 @@ impl Preview {
         format!("Shiba: {}", self.path.display())
     }
 
-    pub fn show<R: Renderer>(&mut self, path: &Path, renderer: &R) -> Result<bool> {
+    pub fn show<W: Window>(&mut self, path: &Path, window: &W) -> Result<bool> {
         log::debug!("Opening markdown preview for {:?}", path);
         let new_content = match fs::read_to_string(path) {
             Ok(source) => MarkdownContent::new(source, path.parent()),
@@ -63,47 +63,47 @@ impl Preview {
         let offset = if is_new { None } else { prev_content.modified_utf8_offset(&self.content) };
         log::debug!("Last modified offset: {:?}", offset);
 
-        self.text = renderer.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
+        self.text = window.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
 
         if is_new {
-            renderer.send_message(MessageToRenderer::Path { path })?;
+            window.send_message(MessageToWindow::Path { path })?;
             self.path = path.to_path_buf();
             let title = self.title();
             log::debug!("Preview title changed to {title:?}");
-            renderer.set_title(&title);
+            window.set_title(&title);
         }
 
         Ok(true)
     }
 
-    pub fn rerender<R: Renderer>(&mut self, renderer: &R) -> Result<()> {
-        renderer.send_message_raw(MarkdownParser::new(&self.content, None, ()))
+    pub fn rerender<W: Window>(&mut self, window: &W) -> Result<()> {
+        window.send_message_raw(MarkdownParser::new(&self.content, None, ()))
     }
 
-    pub fn search<R: Renderer>(
+    pub fn search<W: Window>(
         &mut self,
-        renderer: &R,
+        window: &W,
         query: &str,
         index: Option<usize>,
         matcher: SearchMatcher,
     ) -> Result<()> {
         log::debug!("Re-rendering content with query {:?} and current index {:?}", query, index);
         if query.is_empty() {
-            return self.rerender(renderer);
+            return self.rerender(window);
         }
 
         let matches = match self.text.search(query, matcher) {
             Ok(matches) => matches,
             Err(err) => {
                 log::debug!("Could not build {:?} matcher for query {:?}: {}", matcher, query, err);
-                return self.rerender(renderer);
+                return self.rerender(window);
             }
         };
         log::debug!("Search hit {} matches", matches.len());
 
         let Some(tokenizer) = matches.tokenizer(index) else {
-            return self.rerender(renderer);
+            return self.rerender(window);
         };
-        renderer.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
+        window.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
     }
 }

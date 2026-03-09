@@ -1,4 +1,4 @@
-use crate::renderer::{Event, EventSender, MessageFromRenderer};
+use crate::renderer::{Event, EventSender, MessageFromWindow};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -18,7 +18,7 @@ impl<S: EventSender> SanityTest<S> {
 
         log::debug!("Start sanity test. This app will quit soon");
         spawn(move || {
-            use MessageFromRenderer::*;
+            use MessageFromWindow::*;
 
             let messages = [
                 OpenFile { path: "README.md".to_string() },
@@ -39,7 +39,7 @@ impl<S: EventSender> SanityTest<S> {
             for msg in messages {
                 sleep(Duration::from_millis(1000));
                 log::debug!("Sanity test case is about to send message: {msg:?}");
-                sender.send(Event::RendererMessage(msg));
+                sender.send(Event::WindowMessage(msg));
             }
         });
     }

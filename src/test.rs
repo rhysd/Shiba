@@ -1,5 +1,5 @@
 use crate::renderer::{
-    MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance, WindowHandles, WindowState,
+    MessageToWindow, RawMessageWriter, Window, WindowAppearance, WindowHandles, WindowState,
     ZoomLevel,
 };
 use anyhow::Result;
@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Default)]
-pub struct TestRenderer {
+pub struct TestWindow {
     pub messages: RefCell<Vec<String>>,
     pub title: RefCell<String>,
     pub window_state: Option<WindowState>,
@@ -26,8 +26,8 @@ pub struct TestRenderer {
     pub window_handles_requested: AtomicBool,
 }
 
-impl Renderer for TestRenderer {
-    fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()> {
+impl Window for TestWindow {
+    fn send_message(&self, message: MessageToWindow<'_>) -> Result<()> {
         let msg = serde_json::to_string_pretty(&message)?;
         self.messages.borrow_mut().push(msg);
         Ok(())
@@ -44,7 +44,7 @@ impl Renderer for TestRenderer {
         *self.title.borrow_mut() = title.into();
     }
 
-    fn window_state(&self) -> Option<WindowState> {
+    fn state(&self) -> Option<WindowState> {
         self.window_state.clone()
     }
 
@@ -87,7 +87,7 @@ impl Renderer for TestRenderer {
         self.is_maximized
     }
 
-    fn set_maximized(&mut self, maximized: bool) {
+    fn maximize(&mut self, maximized: bool) {
         self.is_maximized = maximized;
     }
 
@@ -95,11 +95,11 @@ impl Renderer for TestRenderer {
         self.is_minimized
     }
 
-    fn set_minimized(&mut self, minimized: bool) {
+    fn minimize(&mut self, minimized: bool) {
         self.is_minimized = minimized;
     }
 
-    fn window_appearance(&self) -> WindowAppearance {
+    fn appearance(&self) -> WindowAppearance {
         self.window_appearance
     }
 
@@ -122,7 +122,7 @@ impl Renderer for TestRenderer {
         Ok(())
     }
 
-    fn window_handles(&self) -> WindowHandles<'_> {
+    fn handles(&self) -> WindowHandles<'_> {
         self.window_handles_requested.store(true, Ordering::Relaxed);
         WindowHandles::unsupported()
     }

@@ -1,8 +1,8 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, MessageFromRenderer, MessageToRenderer, RawMessageWriter, Renderer, WindowAppearance,
-    WindowHandles, WindowState, ZoomLevel,
+    Event, MessageFromWindow, MessageToWindow, RawMessageWriter, Window as RendererWindow,
+    WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::Menu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
@@ -204,9 +204,9 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     builder = builder
         .with_url("shiba://localhost/index.html")
         .with_ipc_handler(move |msg| {
-            let msg: MessageFromRenderer = serde_json::from_str(msg.body()).unwrap();
+            let msg: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
             log::debug!("Message from WebView: {msg:?}");
-            if let Err(err) = ipc_proxy.send_event(Event::RendererMessage(msg)) {
+            if let Err(err) = ipc_proxy.send_event(Event::WindowMessage(msg)) {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
@@ -324,7 +324,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     Ok(webview)
 }
 
-pub struct WebViewRenderer {
+pub struct WebViewWindow {
     webview: WebView,
     window: Window,
     zoom_level: ZoomLevel,
@@ -333,7 +333,7 @@ pub struct WebViewRenderer {
     is_vibrant: bool,
 }
 
-impl WebViewRenderer {
+impl WebViewWindow {
     pub fn new(config: &Config, event_loop: &EventLoop, mut menu: Menu) -> Result<Self> {
         let (window, zoom_level, always_on_top) = create_window(event_loop, config)?;
 
@@ -351,12 +351,12 @@ impl WebViewRenderer {
         }
 
         let is_vibrant = config.window().is_vibrant();
-        Ok(WebViewRenderer { webview, window, zoom_level, always_on_top, menu, is_vibrant })
+        Ok(WebViewWindow { webview, window, zoom_level, always_on_top, menu, is_vibrant })
     }
 }
 
-impl Renderer for WebViewRenderer {
-    fn send_message(&self, message: MessageToRenderer) -> Result<()> {
+impl RendererWindow for WebViewWindow {
+    fn send_message(&self, message: MessageToWindow) -> Result<()> {
         let mut buf = b"window.postShibaMessageFromMain(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
         buf.push(b')');
@@ -380,7 +380,7 @@ impl Renderer for WebViewRenderer {
     #[cfg(target_os = "macos")]
     fn set_title(&self, _title: &str) {} // On macOS, the title bar is hidden
 
-    fn window_state(&self) -> Option<WindowState> {
+    fn state(&self) -> Option<WindowState> {
         let scale = self.window.scale_factor();
         let LogicalPosition { x, y } = match self.window.outer_position() {
             Ok(pos) => pos.to_logical(scale),
@@ -450,7 +450,7 @@ impl Renderer for WebViewRenderer {
         self.window.is_maximized() // Note: Window is unmaximized when a user changes the window size manually
     }
 
-    fn set_maximized(&mut self, maximized: bool) {
+    fn maximize(&mut self, maximized: bool) {
         self.window.set_maximized(maximized);
     }
 
@@ -458,11 +458,11 @@ impl Renderer for WebViewRenderer {
         self.window.is_minimized()
     }
 
-    fn set_minimized(&mut self, minimized: bool) {
+    fn minimize(&mut self, minimized: bool) {
         self.window.set_minimized(minimized);
     }
 
-    fn window_appearance(&self) -> WindowAppearance {
+    fn appearance(&self) -> WindowAppearance {
         WindowAppearance {
             title: cfg!(not(target_os = "macos")),
             vibrancy: self.is_vibrant,
@@ -500,7 +500,7 @@ impl Renderer for WebViewRenderer {
         Ok(())
     }
 
-    fn window_handles(&self) -> WindowHandles<'_> {
+    fn handles(&self) -> WindowHandles<'_> {
         WindowHandles::new(&self.window)
     }
 }

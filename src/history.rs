@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::persistent::PersistentData;
-use crate::renderer::{MessageToRenderer, Renderer};
+use crate::renderer::{MessageToWindow, Window};
 use anyhow::Result;
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
@@ -140,9 +140,9 @@ impl History {
         config.data_dir().save(&data)
     }
 
-    pub fn send_paths<R: Renderer>(&self, renderer: &R) -> Result<()> {
-        log::debug!("Send {} history paths to renderer", self.items.len());
-        renderer.send_message(MessageToRenderer::History { paths: &self.items })
+    pub fn send_paths<W: Window>(&self, window: &W) -> Result<()> {
+        log::debug!("Send {} history paths to window", self.items.len());
+        window.send_message(MessageToWindow::History { paths: &self.items })
     }
 
     pub fn clear(&mut self, config: &Config) -> Result<()> {
@@ -160,7 +160,7 @@ impl History {
 mod tests {
     use super::*;
     use crate::config::UserConfig;
-    use crate::test::TestRenderer;
+    use crate::test::TestWindow;
     use std::fs;
 
     #[track_caller]
@@ -186,11 +186,11 @@ mod tests {
     }
 
     #[test]
-    fn send_paths_to_renderer() {
+    fn send_paths_to_window() {
         let history = History::with_items(["foo.txt".into(), "bar.txt".into()].into(), 10);
-        let renderer = TestRenderer::default();
-        history.send_paths(&renderer).unwrap();
-        let msg = renderer.messages.take().pop().unwrap();
+        let window = TestWindow::default();
+        history.send_paths(&window).unwrap();
+        let msg = window.messages.take().pop().unwrap();
         let json: serde_json::Value = serde_json::from_str(&msg).unwrap();
         insta::assert_json_snapshot!(json);
     }

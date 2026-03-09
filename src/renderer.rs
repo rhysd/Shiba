@@ -38,7 +38,7 @@ pub struct WindowAppearance {
 #[derive(Serialize)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
-pub enum MessageToRenderer<'a> {
+pub enum MessageToWindow<'a> {
     Config {
         keymaps: &'a HashMap<String, KeyAction>,
         search: &'a SearchConfig,
@@ -70,7 +70,7 @@ pub enum MessageToRenderer<'a> {
 #[derive(Deserialize, Debug)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
-pub enum MessageFromRenderer {
+pub enum MessageFromWindow {
     Init,
     Reload,
     FileDialog,
@@ -96,7 +96,7 @@ pub enum MessageFromRenderer {
 
 #[derive(Debug)]
 pub enum Event {
-    RendererMessage(MessageFromRenderer),
+    WindowMessage(MessageFromWindow),
     FileDrop(PathBuf),
     WatchedFilesChanged(Vec<PathBuf>),
     OpenLocalPath(PathBuf),
@@ -209,12 +209,12 @@ pub trait EventSender: 'static + Send {
     fn send(&self, event: Event);
 }
 
-/// Renderer is responsible for rendering the actual UI in the rendering context.
-pub trait Renderer {
-    fn send_message(&self, message: MessageToRenderer<'_>) -> Result<()>;
+/// Window is responsible for rendering a single window in the rendering context.
+pub trait Window {
+    fn send_message(&self, message: MessageToWindow<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
-    fn window_state(&self) -> Option<WindowState>;
+    fn state(&self) -> Option<WindowState>;
     fn show(&self);
     fn hide(&self);
     fn print(&self) -> Result<()>;
@@ -224,25 +224,25 @@ pub trait Renderer {
     fn always_on_top(&self) -> bool;
     fn drag_window(&self) -> Result<()>;
     fn is_maximized(&self) -> bool;
-    fn set_maximized(&mut self, maximized: bool);
+    fn maximize(&mut self, maximized: bool);
     fn is_minimized(&self) -> bool;
-    fn set_minimized(&mut self, minimized: bool);
-    fn window_appearance(&self) -> WindowAppearance;
+    fn minimize(&mut self, minimized: bool);
+    fn appearance(&self) -> WindowAppearance;
     fn show_menu_at(&self, position: Option<(f64, f64)>);
     fn toggle_menu(&mut self) -> Result<()>;
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cache(&mut self) -> Result<()>;
-    fn window_handles(&self) -> WindowHandles<'_>;
+    fn handles(&self) -> WindowHandles<'_>;
 }
 
-/// Context to execute rendering.
-pub trait Rendering: Sized {
+/// Renderer manages the entire rendering lifecycle.
+pub trait Renderer: Sized {
     type EventSender: EventSender;
-    type Renderer: Renderer;
+    type Window: Window;
 
     fn new() -> Result<Self>;
     fn create_sender(&self) -> Self::EventSender;
-    fn create_renderer(&self, config: &Config) -> Result<Self::Renderer>;
+    fn create_window(&self, config: &Config) -> Result<Self::Window>;
     /// Starts the rendering execution and runs until the process exits.
     fn start<H: EventHandler + 'static>(self, handler: H) -> !;
 }
