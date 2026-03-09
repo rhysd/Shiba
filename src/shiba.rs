@@ -65,6 +65,7 @@ where
         log::debug!("Application config: {:?}", config);
 
         let window = renderer.create_window(&config)?;
+        log::debug!("Created window with ID: {:?}", window.id());
 
         let filter = PathFilter::new(config.watch());
         let mut watcher = W::new(renderer.create_sender(), filter)?;

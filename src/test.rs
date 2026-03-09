@@ -24,9 +24,12 @@ pub struct TestWindow {
     pub is_low_memory: bool,
     pub cache_deleted: bool,
     pub window_handles_requested: AtomicBool,
+    pub window_id: u32,
 }
 
 impl Window for TestWindow {
+    type Id = u32;
+
     fn send_message(&self, message: MessageToWindow<'_>) -> Result<()> {
         let msg = serde_json::to_string_pretty(&message)?;
         self.messages.borrow_mut().push(msg);
@@ -125,5 +128,9 @@ impl Window for TestWindow {
     fn handles(&self) -> WindowHandles<'_> {
         self.window_handles_requested.store(true, Ordering::Relaxed);
         WindowHandles::unsupported()
+    }
+
+    fn id(&self) -> Self::Id {
+        self.window_id
     }
 }

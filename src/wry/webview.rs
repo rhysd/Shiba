@@ -17,7 +17,7 @@ use tao::platform::unix::WindowExtUnix;
 use tao::platform::windows::WindowBuilderExtWindows as _;
 #[cfg(target_os = "windows")]
 use tao::platform::windows::WindowExtWindows as _;
-use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
+use tao::window::{Fullscreen, Theme, Window, WindowBuilder, WindowId};
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
 use wry::http::Response;
@@ -356,6 +356,8 @@ impl WebViewWindow {
 }
 
 impl RendererWindow for WebViewWindow {
+    type Id = WindowId;
+
     fn send_message(&self, message: MessageToWindow) -> Result<()> {
         let mut buf = b"window.postShibaMessageFromMain(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
@@ -502,5 +504,9 @@ impl RendererWindow for WebViewWindow {
 
     fn handles(&self) -> WindowHandles<'_> {
         WindowHandles::new(&self.window)
+    }
+
+    fn id(&self) -> Self::Id {
+        self.window.id()
     }
 }

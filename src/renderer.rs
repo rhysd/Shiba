@@ -7,6 +7,8 @@ use raw_window_handle::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::Debug;
+use std::hash::Hash;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -211,6 +213,8 @@ pub trait EventSender: 'static + Send {
 
 /// Window is responsible for rendering a single window in the rendering context.
 pub trait Window {
+    type Id: PartialEq + Eq + Hash + Debug;
+
     fn send_message(&self, message: MessageToWindow<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
@@ -233,6 +237,7 @@ pub trait Window {
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cache(&mut self) -> Result<()>;
     fn handles(&self) -> WindowHandles<'_>;
+    fn id(&self) -> Self::Id;
 }
 
 /// Renderer manages the entire rendering lifecycle.
