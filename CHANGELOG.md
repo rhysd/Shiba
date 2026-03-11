@@ -1,3 +1,78 @@
+<a id="v2.0.0-alpha.3"></a>
+# [v2.0.0-alpha.3](https://github.com/rhysd/Shiba/releases/tag/v2.0.0-alpha.3) - 2026-03-11
+
+- **Breaking change:** Rename key actions `Forward` and `Back` to more clear names `GoForward` and `GoBack`.
+- **Breaking chagne:** There were two key shortcut systems in Shiba; (1) our own key shortcut system configurable in `config.yml` and (2) platform-specific menu items. However two systems existing in one app was confusing and the behavior of menu item key shortcuts depended on the platforms. This release removes platform-specific key shortcuts in menu items and unifies all key actions into our own key shortcut system which is configurable at the `keymaps` section of the configuration file. The following key actions are newly introduced for this change.
+  - `MaximizeWindow`
+  - `MinimizeWindow`
+  - `ToggleAlwaysOnTop`
+  - `ToggleMenuBar`
+  - `ShowMenu`
+  - `EditConfig`
+- **Breaking change:** Following the above change, the default key mappings are overhauled. The new mappings are as follows. If you want to update your existing configuration to the new mappings, overwrite it by `--generate-config-file` command line option.
+  | Keys | Action |
+  |-|-|
+  | `j` | `ScrollDown` |
+  | `k` | `ScrollUp` |
+  | `h` | `ScrollLeft` |
+  | `l` | `ScrollRight` |
+  | `g` | `ScrollTop` |
+  | `G` | `ScrollBottom` |
+  | `d` | `ScrollPageDown` |
+  | `u` | `ScrollPageUp` |
+  | `space` | `ScrollPageDown` |
+  | `down` | `ScrollDown` |
+  | `up` | `ScrollUp` |
+  | `left` | `ScrollLeft` |
+  | `right` | `ScrollRight` |
+  | `pagedown` | `ScrollPageDown` |
+  | `pageup` | `ScrollPageUp` |
+  | `ctrl+down` | `ScrollPageDown` |
+  | `ctrl+up` | `ScrollPageUp` |
+  | `ctrl+shift+down` | `ScrollBottom` |
+  | `ctrl+shift+up` | `ScrollTop` |
+  | `ctrl+j` | `ScrollNextSection` |
+  | `ctrl+k` | `ScrollPrevSection` |
+  | `ctrl+b` | `GoBack` |
+  | `ctrl+f` | `GoForward` |
+  | `ctrl+o` | `OpenFile` |
+  | `ctrl+shift+o` | `OpenDir` |
+  | `ctrl+h` | `History` |
+  | `ctrl+r` | `Reload` |
+  | `o` | `Outline` |
+  | `s` | `Search` |
+  | `plus` | `ZoomIn` |
+  | `-` | `ZoomOut` |
+  | `ctrl+m` | `MaximizeWindow` |
+  | `mod+q` | `Quit` |
+  | `?` | `Help` |
+- Apply the [Mica material](https://learn.microsoft.com/en-us/windows/apps/design/style/mica) to the window background on Windows 11 or later, which is the modern dynamic material based on your desktop wallpaper.
+  <img alt="window with mica material" src="https://github.com/user-attachments/assets/cfbb2b87-886b-4770-ac24-467047ca89e6" width="598">
+- Support `max` keyword at the width and hight of window size in the `window.default_size` configuration. For example the following configration creates a window with fixed 800 pixels width and maximized height.
+  ```yaml
+  window:
+    default_size:
+      width: 800
+      height: max
+  ```
+- Add new `window.vibrant` configuration. When this is set to `true`, Shiba applies platform-specific vibrant effects to the window; [`NSVisualEffectView` on macOS](https://developer.apple.com/design/human-interface-guidelines/materials) and [Mica material](https://learn.microsoft.com/en-us/windows/apps/design/style/mica) on Windows, no effect on Linux. Setting `false` disables the dynamic effects by using solid colors. It may slightly improve the performance of the application rendering and launch. The default value of this configuration is `true`.
+  ```yaml
+  window:
+    vibrant: true  # Apply vibrant effect to the window
+  ```
+- Set the default window size to 600x800.
+- Add 'Delete History' menu item in the 'History' menu to delete the history.
+- Add `GoTop` key action and a new menu item to go to the top of the history. It quickly opens the most recent document in the history.
+- Add `no-debug-log` cargo feature to disable the debug log statically. It can slightly reduce the binary size and application performance.
+- Fix 'Print' menu item only prints the current window. Now it prints all pages and doesn't include the side bar.
+- Fix applying the system's theme setting to the webview on Windows.
+- Implement platform-agnostic window maximization/minimization so that 'Maximize Window' and 'Minimize Window' menu items are available on all platforms.
+- Efficiently receive menu item events instead of polling them at every window events.
+- Update npm dependencies including some security fixes.
+
+[Changes][v2.0.0-alpha.3]
+
+
 <a id="v2.0.0-alpha.2"></a>
 # [v2.0.0-alpha.2](https://github.com/rhysd/Shiba/releases/tag/v2.0.0-alpha.2) - 2026-02-21
 
@@ -285,6 +360,7 @@ First experimental alpha release of Shiba.
 [Changes][v0.1.0]
 
 
+[v2.0.0-alpha.3]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
 [v2.0.0-alpha.2]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
 [v2.0.0-alpha.1]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.0...v2.0.0-alpha.1
 [v2.0.0-alpha.0]: https://github.com/rhysd/Shiba/compare/v1.2.1...v2.0.0-alpha.0
