@@ -82,7 +82,14 @@ export const Notification: React.FC<Props> = ({ open, content, dispatch }) => {
     }
 
     return (
-        <Snackbar style={ROOT_STYLE} open={open} autoHideDuration={4000} onClose={handleClose} anchorOrigin={ORIGIN}>
+        <Snackbar
+            id="notification"
+            style={ROOT_STYLE}
+            open={open}
+            autoHideDuration={4000}
+            onClose={handleClose}
+            anchorOrigin={ORIGIN}
+        >
             {body}
         </Snackbar>
     );

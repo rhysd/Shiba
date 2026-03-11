@@ -122,7 +122,8 @@ pre code.hljs {
   }
 
   nav,
-  #preview-separator {
+  #preview-separator,
+  #notification {
     display: none !important;
   }
 
