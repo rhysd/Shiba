@@ -58,11 +58,9 @@ fn metadata() -> AboutMetadata {
     m
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Menu {
     menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
-    #[cfg(not(target_os = "macos"))]
-    visibility: Option<bool>,
 }
 
 impl Menu {
@@ -260,35 +258,52 @@ impl Menu {
         Ok(())
     }
 
+    pub fn window_menu(&self) -> WindowMenu {
+        WindowMenu {
+            menu_bar: self.menu_bar.clone(),
+            #[cfg(not(target_os = "macos"))]
+            is_visible: None,
+        }
+    }
+
     #[cfg(target_os = "windows")]
     pub fn accel_translator(&self) -> AccelTranslator {
         AccelTranslator(self.menu_bar.clone())
     }
+}
 
+pub struct WindowMenu {
+    menu_bar: MenuBar, // Note: This will remove menu from application on being dropped
+    #[cfg(not(target_os = "macos"))]
+    is_visible: Option<bool>,
+}
+
+impl WindowMenu {
+    #[cfg(not(target_os = "macos"))]
+    pub fn is_visible(&self) -> bool {
+        self.is_visible.unwrap_or(false)
+    }
     #[cfg(target_os = "macos")]
     pub fn is_visible(&self) -> bool {
         true
     }
-    #[cfg(not(target_os = "macos"))]
-    pub fn is_visible(&self) -> bool {
-        self.visibility.unwrap_or(false)
-    }
 
     #[cfg(not(target_os = "macos"))]
     pub fn toggle(&mut self, window: &Window) -> Result<()> {
-        let is_visible = match self.visibility {
+        let is_visible = match self.is_visible {
             None => {
-                // Safety: Using the handle returned from `Window::hwnd`.
+                log::debug!("Initialize menu for window: {:?}", window.id());
+                // Safety: The handle returned from `Window::hwnd` is valid.
                 #[cfg(target_os = "windows")]
                 unsafe {
                     self.menu_bar.init_for_hwnd(window.hwnd() as _)?;
                 }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.init_for_gtk_window(window.gtk_window(), window.default_vbox())?;
-                log::debug!("Initialized menubar for window: {:?}", window.id());
                 true
             }
             Some(true) => {
+                log::debug!("Hide menu on window: {:?}", window.id());
                 // Safety: The handle is valid because it is returned from `Window::hwnd`.
                 #[cfg(target_os = "windows")]
                 unsafe {
@@ -296,10 +311,10 @@ impl Menu {
                 }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.hide_for_gtk_window(window.gtk_window())?;
-                log::debug!("Hide menu on window (id={:?})", window.id());
                 false
             }
             Some(false) => {
+                log::debug!("Show menu on window: {:?}", window.id());
                 // Safety: The handle is valid because it is returned from `Window::hwnd`.
                 #[cfg(target_os = "windows")]
                 unsafe {
@@ -307,11 +322,10 @@ impl Menu {
                 }
                 #[cfg(target_os = "linux")]
                 self.menu_bar.show_for_gtk_window(window.gtk_window())?;
-                log::debug!("Show menu on window (id={:?})", window.id());
                 true
             }
         };
-        self.visibility = Some(is_visible);
+        self.is_visible = Some(is_visible);
         Ok(())
     }
     #[cfg(target_os = "macos")]
@@ -321,15 +335,15 @@ impl Menu {
 
     pub fn show_at(&self, position: Option<(f64, f64)>, window: &Window) {
         let position = position.map(|(x, y)| Position::Logical(LogicalPosition { x, y }));
-        log::debug!("Showing context menu at {:?}", position);
-        // Safety: Using the handle returned from `Window::hwnd`.
+        log::debug!("Showing context menu at {:?} on window {:?}", position, window.id());
+        // Safety: The handle returned from `Window::hwnd` is valid.
         #[cfg(target_os = "windows")]
         unsafe {
             self.menu_bar.show_context_menu_for_hwnd(window.hwnd() as _, position);
         }
         #[cfg(target_os = "linux")]
         self.menu_bar.show_context_menu_for_gtk_window(window.gtk_window().as_ref(), position);
-        // Safety: Using the pointer returned from `Window::ns_view`.
+        // Safety: The pointer returned from `Window::ns_view` is valid.
         #[cfg(target_os = "macos")]
         unsafe {
             self.menu_bar.show_context_menu_for_nsview(window.ns_view() as _, position);

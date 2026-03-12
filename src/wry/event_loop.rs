@@ -55,7 +55,7 @@ impl Renderer for Wry {
     }
 
     fn create_window(&self, config: &Config) -> Result<Self::Window> {
-        WebViewWindow::new(config, &self.event_loop, self.menu.clone())
+        WebViewWindow::new(config, &self.event_loop, self.menu.window_menu())
     }
 
     fn start<H>(self, mut handler: H) -> !

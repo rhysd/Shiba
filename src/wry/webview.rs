@@ -4,7 +4,7 @@ use crate::renderer::{
     Event, MessageFromWindow, MessageToWindow, RawMessageWriter, Window as RendererWindow,
     WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
-use crate::wry::menu::Menu;
+use crate::wry::menu::WindowMenu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
@@ -329,12 +329,12 @@ pub struct WebViewWindow {
     window: Window,
     zoom_level: ZoomLevel,
     always_on_top: bool,
-    menu: Menu,
+    menu: WindowMenu,
     is_vibrant: bool,
 }
 
 impl WebViewWindow {
-    pub fn new(config: &Config, event_loop: &EventLoop, mut menu: Menu) -> Result<Self> {
+    pub fn new(config: &Config, event_loop: &EventLoop, mut menu: WindowMenu) -> Result<Self> {
         let (window, zoom_level, always_on_top) = create_window(event_loop, config)?;
 
         if config.window().menu_bar != menu.is_visible() {
