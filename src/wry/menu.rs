@@ -12,6 +12,24 @@ use tao::platform::unix::WindowExtUnix as _;
 #[cfg(target_os = "windows")]
 use tao::platform::windows::WindowExtWindows as _;
 use tao::window::Window;
+#[cfg(target_os = "windows")]
+use windows::Win32::UI::WindowsAndMessaging::{HACCEL, MSG, TranslateAcceleratorW};
+
+#[cfg(target_os = "windows")]
+pub struct AccelTranslator(MenuBar);
+
+#[cfg(target_os = "windows")]
+impl AccelTranslator {
+    pub unsafe fn translate(&self, msg: *const MSG) -> bool {
+        // Note: windows-sys v0.52 (depended by muda) returns `isize` but windows v0.58 requires `*mut c_void`
+        let haccel = HACCEL(self.0.haccel() as *mut _);
+        // SAFETY: `msg` pointer was given by `EventLoopBuilder::with_msg_hook` which internally receives
+        // events via message loop. `haccel` is validated by muda's API.
+        // Ref: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratorw
+        let translated = unsafe { TranslateAcceleratorW((*msg).hwnd, haccel, msg) };
+        translated != 0
+    }
+}
 
 fn metadata() -> AboutMetadata {
     let mut m = AboutMetadata {
@@ -243,8 +261,8 @@ impl Menu {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn menu_bar(&self) -> &MenuBar {
-        &self.menu_bar
+    pub fn accel_translator(&self) -> AccelTranslator {
+        AccelTranslator(self.menu_bar.clone())
     }
 
     #[cfg(target_os = "macos")]
