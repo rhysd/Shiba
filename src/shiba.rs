@@ -15,11 +15,6 @@ use anyhow::{Context as _, Error, Result};
 use std::mem;
 use std::path::PathBuf;
 
-enum Zoom {
-    In,
-    Out,
-}
-
 pub struct Shiba<R: Renderer, O, W, D> {
     window: R::Window, // Only a single window is currently supported
     opener: O,
@@ -171,10 +166,11 @@ where
         Ok(())
     }
 
-    fn zoom(&mut self, zoom: Zoom) -> Result<()> {
-        let level = match zoom {
-            Zoom::In => self.window.zoom_level().zoom_in(),
-            Zoom::Out => self.window.zoom_level().zoom_out(),
+    fn zoom(&mut self, zoom_in: bool) -> Result<()> {
+        let level = if zoom_in {
+            self.window.zoom_level().zoom_in()
+        } else {
+            self.window.zoom_level().zoom_out()
         };
 
         let Some(level) = level else {
@@ -253,8 +249,8 @@ where
             FileDialog => self.open_files()?,
             DirDialog => self.open_dirs()?,
             OpenFile { path } => self.open_preview(PathBuf::from(path))?,
-            ZoomIn => self.zoom(Zoom::In)?,
-            ZoomOut => self.zoom(Zoom::Out)?,
+            ZoomIn => self.zoom(true)?,
+            ZoomOut => self.zoom(false)?,
             DragWindow => self.window.drag_window()?,
             ToggleMaximized => self.toggle_maximized(),
             ToggleMinimized => self.toggle_minimized(),
@@ -287,8 +283,8 @@ where
             Outline => self.window.send_message(MessageToWindow::Outline)?,
             Print if self.preview.is_empty() => {}
             Print => self.window.print()?,
-            ZoomIn => self.zoom(Zoom::In)?,
-            ZoomOut => self.zoom(Zoom::Out)?,
+            ZoomIn => self.zoom(true)?,
+            ZoomOut => self.zoom(false)?,
             #[cfg(not(target_os = "macos"))]
             ToggleMenuBar => self.window.toggle_menu()?,
             History => self.history.send_paths(&self.window)?,
