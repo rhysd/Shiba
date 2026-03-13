@@ -351,7 +351,7 @@ impl WebViewWindow {
         }
 
         let is_vibrant = config.window().is_vibrant();
-        Ok(WebViewWindow { webview, window, zoom_level, always_on_top, menu, is_vibrant })
+        Ok(Self { webview, window, zoom_level, always_on_top, menu, is_vibrant })
     }
 }
 

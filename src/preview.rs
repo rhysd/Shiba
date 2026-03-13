@@ -76,12 +76,12 @@ impl Preview {
         Ok(true)
     }
 
-    pub fn rerender<W: Window>(&mut self, window: &W) -> Result<()> {
+    pub fn rerender<W: Window>(&self, window: &W) -> Result<()> {
         window.send_message_raw(MarkdownParser::new(&self.content, None, ()))
     }
 
     pub fn search<W: Window>(
-        &mut self,
+        &self,
         window: &W,
         query: &str,
         index: Option<usize>,

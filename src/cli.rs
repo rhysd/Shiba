@@ -96,7 +96,7 @@ Document:
             Ok(v.into())
         }
 
-        let mut opts = Options::default();
+        let mut opts = Self::default();
 
         let cwd = OnceCell::new();
         let mut parser = lexopt::Parser::from_iter(args);

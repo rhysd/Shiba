@@ -46,12 +46,12 @@ where
             }
             err
         }
-        let mut renderer = R::new().map_err(on_err::<D>)?;
-        let dog = Self::new(options, &mut renderer).map_err(on_err::<D>)?;
+        let renderer = R::new().map_err(on_err::<D>)?;
+        let dog = Self::new(options, &renderer).map_err(on_err::<D>)?;
         renderer.start(dog)
     }
 
-    pub fn new(mut options: Options, renderer: &mut R) -> Result<Self> {
+    pub fn new(mut options: Options, renderer: &R) -> Result<Self> {
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
         let init_file = mem::take(&mut options.init_file);
@@ -365,7 +365,7 @@ where
         Ok(RenderingFlow::Continue)
     }
 
-    fn shutdown(&mut self) -> Result<()> {
+    fn shutdown(&self) -> Result<()> {
         log::debug!("Handling application exit");
 
         // Hide the window before destroying it to avoid flickering.
