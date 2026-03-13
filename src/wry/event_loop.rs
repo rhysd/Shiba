@@ -7,6 +7,8 @@ use crate::wry::webview::{EventLoop, WebViewWindow};
 use anyhow::Result;
 use tao::event::{Event, StartCause, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
+#[cfg(target_os = "windows")]
+use tao::platform::windows::EventLoopBuilderExtWindows as _;
 
 pub struct Wry {
     event_loop: EventLoop,
@@ -25,27 +27,23 @@ impl Renderer for Wry {
     type EventSender = EventLoopProxy<RendererEvent>;
     type Window = WebViewWindow;
 
-    #[cfg(not(target_os = "windows"))]
     fn new() -> Result<Self> {
         // `EventLoopBuilder::with_app_id` on Linux is not usable because it can cause SEGV.
         // See https://github.com/tauri-apps/tao/issues/1186
 
+        let menu = Menu::default();
+
+        #[cfg(not(target_os = "windows"))]
         let event_loop = EventLoopBuilder::with_user_event().build();
-        let menu = Menu::default();
-        menu.create(event_loop.create_proxy())?;
-        Ok(Self { event_loop, menu })
-    }
+        #[cfg(target_os = "windows")]
+        let event_loop = {
+            let translator = menu.accel_translator();
+            EventLoopBuilder::with_user_event()
+                // Safety: `MSG` pointer passed from `EventLoop` is valid.
+                .with_msg_hook(move |msg| unsafe { translator.translate(msg as *const _) })
+                .build()
+        };
 
-    #[cfg(target_os = "windows")]
-    fn new() -> Result<Self> {
-        use tao::platform::windows::EventLoopBuilderExtWindows;
-
-        let menu = Menu::default();
-        let translator = menu.accel_translator();
-        let event_loop = EventLoopBuilder::with_user_event()
-            // SAFETY: `MSG` pointer passed from `EventLoop` is valid.
-            .with_msg_hook(move |msg| unsafe { translator.translate(msg as *const _) })
-            .build();
         menu.create(event_loop.create_proxy())?;
         Ok(Self { event_loop, menu })
     }
