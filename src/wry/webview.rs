@@ -1,7 +1,7 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, MessageFromWindow, MessageToWindow, RawMessageWriter, Window as RendererWindow,
+    Event, MessageFromWindow, MessageToWindow, RawMessageWriter, Request, Window as RendererWindow,
     WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::WindowMenu;
@@ -9,6 +9,7 @@ use crate::wry::monitor::MonitorExtWorkArea as _;
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
+use tao::event_loop::{EventLoopProxy, EventLoopWindowTarget};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -26,7 +27,8 @@ use wry::{DragDropEvent, NewWindowResponse, WebContext, WebView, WebViewBuilder}
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
 
-pub type EventLoop = tao::event_loop::EventLoop<Event>;
+pub type EventLoop = EventLoopWindowTarget<Request>;
+type Proxy = EventLoopProxy<Request>;
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -190,10 +192,9 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
     Ok((window, zoom_level, always_on_top))
 }
 
-fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
-    let ipc_proxy = event_loop.create_proxy();
-    let file_drop_proxy = event_loop.create_proxy();
-    let navigation_proxy = event_loop.create_proxy();
+fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
+    let file_drop_proxy = ipc_proxy.clone();
+    let navigation_proxy = ipc_proxy.clone();
     let loader = Assets::new(config);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
@@ -206,7 +207,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
         .with_ipc_handler(move |msg| {
             let msg: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
             log::debug!("Message from WebView: {msg:?}");
-            if let Err(err) = ipc_proxy.send_event(Event::WindowMessage(msg)) {
+            if let Err(err) = ipc_proxy.send_event(Request::Event(Event::WindowMessage(msg))) {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
@@ -215,7 +216,8 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
                 log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
                 // TODO: Support dropping multiple files
                 if let Some(path) = paths.into_iter().next()
-                    && let Err(err) = file_drop_proxy.send_event(Event::FileDrop(path))
+                    && let Err(err) =
+                        file_drop_proxy.send_event(Request::Event(Event::FileDrop(path)))
                 {
                     log::error!("Could not send user event for file drop: {err}");
                 }
@@ -260,7 +262,7 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
                 Event::OpenExternalLink(url)
             };
 
-            if let Err(e) = navigation_proxy.send_event(event) {
+            if let Err(e) = navigation_proxy.send_event(Request::Event(event)) {
                 log::error!("Could not send navigation event: {}", e);
             }
 
@@ -334,14 +336,19 @@ pub struct WebViewWindow {
 }
 
 impl WebViewWindow {
-    pub fn new(config: &Config, event_loop: &EventLoop, mut menu: WindowMenu) -> Result<Self> {
+    pub fn new(
+        config: &Config,
+        event_loop: &EventLoop,
+        proxy: Proxy,
+        mut menu: WindowMenu,
+    ) -> Result<Self> {
         let (window, zoom_level, always_on_top) = create_window(event_loop, config)?;
 
         if config.window().menu_bar != menu.is_visible() {
             menu.toggle(&window)?;
         }
 
-        let webview = create_webview(&window, event_loop, config)?;
+        let webview = create_webview(&window, proxy, config)?;
         log::debug!("WebView was created successfully");
 
         let zoom_factor = zoom_level.factor();

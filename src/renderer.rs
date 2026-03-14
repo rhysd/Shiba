@@ -11,6 +11,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct WindowState {
@@ -94,6 +95,12 @@ pub enum MessageFromWindow {
     ToggleAlwaysOnTop,
     EditConfig,
     Error { message: String },
+}
+
+#[derive(Debug)]
+pub enum Request {
+    Event(Event),
+    CreateWindow,
 }
 
 #[derive(Debug)]
@@ -205,10 +212,11 @@ pub enum RenderingFlow {
     Exit,
 }
 
-/// Sender to send [`Event`] accross threads. It is used to send the user events to the main thread
+/// Handle to access the renderer accross threads. It is used to send the user events to the main thread
 /// from another worker thread.
-pub trait EventSender: 'static + Send {
+pub trait RendererHandle: 'static + Send + Clone {
     fn send(&self, event: Event);
+    fn create_window(&self);
 }
 
 /// Window is responsible for rendering a single window in the rendering context.
@@ -242,20 +250,23 @@ pub trait Window {
 
 /// Renderer manages the entire rendering lifecycle.
 pub trait Renderer: Sized {
-    type EventSender: EventSender;
+    type Handle: RendererHandle;
     type Window: Window;
 
-    fn new() -> Result<Self>;
-    fn create_sender(&self) -> Self::EventSender;
-    fn create_window(&self, config: &Config) -> Result<Self::Window>;
+    fn new(config: Rc<Config>) -> Result<Self>;
+    fn create_handle(&self) -> Self::Handle;
     /// Starts the rendering execution and runs until the process exits.
-    fn start<H: EventHandler + 'static>(self, handler: H) -> !;
+    fn start<H>(self, handler: H) -> !
+    where
+        H: EventHandler<Window = Self::Window> + 'static;
 }
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
+    type Window: Window;
     fn on_event(&mut self, event: Event) -> RenderingFlow;
     fn on_exit(&mut self) -> i32;
+    fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow;
 }
 
 #[cfg(test)]

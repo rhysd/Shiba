@@ -1,18 +1,18 @@
-use crate::renderer::{Event, EventSender, MessageFromWindow};
+use crate::renderer::{Event, MessageFromWindow, RendererHandle};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
-pub struct SanityTest<S> {
-    sender: Option<S>,
+pub struct SanityTest<H> {
+    handle: Option<H>,
 }
 
-impl<S: EventSender> SanityTest<S> {
-    pub fn new(sender: S) -> Self {
-        Self { sender: Some(sender) }
+impl<H: RendererHandle> SanityTest<H> {
+    pub fn new(handle: H) -> Self {
+        Self { handle: Some(handle) }
     }
 
     pub fn run_test(&mut self) {
-        let Some(sender) = self.sender.take() else {
+        let Some(handle) = self.handle.take() else {
             return;
         };
 
@@ -39,7 +39,7 @@ impl<S: EventSender> SanityTest<S> {
             for msg in messages {
                 sleep(Duration::from_millis(1000));
                 log::debug!("Sanity test case is about to send message: {msg:?}");
-                sender.send(Event::WindowMessage(msg));
+                handle.send(Event::WindowMessage(msg));
             }
         });
     }

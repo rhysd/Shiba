@@ -1,33 +1,44 @@
 #[cfg(target_os = "macos")]
 use crate::assets::set_app_icon_to_dock;
 use crate::config::Config;
-use crate::renderer::{Event as RendererEvent, EventHandler, EventSender, Renderer, RenderingFlow};
+use crate::renderer::{
+    Event as RendererEvent, EventHandler, Renderer, RendererHandle, RenderingFlow, Request,
+};
 use crate::wry::menu::Menu;
-use crate::wry::webview::{EventLoop, WebViewWindow};
+use crate::wry::webview::WebViewWindow;
 use anyhow::Result;
+use std::rc::Rc;
 use tao::event::{Event, StartCause, WindowEvent};
+use tao::event_loop::EventLoop;
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 #[cfg(target_os = "windows")]
 use tao::platform::windows::EventLoopBuilderExtWindows as _;
 
 pub struct Wry {
-    event_loop: EventLoop,
+    event_loop: EventLoop<Request>,
     menu: Menu,
+    config: Rc<Config>,
 }
 
-impl EventSender for EventLoopProxy<RendererEvent> {
+impl RendererHandle for EventLoopProxy<Request> {
     fn send(&self, event: RendererEvent) {
-        if let Err(err) = self.send_event(event) {
+        if let Err(err) = self.send_event(Request::Event(event)) {
             log::error!("Could not send user event for message from WebView: {}", err);
+        }
+    }
+
+    fn create_window(&self) {
+        if let Err(err) = self.send_event(Request::CreateWindow) {
+            log::error!("Could not send window creation request: {}", err);
         }
     }
 }
 
 impl Renderer for Wry {
-    type EventSender = EventLoopProxy<RendererEvent>;
+    type Handle = EventLoopProxy<Request>;
     type Window = WebViewWindow;
 
-    fn new() -> Result<Self> {
+    fn new(config: Rc<Config>) -> Result<Self> {
         // `EventLoopBuilder::with_app_id` on Linux is not usable because it can cause SEGV.
         // See https://github.com/tauri-apps/tao/issues/1186
 
@@ -45,23 +56,20 @@ impl Renderer for Wry {
         };
 
         menu.create(event_loop.create_proxy())?;
-        Ok(Self { event_loop, menu })
+        Ok(Self { event_loop, menu, config })
     }
 
-    fn create_sender(&self) -> Self::EventSender {
+    fn create_handle(&self) -> Self::Handle {
         self.event_loop.create_proxy()
-    }
-
-    fn create_window(&self, config: &Config) -> Result<Self::Window> {
-        WebViewWindow::new(config, &self.event_loop, self.menu.window_menu())
     }
 
     fn start<H>(self, mut handler: H) -> !
     where
-        H: EventHandler + 'static,
+        H: EventHandler<Window = Self::Window> + 'static,
     {
+        let proxy = self.event_loop.create_proxy();
         let mut is_minimized = false;
-        self.event_loop.run(move |event, _, control| {
+        self.event_loop.run(move |event, event_loop, control| {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
                     log::debug!("Application has started");
@@ -77,7 +85,21 @@ impl Renderer for Wry {
                     log::debug!("Closing window was requested");
                     RenderingFlow::Exit
                 }
-                Event::UserEvent(event) => handler.on_event(event),
+                Event::UserEvent(request) => match request {
+                    Request::Event(event) => handler.on_event(event),
+                    Request::CreateWindow => {
+                        let created = WebViewWindow::new(
+                            &self.config,
+                            event_loop,
+                            proxy.clone(),
+                            self.menu.window_menu(),
+                        );
+                        match created {
+                            Ok(window) => handler.on_window_created(window),
+                            Err(err) => handler.on_event(RendererEvent::Error(err)),
+                        }
+                    }
+                },
                 Event::WindowEvent { event: WindowEvent::Resized(size), .. } => {
                     let next_minimized = size.height == 0 || size.width == 0;
                     if next_minimized != is_minimized {

@@ -1,5 +1,5 @@
 use super::{PathFilter, Watcher, find_watch_path_fallback, should_watch_event};
-use crate::renderer::{Event, EventSender};
+use crate::renderer::{Event, RendererHandle};
 use anyhow::{Context as _, Result};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher, recommended_watcher};
 use std::collections::HashMap;
@@ -11,7 +11,7 @@ pub struct SystemWatcher {
 }
 
 impl Watcher for SystemWatcher {
-    fn new<S: EventSender>(sender: S, mut filter: PathFilter) -> Result<Self> {
+    fn new<H: RendererHandle>(handle: H, mut filter: PathFilter) -> Result<Self> {
         let inner = recommended_watcher(move |res: notify::Result<notify::Event>| match res {
             Ok(event) if should_watch_event(event.kind) => {
                 log::debug!("Caught filesystem event: {:?}", event);
@@ -21,7 +21,7 @@ impl Watcher for SystemWatcher {
 
                 if !paths.is_empty() {
                     log::debug!("Files change event from watcher: {:?}", paths);
-                    sender.send(Event::WatchedFilesChanged(paths));
+                    handle.send(Event::WatchedFilesChanged(paths));
                 }
 
                 filter.cleanup_debouncer();
@@ -29,7 +29,7 @@ impl Watcher for SystemWatcher {
             Ok(event) => log::debug!("Ignored filesystem event: {:?}", event),
             Err(err) => {
                 log::error!("Error on watching file changes: {}", err);
-                sender.send(Event::Error(err.into()));
+                handle.send(Event::Error(err.into()));
             }
         })?;
 
