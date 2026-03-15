@@ -38,8 +38,8 @@ impl RendererHandle for Proxy {
 
 impl Renderer for Wry {
     type Handle = Proxy;
-    type Window = WebViewWindow;
     type WindowId = WindowId;
+    type Window = WebViewWindow;
 
     fn new(config: Rc<Config>) -> Result<Self> {
         // `EventLoopBuilder::with_app_id` on Linux is not usable because it can cause SEGV.

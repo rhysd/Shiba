@@ -258,7 +258,7 @@ where
                 }
 
                 #[cfg(feature = "__sanity")]
-                self.sanity.run_test();
+                self.sanity.run_test(self.window.focused().id());
             }
             Search { query, index, matcher } => {
                 self.preview.search(self.window.focused(), &query, index, matcher)?;

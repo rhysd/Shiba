@@ -11,7 +11,7 @@ impl<H: RendererHandle> SanityTest<H> {
         Self { handle: Some(handle) }
     }
 
-    pub fn run_test(&mut self) {
+    pub fn run_test(&mut self, id: H::WindowId) {
         let Some(handle) = self.handle.take() else {
             return;
         };
@@ -36,10 +36,10 @@ impl<H: RendererHandle> SanityTest<H> {
                 Quit,
             ];
 
-            for msg in messages {
+            for message in messages {
                 sleep(Duration::from_millis(1000));
-                log::debug!("Sanity test case is about to send message: {msg:?}");
-                handle.send(Event::WindowMessage(msg));
+                log::debug!("Sanity test case is about to send message: {message:?}");
+                handle.send(Event::WindowMessage { message, id: id.clone() });
             }
         });
     }
