@@ -229,7 +229,11 @@ where
         self.opener.open(&path)
     }
 
-    fn handle_window_message(&mut self, message: MessageFromWindow) -> Result<RenderingFlow> {
+    fn handle_window_message(
+        &mut self,
+        id: R::WindowId,
+        message: MessageFromWindow,
+    ) -> Result<RenderingFlow> {
         use MessageFromWindow::*;
         match message {
             Init => {
@@ -329,11 +333,11 @@ where
         Ok(RenderingFlow::Continue)
     }
 
-    fn handle_event(&mut self, event: Event) -> Result<RenderingFlow> {
+    fn handle_event(&mut self, event: Event<R::WindowId>) -> Result<RenderingFlow> {
         log::debug!("Handling event {:?}", event);
         match event {
-            Event::WindowMessage(msg) => return self.handle_window_message(msg),
-            Event::FileDrop(mut path) => {
+            Event::WindowMessage { message, id } => return self.handle_window_message(id, message),
+            Event::FileDrop { mut path, id } => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
@@ -358,7 +362,7 @@ where
                     }
                 }
             }
-            Event::OpenLocalPath(mut path) => {
+            Event::OpenLocalPath { mut path, id } => {
                 if path.is_relative()
                     && let Some(current_file) = self.history.current()
                     && let Some(dir) = current_file.parent()
@@ -380,7 +384,7 @@ where
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
-            Event::Minimized(is_minimized) => {
+            Event::Minimized { is_minimized, id } => {
                 self.window.focused_mut().save_memory(is_minimized)?
             }
             Event::Error(err) => self.dialog.alert(&err, &self.window.focused().handles()),
@@ -415,8 +419,9 @@ where
     D: Dialog,
 {
     type Window = R::Window;
+    type WindowId = R::WindowId;
 
-    fn on_event(&mut self, event: Event) -> RenderingFlow {
+    fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
             let err = err.context("Could not handle event");
             self.dialog.alert(&err, &self.window.focused().handles());

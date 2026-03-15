@@ -1,4 +1,5 @@
 use crate::renderer::{Event, MenuItem as AppMenuItem, RendererHandle};
+use crate::wry::types::Proxy;
 use anyhow::Result;
 use muda::dpi::{LogicalPosition, Position};
 use muda::{
@@ -64,7 +65,7 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn create<H: RendererHandle + Sync>(&self, handle: H) -> Result<()> {
+    pub fn create(&self, proxy: Proxy) -> Result<()> {
         fn item(text: &str) -> MenuItem {
             MenuItem::new(text, true, None)
         }
@@ -242,7 +243,7 @@ impl Menu {
                 let err = anyhow::anyhow!("Unknown menu item ID in event {:?}: {:?}", event, ids);
                 Event::Error(err)
             };
-            handle.send(event);
+            proxy.send(event);
         }));
         log::debug!("Set menu event handler with {} menu items", num_ids);
 

@@ -98,20 +98,20 @@ pub enum MessageFromWindow {
 }
 
 #[derive(Debug)]
-pub enum Request {
-    Event(Event),
+pub enum Request<WindowId> {
+    Event(Event<WindowId>),
     CreateWindow,
 }
 
 #[derive(Debug)]
-pub enum Event {
-    WindowMessage(MessageFromWindow),
-    FileDrop(PathBuf),
+pub enum Event<WindowId> {
+    WindowMessage { message: MessageFromWindow, id: WindowId },
+    FileDrop { path: PathBuf, id: WindowId },
     WatchedFilesChanged(Vec<PathBuf>),
-    OpenLocalPath(PathBuf),
+    OpenLocalPath { path: PathBuf, id: WindowId },
     OpenExternalLink(String),
     Menu(MenuItem),
-    Minimized(bool),
+    Minimized { is_minimized: bool, id: WindowId },
     Error(Error),
 }
 
@@ -215,7 +215,9 @@ pub enum RenderingFlow {
 /// Handle to access the renderer accross threads. It is used to send the user events to the main thread
 /// from another worker thread.
 pub trait RendererHandle: 'static + Send + Clone {
-    fn send(&self, event: Event);
+    type WindowId: PartialEq + Eq + Hash + Debug;
+
+    fn send(&self, event: Event<Self::WindowId>);
     fn create_window(&self);
 }
 
@@ -250,21 +252,24 @@ pub trait Window {
 
 /// Renderer manages the entire rendering lifecycle.
 pub trait Renderer: Sized {
-    type Handle: RendererHandle;
     type Window: Window;
+    type WindowId: PartialEq + Eq + Hash + Debug;
+    type Handle: RendererHandle;
 
     fn new(config: Rc<Config>) -> Result<Self>;
     fn create_handle(&self) -> Self::Handle;
     /// Starts the rendering execution and runs until the process exits.
     fn start<H>(self, handler: H) -> !
     where
-        H: EventHandler<Window = Self::Window> + 'static;
+        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static;
 }
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
     type Window: Window;
-    fn on_event(&mut self, event: Event) -> RenderingFlow;
+    type WindowId: PartialEq + Eq + Hash + Debug;
+
+    fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow;
     fn on_exit(&mut self) -> i32;
     fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow;
 }

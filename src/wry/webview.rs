@@ -6,10 +6,10 @@ use crate::renderer::{
 };
 use crate::wry::menu::WindowMenu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
+use crate::wry::types::{EventLoop, Proxy};
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
-use tao::event_loop::{EventLoopProxy, EventLoopWindowTarget};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -26,9 +26,6 @@ use wry::http::header::CONTENT_TYPE;
 use wry::{DragDropEvent, NewWindowResponse, WebContext, WebView, WebViewBuilder};
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
-
-pub type EventLoop = EventLoopWindowTarget<Request>;
-type Proxy = EventLoopProxy<Request>;
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -198,6 +195,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
     let loader = Assets::new(config);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
+    let id = window.id();
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
     let mut builder = WebViewBuilder::new_with_web_context(&mut context);
@@ -205,9 +203,11 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
     builder = builder
         .with_url("shiba://localhost/index.html")
         .with_ipc_handler(move |msg| {
-            let msg: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
-            log::debug!("Message from WebView: {msg:?}");
-            if let Err(err) = ipc_proxy.send_event(Request::Event(Event::WindowMessage(msg))) {
+            let message: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
+            log::debug!("Message from WebView: {message:?}");
+            if let Err(err) =
+                ipc_proxy.send_event(Request::Event(Event::WindowMessage { message, id }))
+            {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
@@ -217,7 +217,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
                 // TODO: Support dropping multiple files
                 if let Some(path) = paths.into_iter().next()
                     && let Err(err) =
-                        file_drop_proxy.send_event(Request::Event(Event::FileDrop(path)))
+                        file_drop_proxy.send_event(Request::Event(Event::FileDrop { path, id }))
                 {
                     log::error!("Could not send user event for file drop: {err}");
                 }
@@ -256,7 +256,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
                 let path = url.replace('/', "\\").into();
 
                 log::debug!("Opening local path {:?}", path);
-                Event::OpenLocalPath(path)
+                Event::OpenLocalPath { path, id }
             } else {
                 log::debug!("Navigating to external URL {:?}", url);
                 Event::OpenExternalLink(url)

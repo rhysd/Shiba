@@ -1,18 +1,18 @@
 #[cfg(target_os = "macos")]
 use crate::assets::set_app_icon_to_dock;
 use crate::config::Config;
-use crate::renderer::{
-    Event as RendererEvent, EventHandler, Renderer, RendererHandle, RenderingFlow, Request,
-};
+use crate::renderer::{EventHandler, Renderer, RendererHandle, RenderingFlow};
 use crate::wry::menu::Menu;
+use crate::wry::types::{Event as RendererEvent, Proxy, Request};
 use crate::wry::webview::WebViewWindow;
 use anyhow::Result;
 use std::rc::Rc;
 use tao::event::{Event, StartCause, WindowEvent};
 use tao::event_loop::EventLoop;
-use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
+use tao::event_loop::{ControlFlow, EventLoopBuilder};
 #[cfg(target_os = "windows")]
 use tao::platform::windows::EventLoopBuilderExtWindows as _;
+use tao::window::WindowId;
 
 pub struct Wry {
     event_loop: EventLoop<Request>,
@@ -20,7 +20,9 @@ pub struct Wry {
     config: Rc<Config>,
 }
 
-impl RendererHandle for EventLoopProxy<Request> {
+impl RendererHandle for Proxy {
+    type WindowId = WindowId;
+
     fn send(&self, event: RendererEvent) {
         if let Err(err) = self.send_event(Request::Event(event)) {
             log::error!("Could not send user event for message from WebView: {}", err);
@@ -35,8 +37,9 @@ impl RendererHandle for EventLoopProxy<Request> {
 }
 
 impl Renderer for Wry {
-    type Handle = EventLoopProxy<Request>;
+    type Handle = Proxy;
     type Window = WebViewWindow;
+    type WindowId = WindowId;
 
     fn new(config: Rc<Config>) -> Result<Self> {
         // `EventLoopBuilder::with_app_id` on Linux is not usable because it can cause SEGV.
@@ -65,7 +68,7 @@ impl Renderer for Wry {
 
     fn start<H>(self, mut handler: H) -> !
     where
-        H: EventHandler<Window = Self::Window> + 'static,
+        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static,
     {
         let proxy = self.event_loop.create_proxy();
         let mut is_minimized = false;
@@ -100,12 +103,12 @@ impl Renderer for Wry {
                         }
                     }
                 },
-                Event::WindowEvent { event: WindowEvent::Resized(size), .. } => {
+                Event::WindowEvent { event: WindowEvent::Resized(size), window_id: id, .. } => {
                     let next_minimized = size.height == 0 || size.width == 0;
                     if next_minimized != is_minimized {
                         is_minimized = next_minimized;
                         log::debug!("Minimized state changed: {is_minimized}");
-                        handler.on_event(RendererEvent::Minimized(is_minimized))
+                        handler.on_event(RendererEvent::Minimized { is_minimized, id })
                     } else {
                         RenderingFlow::Continue
                     }
