@@ -8,8 +8,18 @@ use std::fs;
 use std::mem;
 use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
+
+pub fn home_dir() -> Option<&'static Path> {
+    static HOME_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+        let home_dir = dirs::home_dir();
+        #[cfg(target_os = "windows")]
+        let home_dir = home_dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
+        home_dir
+    });
+    HOME_DIR.as_deref()
+}
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -312,9 +322,10 @@ fn resolve_path<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Pat
     }
 
     let path = if let Some(rel) = s.strip_prefix(PREFIX) {
-        let Some(mut home) = dirs::home_dir() else {
+        let Some(home) = home_dir() else {
             return Ok(None);
         };
+        let mut home = home.to_path_buf();
         home.push(rel);
         home
     } else {

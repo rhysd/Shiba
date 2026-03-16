@@ -39,7 +39,7 @@ impl<H: RendererHandle> SanityTest<H> {
             for message in messages {
                 sleep(Duration::from_millis(1000));
                 log::debug!("Sanity test case is about to send message: {message:?}");
-                handle.send(Event::WindowMessage { message, id: id.clone() });
+                handle.send(Event::WindowMessage { message, id });
             }
         });
     }
