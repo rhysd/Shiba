@@ -513,6 +513,10 @@ impl RendererWindow for WebViewWindow {
         WindowHandles::new(&self.window)
     }
 
+    fn is_focused(&self) -> bool {
+        self.window.is_focused()
+    }
+
     fn id(&self) -> Self::Id {
         self.window.id()
     }

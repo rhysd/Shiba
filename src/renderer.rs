@@ -111,7 +111,6 @@ pub enum Event<WindowId> {
     OpenLocalPath { path: PathBuf, id: WindowId },
     OpenExternalLink(String),
     Menu(MenuItem),
-    Minimized { is_minimized: bool, id: WindowId },
     Error(Error),
 }
 
@@ -209,7 +208,7 @@ impl<'a> WindowHandles<'a> {
 #[derive(Debug)]
 pub enum RenderingFlow {
     Continue,
-    Exit,
+    Exit(i32),
 }
 
 /// Handle to access the renderer accross threads. It is used to send the user events to the main thread
@@ -247,6 +246,7 @@ pub trait Window {
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cache(&mut self) -> Result<()>;
     fn handles(&self) -> WindowHandles<'_>;
+    fn is_focused(&self) -> bool;
     fn id(&self) -> Self::Id;
 }
 
@@ -270,8 +270,10 @@ pub trait EventHandler {
     type WindowId: PartialEq + Eq + Hash + Clone + Debug + Send + Sync;
 
     fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow;
-    fn on_exit(&mut self) -> i32;
     fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow;
+    fn on_window_minimized(&mut self, minimized: bool, id: Self::WindowId) -> RenderingFlow;
+    fn on_window_focused(&mut self, id: Self::WindowId) -> RenderingFlow;
+    fn on_window_closed(&mut self, id: Self::WindowId) -> RenderingFlow;
 }
 
 #[cfg(test)]

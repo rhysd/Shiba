@@ -84,9 +84,9 @@ impl Renderer for Wry {
 
                     RenderingFlow::Continue
                 }
-                Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
-                    log::debug!("Closing window was requested");
-                    RenderingFlow::Exit
+                Event::WindowEvent { event: WindowEvent::CloseRequested, window_id, .. } => {
+                    log::debug!("Closing window was requested: {window_id:?}");
+                    handler.on_window_closed(window_id)
                 }
                 Event::UserEvent(request) => match request {
                     Request::Event(event) => handler.on_event(event),
@@ -103,22 +103,26 @@ impl Renderer for Wry {
                         }
                     }
                 },
-                Event::WindowEvent { event: WindowEvent::Resized(size), window_id: id, .. } => {
+                Event::WindowEvent { event: WindowEvent::Resized(size), window_id, .. } => {
                     let next_minimized = size.height == 0 || size.width == 0;
                     if next_minimized != is_minimized {
                         is_minimized = next_minimized;
-                        log::debug!("Minimized state changed: {is_minimized}");
-                        handler.on_event(RendererEvent::Minimized { is_minimized, id })
+                        log::debug!("Minimized state changed for {window_id:?}: {is_minimized}");
+                        handler.on_window_minimized(is_minimized, window_id)
                     } else {
                         RenderingFlow::Continue
                     }
+                }
+                Event::WindowEvent { event: WindowEvent::Focused(true), window_id, .. } => {
+                    handler.on_window_focused(window_id);
+                    RenderingFlow::Continue
                 }
                 _ => RenderingFlow::Continue,
             };
 
             *control = match flow {
                 RenderingFlow::Continue => ControlFlow::Wait,
-                RenderingFlow::Exit => ControlFlow::ExitWithCode(handler.on_exit()),
+                RenderingFlow::Exit(code) => ControlFlow::ExitWithCode(code),
             };
         })
     }

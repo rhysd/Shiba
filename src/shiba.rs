@@ -12,25 +12,94 @@ use crate::renderer::{
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
+use std::collections::HashMap;
 use std::mem;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-// TODO: Only a single window is currently supported
-pub struct Windows<W>(Option<W>);
+struct WindowManager<R: Renderer> {
+    windows: HashMap<R::WindowId, R::Window>,
+    focused: Option<R::WindowId>,
+}
 
-impl<W> Windows<W> {
-    fn focused(&self) -> &W {
-        self.0.as_ref().unwrap()
+impl<R: Renderer> Default for WindowManager<R> {
+    fn default() -> Self {
+        Self { windows: HashMap::new(), focused: None }
+    }
+}
+
+impl<R: Renderer> WindowManager<R> {
+    fn focused(&self) -> &R::Window {
+        if let Some(id) = self.focused.as_ref() {
+            self.windows.get(id).expect("Focused window must exist")
+        } else {
+            self.windows.values().next().expect("At least one window exist")
+        }
     }
 
-    fn focused_mut(&mut self) -> &mut W {
-        self.0.as_mut().unwrap()
+    fn focused_mut(&mut self) -> &mut R::Window {
+        if let Some(id) = self.focused.as_ref() {
+            self.windows.get_mut(id).expect("Focused window must exist")
+        } else {
+            self.windows.values_mut().next().expect("At least one window exist")
+        }
+    }
+
+    fn get(&self, id: R::WindowId) -> &R::Window {
+        self.windows.get(&id).unwrap_or_else(|| self.focused())
+    }
+
+    fn get_mut(&mut self, id: R::WindowId) -> &mut R::Window {
+        if let Some(window) = self.windows.get_mut(&id).map(|v| v as *mut _) {
+            // Safety:
+            // `window` originates from `self.windows.get_mut(&key)`, so it points to a valid element
+            // inside `self.windows`. Converting it to a raw pointer ends the borrow from `get_mut`.
+            // In this branch we immediately reconstruct `&mut V` and return it without mutating the
+            // map or creating any other mutable references to the same element. The `else` branch
+            // (which calls `focused_mut`) is not executed in this case, so no aliasing mutable
+            // reference can occur.
+            unsafe { &mut *window }
+        } else {
+            log::debug!("Window ID {id:?} does not exist. Fall back to focused window");
+            self.focused_mut()
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.windows.is_empty()
+    }
+
+    fn add(&mut self, window: R::Window) {
+        let id = window.id();
+        log::debug!("Add new window: {id:?}");
+        self.windows.insert(id.clone(), window);
+        self.set_focus(id);
+    }
+
+    fn delete(&mut self, id: R::WindowId) -> Option<R::Window> {
+        let removed = self.windows.remove(&id)?;
+        log::debug!("Deleted window {id:?}");
+        if self.focused == Some(id) {
+            self.focused = self
+                .windows
+                .iter()
+                .find_map(|(id, window)| window.is_focused().then(|| id.clone()));
+        }
+        Some(removed)
+    }
+
+    fn set_focus(&mut self, id: R::WindowId) {
+        let focused = Some(id.clone());
+        // Invariant: Focused window ID must exist in `self.windows`
+        if self.focused != focused && self.windows.contains_key(&id) {
+            log::debug!("Set focus on window: {id:?}");
+            self.focused = focused;
+        }
     }
 }
 
 pub struct Shiba<R: Renderer, O, W, D> {
-    window: Windows<R::Window>,
+    windows: WindowManager<R>,
     opener: O,
     history: History,
     watcher: W,
@@ -91,7 +160,7 @@ where
         }
 
         Ok(Self {
-            window: Windows(None),
+            windows: WindowManager::default(),
             opener: O::default(),
             history,
             watcher,
@@ -106,7 +175,7 @@ where
 
     fn open_preview(&mut self, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
-        if self.preview.show(&path, self.window.focused())? {
+        if self.preview.show(&path, self.windows.focused())? {
             self.history.push(path);
         }
         Ok(())
@@ -125,7 +194,7 @@ where
 
         while let Some(path) = current {
             log::debug!("Try to navigate preview page with direction {dir:?}: {path:?}");
-            if self.preview.show(path, self.window.focused())? {
+            if self.preview.show(path, self.windows.focused())? {
                 return Ok(());
             }
             current = self.history.delete(dir);
@@ -144,15 +213,15 @@ where
         }
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
-            self.preview.show(path, self.window.focused())?;
-            self.window.focused().send_message(MessageToWindow::Reload)?;
+            self.preview.show(path, self.windows.focused())?;
+            self.windows.focused().send_message(MessageToWindow::Reload)?;
         }
         Ok(())
     }
 
     fn open_files(&mut self) -> Result<()> {
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
-        let mut files = self.dialog.pick_files(&self.window.focused().handles());
+        let mut files = self.dialog.pick_files(&self.windows.focused().handles());
         #[cfg(target_os = "windows")]
         let mut files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
         log::debug!("{} files were chosen by dialog", files.len());
@@ -172,7 +241,7 @@ where
     }
 
     fn open_dirs(&mut self) -> Result<()> {
-        let dirs = self.dialog.pick_dirs(&self.window.focused().handles());
+        let dirs = self.dialog.pick_dirs(&self.windows.focused().handles());
         #[cfg(target_os = "windows")]
         let dirs: Vec<_> = dirs.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
@@ -187,40 +256,40 @@ where
 
     fn zoom(&mut self, zoom_in: bool) -> Result<()> {
         let level = if zoom_in {
-            self.window.focused().zoom_level().zoom_in()
+            self.windows.focused().zoom_level().zoom_in()
         } else {
-            self.window.focused().zoom_level().zoom_out()
+            self.windows.focused().zoom_level().zoom_out()
         };
 
         let Some(level) = level else {
             return Ok(());
         };
 
-        self.window.focused_mut().zoom(level)?;
+        self.windows.focused_mut().zoom(level)?;
         let percent = level.percent();
         log::debug!("Changed zoom factor: {}%", percent);
-        self.window.focused().send_message(MessageToWindow::Zoomed { percent })?;
+        self.windows.focused().send_message(MessageToWindow::Zoomed { percent })?;
 
         Ok(())
     }
 
     fn toggle_always_on_top(&mut self) -> Result<()> {
-        let pinned = !self.window.focused().always_on_top();
+        let pinned = !self.windows.focused().always_on_top();
         log::debug!("Toggle always-on-top (pinned={})", pinned);
-        self.window.focused_mut().set_always_on_top(pinned);
-        self.window.focused().send_message(MessageToWindow::AlwaysOnTop { pinned })
+        self.windows.focused_mut().set_always_on_top(pinned);
+        self.windows.focused().send_message(MessageToWindow::AlwaysOnTop { pinned })
     }
 
     fn toggle_maximized(&mut self) {
-        let maximized = !self.window.focused().is_maximized();
+        let maximized = !self.windows.focused().is_maximized();
         log::debug!("Toggle maximized window (maximized={})", maximized);
-        self.window.focused_mut().maximize(maximized);
+        self.windows.focused_mut().maximize(maximized);
     }
 
     fn toggle_minimized(&mut self) {
-        let minimized = !self.window.focused().is_minimized();
+        let minimized = !self.windows.focused().is_minimized();
         log::debug!("Toggle minimized window (minimized={})", minimized);
-        self.window.focused_mut().minimize(minimized);
+        self.windows.focused_mut().minimize(minimized);
     }
 
     fn open_config(&mut self) -> Result<()> {
@@ -238,48 +307,48 @@ where
         match message {
             Init => {
                 if self.config.debug() {
-                    self.window.focused().send_message(MessageToWindow::Debug)?;
+                    self.windows.focused().send_message(MessageToWindow::Debug)?;
                 }
 
-                self.window.focused().send_message(MessageToWindow::Config {
+                self.windows.focused().send_message(MessageToWindow::Config {
                     keymaps: self.config.keymaps(),
                     search: self.config.search(),
                     home: self.preview.home_dir(),
-                    window: self.window.focused().appearance(),
+                    window: self.windows.focused().appearance(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
-                self.window.focused().show();
+                self.windows.focused().show();
 
                 if let Some(path) = mem::take(&mut self.init_file) {
                     self.open_preview(path)?;
                 } else {
-                    self.window.focused().send_message(MessageToWindow::Welcome)?;
+                    self.windows.focused().send_message(MessageToWindow::Welcome)?;
                 }
 
                 #[cfg(feature = "__sanity")]
-                self.sanity.run_test(self.window.focused().id());
+                self.sanity.run_test(self.windows.focused().id());
             }
             Search { query, index, matcher } => {
-                self.preview.search(self.window.focused(), &query, index, matcher)?;
+                self.preview.search(self.windows.focused(), &query, index, matcher)?;
             }
             GoForward => self.navigate(Direction::Forward)?,
             GoBack => self.navigate(Direction::Back)?,
             GoTop if self.preview.is_empty() => self.navigate(Direction::Back)?,
             GoTop => self.navigate(Direction::Top)?,
-            History => self.history.send_paths(self.window.focused())?,
+            History => self.history.send_paths(self.windows.focused())?,
             Reload => self.reload()?,
             FileDialog => self.open_files()?,
             DirDialog => self.open_dirs()?,
             OpenFile { path } => self.open_preview(PathBuf::from(path))?,
             ZoomIn => self.zoom(true)?,
             ZoomOut => self.zoom(false)?,
-            DragWindow => self.window.focused().drag_window()?,
+            DragWindow => self.windows.focused().drag_window()?,
             ToggleMaximized => self.toggle_maximized(),
             ToggleMinimized => self.toggle_minimized(),
-            Quit => return Ok(RenderingFlow::Exit),
-            OpenMenu { position } => self.window.focused().show_menu_at(position),
-            ToggleMenuBar => self.window.focused_mut().toggle_menu()?,
+            Quit => return Ok(self.quit(self.windows.get(id))),
+            OpenMenu { position } => self.windows.focused().show_menu_at(position),
+            ToggleMenuBar => self.windows.focused_mut().toggle_menu()?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             EditConfig => self.open_config()?,
             Error { message } => anyhow::bail!("Error reported from renderer: {}", message),
@@ -292,7 +361,7 @@ where
 
         log::debug!("Menu item was clicked: {:?}", item);
         match item {
-            Quit => return Ok(RenderingFlow::Exit),
+            Quit => return Ok(self.quit(self.windows.focused())),
             Forward => self.navigate(Direction::Forward)?,
             Back => self.navigate(Direction::Back)?,
             Top if self.preview.is_empty() => self.navigate(Direction::Back)?,
@@ -300,33 +369,33 @@ where
             Reload => self.reload()?,
             OpenFiles => self.open_files()?,
             WatchDirs => self.open_dirs()?,
-            Search => self.window.focused().send_message(MessageToWindow::Search)?,
-            SearchNext => self.window.focused().send_message(MessageToWindow::SearchNext)?,
+            Search => self.windows.focused().send_message(MessageToWindow::Search)?,
+            SearchNext => self.windows.focused().send_message(MessageToWindow::SearchNext)?,
             SearchPrevious => {
-                self.window.focused().send_message(MessageToWindow::SearchPrevious)?
+                self.windows.focused().send_message(MessageToWindow::SearchPrevious)?
             }
-            Outline => self.window.focused().send_message(MessageToWindow::Outline)?,
+            Outline => self.windows.focused().send_message(MessageToWindow::Outline)?,
             Print if self.preview.is_empty() => {} // Do not print welcome page
-            Print => self.window.focused().print()?,
+            Print => self.windows.focused().print()?,
             ZoomIn => self.zoom(true)?,
             ZoomOut => self.zoom(false)?,
             #[cfg(not(target_os = "macos"))]
             ToggleMenuBar => self.window.focused_mut().toggle_menu()?,
-            History => self.history.send_paths(self.window.focused())?,
+            History => self.history.send_paths(self.windows.focused())?,
             ToggleAlwaysOnTop => self.toggle_always_on_top()?,
             ToggleMinimizeWindow => self.toggle_minimized(),
             ToggleMaximizeWindow => self.toggle_maximized(),
-            Help => self.window.focused().send_message(MessageToWindow::Help)?,
+            Help => self.windows.focused().send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
             DeleteHistory => {
                 if self.dialog.yes_no(
                     "Deleting history...",
                     "Are you sure you want to delete all history?",
-                    &self.window.focused().handles(),
+                    &self.windows.focused().handles(),
                 ) {
                     self.history.clear(&self.config)?;
-                    self.window.focused_mut().delete_cache()?;
+                    self.windows.focused_mut().delete_cache()?;
                 }
             }
         }
@@ -349,7 +418,7 @@ where
                 if let Some(current) = self.history.current()
                     && paths.iter().any(|p| p == current)
                 {
-                    self.preview.show(current, self.window.focused())?;
+                    self.preview.show(current, self.windows.focused())?;
                     return Ok(RenderingFlow::Continue);
                 }
                 // Choose the last one to preview if the current file is not included in `paths`
@@ -357,7 +426,7 @@ where
                     if !path.is_absolute() {
                         path = path.canonicalize()?;
                     }
-                    if self.preview.show(&path, self.window.focused())? {
+                    if self.preview.show(&path, self.windows.focused())? {
                         self.history.push(path);
                     }
                 }
@@ -384,30 +453,36 @@ where
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
-            Event::Minimized { is_minimized, id } => {
-                self.window.focused_mut().save_memory(is_minimized)?
-            }
-            Event::Error(err) => self.dialog.alert(&err, &self.window.focused().handles()),
+            Event::Error(err) => self.dialog.alert(&err, &self.windows.focused().handles()),
         }
         Ok(RenderingFlow::Continue)
     }
 
-    fn shutdown(&self) -> Result<()> {
-        log::debug!("Handling application exit");
+    fn save(&self, last_window: &R::Window) -> Result<()> {
+        log::debug!("Save the persistent data before quit with window {:?}", last_window.id());
 
-        // Hide the window before destroying it to avoid flickering.
-        self.window.focused().hide();
-
+        let mut result = Ok(()); // Don't return early
         if self.config.window().restore
-            && let Some(state) = self.window.focused().state()
+            && let Some(state) = last_window.state()
             && state.height > 0.0
             && state.width > 0.0
         {
             log::debug!("Saving window state as persistent data: {:?}", state);
-            self.config.data_dir().save(&state)?;
+            result = self.config.data_dir().save(&state);
         }
-        self.history.save(&self.config)?;
-        Ok(())
+
+        result.or(self.history.save(&self.config))
+    }
+
+    fn quit(&self, last_window: &R::Window) -> RenderingFlow {
+        last_window.hide();
+        if let Err(error) = self.save(last_window) {
+            let error = error.context("Error while quitting the application");
+            self.dialog.alert(&error, &last_window.handles());
+            RenderingFlow::Exit(1)
+        } else {
+            RenderingFlow::Exit(0)
+        }
     }
 }
 
@@ -424,25 +499,40 @@ where
     fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
             let err = err.context("Could not handle event");
-            self.dialog.alert(&err, &self.window.focused().handles());
+            self.dialog.alert(&err, &self.windows.focused().handles());
             RenderingFlow::Continue
         })
     }
 
-    fn on_exit(&mut self) -> i32 {
-        if let Err(err) = self.shutdown() {
-            let err = err.context("Could not shutdown application");
-            // Don't pass window handles because the window is already hidden in `self.shutdown` call.
-            self.dialog.alert(&err, &WindowHandles::unsupported());
-            1
-        } else {
-            0
-        }
+    fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow {
+        self.windows.add(window);
+        RenderingFlow::Continue
     }
 
-    fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow {
-        log::debug!("Window created: {:?}", window.id());
-        self.window.0 = Some(window); // TODO
+    fn on_window_minimized(&mut self, is_minimized: bool, id: Self::WindowId) -> RenderingFlow {
+        if let Err(err) = self.windows.focused_mut().save_memory(is_minimized) {
+            let err = err.context("Could not save memory on minimized window");
+            self.dialog.alert(&err, &self.windows.focused().handles());
+        }
         RenderingFlow::Continue
+    }
+
+    fn on_window_focused(&mut self, id: Self::WindowId) -> RenderingFlow {
+        self.windows.set_focus(id);
+        RenderingFlow::Continue
+    }
+
+    fn on_window_closed(&mut self, id: Self::WindowId) -> RenderingFlow {
+        let Some(window) = self.windows.delete(id.clone()) else {
+            log::error!("Window was closed but it is not managed by Shiba: {id:?}");
+            return RenderingFlow::Continue;
+        };
+
+        if self.windows.is_empty() {
+            log::debug!("No window remains after the last window was closed");
+            self.quit(&window)
+        } else {
+            RenderingFlow::Continue
+        }
     }
 }
