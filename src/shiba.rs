@@ -12,7 +12,7 @@ use crate::renderer::{
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::mem;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -29,8 +29,8 @@ impl<R: Renderer> Default for WindowManager<R> {
 }
 
 impl<R: Renderer> WindowManager<R> {
-    fn focused(&self) -> (&R::Window, &Preview) {
-        let (win, prev) = if let Some(id) = self.focused.as_ref() {
+    pub fn focused(&self) -> (&R::Window, &Preview) {
+        let (win, prev) = if let Some(id) = &self.focused {
             self.windows.get(id).expect("Focused window must exist")
         } else {
             self.windows.values().next().expect("At least one window exist")
@@ -38,7 +38,7 @@ impl<R: Renderer> WindowManager<R> {
         (win, prev)
     }
 
-    fn focused_mut(&mut self) -> (&mut R::Window, &mut Preview) {
+    pub fn focused_mut(&mut self) -> (&mut R::Window, &mut Preview) {
         let (win, prev) = if let Some(id) = self.focused.as_ref() {
             self.windows.get_mut(id).expect("Focused window must exist")
         } else {
@@ -47,11 +47,11 @@ impl<R: Renderer> WindowManager<R> {
         (win, prev)
     }
 
-    fn get(&self, id: R::WindowId) -> (&R::Window, &Preview) {
+    pub fn get(&self, id: R::WindowId) -> (&R::Window, &Preview) {
         if let Some((win, prev)) = self.windows.get(&id) { (win, prev) } else { self.focused() }
     }
 
-    fn get_mut(&mut self, id: R::WindowId) -> (&mut R::Window, &mut Preview) {
+    pub fn get_mut(&mut self, id: R::WindowId) -> (&mut R::Window, &mut Preview) {
         if let Some(window) = self.windows.get_mut(&id).map(|v| v as *mut _) {
             // Safety:
             // `window` originates from `self.windows.get_mut(&key)`, so it points to a valid element
@@ -68,18 +68,18 @@ impl<R: Renderer> WindowManager<R> {
         }
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.windows.is_empty()
     }
 
-    fn add(&mut self, window: R::Window) {
+    pub fn add(&mut self, window: R::Window) {
         let id = window.id();
         log::debug!("Add new window: {id:?}");
         self.windows.insert(id, (window, Preview::default()));
         self.set_focus(id);
     }
 
-    fn delete(&mut self, id: R::WindowId) -> Option<(R::Window, Preview)> {
+    pub fn delete(&mut self, id: R::WindowId) -> Option<(R::Window, Preview)> {
         let removed = self.windows.remove(&id)?;
         log::debug!("Deleted window {id:?}");
         if self.focused == Some(id) {
@@ -93,21 +93,21 @@ impl<R: Renderer> WindowManager<R> {
         Some(removed)
     }
 
-    fn set_focus(&mut self, id: R::WindowId) {
-        let focused = Some(id);
+    pub fn set_focus(&mut self, id: R::WindowId) {
         // Invariant: Focused window ID must exist in `self.windows`
-        if self.focused != focused && self.windows.contains_key(&id) {
-            log::debug!("Set focus on window: {id:?}");
-            self.focused = focused;
-        }
+        assert!(self.windows.contains_key(&id));
+        log::debug!("Set focused window: {id:?}");
+        self.focused = Some(id);
     }
 
-    fn focused_id(&self) -> R::WindowId {
-        self.focused.unwrap()
+    pub fn focused_id(&self) -> R::WindowId {
+        self.focused
+            .unwrap_or_else(|| *self.windows.keys().next().expect("At least one window exists"))
     }
 }
 
 pub struct Shiba<R: Renderer, O, W, D> {
+    renderer: R::Handle,
     windows: WindowManager<R>,
     opener: O,
     history: History,
@@ -115,7 +115,7 @@ pub struct Shiba<R: Renderer, O, W, D> {
     dialog: D,
     config: Rc<Config>,
     preview: Preview,
-    init_file: Option<PathBuf>,
+    init_files: VecDeque<PathBuf>,
     #[cfg(feature = "__sanity")]
     sanity: SanityTest<R::Handle>,
 }
@@ -149,7 +149,6 @@ where
         let renderer = R::new(config.clone()).map_err(on_err::<D>)?;
         let dog = Self::new(watch_paths, init_file, config, &renderer).map_err(on_err::<D>)?;
 
-        renderer.create_handle().create_window();
         renderer.start(dog)
     }
 
@@ -167,8 +166,11 @@ where
             watcher.watch(&path)?;
             history.push(path);
         }
+        let handle = renderer.create_handle();
+        handle.create_window();
 
         Ok(Self {
+            renderer: handle,
             windows: WindowManager::default(),
             opener: O::default(),
             history,
@@ -176,7 +178,7 @@ where
             dialog: D::new(&config)?,
             config,
             preview: Preview::default(),
-            init_file,
+            init_files: init_file.into_iter().collect(),
             #[cfg(feature = "__sanity")]
             sanity: SanityTest::new(renderer.create_handle()),
         })
@@ -338,7 +340,7 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 window.show();
 
-                if let Some(path) = mem::take(&mut self.init_file) {
+                if let Some(path) = self.init_files.pop_front() {
                     self.open_preview(id, path)?;
                 } else {
                     window.send_message(MessageToWindow::Welcome)?;
@@ -475,6 +477,29 @@ where
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
+            Event::NewWindow { init_file } => {
+                if let Some(mut path) = init_file {
+                    if path.is_relative()
+                        && let Some(current_file) = self.history.current()
+                        && let Some(dir) = current_file.parent()
+                    {
+                        path = dir.join(path).canonicalize()?;
+                    }
+                    let path = path;
+                    if self.config.watch().file_extensions.matches(&path) {
+                        log::debug!("Creating new window with file: {:?}", path);
+                        self.init_files.push_back(path);
+                        self.renderer.create_window();
+                    } else {
+                        log::debug!("Opening local link item clicked in WebView: {:?}", path);
+                        self.opener
+                            .open(&path)
+                            .with_context(|| format!("opening path {:?}", &path))?;
+                    }
+                } else {
+                    self.renderer.create_window(); // Create new welcome window
+                }
+            }
             Event::Error(err) => self.dialog.alert(&err, &self.windows.focused().0.handles()),
         }
         Ok(RenderingFlow::Continue)

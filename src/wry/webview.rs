@@ -192,6 +192,7 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
 fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
     let file_drop_proxy = ipc_proxy.clone();
     let navigation_proxy = ipc_proxy.clone();
+    let new_window_proxy = ipc_proxy.clone();
     let loader = Assets::new(config);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
@@ -268,8 +269,39 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
 
             false // Don't allow navigating to any external links
         })
-        .with_new_window_req_handler(|url, _| {
-            log::debug!("Rejected to open new window for URL: {}", url);
+        .with_new_window_req_handler(move |mut url, _| {
+            // Custom protocol URLs are different for each platform
+            //   macOS, Linux → <scheme_name>://<path>
+            //   Windows → https://<scheme_name>.<path>
+            #[cfg(not(target_os = "windows"))]
+            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
+            #[cfg(target_os = "windows")]
+            const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
+
+            let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
+                log::debug!("Creating new window with custom protocol URL {}", url);
+                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
+
+                if url.is_empty() {
+                    url.push('.');
+                }
+
+                #[cfg(not(target_os = "windows"))]
+                let path = url.into();
+                #[cfg(target_os = "windows")]
+                let path = url.replace('/', "\\").into();
+
+                log::debug!("Opening new window path {:?}", path);
+                Event::NewWindow { init_file: Some(path) }
+            } else {
+                log::debug!("Navigating to external URL {:?}", url);
+                Event::OpenExternalLink(url)
+            };
+
+            if let Err(e) = new_window_proxy.send_event(Request::Event(event)) {
+                log::error!("Could not send new window event: {}", e);
+            }
+
             NewWindowResponse::Deny
         })
         .with_custom_protocol("shiba".into(), move |_webview_id, request| {

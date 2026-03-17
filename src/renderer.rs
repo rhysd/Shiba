@@ -111,6 +111,7 @@ pub enum Event<WindowId> {
     OpenLocalPath { path: PathBuf, id: WindowId },
     OpenExternalLink(String),
     Menu(MenuItem),
+    NewWindow { init_file: Option<PathBuf> },
     Error(Error),
 }
 
