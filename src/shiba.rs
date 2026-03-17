@@ -456,13 +456,9 @@ where
                 }
             }
             Event::OpenLocalPath { mut path, id } => {
-                if path.is_relative()
-                    && let Some(current_file) = self.history.current()
-                    && let Some(dir) = current_file.parent()
-                {
-                    path = dir.join(path).canonicalize()?;
+                if let Some(abs_path) = self.history.absolute_path(&path) {
+                    path = abs_path;
                 }
-                let path = path;
                 let is_markdown = self.config.watch().file_extensions.matches(&path);
                 if is_markdown {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
@@ -477,27 +473,18 @@ where
                 self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
-            Event::NewWindow { init_file } => {
-                if let Some(mut path) = init_file {
-                    if path.is_relative()
-                        && let Some(current_file) = self.history.current()
-                        && let Some(dir) = current_file.parent()
-                    {
-                        path = dir.join(path).canonicalize()?;
-                    }
-                    let path = path;
-                    if self.config.watch().file_extensions.matches(&path) {
-                        log::debug!("Creating new window with file: {:?}", path);
-                        self.init_files.push_back(path);
-                        self.renderer.create_window();
-                    } else {
-                        log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                        self.opener
-                            .open(&path)
-                            .with_context(|| format!("opening path {:?}", &path))?;
-                    }
+            Event::NewWindow { init_file: None } => self.renderer.create_window(),
+            Event::NewWindow { init_file: Some(mut path) } => {
+                if let Some(abs_path) = self.history.absolute_path(&path) {
+                    path = abs_path;
+                }
+                if self.config.watch().file_extensions.matches(&path) {
+                    log::debug!("Creating new window with file: {:?}", path);
+                    self.init_files.push_back(path);
+                    self.renderer.create_window();
                 } else {
-                    self.renderer.create_window(); // Create new welcome window
+                    log::debug!("Opening local link item clicked in WebView: {:?}", path);
+                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
                 }
             }
             Event::Error(err) => self.dialog.alert(&err, &self.windows.focused().0.handles()),

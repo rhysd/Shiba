@@ -154,6 +154,17 @@ impl History {
         self.items.clear();
         config.data_dir().delete::<Data>()
     }
+
+    pub fn absolute_path(&self, path: &Path) -> Option<PathBuf> {
+        if path.is_relative()
+            && let Some(current_file) = self.current()
+            && let Some(dir) = current_file.parent()
+        {
+            dir.join(path).canonicalize().ok()
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]

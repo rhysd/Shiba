@@ -189,6 +189,30 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
     Ok((window, zoom_level, always_on_top))
 }
 
+fn parse_local_path_from_url(mut url: String) -> Result<String, String> {
+    // Custom protocol URLs are different for each platform
+    //   macOS, Linux → <scheme_name>://<path>
+    //   Windows → https://<scheme_name>.<path>
+    #[cfg(not(target_os = "windows"))]
+    const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
+    #[cfg(target_os = "windows")]
+    const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
+
+    if !url.starts_with(CUSTOM_PROTOCOL_URL) {
+        return Err(url);
+    }
+
+    url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
+    if url.is_empty() {
+        url.push('.');
+    }
+    #[cfg(not(target_os = "windows"))]
+    let path = url;
+    #[cfg(target_os = "windows")]
+    let path = url.replace('/', "\\");
+    Ok(path)
+}
+
 fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
     let file_drop_proxy = ipc_proxy.clone();
     let navigation_proxy = ipc_proxy.clone();
@@ -225,79 +249,30 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
             }
             true
         })
-        .with_navigation_handler(move |mut url| {
-            // Custom protocol URLs are different for each platform
-            //   macOS, Linux → <scheme_name>://<path>
-            //   Windows → https://<scheme_name>.<path>
-            #[cfg(not(target_os = "windows"))]
-            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
-            #[cfg(target_os = "windows")]
-            const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
-
-            let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
-                log::debug!("Navigating to custom protocol URL {}", url);
-                if &url[CUSTOM_PROTOCOL_URL.len()..] == "index.html" {
+        .with_navigation_handler(move |url| {
+            let event = match parse_local_path_from_url(url) {
+                Ok(path) if path == "/index.html" || path.starts_with("/index.html#") => {
+                    log::debug!("Navigating to index.html {path:?}");
                     return true;
                 }
-
-                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
-
-                if url.starts_with("/index.html#") {
-                    log::debug!("Allow navigating to hash link {}", url);
-                    return true;
-                }
-
-                if url.is_empty() {
-                    url.push('.');
-                }
-
-                #[cfg(not(target_os = "windows"))]
-                let path = url.into();
-                #[cfg(target_os = "windows")]
-                let path = url.replace('/', "\\").into();
-
-                log::debug!("Opening local path {:?}", path);
-                Event::OpenLocalPath { path, id }
-            } else {
-                log::debug!("Navigating to external URL {:?}", url);
-                Event::OpenExternalLink(url)
+                Ok(path) => Event::OpenLocalPath { path: path.into(), id },
+                Err(url) => Event::OpenExternalLink(url),
             };
 
+            log::debug!("Navigating to URL with event {:?}", event);
             if let Err(e) = navigation_proxy.send_event(Request::Event(event)) {
                 log::error!("Could not send navigation event: {}", e);
             }
 
             false // Don't allow navigating to any external links
         })
-        .with_new_window_req_handler(move |mut url, _| {
-            // Custom protocol URLs are different for each platform
-            //   macOS, Linux → <scheme_name>://<path>
-            //   Windows → https://<scheme_name>.<path>
-            #[cfg(not(target_os = "windows"))]
-            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
-            #[cfg(target_os = "windows")]
-            const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
-
-            let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
-                log::debug!("Creating new window with custom protocol URL {}", url);
-                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
-
-                if url.is_empty() {
-                    url.push('.');
-                }
-
-                #[cfg(not(target_os = "windows"))]
-                let path = url.into();
-                #[cfg(target_os = "windows")]
-                let path = url.replace('/', "\\").into();
-
-                log::debug!("Opening new window path {:?}", path);
-                Event::NewWindow { init_file: Some(path) }
-            } else {
-                log::debug!("Navigating to external URL {:?}", url);
-                Event::OpenExternalLink(url)
+        .with_new_window_req_handler(move |url, _| {
+            let event = match parse_local_path_from_url(url) {
+                Ok(path) => Event::NewWindow { init_file: Some(path.into()) },
+                Err(url) => Event::OpenExternalLink(url),
             };
 
+            log::debug!("Creating new window or opening external link with event: {event:?}");
             if let Err(e) = new_window_proxy.send_event(Request::Event(event)) {
                 log::error!("Could not send new window event: {}", e);
             }
