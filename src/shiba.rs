@@ -14,7 +14,7 @@ use crate::watcher::{PathFilter, Watcher};
 use anyhow::{Context as _, Error, Result};
 use std::collections::{HashMap, VecDeque};
 use std::mem;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 struct WindowManager<R: Renderer> {
@@ -316,6 +316,11 @@ where
         self.opener.open(&path)
     }
 
+    fn is_markdown_file(&self, path: &Path) -> bool {
+        self.config.watch().file_extensions.matches(path)
+            && path.metadata().map(|md| !md.is_dir()).unwrap_or(false)
+    }
+
     fn handle_window_message(
         &mut self,
         id: R::WindowId,
@@ -459,13 +464,12 @@ where
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;
                 }
-                let is_markdown = self.config.watch().file_extensions.matches(&path);
-                if is_markdown {
+                if self.is_markdown_file(&path) {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
                     self.open_preview(id, path)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
+                    self.opener.open(&path).with_context(|| format!("Opening path {path:?}"))?;
                 }
             }
             Event::OpenExternalLink(link) => {
@@ -478,7 +482,7 @@ where
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;
                 }
-                if self.config.watch().file_extensions.matches(&path) {
+                if self.is_markdown_file(&path) {
                     log::debug!("Creating new window with file: {:?}", path);
                     self.init_files.push_back(path);
                     self.renderer.create_window();
