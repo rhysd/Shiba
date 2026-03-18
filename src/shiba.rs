@@ -68,8 +68,10 @@ impl<R: Renderer> WindowManager<R> {
         }
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut R::Window, &mut Preview)> {
-        self.windows.values_mut().map(|(w, p)| (w, p))
+    pub fn iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (R::WindowId, &mut R::Window, &mut Preview)> {
+        self.windows.iter_mut().map(|(&i, (w, p))| (i, w, p))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -420,7 +422,7 @@ where
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             #[cfg(not(target_os = "macos"))]
-            ToggleMenuBar => self.window.get_mut(id).toggle_menu()?,
+            ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
             History => self.history.send_paths(self.windows.get(id).0)?,
             ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
             ToggleMinimizeWindow => self.toggle_minimized(id),
@@ -445,52 +447,33 @@ where
     fn handle_file_changes(&mut self, mut paths: Vec<PathBuf>) -> Result<()> {
         log::debug!("Files changed: {:?}", paths);
 
-        enum MainWindow<'a, W: Window> {
-            Found(&'a mut W, &'a mut Preview),
-            NotFound,
-            FoundAndUpdated,
-        }
-
-        // Update preview contents of windows.
-        let current_path = self.history.current();
-        let mut main_window = MainWindow::NotFound;
         let mut updated = vec![];
-        for (window, preview) in self.windows.iter_mut() {
+        let focused_id = self.windows.focused_id();
+        let mut focused_window_updated = false;
+        for (id, window, preview) in self.windows.iter_mut() {
             let is_updated = if let Some(idx) = paths.iter().position(|p| p == preview.path()) {
                 let path = paths.swap_remove(idx);
+                log::debug!("Update the preview for the file change: {:?}", path);
                 preview.show(&path, window)?;
                 updated.push(path);
                 true
             } else if let Some(path) = updated.iter().find(|&p| p == preview.path()) {
+                log::debug!("Update the (duplicate) preview for the file change: {:?}", path);
                 preview.show(path, window)?;
                 true
             } else {
                 false
             };
-
-            if is_updated {
-                log::debug!("Update the preview for the file change: {:?}", preview.path());
+            if is_updated && id == focused_id {
+                focused_window_updated = true;
             }
-
-            // When this is the 'main' window
-            if matches!(main_window, MainWindow::NotFound) && current_path == Some(preview.path()) {
-                main_window = if is_updated {
-                    // The content was updated so we don't need further update later.
-                    MainWindow::FoundAndUpdated
-                } else {
-                    // This window will be updated with some new preview later.
-                    MainWindow::Found(window, preview)
-                };
-            };
         }
 
-        if let Some(path) = paths.pop() {
-            let (window, preview) = match main_window {
-                MainWindow::Found(window, preview) => (window, preview),
-                MainWindow::NotFound => self.windows.focused_mut(), // Fallback
-                MainWindow::FoundAndUpdated => return Ok(()),
-            };
-            log::debug!("Show the new preview for the file change: {:?}", path);
+        if !focused_window_updated && let Some(path) = paths.pop() {
+            log::debug!(
+                "Show the new preview for the file change in window {focused_id:?}: {path:?}",
+            );
+            let (window, preview) = self.windows.get_mut(focused_id);
             if preview.show(&path, window)? {
                 self.history.push(path);
             }
@@ -533,6 +516,7 @@ where
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;
                 }
+                // TODO: Find window with `path` opened and focus it instead of creating a new window
                 if self.is_markdown_file(&path) {
                     log::debug!("Creating new window with file: {:?}", path);
                     self.init_files.push_back(path);
