@@ -11,7 +11,7 @@ use crate::renderer::{
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
-use anyhow::{Context as _, Error, Result};
+use anyhow::{Context as _, Result};
 use std::collections::{HashMap, VecDeque};
 use std::mem;
 use std::path::{Path, PathBuf};
@@ -52,20 +52,24 @@ impl<R: Renderer> WindowManager<R> {
     }
 
     pub fn get_mut(&mut self, id: R::WindowId) -> (&mut R::Window, &mut Preview) {
-        if let Some(window) = self.windows.get_mut(&id).map(|v| v as *mut _) {
+        if let Some(ptr) = self.windows.get_mut(&id).map(|v| v as *mut _) {
             // Safety:
-            // `window` originates from `self.windows.get_mut(&key)`, so it points to a valid element
+            // `ptr` originates from `self.windows.get_mut(&key)`, so it points to a valid element
             // inside `self.windows`. Converting it to a raw pointer ends the borrow from `get_mut`.
             // In this branch we immediately reconstruct `&mut V` and return it without mutating the
             // map or creating any other mutable references to the same element. The `else` branch
             // (which calls `focused_mut`) is not executed in this case, so no aliasing mutable
             // reference can occur.
-            let (win, prev) = unsafe { &mut *window };
+            let (win, prev) = unsafe { &mut *ptr };
             (win, prev)
         } else {
             log::debug!("Window ID {id:?} does not exist. Fall back to focused window");
             self.focused_mut()
         }
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&mut R::Window, &mut Preview)> {
+        self.windows.values_mut().map(|(w, p)| (w, p))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -127,18 +131,25 @@ where
     W: Watcher,
     D: Dialog,
 {
-    pub fn run(mut options: Options) -> Result<()>
+    pub fn run(options: Options) -> Result<()>
     where
         Self: 'static,
     {
-        fn on_err<D: Dialog>(err: Error) -> Error {
-            let err = err.context("Could not launch application");
-            if let Ok(dialog) = D::new(&Config::default()) {
-                dialog.alert(&err, &WindowHandles::unsupported());
-            }
-            err
-        }
+        let Err(error) = Self::run_impl(options) else {
+            return Ok(());
+        };
 
+        let error = error.context("Could not launch application");
+        if let Ok(dialog) = D::new(&Config::default()) {
+            dialog.alert(&error, &WindowHandles::unsupported());
+        }
+        Err(error)
+    }
+
+    fn run_impl(mut options: Options) -> Result<()>
+    where
+        Self: 'static,
+    {
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
         let init_file = mem::take(&mut options.init_file);
@@ -146,8 +157,8 @@ where
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
 
-        let renderer = R::new(config.clone()).map_err(on_err::<D>)?;
-        let dog = Self::new(watch_paths, init_file, config, &renderer).map_err(on_err::<D>)?;
+        let renderer = R::new(config.clone())?;
+        let dog = Self::new(watch_paths, init_file, config, &renderer)?;
 
         renderer.start(dog)
     }
@@ -384,6 +395,9 @@ where
     fn handle_menu_item(&mut self, item: MenuItem) -> Result<RenderingFlow> {
         use MenuItem::*;
 
+        // muda doesn't provide a way to know which menu item came from which window. However, when
+        // menu item is selected, the window must be focused. We can assume that the focused window
+        // emitted the menu event here.
         let id = self.windows.focused_id();
         log::debug!("Menu item was clicked with window {:?}: {:?}", id, item);
 
@@ -428,6 +442,63 @@ where
         Ok(RenderingFlow::Continue)
     }
 
+    fn handle_file_changes(&mut self, mut paths: Vec<PathBuf>) -> Result<()> {
+        log::debug!("Files changed: {:?}", paths);
+
+        enum MainWindow<'a, W: Window> {
+            Found(&'a mut W, &'a mut Preview),
+            NotFound,
+            FoundAndUpdated,
+        }
+
+        // Update preview contents of windows.
+        let current_path = self.history.current();
+        let mut main_window = MainWindow::NotFound;
+        let mut updated = vec![];
+        for (window, preview) in self.windows.iter_mut() {
+            let is_updated = if let Some(idx) = paths.iter().position(|p| p == preview.path()) {
+                let path = paths.swap_remove(idx);
+                preview.show(&path, window)?;
+                updated.push(path);
+                true
+            } else if let Some(path) = updated.iter().find(|&p| p == preview.path()) {
+                preview.show(path, window)?;
+                true
+            } else {
+                false
+            };
+
+            if is_updated {
+                log::debug!("Update the preview for the file change: {:?}", preview.path());
+            }
+
+            // When this is the 'main' window
+            if matches!(main_window, MainWindow::NotFound) && current_path == Some(preview.path()) {
+                main_window = if is_updated {
+                    // The content was updated so we don't need further update later.
+                    MainWindow::FoundAndUpdated
+                } else {
+                    // This window will be updated with some new preview later.
+                    MainWindow::Found(window, preview)
+                };
+            };
+        }
+
+        if let Some(path) = paths.pop() {
+            let (window, preview) = match main_window {
+                MainWindow::Found(window, preview) => (window, preview),
+                MainWindow::NotFound => self.windows.focused_mut(), // Fallback
+                MainWindow::FoundAndUpdated => return Ok(()),
+            };
+            log::debug!("Show the new preview for the file change: {:?}", path);
+            if preview.show(&path, window)? {
+                self.history.push(path);
+            }
+        }
+
+        Ok(())
+    }
+
     fn handle_event(&mut self, event: Event<R::WindowId>) -> Result<RenderingFlow> {
         log::debug!("Handling event {:?}", event);
         match event {
@@ -439,27 +510,7 @@ where
                 }
                 self.open_preview(id, path)?;
             }
-            Event::WatchedFilesChanged(mut paths) => {
-                log::debug!("Files changed: {:?}", paths);
-                if let Some(current) = self.history.current()
-                    && paths.iter().any(|p| p == current)
-                {
-                    // TODO: Find window to render by the file path
-                    let (window, preview) = self.windows.focused_mut();
-                    preview.show(current, window)?;
-                    return Ok(RenderingFlow::Continue);
-                }
-                // Choose the last one to preview if the current file is not included in `paths`
-                if let Some(mut path) = paths.pop() {
-                    if !path.is_absolute() {
-                        path = path.canonicalize()?;
-                    }
-                    let (window, preview) = self.windows.focused_mut();
-                    if preview.show(&path, window)? {
-                        self.history.push(path);
-                    }
-                }
-            }
+            Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
             Event::OpenLocalPath { mut path, id } => {
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;

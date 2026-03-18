@@ -18,6 +18,10 @@ impl Preview {
         self.content.is_empty()
     }
 
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
     fn title(&self) -> String {
         if let Some(home_dir) = home_dir()
             && let Ok(path) = self.path.strip_prefix(home_dir)
