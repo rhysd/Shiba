@@ -83,7 +83,35 @@ Options:
     -h, --help                  Print this help
         --version               Print application version
 
+Arguments:
+
+    PATH...                     Paths to the files and directories to watch. The first file is
+                                opened in a preview window. Rest of paths are opened in the preview
+                                when they are modified (e.g. edited by a text editor) next time. If
+                                you want to open them in multiple windows, use --open or -o option.
+
+Examples:
+
+    $ shiba file.md
+        Opens `file.md` file in a preview window and tracks the file changes.
+
+    $ shiba dir/
+        Tracks all files in the `dir` directory. When one of them is modified, it's opened in a
+        preview window.
+
+    $ shiba file1.md file2.md dir1 dir2
+        Tracks `file1.md`, `file2.md`, files in `dir1` and `dir2` directories and `file1.md` file is
+        opened in a preview window.
+
+    $ shiba file1.md -o file2.md -o file3.md
+        Opens the three files in three windows respectively and tracks the file changes. The first
+        file path implies --open option so you don't need to specify it.
+
+    $ shiba
+        Opens an empty window. You can open files from key shortcuts, menu items, file picker, etc.
+
 Document:
+
     https://github.com/rhysd/Shiba/README.md
 "#;
 
