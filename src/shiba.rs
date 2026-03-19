@@ -100,6 +100,9 @@ impl<R: Renderer> WindowManager<R> {
     }
 
     pub fn set_focus(&mut self, id: R::WindowId) {
+        if self.focused == Some(id) {
+            return;
+        }
         // Invariant: Focused window ID must exist in `self.windows`
         assert!(self.windows.contains_key(&id));
         log::debug!("Set focused window: {id:?}");
@@ -153,20 +156,20 @@ where
     {
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
-        let init_file = mem::take(&mut options.init_file);
+        let init_files = mem::take(&mut options.init_files);
 
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
 
         let renderer = R::new(config.clone())?;
-        let dog = Self::new(watch_paths, init_file, config, &renderer)?;
+        let dog = Self::new(watch_paths, init_files, config, &renderer)?;
 
         renderer.start(dog)
     }
 
     pub fn new(
         watch_paths: Vec<PathBuf>,
-        init_file: Option<PathBuf>,
+        init_files: Vec<PathBuf>,
         config: Rc<Config>,
         renderer: &R,
     ) -> Result<Self> {
@@ -179,7 +182,9 @@ where
             history.push(path);
         }
         let handle = renderer.create_handle();
-        handle.create_window();
+        for _ in 0..init_files.len() {
+            handle.create_window();
+        }
 
         Ok(Self {
             renderer: handle,
@@ -189,7 +194,7 @@ where
             watcher,
             dialog: D::new(&config)?,
             config,
-            init_files: init_file.into_iter().collect(),
+            init_files: init_files.into(),
             #[cfg(feature = "__sanity")]
             sanity: SanityTest::new(renderer.create_handle()),
         })

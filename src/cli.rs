@@ -38,7 +38,7 @@ pub enum Parsed {
 #[derive(Debug, PartialEq)]
 pub struct Options {
     pub debug: bool,
-    pub init_file: Option<PathBuf>,
+    pub init_files: Vec<PathBuf>,
     pub watch_paths: Vec<PathBuf>,
     pub watch: bool,
     pub restore: bool,
@@ -52,7 +52,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             debug: false,
-            init_file: None,
+            init_files: vec![],
             watch_paths: vec![],
             watch: true,
             restore: true,
@@ -71,6 +71,8 @@ Shiba is a markdown preview application to be used with your favorite text
 editor, designed for simplicity, performance, and keyboard-friendliness.
 
 Options:
+
+    -o, --open PATH             Open the path with a window. This option is repeatable
     -t, --theme THEME           Window theme ("system" (default), "dark" or "light")
         --no-watch              Disable to watch file changes
         --no-restore            Do not restore the previous window state
@@ -111,6 +113,7 @@ Document:
                 Long("config-dir") => opts.config_dir = Some(path_value(&mut parser)?),
                 Long("data-dir") => opts.data_dir = Some(path_value(&mut parser)?),
                 Long("debug") => opts.debug = true,
+                Short('o') | Long("open") => opts.init_files.push(path_value(&mut parser)?),
                 Value(path) => {
                     let path = PathBuf::from(path);
                     let exists = path.exists();
@@ -123,10 +126,10 @@ Document:
                         cwd.get_or_try_init(|| env::current_dir()?.canonicalize())?.join(path)
                     };
 
-                    if opts.init_file.is_some() || !exists || path.is_dir() {
+                    if !opts.init_files.is_empty() || !exists || path.is_dir() {
                         opts.watch_paths.push(path);
                     } else {
-                        opts.init_file = Some(path);
+                        opts.init_files.push(path);
                     }
                 }
                 _ => return Err(arg.unexpected().into()),
@@ -160,14 +163,14 @@ mod tests {
             (
                 &["README.md"][..],
                 Options {
-                    init_file: Some(cur.join("README.md")),
+                    init_files: vec![cur.join("README.md")],
                     ..Default::default()
                 },
             ),
             (
                 &["README.md", "src"][..],
                 Options {
-                    init_file: Some(cur.join("README.md")),
+                    init_files: vec![cur.join("README.md")],
                     watch_paths: vec![cur.join("src")],
                     ..Default::default()
                 },
@@ -175,7 +178,6 @@ mod tests {
             (
                 &["file-not-existing.md"][..],
                 Options {
-                    init_file: None,
                     watch_paths: vec![cur.join("file-not-existing.md")],
                     ..Default::default()
                 },
@@ -222,6 +224,28 @@ mod tests {
                     ..Default::default()
                 },
             ),
+            (
+                &["a.md", "-o", "b.md", "--open", "c.md"][..],
+                Options {
+                    init_files: vec![
+                        cur.join("a.md"),
+                        cur.join("b.md"),
+                        cur.join("c.md"),
+                    ],
+                    ..Default::default()
+                },
+            ),
+            (
+                &["-o", "a.md", "b.md", "-o", "c.md"][..],
+                Options {
+                    init_files: vec![
+                        cur.join("a.md"),
+                        cur.join("c.md"),
+                    ],
+                    watch_paths: vec![cur.join("src")],
+                    ..Default::default()
+                },
+            ),
         ];
 
         for (args, want) in tests {
@@ -260,7 +284,7 @@ mod tests {
 
     #[test]
     fn parse_missing_option_arg() {
-        for arg in ["--config-dir", "--data-dir", "--theme"] {
+        for arg in ["--config-dir", "--data-dir", "--theme", "--open", "-o"] {
             let err = Options::parse(cmdline(&["--debug", arg])).unwrap_err();
             assert_eq!(
                 format!("{err}"),
@@ -272,7 +296,7 @@ mod tests {
 
     #[test]
     fn parse_invalid_option_arg() {
-        for arg in ["--config-dir", "--data-dir"] {
+        for arg in ["--config-dir", "--data-dir", "--open", "-o"] {
             let err = Options::parse(cmdline(&[arg, "--debug"])).unwrap_err();
             assert_eq!(
                 format!("{err}"),
