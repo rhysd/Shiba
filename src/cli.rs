@@ -1,5 +1,5 @@
 use anyhow::{Error, Result};
-use once_cell::unsync::OnceCell;
+use once_cell::unsync::OnceCell; // For OnceCell::get_or_try_init
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -72,7 +72,7 @@ editor, designed for simplicity, performance, and keyboard-friendliness.
 
 Options:
 
-    -o, --open PATH             Open the path with a window. This option is repeatable
+    -o, --open FILE             Open the file with a window. This option is repeatable
     -t, --theme THEME           Window theme ("system" (default), "dark" or "light")
         --no-watch              Disable to watch file changes
         --no-restore            Do not restore the previous window state
@@ -141,7 +141,21 @@ Document:
                 Long("config-dir") => opts.config_dir = Some(path_value(&mut parser)?),
                 Long("data-dir") => opts.data_dir = Some(path_value(&mut parser)?),
                 Long("debug") => opts.debug = true,
-                Short('o') | Long("open") => opts.init_files.push(path_value(&mut parser)?),
+                Short('o') | Long("open") => {
+                    let path = path_value(&mut parser)?;
+                    let path = match path.metadata() {
+                        Ok(md) if md.is_dir() => anyhow::bail!(
+                            "--open only works with files but directory found: {path:?}",
+                        ),
+                        Ok(_) => path.canonicalize()?,
+                        Err(err) => {
+                            let err = Error::new(err)
+                                .context(format!("Could not open the file for --open: {path:?}"));
+                            return Err(err);
+                        }
+                    };
+                    opts.init_files.push(path)
+                }
                 Value(path) => {
                     let path = PathBuf::from(path);
                     let exists = path.exists();
@@ -211,6 +225,14 @@ mod tests {
                 },
             ),
             (
+                &["file-not-existing.md", "README.md"][..],
+                Options {
+                    init_files: vec![cur.join("README.md")],
+                    watch_paths: vec![cur.join("file-not-existing.md")],
+                    ..Default::default()
+                },
+            ),
+            (
                 &["--no-watch"][..],
                 Options { watch: false, ..Default::default() },
             ),
@@ -253,24 +275,24 @@ mod tests {
                 },
             ),
             (
-                &["a.md", "-o", "b.md", "--open", "c.md"][..],
+                &["README.md", "-o", "CHANGELOG.md", "--open", "LICENSE"][..],
                 Options {
                     init_files: vec![
-                        cur.join("a.md"),
-                        cur.join("b.md"),
-                        cur.join("c.md"),
+                        cur.join("README.md"),
+                        cur.join("CHANGELOG.md"),
+                        cur.join("LICENSE"),
                     ],
                     ..Default::default()
                 },
             ),
             (
-                &["-o", "a.md", "b.md", "-o", "c.md"][..],
+                &["-o", "README.md", "CHANGELOG.md", "-o", "LICENSE"][..],
                 Options {
                     init_files: vec![
-                        cur.join("a.md"),
-                        cur.join("c.md"),
+                        cur.join("README.md"),
+                        cur.join("LICENSE"),
                     ],
-                    watch_paths: vec![cur.join("src")],
+                    watch_paths: vec![cur.join("CHANGELOG.md")],
                     ..Default::default()
                 },
             ),
@@ -335,12 +357,28 @@ mod tests {
     }
 
     #[test]
-    fn parse_theme_name() {
+    fn parse_invalid_theme_name() {
         let err = Options::parse(cmdline(&["--theme", "foo"])).unwrap_err();
         let msg = format!("{err}");
         assert!(
             msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
             "unexpected message {msg:?}",
         );
+    }
+
+    #[test]
+    fn parse_invalid_open_arg() {
+        for (arg, expected) in [
+            (".", "--open only works with files but directory found"),
+            ("not-existing.md", "Could not open the file for --open"),
+            ("", "Could not open the file for --open"),
+        ] {
+            let err = Options::parse(cmdline(&["--open", arg])).unwrap_err();
+            let msg = format!("{err}");
+            assert!(
+                msg.contains(expected),
+                "argument {arg:?} does not cause expected message {expected:?}: {msg:?}",
+            );
+        }
     }
 }
