@@ -334,6 +334,16 @@ where
             && path.metadata().map(|md| !md.is_dir()).unwrap_or(false)
     }
 
+    fn duplicate_window(&mut self, id: R::WindowId) {
+        let (_, preview) = self.windows.get(id);
+        if !preview.is_empty() {
+            let path = preview.path().to_path_buf();
+            log::debug!("Duplicate window with path: {path:?}");
+            self.init_files.push_back(path);
+        }
+        self.renderer.create_window();
+    }
+
     fn handle_window_message(
         &mut self,
         id: R::WindowId,
@@ -427,6 +437,8 @@ where
             ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
             ToggleMinimizeWindow => self.toggle_minimized(id),
             ToggleMaximizeWindow => self.toggle_maximized(id),
+            NewWindow => self.renderer.create_window(),
+            DuplicateWindow => self.duplicate_window(id),
             Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,

@@ -90,6 +90,8 @@ impl Menu {
         let back = item("Back");
         let top = item("Latest");
         let history = item("History…");
+        let new_window = item("New Window");
+        let dup_window = item("Duplicate Window");
         let minimize = item("Minimize");
         let maximize = item("Maximize");
         let always_on_top = item("Pin/Unpin On Top");
@@ -102,6 +104,9 @@ impl Menu {
             "&Window",
             true,
             &[
+                &new_window,
+                &dup_window,
+                &PredefinedMenuItem::separator(),
                 &minimize,
                 &maximize,
                 #[cfg(target_os = "macos")]
@@ -223,6 +228,8 @@ impl Menu {
                 (zoom_out.into_id(),        ZoomOut),
                 (history.into_id(),         History),
                 (always_on_top.into_id(),   ToggleAlwaysOnTop),
+                (new_window.into_id(),      NewWindow),
+                (dup_window.into_id(),      DuplicateWindow),
                 (minimize.into_id(),        ToggleMinimizeWindow),
                 (maximize.into_id(),        ToggleMaximizeWindow),
                 (guide.into_id(),           Help),

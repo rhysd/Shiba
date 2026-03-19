@@ -137,6 +137,8 @@ pub enum MenuItem {
     ToggleAlwaysOnTop,
     ToggleMinimizeWindow,
     ToggleMaximizeWindow,
+    NewWindow,
+    DuplicateWindow,
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,
