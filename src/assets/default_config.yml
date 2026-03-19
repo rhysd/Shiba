@@ -49,6 +49,7 @@ keymaps:
   plus: ZoomIn
   -: ZoomOut
   ctrl+m: MaximizeWindow
+  ctrl+n: NewWindow
   mod+q: Quit
   ?: Help
 

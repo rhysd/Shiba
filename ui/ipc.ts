@@ -38,6 +38,8 @@ export type KeyAction =
     | 'ToggleAlwaysOnTop'
     | 'MinimizeWindow'
     | 'MaximizeWindow'
+    | 'NewWindow'
+    | 'DuplicateWindow'
     | 'EditConfig'
     | 'Quit';
 
@@ -321,6 +323,12 @@ export type MessageToMain =
       }
     | {
           kind: 'toggle_minimized';
+      }
+    | {
+          kind: 'new_window';
+      }
+    | {
+          kind: 'duplicate_window';
       }
     | {
           kind: 'edit_config';

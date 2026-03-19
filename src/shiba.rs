@@ -394,6 +394,8 @@ where
             DragWindow => self.windows.get(id).0.drag_window()?,
             ToggleMaximized => self.toggle_maximized(id),
             ToggleMinimized => self.toggle_minimized(id),
+            NewWindow => self.renderer.create_window(),
+            DuplicateWindow => self.duplicate_window(id),
             Quit => return Ok(self.quit(self.windows.get(id).0)),
             OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
             ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,

@@ -90,6 +90,8 @@ pub enum MessageFromWindow {
     DragWindow,
     ToggleMaximized,
     ToggleMinimized,
+    NewWindow,
+    DuplicateWindow,
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
     ToggleAlwaysOnTop,

@@ -267,6 +267,20 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    NewWindow: {
+        description: 'Create a new window.',
+        dispatch(): void {
+            sendMessage({ kind: 'new_window' });
+        },
+    },
+
+    DuplicateWindow: {
+        description: 'Duplicate the current window.',
+        dispatch(): void {
+            sendMessage({ kind: 'duplicate_window' });
+        },
+    },
+
     EditConfig: {
         description: 'Edit configuration with a default text editor.',
         dispatch(): void {

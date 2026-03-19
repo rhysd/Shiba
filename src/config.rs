@@ -53,6 +53,8 @@ pub enum KeyAction {
     ToggleAlwaysOnTop,
     MinimizeWindow,
     MaximizeWindow,
+    NewWindow,
+    DuplicateWindow,
     EditConfig,
     Quit,
 }
@@ -93,6 +95,7 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
         ("plus",            ZoomIn),
         ("-",               ZoomOut),
         ("ctrl+m",          MaximizeWindow),
+        ("ctrl+n",          NewWindow),
         ("mod+q",           Quit),
         ("?",               Help),
     ]
