@@ -120,7 +120,6 @@ pub struct Shiba<R: Renderer, O, W, D> {
     watcher: W,
     dialog: D,
     config: Rc<Config>,
-    preview: Preview,
     init_files: VecDeque<PathBuf>,
     #[cfg(feature = "__sanity")]
     sanity: SanityTest<R::Handle>,
@@ -190,7 +189,6 @@ where
             watcher,
             dialog: D::new(&config)?,
             config,
-            preview: Preview::default(),
             init_files: init_file.into_iter().collect(),
             #[cfg(feature = "__sanity")]
             sanity: SanityTest::new(renderer.create_handle()),
@@ -429,8 +427,12 @@ where
                 self.windows.get(id).0.send_message(MessageToWindow::SearchPrevious)?
             }
             Outline => self.windows.get(id).0.send_message(MessageToWindow::Outline)?,
-            Print if self.preview.is_empty() => {} // Do not print welcome page
-            Print => self.windows.get(id).0.print()?,
+            Print => {
+                let (window, preview) = self.windows.get(id);
+                if !preview.is_empty() {
+                    window.print()?;
+                }
+            }
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             #[cfg(not(target_os = "macos"))]
