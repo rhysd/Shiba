@@ -248,6 +248,7 @@ pub trait Window {
     fn delete_cache(&mut self) -> Result<()>;
     fn handles(&self) -> WindowHandles<'_>;
     fn is_focused(&self) -> bool;
+    fn focus(&self);
     fn id(&self) -> Self::Id;
 }
 

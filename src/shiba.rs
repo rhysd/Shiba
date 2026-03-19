@@ -516,11 +516,17 @@ where
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;
                 }
-                // TODO: Find window with `path` opened and focus it instead of creating a new window
                 if self.is_markdown_file(&path) {
-                    log::debug!("Creating new window with file: {:?}", path);
-                    self.init_files.push_back(path);
-                    self.renderer.create_window();
+                    if let Some((id, window, _)) =
+                        self.windows.iter_mut().find(|(_, _, preview)| preview.path() == path)
+                    {
+                        log::debug!("Path is already opened in window {:?}: {:?}", id, path);
+                        window.focus();
+                    } else {
+                        log::debug!("Creating new window with file: {:?}", path);
+                        self.init_files.push_back(path);
+                        self.renderer.create_window();
+                    }
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
                     self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;

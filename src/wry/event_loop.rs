@@ -114,8 +114,7 @@ impl Renderer for Wry {
                     }
                 }
                 Event::WindowEvent { event: WindowEvent::Focused(true), window_id, .. } => {
-                    handler.on_window_focused(window_id);
-                    RenderingFlow::Continue
+                    handler.on_window_focused(window_id)
                 }
                 _ => RenderingFlow::Continue,
             };
