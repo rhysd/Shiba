@@ -182,7 +182,7 @@ where
             history.push(path);
         }
         let handle = renderer.create_handle();
-        for _ in 0..init_files.len() {
+        for _ in 0..init_files.len().max(1) {
             handle.create_window();
         }
 
