@@ -67,12 +67,12 @@ impl Default for Options {
 impl Options {
     const USAGE: &'static str = r#"Usage: shiba [OPTIONS...] [PATH...]
 
-Shiba is a markdown preview application to be used with your favorite text
-editor, designed for simplicity, performance, and keyboard-friendliness.
+Shiba is a markdown previewer to be used with your favorite text editor, designed for simplicity,
+performance, and keyboard-friendliness.
 
 Options:
 
-    -o, --open FILE             Open the file with a window. This option is repeatable
+    -o, --open FILE             Open the file with a new window. This option is repeatable
     -t, --theme THEME           Window theme ("system" (default), "dark" or "light")
         --no-watch              Disable to watch file changes
         --no-restore            Do not restore the previous window state
@@ -86,9 +86,10 @@ Options:
 Arguments:
 
     PATH...                     Paths to the files and directories to watch. The first file is
-                                opened in a preview window. Rest of paths are opened in the preview
-                                when they are modified (e.g. edited by a text editor) next time. If
-                                you want to open them in multiple windows, use --open or -o option.
+                                opened in a preview window. Rest of paths are shown in the preview
+                                window when they are modified (e.g. edited by a text editor) next
+                                time. If you want to open them in multiple windows, use --open or -o
+                                option.
 
 Examples:
 
@@ -100,8 +101,8 @@ Examples:
         preview window.
 
     $ shiba file1.md file2.md dir1 dir2
-        Tracks `file1.md`, `file2.md`, files in `dir1` and `dir2` directories and `file1.md` file is
-        opened in a preview window.
+        Tracks `file1.md`, `file2.md`, files in `dir1` directory, and files in `dir2` directory.
+        `file1.md` file is opened in a preview window.
 
     $ shiba file1.md -o file2.md -o file3.md
         Opens the three files in three windows respectively and tracks the file changes. The first
