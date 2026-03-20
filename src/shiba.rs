@@ -31,18 +31,18 @@ impl<R: Renderer> Default for WindowManager<R> {
 impl<R: Renderer> WindowManager<R> {
     pub fn focused(&self) -> (&R::Window, &Preview) {
         let (win, prev) = if let Some(id) = &self.focused {
-            self.windows.get(id).expect("Focused window must exist")
+            self.windows.get(id).expect("focused window must exist")
         } else {
-            self.windows.values().next().expect("At least one window exist")
+            self.windows.values().next().expect("at least one window exist")
         };
         (win, prev)
     }
 
     pub fn focused_mut(&mut self) -> (&mut R::Window, &mut Preview) {
         let (win, prev) = if let Some(id) = self.focused.as_ref() {
-            self.windows.get_mut(id).expect("Focused window must exist")
+            self.windows.get_mut(id).expect("focused window must exist")
         } else {
-            self.windows.values_mut().next().expect("At least one window exist")
+            self.windows.values_mut().next().expect("at least one window exist")
         };
         (win, prev)
     }
@@ -63,7 +63,6 @@ impl<R: Renderer> WindowManager<R> {
             let (win, prev) = unsafe { &mut *ptr };
             (win, prev)
         } else {
-            log::debug!("Window ID {id:?} does not exist. Fall back to focused window");
             self.focused_mut()
         }
     }
@@ -89,12 +88,8 @@ impl<R: Renderer> WindowManager<R> {
         let removed = self.windows.remove(&id)?;
         log::debug!("Deleted window {id:?}");
         if self.focused == Some(id) {
-            // XXX: Should we set `None` here or fall back to the first window to avoid `None`?
-            self.focused = self
-                .windows
-                .iter()
-                .find_map(|(id, (window, _))| window.is_focused().then_some(*id));
-            log::debug!("Updated focus to window {:?}", self.focused);
+            log::debug!("Focus was lost because the window was deleted");
+            self.focused = None;
         }
         Some(removed)
     }
@@ -103,15 +98,17 @@ impl<R: Renderer> WindowManager<R> {
         if self.focused == Some(id) {
             return;
         }
-        // Invariant: Focused window ID must exist in `self.windows`
-        assert!(self.windows.contains_key(&id));
-        log::debug!("Set focused window: {id:?}");
+        if !self.windows.contains_key(&id) {
+            log::error!("Unknown window is focused: {id:?}");
+            return;
+        }
+        log::debug!("Update focus: {:?} -> {:?}", self.focused, id);
         self.focused = Some(id);
     }
 
     pub fn focused_id(&self) -> R::WindowId {
         self.focused
-            .unwrap_or_else(|| *self.windows.keys().next().expect("At least one window exists"))
+            .unwrap_or_else(|| *self.windows.keys().next().expect("at least one window exists"))
     }
 }
 
@@ -597,6 +594,10 @@ where
     type WindowId = R::WindowId;
 
     fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow {
+        if self.windows.is_empty() {
+            log::error!("Ignore the event because no window exists: {event:?}");
+            return RenderingFlow::Continue;
+        }
         self.handle_event(event).unwrap_or_else(|err| {
             let err = err.context("Could not handle event");
             self.dialog.alert(&err, &self.windows.focused().0.handles());
@@ -609,10 +610,14 @@ where
         RenderingFlow::Continue
     }
 
-    fn on_window_minimized(&mut self, is_minimized: bool, _id: Self::WindowId) -> RenderingFlow {
-        if let Err(err) = self.windows.focused_mut().0.save_memory(is_minimized) {
+    fn on_window_minimized(&mut self, is_minimized: bool, id: Self::WindowId) -> RenderingFlow {
+        if self.windows.is_empty() {
+            return RenderingFlow::Continue;
+        }
+        let (window, _) = self.windows.get_mut(id);
+        if let Err(err) = window.save_memory(is_minimized) {
             let err = err.context("Could not save memory on minimized window");
-            self.dialog.alert(&err, &self.windows.focused().0.handles());
+            self.dialog.alert(&err, &window.handles());
         }
         RenderingFlow::Continue
     }

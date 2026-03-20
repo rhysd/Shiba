@@ -131,10 +131,6 @@ impl Window for TestWindow {
         WindowHandles::unsupported()
     }
 
-    fn is_focused(&self) -> bool {
-        self.is_focused.load(Ordering::Relaxed)
-    }
-
     fn focus(&self) {
         self.is_focused.store(true, Ordering::Relaxed)
     }
