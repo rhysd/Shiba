@@ -11,7 +11,7 @@ use crate::renderer::{
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
-use anyhow::{Context as _, Result};
+use anyhow::{Context as _, Error, Result};
 use std::collections::{HashMap, VecDeque};
 use std::mem;
 use std::path::{Path, PathBuf};
@@ -83,11 +83,11 @@ impl<R: Renderer> WindowManager<R> {
         self.set_focus(id);
     }
 
-    pub fn delete(&mut self, id: R::WindowId) -> Option<(R::Window, Preview)> {
+    pub fn remove(&mut self, id: R::WindowId) -> Option<(R::Window, Preview)> {
         let removed = self.windows.remove(&id)?;
-        log::debug!("Deleted window {id:?}");
+        log::debug!("Removed window {id:?}");
         if self.focused == Some(id) {
-            log::debug!("Focus was lost because the window was deleted");
+            log::debug!("Focus was lost because the window was removed");
             self.focused = None;
         }
         Some(removed)
@@ -325,7 +325,7 @@ where
     fn open_config(&mut self) -> Result<()> {
         let path = self.config.config_file()?;
         log::debug!("Opening config file via menu item: {:?}", path);
-        self.opener.open(&path)
+        self.opener.open(&path).with_context(|| format!("Could not open config file {path:?}"))
     }
 
     fn is_markdown_file(&self, path: &Path) -> bool {
@@ -549,7 +549,7 @@ where
                     self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
                 }
             }
-            Event::Error(err) => self.dialog.alert(&err, &self.windows.focused().0.handles()),
+            Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -573,8 +573,7 @@ where
     fn quit(&self, last_window: &R::Window) -> RenderingFlow {
         last_window.hide();
         if let Err(error) = self.save(last_window) {
-            let error = error.context("Error while quitting the application");
-            self.dialog.alert(&error, &last_window.handles());
+            self.alert("Error while the application quits", error);
             RenderingFlow::Exit(1)
         } else {
             RenderingFlow::Exit(0)
@@ -595,7 +594,7 @@ where
             }
             WindowEvent::Focused => self.windows.set_focus(id),
             WindowEvent::Closed => {
-                if let Some((window, _)) = self.windows.delete(id) {
+                if let Some((window, _)) = self.windows.remove(id) {
                     if self.windows.is_empty() {
                         log::debug!("No window remains after the last window was closed");
                         return Ok(self.quit(&window));
@@ -606,6 +605,16 @@ where
             }
         }
         Ok(RenderingFlow::Continue)
+    }
+
+    fn alert(&self, title: &'static str, error: Error) {
+        log::error!("Error while handling window event: {title}: {error}");
+        let handles = if self.windows.is_empty() {
+            WindowHandles::unsupported() // Error may happen after all windows are closed
+        } else {
+            self.windows.focused().0.handles()
+        };
+        self.dialog.alert(&error.context(title), &handles);
     }
 }
 
@@ -625,16 +634,14 @@ where
             return RenderingFlow::Continue;
         }
         self.handle_event(event).unwrap_or_else(|err| {
-            let err = err.context("Could not handle event");
-            self.dialog.alert(&err, &self.windows.focused().0.handles());
+            self.alert("Could not handle event", err);
             RenderingFlow::Continue
         })
     }
 
     fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow {
         self.handle_window_event(id, event).unwrap_or_else(|err| {
-            let err = err.context("Could not handle window event");
-            self.dialog.alert(&err, &self.windows.get(id).0.handles());
+            self.alert("Could not handle window event", err);
             RenderingFlow::Continue
         })
     }
