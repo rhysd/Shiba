@@ -29,29 +29,27 @@ impl<R: Renderer> Default for WindowManager<R> {
 }
 
 impl<R: Renderer> WindowManager<R> {
-    pub fn focused(&self) -> (&R::Window, &Preview) {
-        let (win, prev) = if let Some(id) = &self.focused {
-            self.windows.get(id).expect("Focused window must exist")
+    pub fn focused(&self) -> Option<&(R::Window, Preview)> {
+        if let Some(id) = &self.focused {
+            self.windows.get(id)
         } else {
-            self.windows.values().next().expect("At least one window exist")
-        };
-        (win, prev)
+            self.windows.values().next()
+        }
     }
 
-    pub fn focused_mut(&mut self) -> (&mut R::Window, &mut Preview) {
-        let (win, prev) = if let Some(id) = self.focused.as_ref() {
-            self.windows.get_mut(id).expect("Focused window must exist")
+    pub fn focused_mut(&mut self) -> Option<&mut (R::Window, Preview)> {
+        if let Some(id) = self.focused.as_ref() {
+            self.windows.get_mut(id)
         } else {
-            self.windows.values_mut().next().expect("At least one window exist")
-        };
-        (win, prev)
+            self.windows.values_mut().next()
+        }
     }
 
-    pub fn get(&self, id: R::WindowId) -> (&R::Window, &Preview) {
-        if let Some((win, prev)) = self.windows.get(&id) { (win, prev) } else { self.focused() }
+    pub fn get(&self, id: R::WindowId) -> Option<&(R::Window, Preview)> {
+        self.windows.get(&id).or_else(|| self.focused())
     }
 
-    pub fn get_mut(&mut self, id: R::WindowId) -> (&mut R::Window, &mut Preview) {
+    pub fn get_mut(&mut self, id: R::WindowId) -> Option<&mut (R::Window, Preview)> {
         if let Some(ptr) = self.windows.get_mut(&id).map(|v| v as *mut _) {
             // Safety:
             // `ptr` originates from `self.windows.get_mut(&key)`, so it points to a valid element
@@ -60,10 +58,8 @@ impl<R: Renderer> WindowManager<R> {
             // map or creating any other mutable references to the same element. The `else` branch
             // (which calls `focused_mut`) is not executed in this case, so no aliasing mutable
             // reference can occur.
-            let (win, prev) = unsafe { &mut *ptr };
-            (win, prev)
+            Some(unsafe { &mut *ptr })
         } else {
-            log::debug!("Window ID {id:?} does not exist. Fall back to focused window");
             self.focused_mut()
         }
     }
@@ -89,7 +85,6 @@ impl<R: Renderer> WindowManager<R> {
         let removed = self.windows.remove(&id)?;
         log::debug!("Deleted window {id:?}");
         if self.focused == Some(id) {
-            // XXX: Should we set `None` here or fall back to the first window to avoid `None`?
             self.focused = self
                 .windows
                 .iter()
@@ -109,9 +104,16 @@ impl<R: Renderer> WindowManager<R> {
         self.focused = Some(id);
     }
 
-    pub fn focused_id(&self) -> R::WindowId {
-        self.focused
-            .unwrap_or_else(|| *self.windows.keys().next().expect("At least one window exists"))
+    pub fn focused_id(&self) -> Option<R::WindowId> {
+        self.focused.or_else(|| self.windows.keys().next().copied())
+    }
+
+    pub fn focused_handles(&self) -> WindowHandles<'_> {
+        if let Some((window, _)) = self.focused() {
+            window.handles()
+        } else {
+            WindowHandles::unsupported()
+        }
     }
 }
 
@@ -202,15 +204,18 @@ where
 
     fn open_preview(&mut self, id: R::WindowId, path: PathBuf) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
-        let (window, preview) = self.windows.get_mut(id);
-        if preview.show(&path, window)? {
+        if let Some((window, preview)) = self.windows.get_mut(id)
+            && preview.show(&path, window)?
+        {
             self.history.push(path);
         }
         Ok(())
     }
 
     fn navigate(&mut self, id: R::WindowId, dir: Direction) -> Result<()> {
-        let (window, preview) = self.windows.get_mut(id);
+        let Some((window, preview)) = self.windows.get_mut(id) else {
+            return Ok(());
+        };
 
         let (mut current, dir) = if preview.is_empty() {
             // When the welcome page is displayed, the history already indicates the latest history item.
@@ -235,7 +240,9 @@ where
     }
 
     fn reload(&mut self, id: R::WindowId) -> Result<()> {
-        let (window, preview) = self.windows.get_mut(id);
+        let Some((window, preview)) = self.windows.get_mut(id) else {
+            return Ok(());
+        };
         if preview.is_empty() {
             // When content is empty, we don't need to reload the page. This happens when 'welcome' page displays just
             // after launching the app.
@@ -251,7 +258,9 @@ where
     }
 
     fn open_files(&mut self, id: R::WindowId) -> Result<()> {
-        let (window, _) = self.windows.get(id);
+        let Some((window, _)) = self.windows.get(id) else {
+            return Ok(());
+        };
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
         let mut files = self.dialog.pick_files(&window.handles());
         #[cfg(target_os = "windows")]
@@ -273,7 +282,9 @@ where
     }
 
     fn open_dirs(&mut self, id: R::WindowId) -> Result<()> {
-        let (window, _) = self.windows.get(id);
+        let Some((window, _)) = self.windows.get(id) else {
+            return Ok(());
+        };
         let dirs = self.dialog.pick_dirs(&window.handles());
         #[cfg(target_os = "windows")]
         let dirs: Vec<_> = dirs.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
@@ -288,7 +299,9 @@ where
     }
 
     fn zoom(&mut self, id: R::WindowId, zoom_in: bool) -> Result<()> {
-        let (window, _) = self.windows.get_mut(id);
+        let Some((window, _)) = self.windows.get_mut(id) else {
+            return Ok(());
+        };
         let level = window.zoom_level();
         let level = if zoom_in { level.zoom_in() } else { level.zoom_out() };
 
@@ -299,13 +312,13 @@ where
         window.zoom(level)?;
         let percent = level.percent();
         log::debug!("Changed zoom factor: {}%", percent);
-        window.send_message(MessageToWindow::Zoomed { percent })?;
-
-        Ok(())
+        window.send_message(MessageToWindow::Zoomed { percent })
     }
 
     fn toggle_always_on_top(&mut self, id: R::WindowId) -> Result<()> {
-        let (window, _) = self.windows.get_mut(id);
+        let Some((window, _)) = self.windows.get_mut(id) else {
+            return Ok(());
+        };
         let pinned = !window.always_on_top();
         log::debug!("Toggle always-on-top (pinned={})", pinned);
         window.set_always_on_top(pinned);
@@ -313,17 +326,19 @@ where
     }
 
     fn toggle_maximized(&mut self, id: R::WindowId) {
-        let (window, _) = self.windows.get_mut(id);
-        let maximized = !window.is_maximized();
-        log::debug!("Toggle maximized window (maximized={})", maximized);
-        window.maximize(maximized);
+        if let Some((window, _)) = self.windows.get_mut(id) {
+            let maximized = !window.is_maximized();
+            log::debug!("Toggle maximized window (maximized={})", maximized);
+            window.maximize(maximized);
+        }
     }
 
     fn toggle_minimized(&mut self, id: R::WindowId) {
-        let (window, _) = self.windows.get_mut(id);
-        let minimized = !window.is_minimized();
-        log::debug!("Toggle minimized window (minimized={})", minimized);
-        window.minimize(minimized);
+        if let Some((window, _)) = self.windows.get_mut(id) {
+            let minimized = !window.is_minimized();
+            log::debug!("Toggle minimized window (minimized={})", minimized);
+            window.minimize(minimized);
+        }
     }
 
     fn open_config(&mut self) -> Result<()> {
@@ -338,13 +353,44 @@ where
     }
 
     fn duplicate_window(&mut self, id: R::WindowId) {
-        let (_, preview) = self.windows.get(id);
-        if !preview.is_empty() {
-            let path = preview.path().to_path_buf();
-            log::debug!("Duplicate window with path: {path:?}");
-            self.init_files.push_back(path);
+        if let Some((_, preview)) = self.windows.get(id) {
+            if !preview.is_empty() {
+                let path = preview.path().to_path_buf();
+                log::debug!("Duplicate window with path: {path:?}");
+                self.init_files.push_back(path);
+            }
+            self.renderer.create_window();
         }
-        self.renderer.create_window();
+    }
+
+    fn initialize_window(&mut self, id: R::WindowId) -> Result<()> {
+        let Some((window, _)) = self.windows.get(id) else {
+            return Ok(());
+        };
+
+        if self.config.debug() {
+            window.send_message(MessageToWindow::Debug)?;
+        }
+
+        window.send_message(MessageToWindow::Config {
+            keymaps: self.config.keymaps(),
+            search: self.config.search(),
+            home: home_dir(),
+            window: window.appearance(),
+        })?;
+
+        // Open window when the content is ready. Otherwise a white window flashes when dark theme.
+        window.show();
+
+        if let Some(path) = self.init_files.pop_front() {
+            self.open_preview(id, path)?;
+        } else {
+            window.send_message(MessageToWindow::Welcome)?;
+        }
+
+        #[cfg(feature = "__sanity")]
+        self.sanity.run_test(id);
+        Ok(())
     }
 
     fn handle_window_message(
@@ -354,59 +400,62 @@ where
     ) -> Result<RenderingFlow> {
         use MessageFromWindow::*;
         match message {
-            Init => {
-                let (window, _) = self.windows.get(id);
-
-                if self.config.debug() {
-                    window.send_message(MessageToWindow::Debug)?;
-                }
-
-                window.send_message(MessageToWindow::Config {
-                    keymaps: self.config.keymaps(),
-                    search: self.config.search(),
-                    home: home_dir(),
-                    window: window.appearance(),
-                })?;
-
-                // Open window when the content is ready. Otherwise a white window flashes when dark theme.
-                window.show();
-
-                if let Some(path) = self.init_files.pop_front() {
-                    self.open_preview(id, path)?;
-                } else {
-                    window.send_message(MessageToWindow::Welcome)?;
-                }
-
-                #[cfg(feature = "__sanity")]
-                self.sanity.run_test(id);
-            }
+            Init => self.initialize_window(id)?,
             Search { query, index, matcher } => {
-                let (window, preview) = self.windows.get(id);
-                preview.search(window, &query, index, matcher)?;
+                if let Some((window, preview)) = self.windows.get(id) {
+                    preview.search(window, &query, index, matcher)?;
+                }
             }
             GoForward => self.navigate(id, Direction::Forward)?,
             GoBack => self.navigate(id, Direction::Back)?,
             GoTop => self.navigate(id, Direction::Top)?,
-            History => self.history.send_paths(self.windows.get(id).0)?,
+            History => {
+                if let Some((window, _)) = self.windows.get(id) {
+                    self.history.send_paths(window)?;
+                }
+            }
             Reload => self.reload(id)?,
             FileDialog => self.open_files(id)?,
             DirDialog => self.open_dirs(id)?,
             OpenFile { path } => self.open_preview(id, PathBuf::from(path))?,
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
-            DragWindow => self.windows.get(id).0.drag_window()?,
+            DragWindow => {
+                if let Some((window, _)) = self.windows.get(id) {
+                    window.drag_window()?;
+                }
+            }
             ToggleMaximized => self.toggle_maximized(id),
             ToggleMinimized => self.toggle_minimized(id),
             NewWindow => self.renderer.create_window(),
             DuplicateWindow => self.duplicate_window(id),
-            Quit => return Ok(self.quit(self.windows.get(id).0)),
-            OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
-            ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
+            Quit => {
+                if let Some((window, _)) = self.windows.get(id) {
+                    return Ok(self.quit(window));
+                }
+            }
+            OpenMenu { position } => {
+                if let Some((window, _)) = self.windows.get(id) {
+                    window.show_menu_at(position);
+                }
+            }
+            ToggleMenuBar => {
+                if let Some((window, _)) = self.windows.get_mut(id) {
+                    window.toggle_menu()?;
+                }
+            }
             ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
             EditConfig => self.open_config()?,
             Error { message } => anyhow::bail!("Error reported from renderer: {message}"),
         }
         Ok(RenderingFlow::Continue)
+    }
+
+    fn send_message_to_window(&self, id: R::WindowId, message: MessageToWindow) -> Result<()> {
+        if let Some((window, _)) = self.windows.get(id) {
+            window.send_message(message)?;
+        }
+        Ok(())
     }
 
     fn handle_menu_item(&mut self, item: MenuItem) -> Result<RenderingFlow> {
@@ -415,50 +464,65 @@ where
         // muda doesn't provide a way to know which menu item came from which window. However, when
         // menu item is selected, the window must be focused. We can assume that the focused window
         // emitted the menu event here.
-        let id = self.windows.focused_id();
+        let Some(id) = self.windows.focused_id() else {
+            return Ok(RenderingFlow::Continue);
+        };
         log::debug!("Menu item was clicked with window {:?}: {:?}", id, item);
 
         match item {
-            Quit => return Ok(self.quit(self.windows.get(id).0)),
+            Quit => {
+                if let Some((window, _)) = self.windows.get(id) {
+                    return Ok(self.quit(window));
+                }
+            }
             Forward => self.navigate(id, Direction::Forward)?,
             Back => self.navigate(id, Direction::Back)?,
             Top => self.navigate(id, Direction::Top)?,
             Reload => self.reload(id)?,
             OpenFiles => self.open_files(id)?,
             WatchDirs => self.open_dirs(id)?,
-            Search => self.windows.get(id).0.send_message(MessageToWindow::Search)?,
-            SearchNext => self.windows.get(id).0.send_message(MessageToWindow::SearchNext)?,
-            SearchPrevious => {
-                self.windows.get(id).0.send_message(MessageToWindow::SearchPrevious)?
-            }
-            Outline => self.windows.get(id).0.send_message(MessageToWindow::Outline)?,
+            Search => self.send_message_to_window(id, MessageToWindow::Search)?,
+            SearchNext => self.send_message_to_window(id, MessageToWindow::SearchNext)?,
+            SearchPrevious => self.send_message_to_window(id, MessageToWindow::SearchPrevious)?,
+            Outline => self.send_message_to_window(id, MessageToWindow::Outline)?,
             Print => {
-                let (window, preview) = self.windows.get(id);
-                if !preview.is_empty() {
+                if let Some((window, preview)) = self.windows.get(id)
+                    && !preview.is_empty()
+                {
                     window.print()?;
                 }
             }
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             #[cfg(not(target_os = "macos"))]
-            ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
-            History => self.history.send_paths(self.windows.get(id).0)?,
+            ToggleMenuBar => {
+                if let Some((window, _)) = self.windows.get_mut(id) {
+                    window.toggle_menu()?;
+                }
+            }
+            History => {
+                if let Some((window, _)) = self.windows.get(id) {
+                    self.history.send_paths(window)?;
+                }
+            }
             ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
             ToggleMinimizeWindow => self.toggle_minimized(id),
             ToggleMaximizeWindow => self.toggle_maximized(id),
             NewWindow => self.renderer.create_window(),
             DuplicateWindow => self.duplicate_window(id),
-            Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
+            Help => self.send_message_to_window(id, MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
             DeleteHistory => {
-                if self.dialog.yes_no(
-                    "Deleting history...",
-                    "Are you sure you want to delete all history?",
-                    &self.windows.get(id).0.handles(),
-                ) {
+                if let Some((window, _)) = self.windows.get_mut(id)
+                    && self.dialog.yes_no(
+                        "Deleting history...",
+                        "Are you sure you want to delete all history?",
+                        &window.handles(),
+                    )
+                {
                     self.history.clear(&self.config)?;
-                    self.windows.get_mut(id).0.delete_cache()?;
+                    window.delete_cache()?;
                 }
             }
         }
@@ -469,7 +533,9 @@ where
         log::debug!("Files changed: {:?}", paths);
 
         let mut updated = vec![];
-        let focused_id = self.windows.focused_id();
+        let Some(focused_id) = self.windows.focused_id() else {
+            return Ok(());
+        };
         let mut focused_window_updated = false;
         for (id, window, preview) in self.windows.iter_mut() {
             let is_updated = if let Some(idx) = paths.iter().position(|p| p == preview.path()) {
@@ -494,8 +560,9 @@ where
             log::debug!(
                 "Show the new preview for the file change in window {focused_id:?}: {path:?}",
             );
-            let (window, preview) = self.windows.get_mut(focused_id);
-            if preview.show(&path, window)? {
+            if let Some((window, preview)) = self.windows.get_mut(focused_id)
+                && preview.show(&path, window)?
+            {
                 self.history.push(path);
             }
         }
@@ -553,7 +620,7 @@ where
                     self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
                 }
             }
-            Event::Error(err) => self.dialog.alert(&err, &self.windows.focused().0.handles()),
+            Event::Error(err) => self.dialog.alert(&err, &self.windows.focused_handles()),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -599,7 +666,7 @@ where
     fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow {
         self.handle_event(event).unwrap_or_else(|err| {
             let err = err.context("Could not handle event");
-            self.dialog.alert(&err, &self.windows.focused().0.handles());
+            self.dialog.alert(&err, &self.windows.focused_handles());
             RenderingFlow::Continue
         })
     }
@@ -609,10 +676,12 @@ where
         RenderingFlow::Continue
     }
 
-    fn on_window_minimized(&mut self, is_minimized: bool, _id: Self::WindowId) -> RenderingFlow {
-        if let Err(err) = self.windows.focused_mut().0.save_memory(is_minimized) {
+    fn on_window_minimized(&mut self, is_minimized: bool, id: Self::WindowId) -> RenderingFlow {
+        if let Some((window, _)) = self.windows.get_mut(id)
+            && let Err(err) = window.save_memory(is_minimized)
+        {
             let err = err.context("Could not save memory on minimized window");
-            self.dialog.alert(&err, &self.windows.focused().0.handles());
+            self.dialog.alert(&err, &window.handles());
         }
         RenderingFlow::Continue
     }
