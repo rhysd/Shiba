@@ -6,7 +6,7 @@ use crate::opener::Opener;
 use crate::preview::Preview;
 use crate::renderer::{
     Event, EventHandler, MenuItem, MessageFromWindow, MessageToWindow, Renderer, RendererHandle,
-    RenderingFlow, Window, WindowHandles,
+    RenderingFlow, Window, WindowEvent, WindowHandles,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -77,8 +77,7 @@ impl<R: Renderer> WindowManager<R> {
         self.windows.is_empty()
     }
 
-    pub fn add(&mut self, window: R::Window) {
-        let id = window.id();
+    pub fn add(&mut self, id: R::WindowId, window: R::Window) {
         log::debug!("Add new window: {id:?}");
         self.windows.insert(id, (window, Preview::default()));
         self.set_focus(id);
@@ -581,6 +580,33 @@ where
             RenderingFlow::Exit(0)
         }
     }
+
+    fn handle_window_event(
+        &mut self,
+        id: R::WindowId,
+        event: WindowEvent<R::Window>,
+    ) -> Result<RenderingFlow> {
+        match event {
+            WindowEvent::Created(window) => self.windows.add(id, window),
+            WindowEvent::Minimized(is_minimized) => {
+                if !self.windows.is_empty() {
+                    self.windows.get_mut(id).0.save_memory(is_minimized)?;
+                }
+            }
+            WindowEvent::Focused => self.windows.set_focus(id),
+            WindowEvent::Closed => {
+                if let Some((window, _)) = self.windows.delete(id) {
+                    if self.windows.is_empty() {
+                        log::debug!("No window remains after the last window was closed");
+                        return Ok(self.quit(&window));
+                    }
+                } else {
+                    log::error!("Window was closed but it is not managed by Shiba: {id:?}");
+                }
+            }
+        }
+        Ok(RenderingFlow::Continue)
+    }
 }
 
 impl<R, O, W, D> EventHandler for Shiba<R, O, W, D>
@@ -605,39 +631,11 @@ where
         })
     }
 
-    fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow {
-        self.windows.add(window);
-        RenderingFlow::Continue
-    }
-
-    fn on_window_minimized(&mut self, is_minimized: bool, id: Self::WindowId) -> RenderingFlow {
-        if self.windows.is_empty() {
-            return RenderingFlow::Continue;
-        }
-        let (window, _) = self.windows.get_mut(id);
-        if let Err(err) = window.save_memory(is_minimized) {
-            let err = err.context("Could not save memory on minimized window");
-            self.dialog.alert(&err, &window.handles());
-        }
-        RenderingFlow::Continue
-    }
-
-    fn on_window_focused(&mut self, id: Self::WindowId) -> RenderingFlow {
-        self.windows.set_focus(id);
-        RenderingFlow::Continue
-    }
-
-    fn on_window_closed(&mut self, id: Self::WindowId) -> RenderingFlow {
-        let Some((window, _)) = self.windows.delete(id) else {
-            log::error!("Window was closed but it is not managed by Shiba: {id:?}");
-            return RenderingFlow::Continue;
-        };
-
-        if self.windows.is_empty() {
-            log::debug!("No window remains after the last window was closed");
-            self.quit(&window)
-        } else {
+    fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow {
+        self.handle_window_event(id, event).unwrap_or_else(|err| {
+            let err = err.context("Could not handle window event");
+            self.dialog.alert(&err, &self.windows.get(id).0.handles());
             RenderingFlow::Continue
-        }
+        })
     }
 }

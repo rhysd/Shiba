@@ -100,12 +100,6 @@ pub enum MessageFromWindow {
 }
 
 #[derive(Debug)]
-pub enum Request<WindowId> {
-    Event(Event<WindowId>),
-    CreateWindow,
-}
-
-#[derive(Debug)]
 pub enum Event<WindowId> {
     WindowMessage { message: MessageFromWindow, id: WindowId },
     FileDrop { path: PathBuf, id: WindowId },
@@ -115,6 +109,20 @@ pub enum Event<WindowId> {
     Menu(MenuItem),
     NewWindow { init_file: Option<PathBuf> },
     Error(Error),
+}
+
+#[derive(Debug)]
+pub enum Request<WindowId> {
+    Emit(Event<WindowId>),
+    CreateWindow,
+}
+
+#[derive(Debug)]
+pub enum WindowEvent<W> {
+    Created(W),
+    Minimized(bool),
+    Focused,
+    Closed,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -275,10 +283,7 @@ pub trait EventHandler {
     type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
 
     fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow;
-    fn on_window_created(&mut self, window: Self::Window) -> RenderingFlow;
-    fn on_window_minimized(&mut self, minimized: bool, id: Self::WindowId) -> RenderingFlow;
-    fn on_window_focused(&mut self, id: Self::WindowId) -> RenderingFlow;
-    fn on_window_closed(&mut self, id: Self::WindowId) -> RenderingFlow;
+    fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow;
 }
 
 #[cfg(test)]

@@ -1,9 +1,11 @@
 #[cfg(target_os = "macos")]
 use crate::assets::set_app_icon_to_dock;
 use crate::config::Config;
-use crate::renderer::{EventHandler, Renderer, RendererHandle, RenderingFlow};
+use crate::renderer::{
+    EventHandler, Renderer, RendererHandle, RenderingFlow, Window, WindowEvent as AppWindowEvent,
+};
 use crate::wry::menu::Menu;
-use crate::wry::types::{Event as RendererEvent, Proxy, Request};
+use crate::wry::types::{Event as AppEvent, Proxy, Request};
 use crate::wry::webview::WebViewWindow;
 use anyhow::Result;
 use std::rc::Rc;
@@ -23,8 +25,8 @@ pub struct Wry {
 impl RendererHandle for Proxy {
     type WindowId = WindowId;
 
-    fn send(&self, event: RendererEvent) {
-        if let Err(err) = self.send_event(Request::Event(event)) {
+    fn send(&self, event: AppEvent) {
+        if let Err(err) = self.send_event(Request::Emit(event)) {
             log::error!("Could not send user event for message from WebView: {}", err);
         }
     }
@@ -86,10 +88,10 @@ impl Renderer for Wry {
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, window_id, .. } => {
                     log::debug!("Closing window was requested: {window_id:?}");
-                    handler.on_window_closed(window_id)
+                    handler.on_window(window_id, AppWindowEvent::Closed)
                 }
                 Event::UserEvent(request) => match request {
-                    Request::Event(event) => handler.on_event(event),
+                    Request::Emit(event) => handler.on_event(event),
                     Request::CreateWindow => {
                         let created = WebViewWindow::new(
                             &self.config,
@@ -98,8 +100,10 @@ impl Renderer for Wry {
                             self.menu.window_menu(),
                         );
                         match created {
-                            Ok(window) => handler.on_window_created(window),
-                            Err(err) => handler.on_event(RendererEvent::Error(err)),
+                            Ok(window) => {
+                                handler.on_window(window.id(), AppWindowEvent::Created(window))
+                            }
+                            Err(err) => handler.on_event(AppEvent::Error(err)),
                         }
                     }
                 },
@@ -108,13 +112,13 @@ impl Renderer for Wry {
                     if next_minimized != is_minimized {
                         is_minimized = next_minimized;
                         log::debug!("Minimized state changed for {window_id:?}: {is_minimized}");
-                        handler.on_window_minimized(is_minimized, window_id)
+                        handler.on_window(window_id, AppWindowEvent::Minimized(is_minimized))
                     } else {
                         RenderingFlow::Continue
                     }
                 }
                 Event::WindowEvent { event: WindowEvent::Focused(true), window_id, .. } => {
-                    handler.on_window_focused(window_id)
+                    handler.on_window(window_id, AppWindowEvent::Focused)
                 }
                 _ => RenderingFlow::Continue,
             };

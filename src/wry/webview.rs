@@ -240,7 +240,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
             let message: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
             log::debug!("Message from WebView: {message:?}");
             if let Err(err) =
-                ipc_proxy.send_event(Request::Event(Event::WindowMessage { message, id }))
+                ipc_proxy.send_event(Request::Emit(Event::WindowMessage { message, id }))
             {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
@@ -251,7 +251,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
                 // TODO: Support dropping multiple files
                 if let Some(path) = paths.into_iter().next()
                     && let Err(err) =
-                        file_drop_proxy.send_event(Request::Event(Event::FileDrop { path, id }))
+                        file_drop_proxy.send_event(Request::Emit(Event::FileDrop { path, id }))
                 {
                     log::error!("Could not send user event for file drop: {err}");
                 }
@@ -266,7 +266,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
                 Err(url) => Event::OpenExternalLink(url),
             };
 
-            if let Err(e) = navigation_proxy.send_event(Request::Event(event)) {
+            if let Err(e) = navigation_proxy.send_event(Request::Emit(event)) {
                 log::error!("Could not send navigation event: {}", e);
             }
 
@@ -280,7 +280,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
                 Err(url) => Event::OpenExternalLink(url),
             };
 
-            if let Err(e) = new_window_proxy.send_event(Request::Event(event)) {
+            if let Err(e) = new_window_proxy.send_event(Request::Emit(event)) {
                 log::error!("Could not send new window event: {}", e);
             }
 
