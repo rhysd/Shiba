@@ -1,10 +1,13 @@
+use crate::config::Config;
 use crate::renderer::{
-    MessageToWindow, RawMessageWriter, Window, WindowAppearance, WindowHandles, WindowState,
-    ZoomLevel,
+    Event, EventHandler, MessageToWindow, RawMessageWriter, Renderer, RendererHandle, Request,
+    Window, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use anyhow::Result;
 use std::cell::RefCell;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::mpsc::{Receiver, Sender, channel};
 
 #[derive(Default)]
 pub struct TestWindow {
@@ -26,6 +29,18 @@ pub struct TestWindow {
     pub window_handles_requested: AtomicBool,
     pub window_id: u32,
     pub is_focused: AtomicBool,
+}
+
+impl TestWindow {
+    pub fn new() -> Self {
+        static ID: AtomicU32 = AtomicU32::new(0);
+
+        let mut w = Self::default();
+        let id = ID.load(Ordering::Relaxed);
+        w.window_id = id;
+        ID.store(id + 1, Ordering::Relaxed);
+        w
+    }
 }
 
 impl Window for TestWindow {
@@ -138,4 +153,63 @@ impl Window for TestWindow {
     fn id(&self) -> Self::Id {
         self.window_id
     }
+}
+
+#[derive(Clone)]
+pub struct TestRendererHandle {
+    tx: Sender<Request<u32>>,
+}
+
+impl RendererHandle for TestRendererHandle {
+    type WindowId = u32;
+
+    fn send(&self, event: Event<Self::WindowId>) {
+        self.tx.send(Request::Emit(event)).unwrap();
+    }
+
+    fn create_window(&self) {
+        self.tx.send(Request::CreateWindow).unwrap();
+    }
+}
+
+pub struct TestRenderer {
+    tx: Sender<Request<u32>>,
+    rx: Receiver<Request<u32>>,
+}
+
+impl TestRenderer {
+    pub fn recv(&self) -> Request<u32> {
+        self.rx.try_recv().unwrap()
+    }
+}
+
+impl Renderer for TestRenderer {
+    type WindowId = u32;
+    type Window = TestWindow;
+    type Handle = TestRendererHandle;
+
+    fn new(_: Rc<Config>) -> Result<Self> {
+        let (tx, rx) = channel();
+        Ok(Self { tx, rx })
+    }
+
+    fn create_handle(&self) -> Self::Handle {
+        TestRendererHandle { tx: self.tx.clone() }
+    }
+
+    fn start<H>(self, _: H) -> !
+    where
+        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static,
+    {
+        unreachable!()
+    }
+}
+
+#[test]
+fn test_renderer_create_window() {
+    let renderer = TestRenderer::new(Rc::new(Config::default())).unwrap();
+    let handle = renderer.create_handle();
+    handle.create_window();
+    let req = renderer.recv();
+    assert!(matches!(req, Request::CreateWindow), "request={req:?}");
 }
