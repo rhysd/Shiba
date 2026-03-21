@@ -179,6 +179,7 @@ Document:
             }
         }
 
+        log::debug!("Parsed command line options: {opts:?}");
         Ok(Parsed::Options(opts))
     }
 }

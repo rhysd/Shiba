@@ -111,6 +111,12 @@ where
         Ok(())
     }
 
+    fn open_window(&mut self, path: PathBuf) {
+        log::debug!("Open new window with path: {path:?}");
+        self.init_files.push_back(path);
+        self.renderer.create_window();
+    }
+
     fn navigate(&mut self, id: R::WindowId, dir: Direction) -> Result<()> {
         let (window, preview) = self.windows.get_mut(id);
 
@@ -241,12 +247,11 @@ where
 
     fn duplicate_window(&mut self, id: R::WindowId) {
         let (_, preview) = self.windows.get(id);
-        if !preview.is_empty() {
-            let path = preview.path().to_path_buf();
-            log::debug!("Duplicate window with path: {path:?}");
-            self.init_files.push_back(path);
+        if preview.is_empty() {
+            self.renderer.create_window();
+        } else {
+            self.open_window(preview.path().to_path_buf());
         }
-        self.renderer.create_window();
     }
 
     fn handle_window_message(
@@ -293,7 +298,8 @@ where
             Reload => self.reload(id)?,
             FileDialog => self.open_files(id)?,
             DirDialog => self.open_dirs(id)?,
-            OpenFile { path } => self.open_preview(id, PathBuf::from(path))?,
+            OpenFile { path, window } if window => self.open_window(path.into()),
+            OpenFile { path, .. } => self.open_preview(id, path.into())?,
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             DragWindow => self.windows.get(id).0.drag_window()?,
@@ -446,9 +452,7 @@ where
                         log::debug!("Path is already opened in window {:?}: {:?}", id, path);
                         window.focus();
                     } else {
-                        log::debug!("Creating new window with file: {:?}", path);
-                        self.init_files.push_back(path);
-                        self.renderer.create_window();
+                        self.open_window(path);
                     }
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);

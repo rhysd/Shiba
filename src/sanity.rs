@@ -21,12 +21,13 @@ impl<H: RendererHandle> SanityTest<H> {
             use MessageFromWindow::*;
 
             let messages = [
-                OpenFile { path: "README.md".to_string() },
+                OpenFile { path: "README.md".to_string(), window: false },
                 OpenFile {
                     #[cfg(target_os = "windows")]
                     path: r"docs\installation.md".to_string(),
                     #[cfg(not(target_os = "windows"))]
                     path: "docs/installation.md".to_string(),
+                    window: false,
                 },
                 GoBack,
                 GoForward,

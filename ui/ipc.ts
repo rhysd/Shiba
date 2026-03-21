@@ -298,6 +298,7 @@ export type MessageToMain =
     | {
           kind: 'open_file';
           path: string;
+          window: boolean;
       }
     | {
           kind: 'zoom_in';

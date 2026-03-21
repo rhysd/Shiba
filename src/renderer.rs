@@ -84,7 +84,7 @@ pub enum MessageFromWindow {
     History,
     Quit,
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
-    OpenFile { path: String },
+    OpenFile { path: String, window: bool },
     ZoomIn,
     ZoomOut,
     DragWindow,
