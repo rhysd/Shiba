@@ -26,8 +26,6 @@ pub struct Shiba<R: Renderer, O, W, D> {
     dialog: D,
     config: Rc<Config>,
     init_files: VecDeque<PathBuf>,
-    #[cfg(feature = "__sanity")]
-    sanity: SanityTest<R::Handle>,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -97,8 +95,6 @@ where
             dialog: D::new(&config)?,
             config,
             init_files: init_files.into(),
-            #[cfg(feature = "__sanity")]
-            sanity: SanityTest::new(renderer.create_handle()),
         })
     }
 
@@ -285,7 +281,7 @@ where
                 }
 
                 #[cfg(feature = "__sanity")]
-                self.sanity.run_test(id);
+                SanityTest::new(self.renderer.clone()).run(id);
             }
             Search { query, index, matcher } => {
                 let (window, preview) = self.windows.get(id);
