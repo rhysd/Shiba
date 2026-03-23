@@ -112,6 +112,8 @@ impl Menu {
                 #[cfg(target_os = "macos")]
                 &PredefinedMenuItem::fullscreen(None),
                 &always_on_top,
+                #[cfg(target_os = "macos")]
+                &PredefinedMenuItem::bring_all_to_front(None),
                 &PredefinedMenuItem::separator(),
                 &zoom_in,
                 &zoom_out,
