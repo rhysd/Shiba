@@ -258,8 +258,7 @@ where
         if preview.is_empty() {
             self.renderer.create_window();
         } else {
-            let init_file = InitFile { path: preview.path().into(), fragment };
-            self.open_window(init_file);
+            self.open_window(InitFile { path: preview.path().into(), fragment });
         }
     }
 
@@ -460,17 +459,7 @@ where
                     file.path = abs_path;
                 }
                 if self.is_markdown_file(&file.path) {
-                    if file.fragment.is_none()
-                        && let Some((id, window, _)) = self
-                            .windows
-                            .iter_mut()
-                            .find(|(_, _, preview)| preview.path() == file.path)
-                    {
-                        log::debug!("Path is already opened in window {:?}: {:?}", id, file);
-                        window.focus();
-                    } else {
-                        self.open_window(file);
-                    }
+                    self.open_window(file);
                 } else {
                     let InitFile { path, .. } = file;
                     log::debug!("Opening local path link item clicked in WebView: {:?}", path);

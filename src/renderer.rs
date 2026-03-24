@@ -276,7 +276,6 @@ pub trait Window {
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cache(&mut self) -> Result<()>;
     fn handles(&self) -> WindowHandles<'_>;
-    fn focus(&self);
     fn id(&self) -> Self::Id;
 }
 
