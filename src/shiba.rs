@@ -4,8 +4,8 @@ use crate::dialog::Dialog;
 use crate::history::{Direction, History};
 use crate::opener::Opener;
 use crate::renderer::{
-    Event, EventHandler, MenuItem, MessageFromWindow, MessageToWindow, Renderer, RendererHandle,
-    RenderingFlow, Window, WindowEvent, WindowHandles,
+    Event, EventHandler, InitFile, MenuItem, MessageFromWindow, MessageToWindow, Renderer,
+    RendererHandle, RenderingFlow, Window, WindowEvent, WindowHandles,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -25,7 +25,7 @@ pub struct Shiba<R: Renderer, O, W, D> {
     watcher: W,
     dialog: D,
     config: Rc<Config>,
-    init_files: VecDeque<PathBuf>,
+    init_files: VecDeque<InitFile>,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -85,6 +85,7 @@ where
         for _ in 0..init_files.len().max(1) {
             handle.create_window();
         }
+        let init_files = init_files.into_iter().map(|p| p.into()).collect();
 
         Ok(Self {
             renderer: handle,
@@ -94,22 +95,33 @@ where
             watcher,
             dialog: D::new(&config)?,
             config,
-            init_files: init_files.into(),
+            init_files,
         })
     }
 
-    fn open_preview(&mut self, id: R::WindowId, path: PathBuf) -> Result<()> {
+    fn open_preview(
+        &mut self,
+        id: R::WindowId,
+        path: PathBuf,
+        fragment: Option<String>,
+    ) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         let (window, preview) = self.windows.get_mut(id);
+
+        if let Some(hash) = fragment.as_deref() {
+            window.send_message(MessageToWindow::NextFragment { hash })?;
+        }
+
         if preview.show(&path, window)? {
             self.history.push(path);
         }
+
         Ok(())
     }
 
-    fn open_window(&mut self, path: PathBuf) {
-        log::debug!("Open new window with path: {path:?}");
-        self.init_files.push_back(path);
+    fn open_window(&mut self, file: InitFile) {
+        log::debug!("Open new window with file: {file:?}");
+        self.init_files.push_back(file);
         self.renderer.create_window();
     }
 
@@ -171,7 +183,7 @@ where
             self.history.push(file);
         }
         log::debug!("Preview the last file chosen by dialog: {last:?}");
-        self.open_preview(id, last)?;
+        self.open_preview(id, last, None)?;
 
         Ok(())
     }
@@ -241,12 +253,13 @@ where
             && path.metadata().map(|md| !md.is_dir()).unwrap_or(false)
     }
 
-    fn duplicate_window(&mut self, id: R::WindowId) {
+    fn duplicate_window(&mut self, id: R::WindowId, fragment: Option<String>) {
         let (_, preview) = self.windows.get(id);
         if preview.is_empty() {
             self.renderer.create_window();
         } else {
-            self.open_window(preview.path().to_path_buf());
+            let init_file = InitFile { path: preview.path().into(), fragment };
+            self.open_window(init_file);
         }
     }
 
@@ -274,8 +287,8 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 window.show();
 
-                if let Some(path) = self.init_files.pop_front() {
-                    self.open_preview(id, path)?;
+                if let Some(InitFile { path, fragment }) = self.init_files.pop_front() {
+                    self.open_preview(id, path, fragment)?;
                 } else {
                     window.send_message(MessageToWindow::Welcome)?;
                 }
@@ -294,15 +307,15 @@ where
             Reload => self.reload(id)?,
             FileDialog => self.open_files(id)?,
             DirDialog => self.open_dirs(id)?,
-            OpenFile { path, window } if window => self.open_window(path.into()),
-            OpenFile { path, .. } => self.open_preview(id, path.into())?,
+            OpenFile { path, window } if window => self.open_window(PathBuf::from(path).into()),
+            OpenFile { path, .. } => self.open_preview(id, path.into(), None)?,
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             DragWindow => self.windows.get(id).0.drag_window()?,
             ToggleMaximized => self.toggle_maximized(id),
             ToggleMinimized => self.toggle_minimized(id),
             NewWindow => self.renderer.create_window(),
-            DuplicateWindow => self.duplicate_window(id),
+            DuplicateWindow => self.duplicate_window(id, None),
             Quit => return Ok(self.quit(self.windows.get(id).0)),
             OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
             ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
@@ -351,7 +364,7 @@ where
             ToggleMinimizeWindow => self.toggle_minimized(id),
             ToggleMaximizeWindow => self.toggle_maximized(id),
             NewWindow => self.renderer.create_window(),
-            DuplicateWindow => self.duplicate_window(id),
+            DuplicateWindow => self.duplicate_window(id, None),
             Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
@@ -416,45 +429,57 @@ where
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.open_preview(id, path)?;
+                self.open_preview(id, path, None)?;
             }
             Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
-            Event::OpenLocalPath { mut path, id } => {
+            Event::OpenLocalPath { file, id } => {
+                let InitFile { mut path, fragment } = file;
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;
                 }
                 if self.is_markdown_file(&path) {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.open_preview(id, path)?;
+                    self.open_preview(id, path, fragment)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                    self.opener.open(&path).with_context(|| format!("Opening path {path:?}"))?;
+                    self.opener
+                        .open(&path)
+                        .with_context(|| format!("Failed to open the local path {path:?}"))?;
                 }
             }
             Event::OpenExternalLink(link) => {
                 log::debug!("Opening external link item clicked in WebView: {:?}", link);
-                self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
+                self.opener
+                    .open(&link)
+                    .with_context(|| format!("Failed to open link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
             Event::NewWindow { init_file: None } => self.renderer.create_window(),
-            Event::NewWindow { init_file: Some(mut path) } => {
-                if let Some(abs_path) = self.history.absolute_path(&path) {
-                    path = abs_path;
+            Event::NewWindow { init_file: Some(mut file) } => {
+                if let Some(abs_path) = self.history.absolute_path(&file.path) {
+                    file.path = abs_path;
                 }
-                if self.is_markdown_file(&path) {
-                    if let Some((id, window, _)) =
-                        self.windows.iter_mut().find(|(_, _, preview)| preview.path() == path)
+                if self.is_markdown_file(&file.path) {
+                    if file.fragment.is_none()
+                        && let Some((id, window, _)) = self
+                            .windows
+                            .iter_mut()
+                            .find(|(_, _, preview)| preview.path() == file.path)
                     {
-                        log::debug!("Path is already opened in window {:?}: {:?}", id, path);
+                        log::debug!("Path is already opened in window {:?}: {:?}", id, file);
                         window.focus();
                     } else {
-                        self.open_window(path);
+                        self.open_window(file);
                     }
                 } else {
-                    log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
+                    let InitFile { path, .. } = file;
+                    log::debug!("Opening local path link item clicked in WebView: {:?}", path);
+                    self.opener
+                        .open(&path)
+                        .with_context(|| format!("Failed to open the local path {:?}", &path))?;
                 }
             }
+            Event::DuplicateWindow { fragment, id } => self.duplicate_window(id, fragment),
             Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)

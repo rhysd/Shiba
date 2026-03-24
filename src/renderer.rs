@@ -64,10 +64,14 @@ pub enum MessageToWindow<'a> {
         percent: u16,
     },
     Reload,
-    Debug,
     AlwaysOnTop {
         pinned: bool,
     },
+    // TODO: Ideally the fragment information shoudl be included in `render_tree` message
+    NextFragment {
+        hash: &'a str,
+    },
+    Debug,
 }
 
 #[derive(Deserialize, Debug)]
@@ -100,14 +104,27 @@ pub enum MessageFromWindow {
 }
 
 #[derive(Debug)]
+pub struct InitFile {
+    pub path: PathBuf,
+    pub fragment: Option<String>,
+}
+
+impl From<PathBuf> for InitFile {
+    fn from(path: PathBuf) -> Self {
+        Self { path, fragment: None }
+    }
+}
+
+#[derive(Debug)]
 pub enum Event<WindowId> {
     WindowMessage { message: MessageFromWindow, id: WindowId },
     FileDrop { path: PathBuf, id: WindowId },
     WatchedFilesChanged(Vec<PathBuf>),
-    OpenLocalPath { path: PathBuf, id: WindowId },
+    OpenLocalPath { file: InitFile, id: WindowId },
     OpenExternalLink(String),
     Menu(MenuItem),
-    NewWindow { init_file: Option<PathBuf> },
+    NewWindow { init_file: Option<InitFile> },
+    DuplicateWindow { fragment: Option<String>, id: WindowId },
     Error(Error),
 }
 

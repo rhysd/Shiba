@@ -77,21 +77,26 @@ export interface Props {
 }
 
 export const Article: React.FC<Props> = ({ tree, dispatch }) => {
-    const { root, lastModified } = tree;
+    const { root, lastModified, fragment } = tree;
     const ref = useRef<HTMLElement>(null);
 
     useEffect(() => {
-        const elem = lastModified?.current;
-        if (!elem || appearInViewport(elem)) {
-            return;
+        if (lastModified) {
+            const elem = lastModified.current;
+            if (!elem || appearInViewport(elem)) {
+                return;
+            }
+            log.debug('Scrolling to last modified element:', elem);
+            elem.scrollIntoView({
+                behavior: 'smooth', // This does not work on WKWebView
+                block: 'center',
+                inline: 'center',
+            });
+        } else if (fragment !== '') {
+            log.debug('Scrolling to fragment:', fragment);
+            location.hash = fragment;
         }
-        log.debug('Scrolling to last modified element:', elem);
-        elem.scrollIntoView({
-            behavior: 'smooth', // This does not work on WKWebView
-            block: 'center',
-            inline: 'center',
-        });
-    }, [lastModified]);
+    }, [lastModified, fragment]);
 
     useEffect(() => {
         if (root && ref.current) {

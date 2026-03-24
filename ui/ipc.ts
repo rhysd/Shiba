@@ -259,8 +259,13 @@ export type MessageFromMain =
           pinned: boolean;
       }
     | {
+          kind: 'next_fragment';
+          hash: string;
+      }
+    | {
           kind: 'debug';
       };
+
 export type MessageToMain =
     | {
           kind: 'init';

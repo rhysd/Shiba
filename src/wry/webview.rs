@@ -1,15 +1,14 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, MessageFromWindow, MessageToWindow, RawMessageWriter, Request, Window as RendererWindow,
-    WindowAppearance, WindowHandles, WindowState, ZoomLevel,
+    Event, InitFile, MessageFromWindow, MessageToWindow, RawMessageWriter, Request,
+    Window as RendererWindow, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::WindowMenu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
 use crate::wry::types::{EventLoop, Proxy};
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
-use std::path::PathBuf;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
@@ -190,7 +189,7 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
     Ok((window, zoom_level, always_on_top))
 }
 
-fn parse_local_path_from_url(mut url: String) -> Result<PathBuf, String> {
+fn parse_local_path_from_url(mut url: String) -> Result<InitFile, String> {
     // Custom protocol URLs are different for each platform
     //   macOS, Linux → <scheme_name>://<path>
     //   Windows → https://<scheme_name>.<path>
@@ -208,18 +207,21 @@ fn parse_local_path_from_url(mut url: String) -> Result<PathBuf, String> {
         url.push('.');
     }
 
-    // TODO: Consider scrolling to the hash anchor after opening the document
-    if let Some(idx) = url.rfind('#')
+    let fragment = if let Some(idx) = url.rfind('#')
         && !url[idx..].contains('/')
     {
+        let frag = url[idx + 1..].to_string(); // Get hash: /a/b#foo -> foo
         url.truncate(idx); // Remove hash link: /a/b#foo -> /a/b
-    }
+        Some(frag)
+    } else {
+        None
+    };
 
     #[cfg(not(target_os = "windows"))]
     let path = url.into();
     #[cfg(target_os = "windows")]
     let path = url.replace('/', "\\").into();
-    Ok(path)
+    Ok(InitFile { path, fragment })
 }
 
 fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
@@ -261,8 +263,8 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
         .with_navigation_handler(move |url| {
             log::debug!("Navigating to URL: {url:?}");
             let event = match parse_local_path_from_url(url) {
-                Ok(path) if &path == "/index.html" => return true,
-                Ok(path) => Event::OpenLocalPath { path, id },
+                Ok(file) if &file.path == "/index.html" => return true,
+                Ok(file) => Event::OpenLocalPath { file, id },
                 Err(url) => Event::OpenExternalLink(url),
             };
 
@@ -275,8 +277,10 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
         .with_new_window_req_handler(move |url, _| {
             log::debug!("New window request with URL: {url:?}");
             let event = match parse_local_path_from_url(url) {
-                Ok(path) if &path == "/index.html" => return NewWindowResponse::Deny, // TODO: Open the current file with new window
-                Ok(path) => Event::NewWindow { init_file: Some(path) },
+                Ok(InitFile { path, fragment }) if &path == "/index.html" => {
+                    Event::DuplicateWindow { fragment, id }
+                }
+                Ok(file) => Event::NewWindow { init_file: Some(file) },
                 Err(url) => Event::OpenExternalLink(url),
             };
 

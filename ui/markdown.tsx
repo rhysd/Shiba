@@ -162,6 +162,7 @@ export interface MarkdownReactTree {
     root: ReactNode;
     lastModified: React.RefObject<HTMLSpanElement | null> | null;
     matchCount: number;
+    fragment: string;
 }
 
 function rawText(elem: RenderTreeElem): string {
@@ -269,7 +270,7 @@ class RenderTreeToReact {
         this.mathjax = mathjax;
     }
 
-    async run(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
+    async run(tree: RenderTreeElem[], fragment: string): Promise<MarkdownReactTree> {
         log.debug('Rendering preview tree', tree);
         const blocks = await this.renderAll(tree);
         const footNotes = await this.renderFootnotes();
@@ -283,6 +284,7 @@ class RenderTreeToReact {
             root,
             lastModified: this.lastModifiedRef,
             matchCount: this.matchCount,
+            fragment,
         };
     }
 
@@ -557,9 +559,9 @@ export class ReactMarkdownRenderer {
     private readonly mermaid = new MermaidRenderer();
     private readonly mathjax = new MathJaxRenderer();
 
-    render(tree: RenderTreeElem[]): Promise<MarkdownReactTree> {
+    render(tree: RenderTreeElem[], fragment: string): Promise<MarkdownReactTree> {
         this.mermaid.resetId();
         const renderer = new RenderTreeToReact(this.mermaid, this.mathjax);
-        return renderer.run(tree);
+        return renderer.run(tree, fragment);
     }
 }

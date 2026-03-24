@@ -1,6 +1,7 @@
 import {
     type Dispatch,
     type State,
+    type Action,
     INITIAL_STATE,
     initialize,
     notifyAlwaysOnTop,
@@ -28,14 +29,16 @@ export class GlobalDispatcher {
     public state: State; // This prop will be updated by `App` component
     public readonly keymap: KeyMapping;
     public readonly markdown: ReactMarkdownRenderer;
+    private fragment: string;
 
     constructor() {
-        this.dispatch = () => {
-            // do nothing by default
+        this.dispatch = (action: Action) => {
+            log.error('Action is ignored by dispatcher because dispatch function is not set yet:', action);
         };
         this.state = INITIAL_STATE;
         this.keymap = new KeyMapping();
         this.markdown = new ReactMarkdownRenderer();
+        this.fragment = '';
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
@@ -67,7 +70,8 @@ export class GlobalDispatcher {
         try {
             switch (msg.kind) {
                 case 'render_tree': {
-                    const tree = await this.markdown.render(msg.tree);
+                    const tree = await this.markdown.render(msg.tree, this.fragment);
+                    this.fragment = '';
                     this.dispatch(previewContent(tree));
                     break;
                 }
@@ -119,6 +123,9 @@ export class GlobalDispatcher {
                     break;
                 case 'always_on_top':
                     this.dispatch(notifyAlwaysOnTop(msg.pinned));
+                    break;
+                case 'next_fragment':
+                    this.fragment = msg.hash;
                     break;
                 case 'debug':
                     log.enableDebug();
