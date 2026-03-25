@@ -281,6 +281,13 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    CloseWindow: {
+        description: 'Close the current window.',
+        dispatch(): void {
+            sendMessage({ kind: 'close_window' });
+        },
+    },
+
     EditConfig: {
         description: 'Edit configuration with a default text editor.',
         dispatch(): void {

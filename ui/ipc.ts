@@ -40,6 +40,7 @@ export type KeyAction =
     | 'MaximizeWindow'
     | 'NewWindow'
     | 'DuplicateWindow'
+    | 'CloseWindow'
     | 'EditConfig'
     | 'Quit';
 
@@ -337,6 +338,9 @@ export type MessageToMain =
     | {
           kind: 'duplicate_window';
           heading?: number;
+      }
+    | {
+          kind: 'close_window';
       }
     | {
           kind: 'edit_config';

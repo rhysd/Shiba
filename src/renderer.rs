@@ -103,6 +103,7 @@ pub enum MessageFromWindow {
     ToggleMinimized,
     NewWindow { path: Option<String> },
     DuplicateWindow { heading: Option<usize> },
+    CloseWindow,
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
     ToggleAlwaysOnTop,
@@ -190,6 +191,7 @@ pub enum MenuItem {
     ToggleMaximizeWindow,
     NewWindow,
     DuplicateWindow,
+    CloseWindow,
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,

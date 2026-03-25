@@ -92,6 +92,7 @@ impl Menu {
         let history = item("History…");
         let new_window = item("New Window");
         let dup_window = item("Duplicate Window");
+        let close_window = item("Close Window");
         let minimize = item("Minimize");
         let maximize = item("Maximize");
         let always_on_top = item("Pin/Unpin On Top");
@@ -106,6 +107,7 @@ impl Menu {
             &[
                 &new_window,
                 &dup_window,
+                &close_window,
                 &PredefinedMenuItem::separator(),
                 &minimize,
                 &maximize,
@@ -232,6 +234,7 @@ impl Menu {
                 (always_on_top.into_id(),   ToggleAlwaysOnTop),
                 (new_window.into_id(),      NewWindow),
                 (dup_window.into_id(),      DuplicateWindow),
+                (close_window.into_id(),    CloseWindow),
                 (minimize.into_id(),        ToggleMinimizeWindow),
                 (maximize.into_id(),        ToggleMaximizeWindow),
                 (guide.into_id(),           Help),

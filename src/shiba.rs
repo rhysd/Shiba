@@ -265,6 +265,19 @@ where
         }
     }
 
+    fn close_window(&mut self, id: R::WindowId) -> Result<RenderingFlow> {
+        let Some((window, _)) = self.windows.remove(id) else {
+            anyhow::bail!("Could not close the window because it did not exist: {id:?}");
+        };
+        log::debug!("Close window: {id:?}");
+        if self.windows.is_empty() {
+            log::debug!("Quit application because no window remains");
+            Ok(self.quit(&window))
+        } else {
+            Ok(RenderingFlow::Continue)
+        }
+    }
+
     fn handle_window_message(
         &mut self,
         id: R::WindowId,
@@ -321,6 +334,7 @@ where
             DuplicateWindow { heading: Some(index) } => {
                 self.duplicate_window(id, InitScroll::Heading(index));
             }
+            CloseWindow => return self.close_window(id),
             Quit => return Ok(self.quit(self.windows.get(id).0)),
             OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
             ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
@@ -370,6 +384,7 @@ where
             ToggleMaximizeWindow => self.toggle_maximized(id),
             NewWindow => self.renderer.create_window(),
             DuplicateWindow => self.duplicate_window(id, InitScroll::Nop),
+            CloseWindow => return self.close_window(id),
             Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,

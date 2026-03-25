@@ -55,6 +55,7 @@ pub enum KeyAction {
     MaximizeWindow,
     NewWindow,
     DuplicateWindow,
+    CloseWindow,
     EditConfig,
     Quit,
 }
@@ -95,7 +96,8 @@ const DEFAULT_KEY_MAPPINGS: &[(&str, KeyAction)] = {
         ("plus",            ZoomIn),
         ("-",               ZoomOut),
         ("ctrl+m",          MaximizeWindow),
-        ("ctrl+n",          NewWindow),
+        ("ctrl+n",          DuplicateWindow),
+        ("ctrl+w",          CloseWindow),
         ("mod+q",           Quit),
         ("?",               Help),
     ]
