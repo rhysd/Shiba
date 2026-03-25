@@ -4,8 +4,8 @@ use crate::dialog::Dialog;
 use crate::history::{Direction, History};
 use crate::opener::Opener;
 use crate::renderer::{
-    Event, EventHandler, InitFile, MenuItem, MessageFromWindow, MessageToWindow, Renderer,
-    RendererHandle, RenderingFlow, Window, WindowEvent, WindowHandles,
+    Event, EventHandler, InitFile, InitScroll, MenuItem, MessageFromWindow, MessageToWindow,
+    Renderer, RendererHandle, RenderingFlow, ScrollRequest, Window, WindowEvent, WindowHandles,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
@@ -99,17 +99,20 @@ where
         })
     }
 
-    fn open_preview(
-        &mut self,
-        id: R::WindowId,
-        path: PathBuf,
-        fragment: Option<String>,
-    ) -> Result<()> {
+    fn open_preview(&mut self, id: R::WindowId, path: PathBuf, scroll: InitScroll) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         let (window, preview) = self.windows.get_mut(id);
 
-        if let Some(hash) = fragment.as_deref() {
-            window.send_message(MessageToWindow::NextFragment { hash })?;
+        match scroll {
+            InitScroll::Fragment(hash) => {
+                let scroll = ScrollRequest::Fragment(&hash);
+                window.send_message(MessageToWindow::Scroll { scroll })?
+            }
+            InitScroll::Heading(index) => {
+                let scroll = ScrollRequest::Heading(index);
+                window.send_message(MessageToWindow::Scroll { scroll })?
+            }
+            InitScroll::Nop => {}
         }
 
         if preview.show(&path, window)? {
@@ -183,7 +186,7 @@ where
             self.history.push(file);
         }
         log::debug!("Preview the last file chosen by dialog: {last:?}");
-        self.open_preview(id, last, None)?;
+        self.open_preview(id, last, InitScroll::Nop)?;
 
         Ok(())
     }
@@ -253,12 +256,12 @@ where
             && path.metadata().map(|md| !md.is_dir()).unwrap_or(false)
     }
 
-    fn duplicate_window(&mut self, id: R::WindowId, fragment: Option<String>) {
+    fn duplicate_window(&mut self, id: R::WindowId, scroll: InitScroll) {
         let (_, preview) = self.windows.get(id);
         if preview.is_empty() {
             self.renderer.create_window();
         } else {
-            self.open_window(InitFile { path: preview.path().into(), fragment });
+            self.open_window(InitFile { path: preview.path().into(), scroll });
         }
     }
 
@@ -286,8 +289,8 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 window.show();
 
-                if let Some(InitFile { path, fragment }) = self.init_files.pop_front() {
-                    self.open_preview(id, path, fragment)?;
+                if let Some(InitFile { path, scroll }) = self.init_files.pop_front() {
+                    self.open_preview(id, path, scroll)?;
                 } else {
                     window.send_message(MessageToWindow::Welcome)?;
                 }
@@ -307,14 +310,17 @@ where
             FileDialog => self.open_files(id)?,
             DirDialog => self.open_dirs(id)?,
             OpenFile { path, window } if window => self.open_window(PathBuf::from(path).into()),
-            OpenFile { path, .. } => self.open_preview(id, path.into(), None)?,
+            OpenFile { path, .. } => self.open_preview(id, path.into(), InitScroll::Nop)?,
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             DragWindow => self.windows.get(id).0.drag_window()?,
             ToggleMaximized => self.toggle_maximized(id),
             ToggleMinimized => self.toggle_minimized(id),
             NewWindow => self.renderer.create_window(),
-            DuplicateWindow => self.duplicate_window(id, None),
+            DuplicateWindow { heading: None } => self.duplicate_window(id, InitScroll::Nop),
+            DuplicateWindow { heading: Some(index) } => {
+                self.duplicate_window(id, InitScroll::Heading(index));
+            }
             Quit => return Ok(self.quit(self.windows.get(id).0)),
             OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
             ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
@@ -363,7 +369,7 @@ where
             ToggleMinimizeWindow => self.toggle_minimized(id),
             ToggleMaximizeWindow => self.toggle_maximized(id),
             NewWindow => self.renderer.create_window(),
-            DuplicateWindow => self.duplicate_window(id, None),
+            DuplicateWindow => self.duplicate_window(id, InitScroll::Nop),
             Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
@@ -428,17 +434,17 @@ where
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.open_preview(id, path, None)?;
+                self.open_preview(id, path, InitScroll::Nop)?;
             }
             Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
             Event::OpenLocalPath { file, id } => {
-                let InitFile { mut path, fragment } = file;
+                let InitFile { mut path, scroll } = file;
                 if let Some(abs_path) = self.history.absolute_path(&path) {
                     path = abs_path;
                 }
                 if self.is_markdown_file(&path) {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.open_preview(id, path, fragment)?;
+                    self.open_preview(id, path, scroll)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
                     self.opener
@@ -468,7 +474,7 @@ where
                         .with_context(|| format!("Failed to open the local path {:?}", &path))?;
                 }
             }
-            Event::DuplicateWindow { fragment, id } => self.duplicate_window(id, fragment),
+            Event::DuplicateWindow { scroll, id } => self.duplicate_window(id, scroll),
             Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)

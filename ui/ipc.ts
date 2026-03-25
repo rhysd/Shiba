@@ -201,6 +201,7 @@ export type RenderTreeElem =
           t: 'match-current-start'; // First current text search match token
           c: RenderTreeElem[];
       };
+export type InitScroll = { fragment: string } | { heading: number };
 
 export type MessageFromMain =
     | {
@@ -259,8 +260,8 @@ export type MessageFromMain =
           pinned: boolean;
       }
     | {
-          kind: 'next_fragment';
-          hash: string;
+          kind: 'scroll';
+          scroll: InitScroll;
       }
     | {
           kind: 'debug';
@@ -335,6 +336,7 @@ export type MessageToMain =
       }
     | {
           kind: 'duplicate_window';
+          heading?: number;
       }
     | {
           kind: 'edit_config';

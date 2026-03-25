@@ -1,7 +1,7 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, InitFile, MessageFromWindow, MessageToWindow, RawMessageWriter, Request,
+    Event, InitFile, InitScroll, MessageFromWindow, MessageToWindow, RawMessageWriter, Request,
     Window as RendererWindow, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::WindowMenu;
@@ -207,21 +207,21 @@ fn parse_local_path_from_url(mut url: String) -> Result<InitFile, String> {
         url.push('.');
     }
 
-    let fragment = if let Some(idx) = url.rfind('#')
+    let scroll = if let Some(idx) = url.rfind('#')
         && !url[idx..].contains('/')
     {
         let frag = url[idx + 1..].to_string(); // Get hash: /a/b#foo -> foo
         url.truncate(idx); // Remove hash link: /a/b#foo -> /a/b
-        Some(frag)
+        if frag.is_empty() { InitScroll::Nop } else { InitScroll::Fragment(frag) }
     } else {
-        None
+        InitScroll::Nop
     };
 
     #[cfg(not(target_os = "windows"))]
     let path = url.into();
     #[cfg(target_os = "windows")]
     let path = url.replace('/', "\\").into();
-    Ok(InitFile { path, fragment })
+    Ok(InitFile { path, scroll })
 }
 
 fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
@@ -277,8 +277,8 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
         .with_new_window_req_handler(move |url, _| {
             log::debug!("New window request with URL: {url:?}");
             let event = match parse_local_path_from_url(url) {
-                Ok(InitFile { path, fragment }) if &path == "/index.html" => {
-                    Event::DuplicateWindow { fragment, id }
+                Ok(InitFile { path, scroll }) if &path == "/index.html" => {
+                    Event::DuplicateWindow { scroll, id }
                 }
                 Ok(file) => Event::NewWindow { init_file: Some(file) },
                 Err(url) => Event::OpenExternalLink(url),

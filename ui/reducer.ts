@@ -63,7 +63,7 @@ export const INITIAL_STATE: State = {
         root: null,
         lastModified: null,
         matchCount: 0,
-        fragment: '',
+        scroll: null,
     },
     path: null,
     searching: false,

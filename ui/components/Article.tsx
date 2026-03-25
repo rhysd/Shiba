@@ -77,7 +77,7 @@ export interface Props {
 }
 
 export const Article: React.FC<Props> = ({ tree, dispatch }) => {
-    const { root, lastModified, fragment } = tree;
+    const { root, lastModified, scroll } = tree;
     const ref = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -92,11 +92,24 @@ export const Article: React.FC<Props> = ({ tree, dispatch }) => {
                 block: 'center',
                 inline: 'center',
             });
-        } else if (fragment !== '') {
-            log.debug('Scrolling to fragment:', fragment);
-            location.hash = fragment;
+        } else if (scroll !== null) {
+            log.debug('Scrolling:', scroll);
+            if ('fragment' in scroll) {
+                location.hash = scroll.fragment;
+            } else if ('heading' in scroll) {
+                const heading = ref.current
+                    ?.querySelectorAll<HTMLHeadingElement>('article > h1,h2,h3,h4,h5,h6')
+                    .item(scroll.heading);
+                if (heading) {
+                    heading.scrollIntoView({
+                        behavior: 'instant',
+                        block: 'start',
+                        inline: 'start',
+                    });
+                }
+            }
         }
-    }, [lastModified, fragment]);
+    }, [lastModified, scroll]);
 
     useEffect(() => {
         if (root && ref.current) {

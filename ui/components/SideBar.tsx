@@ -117,7 +117,7 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
         listRef.current.addEventListener('mouseleave', callback);
     }, [hideScrollBar]);
 
-    const children = headings.map((h, key) => {
+    const children = headings.map((h, idx) => {
         const selected = !!h.current;
         const ref = selected ? focusedRef : undefined;
         const buttonStyle = {
@@ -131,16 +131,20 @@ export const SideBar: React.FC<Props> = ({ headings, path }) => {
         return (
             <ListItem
                 alignItems="flex-start"
-                onClick={() => {
-                    h.elem.scrollIntoView({
-                        behavior: 'smooth', // This does not work on WKWebView
-                        block: 'start',
-                        inline: 'start',
-                    });
+                onClick={event => {
+                    if (event.shiftKey) {
+                        sendMessage({ kind: 'duplicate_window', heading: idx });
+                    } else {
+                        h.elem.scrollIntoView({
+                            behavior: 'smooth', // This does not work on WKWebView
+                            block: 'start',
+                            inline: 'start',
+                        });
+                    }
                 }}
                 disablePadding
                 ref={ref}
-                key={key}
+                key={idx}
             >
                 <ListItemButton selected={selected} style={buttonStyle} disableGutters>
                     <ListItemText primary={h.text} disableTypography sx={textSx} />

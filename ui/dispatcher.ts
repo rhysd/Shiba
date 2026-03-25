@@ -17,7 +17,7 @@ import {
     searchPrevious,
     welcome,
 } from './reducer';
-import type { MessageFromMain } from './ipc';
+import type { MessageFromMain, InitScroll } from './ipc';
 import { ReactMarkdownRenderer } from './markdown';
 import { KeyMapping } from './keymaps';
 import * as log from './log';
@@ -29,7 +29,7 @@ export class GlobalDispatcher {
     public state: State; // This prop will be updated by `App` component
     public readonly keymap: KeyMapping;
     public readonly markdown: ReactMarkdownRenderer;
-    private fragment: string;
+    private initScroll: InitScroll | null;
 
     constructor() {
         this.dispatch = (action: Action) => {
@@ -38,7 +38,7 @@ export class GlobalDispatcher {
         this.state = INITIAL_STATE;
         this.keymap = new KeyMapping();
         this.markdown = new ReactMarkdownRenderer();
-        this.fragment = '';
+        this.initScroll = null;
     }
 
     setDispatch(dispatch: Dispatch, state: State): void {
@@ -70,8 +70,9 @@ export class GlobalDispatcher {
         try {
             switch (msg.kind) {
                 case 'render_tree': {
-                    const tree = await this.markdown.render(msg.tree, this.fragment);
-                    this.fragment = '';
+                    const tree = await this.markdown.render(msg.tree);
+                    tree.scroll = this.initScroll;
+                    this.initScroll = null;
                     this.dispatch(previewContent(tree));
                     break;
                 }
@@ -124,12 +125,12 @@ export class GlobalDispatcher {
                 case 'always_on_top':
                     this.dispatch(notifyAlwaysOnTop(msg.pinned));
                     break;
-                case 'next_fragment':
-                    this.fragment = msg.hash;
-                    break;
                 case 'debug':
                     log.enableDebug();
                     log.debug('Debug log is enabled');
+                    break;
+                case 'scroll':
+                    this.initScroll = msg.scroll;
                     break;
                 default:
                     log.error('Unknown message:', msg);

@@ -39,6 +39,13 @@ pub struct WindowAppearance {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ScrollRequest<'a> {
+    Fragment(&'a str),
+    Heading(usize),
+}
+
+#[derive(Serialize)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "snake_case")]
 pub enum MessageToWindow<'a> {
@@ -67,9 +74,9 @@ pub enum MessageToWindow<'a> {
     AlwaysOnTop {
         pinned: bool,
     },
-    // TODO: Ideally the fragment information shoudl be included in `render_tree` message
-    NextFragment {
-        hash: &'a str,
+    // TODO: Ideally the information about initial scrolling should be included in `render_tree` message
+    Scroll {
+        scroll: ScrollRequest<'a>,
     },
     Debug,
 }
@@ -95,7 +102,7 @@ pub enum MessageFromWindow {
     ToggleMaximized,
     ToggleMinimized,
     NewWindow,
-    DuplicateWindow,
+    DuplicateWindow { heading: Option<usize> },
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
     ToggleAlwaysOnTop,
@@ -104,14 +111,21 @@ pub enum MessageFromWindow {
 }
 
 #[derive(Debug)]
+pub enum InitScroll {
+    Fragment(String),
+    Heading(usize),
+    Nop,
+}
+
+#[derive(Debug)]
 pub struct InitFile {
     pub path: PathBuf,
-    pub fragment: Option<String>,
+    pub scroll: InitScroll,
 }
 
 impl From<PathBuf> for InitFile {
     fn from(path: PathBuf) -> Self {
-        Self { path, fragment: None }
+        Self { path, scroll: InitScroll::Nop }
     }
 }
 
@@ -124,7 +138,7 @@ pub enum Event<WindowId> {
     OpenExternalLink(String),
     Menu(MenuItem),
     NewWindow { init_file: Option<InitFile> },
-    DuplicateWindow { fragment: Option<String>, id: WindowId },
+    DuplicateWindow { scroll: InitScroll, id: WindowId },
     Error(Error),
 }
 
