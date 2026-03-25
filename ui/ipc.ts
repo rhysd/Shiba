@@ -304,7 +304,6 @@ export type MessageToMain =
     | {
           kind: 'open_file';
           path: string;
-          window: boolean;
       }
     | {
           kind: 'zoom_in';
@@ -333,6 +332,7 @@ export type MessageToMain =
       }
     | {
           kind: 'new_window';
+          path?: string;
       }
     | {
           kind: 'duplicate_window';

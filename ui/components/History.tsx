@@ -34,8 +34,9 @@ export const History: React.FC<Props> = ({ history, dispatch }) => {
 
     const handleSelect = useCallback(
         ({ path }: HistoryItem, shiftKey: boolean) => {
-            log.debug('Opening file via history:', path, shiftKey);
-            sendMessage({ kind: 'open_file', path: path, window: shiftKey });
+            const kind = shiftKey ? 'new_window' : 'open_file';
+            log.debug('Opening file via history:', path, kind);
+            sendMessage({ kind, path });
             dispatch(closeHistory());
         },
         [dispatch],

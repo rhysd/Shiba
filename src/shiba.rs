@@ -45,7 +45,7 @@ where
 
         let error = error.context("Could not launch application");
         if let Ok(dialog) = D::new(&Config::default()) {
-            dialog.alert(&error, &WindowHandles::unsupported());
+            dialog.alert(&error, &WindowHandles::unavailable());
         }
         Err(error)
     }
@@ -169,7 +169,7 @@ where
         Ok(())
     }
 
-    fn open_files(&mut self, id: R::WindowId) -> Result<()> {
+    fn pick_files(&mut self, id: R::WindowId) -> Result<()> {
         let (window, _) = self.windows.get(id);
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
         let mut files = self.dialog.pick_files(&window.handles());
@@ -191,7 +191,7 @@ where
         Ok(())
     }
 
-    fn open_dirs(&mut self, id: R::WindowId) -> Result<()> {
+    fn pick_dirs(&mut self, id: R::WindowId) -> Result<()> {
         let (window, _) = self.windows.get(id);
         let dirs = self.dialog.pick_dirs(&window.handles());
         #[cfg(target_os = "windows")]
@@ -307,16 +307,16 @@ where
             GoTop => self.navigate(id, Direction::Top)?,
             History => self.history.send_paths(self.windows.get(id).0)?,
             Reload => self.reload(id)?,
-            FileDialog => self.open_files(id)?,
-            DirDialog => self.open_dirs(id)?,
-            OpenFile { path, window } if window => self.open_window(PathBuf::from(path).into()),
-            OpenFile { path, .. } => self.open_preview(id, path.into(), InitScroll::Nop)?,
+            FileDialog => self.pick_files(id)?,
+            DirDialog => self.pick_dirs(id)?,
+            OpenFile { path } => self.open_preview(id, path.into(), InitScroll::Nop)?,
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             DragWindow => self.windows.get(id).0.drag_window()?,
             ToggleMaximized => self.toggle_maximized(id),
             ToggleMinimized => self.toggle_minimized(id),
-            NewWindow => self.renderer.create_window(),
+            NewWindow { path: None } => self.renderer.create_window(),
+            NewWindow { path: Some(path) } => self.open_window(PathBuf::from(path).into()),
             DuplicateWindow { heading: None } => self.duplicate_window(id, InitScroll::Nop),
             DuplicateWindow { heading: Some(index) } => {
                 self.duplicate_window(id, InitScroll::Heading(index));
@@ -346,8 +346,8 @@ where
             Back => self.navigate(id, Direction::Back)?,
             Top => self.navigate(id, Direction::Top)?,
             Reload => self.reload(id)?,
-            OpenFiles => self.open_files(id)?,
-            WatchDirs => self.open_dirs(id)?,
+            OpenFiles => self.pick_files(id)?,
+            WatchDirs => self.pick_dirs(id)?,
             Search => self.windows.get(id).0.send_message(MessageToWindow::Search)?,
             SearchNext => self.windows.get(id).0.send_message(MessageToWindow::SearchNext)?,
             SearchPrevious => {
@@ -514,9 +514,7 @@ where
         match event {
             WindowEvent::Created(window) => self.windows.add(id, window),
             WindowEvent::Minimized(is_minimized) => {
-                if !self.windows.is_empty() {
-                    self.windows.get_mut(id).0.save_memory(is_minimized)?;
-                }
+                self.windows.get_mut(id).0.save_memory(is_minimized)?
             }
             WindowEvent::Focused => self.windows.set_focus(id),
             WindowEvent::Closed => {
@@ -536,7 +534,7 @@ where
     fn alert(&self, title: &'static str, error: Error) {
         log::error!("Error while handling window event: {title}: {error}");
         let handles = if self.windows.is_empty() {
-            WindowHandles::unsupported() // Error may happen after all windows are closed
+            WindowHandles::unavailable() // Error may happen after all windows are closed
         } else {
             self.windows.focused().0.handles()
         };
@@ -566,6 +564,12 @@ where
     }
 
     fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow {
+        if self.windows.is_empty() && !matches!(event, WindowEvent::Created(_)) {
+            log::error!(
+                "Ignore the window event for window {id:?} because no window exists: {event:?}",
+            );
+            return RenderingFlow::Continue;
+        }
         self.handle_window_event(id, event).unwrap_or_else(|err| {
             self.alert("Could not handle window event", err);
             RenderingFlow::Continue

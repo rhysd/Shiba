@@ -142,7 +142,7 @@ impl Window for TestWindow {
 
     fn handles(&self) -> WindowHandles<'_> {
         self.window_handles_requested.store(true, Ordering::Relaxed);
-        WindowHandles::unsupported()
+        WindowHandles::unavailable()
     }
 
     fn id(&self) -> Self::Id {

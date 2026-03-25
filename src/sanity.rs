@@ -22,8 +22,8 @@ impl<H: RendererHandle> SanityTest<H> {
             let readme = cwd.join("README.md").to_string_lossy().into();
             let installation = docs.join("installation.md").to_string_lossy().into();
             let messages = [
-                OpenFile { path: readme, window: false },
-                OpenFile { path: installation, window: false },
+                OpenFile { path: readme },
+                OpenFile { path: installation },
                 GoBack,
                 GoForward,
                 Reload,

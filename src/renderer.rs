@@ -7,7 +7,7 @@ use raw_window_handle::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 use std::hash::Hash;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -95,13 +95,13 @@ pub enum MessageFromWindow {
     History,
     Quit,
     Search { query: String, index: Option<usize>, matcher: SearchMatcher },
-    OpenFile { path: String, window: bool },
+    OpenFile { path: String },
     ZoomIn,
     ZoomOut,
     DragWindow,
     ToggleMaximized,
     ToggleMinimized,
-    NewWindow,
+    NewWindow { path: Option<String> },
     DuplicateWindow { heading: Option<usize> },
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
@@ -148,12 +148,22 @@ pub enum Request<WindowId> {
     CreateWindow,
 }
 
-#[derive(Debug)]
 pub enum WindowEvent<W> {
     Created(W),
     Minimized(bool),
     Focused,
     Closed,
+}
+
+impl<W> fmt::Debug for WindowEvent<W> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            WindowEvent::Created(_) => write!(f, "WindowEvent::Created"),
+            WindowEvent::Minimized(v) => write!(f, "WindowEvent::Minimized({v})"),
+            WindowEvent::Focused => write!(f, "WindowEvent::Focused"),
+            WindowEvent::Closed => write!(f, "WindowEvent::Closed"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -244,8 +254,8 @@ impl<'a> WindowHandles<'a> {
     pub fn new<W: HasWindowHandle + HasDisplayHandle>(window: &'a W) -> Self {
         Self { window: window.window_handle(), display: window.display_handle() }
     }
-    pub fn unsupported() -> Self {
-        Self { window: Err(HandleError::NotSupported), display: Err(HandleError::NotSupported) }
+    pub fn unavailable() -> Self {
+        Self { window: Err(HandleError::Unavailable), display: Err(HandleError::Unavailable) }
     }
 }
 
