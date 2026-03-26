@@ -288,6 +288,13 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
         },
     },
 
+    CloseAllOtherWindows: {
+        description: 'Close all windows other than the current window.',
+        dispatch(): void {
+            sendMessage({ kind: 'close_all_other_windows' });
+        },
+    },
+
     EditConfig: {
         description: 'Edit configuration with a default text editor.',
         dispatch(): void {

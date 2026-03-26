@@ -278,6 +278,13 @@ where
         }
     }
 
+    fn close_other_windows(&mut self, id: R::WindowId) {
+        log::debug!("Close all windows other than {id:?}");
+        for (id, _, _) in self.windows.remove_others(id) {
+            log::debug!("Close window: {id:?}");
+        }
+    }
+
     fn handle_window_message(
         &mut self,
         id: R::WindowId,
@@ -335,6 +342,7 @@ where
                 self.duplicate_window(id, InitScroll::Heading(index));
             }
             CloseWindow => return self.close_window(id),
+            CloseAllOtherWindows => self.close_other_windows(id),
             Quit => return Ok(self.quit(self.windows.get(id).0)),
             OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
             ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
@@ -385,6 +393,7 @@ where
             NewWindow => self.renderer.create_window(),
             DuplicateWindow => self.duplicate_window(id, InitScroll::Nop),
             CloseWindow => return self.close_window(id),
+            CloseAllOtherWindows => self.close_other_windows(id),
             Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,

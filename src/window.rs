@@ -78,6 +78,13 @@ impl<R: Renderer> WindowManager<R> {
         Some(removed)
     }
 
+    pub fn remove_others(
+        &mut self,
+        id: R::WindowId,
+    ) -> impl Iterator<Item = (R::WindowId, R::Window, Preview)> {
+        self.windows.extract_if(move |i, _| *i != id).map(|(i, (w, p))| (i, w, p))
+    }
+
     pub fn set_focus(&mut self, id: R::WindowId) {
         if self.focused == Some(id) {
             return;
@@ -218,5 +225,24 @@ mod tests {
             .collect::<Vec<_>>();
         actual.sort(); // Iteration order is random
         assert_eq!(&expected, actual.as_slice());
+    }
+
+    #[test]
+    fn remove_other_windows() {
+        let mut wm = WindowManager::<TestRenderer>::default();
+        let mut add = || {
+            let w = TestWindow::new();
+            let id = w.window_id;
+            wm.add(id, w);
+            id
+        };
+
+        let (id1, id2, id3) = (add(), add(), add());
+        wm.set_focus(id2);
+        let mut removed: Vec<_> = wm.remove_others(id2).map(|(id, _, _)| id).collect();
+        removed.sort();
+        assert_eq!(removed, &[id1, id3]);
+        assert_eq!(wm.focused_id(), id2);
+        assert!(!wm.is_empty());
     }
 }

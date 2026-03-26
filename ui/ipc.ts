@@ -41,6 +41,7 @@ export type KeyAction =
     | 'NewWindow'
     | 'DuplicateWindow'
     | 'CloseWindow'
+    | 'CloseAllOtherWindows'
     | 'EditConfig'
     | 'Quit';
 
@@ -341,6 +342,9 @@ export type MessageToMain =
       }
     | {
           kind: 'close_window';
+      }
+    | {
+          kind: 'close_all_other_windows';
       }
     | {
           kind: 'edit_config';

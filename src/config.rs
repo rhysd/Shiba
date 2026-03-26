@@ -56,6 +56,7 @@ pub enum KeyAction {
     NewWindow,
     DuplicateWindow,
     CloseWindow,
+    CloseAllOtherWindows,
     EditConfig,
     Quit,
 }
