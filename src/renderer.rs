@@ -7,10 +7,11 @@ use raw_window_handle::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 use std::hash::Hash;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct WindowState {
@@ -35,6 +36,13 @@ pub struct WindowAppearance {
     pub vibrancy: bool,
     pub scroll_bar: bool,
     pub border_top: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ScrollRequest<'a> {
+    Fragment(&'a str),
+    Heading(usize),
 }
 
 #[derive(Serialize)]
@@ -63,10 +71,14 @@ pub enum MessageToWindow<'a> {
         percent: u16,
     },
     Reload,
-    Debug,
     AlwaysOnTop {
         pinned: bool,
     },
+    // TODO: Ideally the information about initial scrolling should be included in `render_tree` message
+    Scroll {
+        scroll: ScrollRequest<'a>,
+    },
+    Debug,
 }
 
 #[derive(Deserialize, Debug)]
@@ -89,6 +101,10 @@ pub enum MessageFromWindow {
     DragWindow,
     ToggleMaximized,
     ToggleMinimized,
+    NewWindow { path: Option<String> },
+    DuplicateWindow { heading: Option<usize> },
+    CloseWindow,
+    CloseAllOtherWindows,
     OpenMenu { position: Option<(f64, f64)> },
     ToggleMenuBar,
     ToggleAlwaysOnTop,
@@ -97,15 +113,59 @@ pub enum MessageFromWindow {
 }
 
 #[derive(Debug)]
-pub enum Event {
-    WindowMessage(MessageFromWindow),
-    FileDrop(PathBuf),
+pub enum InitScroll {
+    Fragment(String),
+    Heading(usize),
+    Nop,
+}
+
+#[derive(Debug)]
+pub struct InitFile {
+    pub path: PathBuf,
+    pub scroll: InitScroll,
+}
+
+impl From<PathBuf> for InitFile {
+    fn from(path: PathBuf) -> Self {
+        Self { path, scroll: InitScroll::Nop }
+    }
+}
+
+#[derive(Debug)]
+pub enum Event<WindowId> {
+    WindowMessage { message: MessageFromWindow, id: WindowId },
+    FileDrop { path: PathBuf, id: WindowId },
     WatchedFilesChanged(Vec<PathBuf>),
-    OpenLocalPath(PathBuf),
+    OpenLocalPath { file: InitFile, id: WindowId },
     OpenExternalLink(String),
     Menu(MenuItem),
-    Minimized(bool),
+    NewWindow { init_file: Option<InitFile> },
+    DuplicateWindow { scroll: InitScroll, id: WindowId },
     Error(Error),
+}
+
+#[derive(Debug)]
+pub enum Request<WindowId> {
+    Emit(Event<WindowId>),
+    CreateWindow,
+}
+
+pub enum WindowEvent<W> {
+    Created(W),
+    Minimized(bool),
+    Focused,
+    Closed,
+}
+
+impl<W> fmt::Debug for WindowEvent<W> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            WindowEvent::Created(_) => write!(f, "WindowEvent::Created"),
+            WindowEvent::Minimized(v) => write!(f, "WindowEvent::Minimized({v})"),
+            WindowEvent::Focused => write!(f, "WindowEvent::Focused"),
+            WindowEvent::Closed => write!(f, "WindowEvent::Closed"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -130,6 +190,10 @@ pub enum MenuItem {
     ToggleAlwaysOnTop,
     ToggleMinimizeWindow,
     ToggleMaximizeWindow,
+    NewWindow,
+    DuplicateWindow,
+    CloseWindow,
+    CloseAllOtherWindows,
     EditConfig,
     #[cfg(not(target_os = "macos"))]
     ToggleMenuBar,
@@ -194,26 +258,29 @@ impl<'a> WindowHandles<'a> {
     pub fn new<W: HasWindowHandle + HasDisplayHandle>(window: &'a W) -> Self {
         Self { window: window.window_handle(), display: window.display_handle() }
     }
-    pub fn unsupported() -> Self {
-        Self { window: Err(HandleError::NotSupported), display: Err(HandleError::NotSupported) }
+    pub fn unavailable() -> Self {
+        Self { window: Err(HandleError::Unavailable), display: Err(HandleError::Unavailable) }
     }
 }
 
 #[derive(Debug)]
 pub enum RenderingFlow {
     Continue,
-    Exit,
+    Exit(i32),
 }
 
-/// Sender to send [`Event`] accross threads. It is used to send the user events to the main thread
+/// Handle to access the renderer accross threads. It is used to send the user events to the main thread
 /// from another worker thread.
-pub trait EventSender: 'static + Send {
-    fn send(&self, event: Event);
+pub trait RendererHandle: 'static + Send + Clone {
+    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+
+    fn send(&self, event: Event<Self::WindowId>);
+    fn create_window(&self);
 }
 
 /// Window is responsible for rendering a single window in the rendering context.
 pub trait Window {
-    type Id: PartialEq + Eq + Hash + Debug;
+    type Id: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
 
     fn send_message(&self, message: MessageToWindow<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
@@ -242,20 +309,25 @@ pub trait Window {
 
 /// Renderer manages the entire rendering lifecycle.
 pub trait Renderer: Sized {
-    type EventSender: EventSender;
-    type Window: Window;
+    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+    type Window: Window<Id = Self::WindowId>;
+    type Handle: RendererHandle<WindowId = Self::WindowId>;
 
-    fn new() -> Result<Self>;
-    fn create_sender(&self) -> Self::EventSender;
-    fn create_window(&self, config: &Config) -> Result<Self::Window>;
+    fn new(config: Rc<Config>) -> Result<Self>;
+    fn create_handle(&self) -> Self::Handle;
     /// Starts the rendering execution and runs until the process exits.
-    fn start<H: EventHandler + 'static>(self, handler: H) -> !;
+    fn start<H>(self, handler: H) -> !
+    where
+        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static;
 }
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
-    fn on_event(&mut self, event: Event) -> RenderingFlow;
-    fn on_exit(&mut self) -> i32;
+    type Window: Window;
+    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+
+    fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow;
+    fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow;
 }
 
 #[cfg(test)]

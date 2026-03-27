@@ -1,5 +1,5 @@
 use anyhow::{Error, Result};
-use once_cell::unsync::OnceCell;
+use once_cell::unsync::OnceCell; // For OnceCell::get_or_try_init
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -38,7 +38,7 @@ pub enum Parsed {
 #[derive(Debug, PartialEq)]
 pub struct Options {
     pub debug: bool,
-    pub init_file: Option<PathBuf>,
+    pub init_files: Vec<PathBuf>,
     pub watch_paths: Vec<PathBuf>,
     pub watch: bool,
     pub restore: bool,
@@ -52,7 +52,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             debug: false,
-            init_file: None,
+            init_files: vec![],
             watch_paths: vec![],
             watch: true,
             restore: true,
@@ -67,10 +67,12 @@ impl Default for Options {
 impl Options {
     const USAGE: &'static str = r#"Usage: shiba [OPTIONS...] [PATH...]
 
-Shiba is a markdown preview application to be used with your favorite text
-editor, designed for simplicity, performance, and keyboard-friendliness.
+Shiba is a markdown previewer to be used with your favorite text editor, designed for simplicity,
+performance, and keyboard-friendliness.
 
 Options:
+
+    -o, --open FILE             Open the file with a new window. This option is repeatable
     -t, --theme THEME           Window theme ("system" (default), "dark" or "light")
         --no-watch              Disable to watch file changes
         --no-restore            Do not restore the previous window state
@@ -81,7 +83,36 @@ Options:
     -h, --help                  Print this help
         --version               Print application version
 
+Arguments:
+
+    PATH...                     Paths to the files and directories to watch. The first file is
+                                opened in a preview window. Rest of paths are shown in the preview
+                                window when they are modified (e.g. edited by a text editor) next
+                                time. If you want to open them in multiple windows, use --open or -o
+                                option.
+
+Examples:
+
+    $ shiba file.md
+        Opens `file.md` file in a preview window and tracks the file changes.
+
+    $ shiba dir/
+        Tracks all files in the `dir` directory. When one of them is modified, it's opened in a
+        preview window.
+
+    $ shiba file1.md file2.md dir1 dir2
+        Tracks `file1.md`, `file2.md`, files in `dir1` directory, and files in `dir2` directory.
+        `file1.md` file is opened in a preview window.
+
+    $ shiba file1.md -o file2.md -o file3.md
+        Opens the three files in three windows respectively and tracks the file changes. The first
+        file path implies --open option so you don't need to specify it.
+
+    $ shiba
+        Opens an empty window. You can open files from key shortcuts, menu items, file picker, etc.
+
 Document:
+
     https://github.com/rhysd/Shiba/README.md
 "#;
 
@@ -111,6 +142,21 @@ Document:
                 Long("config-dir") => opts.config_dir = Some(path_value(&mut parser)?),
                 Long("data-dir") => opts.data_dir = Some(path_value(&mut parser)?),
                 Long("debug") => opts.debug = true,
+                Short('o') | Long("open") => {
+                    let path = path_value(&mut parser)?;
+                    let path = match path.metadata() {
+                        Ok(md) if md.is_dir() => anyhow::bail!(
+                            "--open only works with files but directory found: {path:?}",
+                        ),
+                        Ok(_) => path.canonicalize()?,
+                        Err(err) => {
+                            let err = Error::new(err)
+                                .context(format!("Could not open the file for --open: {path:?}"));
+                            return Err(err);
+                        }
+                    };
+                    opts.init_files.push(path)
+                }
                 Value(path) => {
                     let path = PathBuf::from(path);
                     let exists = path.exists();
@@ -123,16 +169,17 @@ Document:
                         cwd.get_or_try_init(|| env::current_dir()?.canonicalize())?.join(path)
                     };
 
-                    if opts.init_file.is_some() || !exists || path.is_dir() {
+                    if !opts.init_files.is_empty() || !exists || path.is_dir() {
                         opts.watch_paths.push(path);
                     } else {
-                        opts.init_file = Some(path);
+                        opts.init_files.push(path);
                     }
                 }
                 _ => return Err(arg.unexpected().into()),
             }
         }
 
+        log::debug!("Parsed command line options: {opts:?}");
         Ok(Parsed::Options(opts))
     }
 }
@@ -160,14 +207,14 @@ mod tests {
             (
                 &["README.md"][..],
                 Options {
-                    init_file: Some(cur.join("README.md")),
+                    init_files: vec![cur.join("README.md")],
                     ..Default::default()
                 },
             ),
             (
                 &["README.md", "src"][..],
                 Options {
-                    init_file: Some(cur.join("README.md")),
+                    init_files: vec![cur.join("README.md")],
                     watch_paths: vec![cur.join("src")],
                     ..Default::default()
                 },
@@ -175,7 +222,14 @@ mod tests {
             (
                 &["file-not-existing.md"][..],
                 Options {
-                    init_file: None,
+                    watch_paths: vec![cur.join("file-not-existing.md")],
+                    ..Default::default()
+                },
+            ),
+            (
+                &["file-not-existing.md", "README.md"][..],
+                Options {
+                    init_files: vec![cur.join("README.md")],
                     watch_paths: vec![cur.join("file-not-existing.md")],
                     ..Default::default()
                 },
@@ -222,6 +276,28 @@ mod tests {
                     ..Default::default()
                 },
             ),
+            (
+                &["README.md", "-o", "CHANGELOG.md", "--open", "LICENSE"][..],
+                Options {
+                    init_files: vec![
+                        cur.join("README.md"),
+                        cur.join("CHANGELOG.md"),
+                        cur.join("LICENSE"),
+                    ],
+                    ..Default::default()
+                },
+            ),
+            (
+                &["-o", "README.md", "CHANGELOG.md", "-o", "LICENSE"][..],
+                Options {
+                    init_files: vec![
+                        cur.join("README.md"),
+                        cur.join("LICENSE"),
+                    ],
+                    watch_paths: vec![cur.join("CHANGELOG.md")],
+                    ..Default::default()
+                },
+            ),
         ];
 
         for (args, want) in tests {
@@ -260,7 +336,7 @@ mod tests {
 
     #[test]
     fn parse_missing_option_arg() {
-        for arg in ["--config-dir", "--data-dir", "--theme"] {
+        for arg in ["--config-dir", "--data-dir", "--theme", "--open", "-o"] {
             let err = Options::parse(cmdline(&["--debug", arg])).unwrap_err();
             assert_eq!(
                 format!("{err}"),
@@ -272,7 +348,7 @@ mod tests {
 
     #[test]
     fn parse_invalid_option_arg() {
-        for arg in ["--config-dir", "--data-dir"] {
+        for arg in ["--config-dir", "--data-dir", "--open", "-o"] {
             let err = Options::parse(cmdline(&[arg, "--debug"])).unwrap_err();
             assert_eq!(
                 format!("{err}"),
@@ -283,12 +359,28 @@ mod tests {
     }
 
     #[test]
-    fn parse_theme_name() {
+    fn parse_invalid_theme_name() {
         let err = Options::parse(cmdline(&["--theme", "foo"])).unwrap_err();
         let msg = format!("{err}");
         assert!(
             msg.contains(r#"Value for --theme must be one of "dark", "light" or "system""#),
             "unexpected message {msg:?}",
         );
+    }
+
+    #[test]
+    fn parse_invalid_open_arg() {
+        for (arg, expected) in [
+            (".", "--open only works with files but directory found"),
+            ("not-existing.md", "Could not open the file for --open"),
+            ("", "Could not open the file for --open"),
+        ] {
+            let err = Options::parse(cmdline(&["--open", arg])).unwrap_err();
+            let msg = format!("{err}");
+            assert!(
+                msg.contains(expected),
+                "argument {arg:?} does not cause expected message {expected:?}: {msg:?}",
+            );
+        }
     }
 }

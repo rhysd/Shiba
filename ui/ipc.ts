@@ -38,6 +38,10 @@ export type KeyAction =
     | 'ToggleAlwaysOnTop'
     | 'MinimizeWindow'
     | 'MaximizeWindow'
+    | 'NewWindow'
+    | 'DuplicateWindow'
+    | 'CloseWindow'
+    | 'CloseAllOtherWindows'
     | 'EditConfig'
     | 'Quit';
 
@@ -199,6 +203,7 @@ export type RenderTreeElem =
           t: 'match-current-start'; // First current text search match token
           c: RenderTreeElem[];
       };
+export type InitScroll = { fragment: string } | { heading: number };
 
 export type MessageFromMain =
     | {
@@ -257,8 +262,13 @@ export type MessageFromMain =
           pinned: boolean;
       }
     | {
+          kind: 'scroll';
+          scroll: InitScroll;
+      }
+    | {
           kind: 'debug';
       };
+
 export type MessageToMain =
     | {
           kind: 'init';
@@ -321,6 +331,20 @@ export type MessageToMain =
       }
     | {
           kind: 'toggle_minimized';
+      }
+    | {
+          kind: 'new_window';
+          path?: string;
+      }
+    | {
+          kind: 'duplicate_window';
+          heading?: number;
+      }
+    | {
+          kind: 'close_window';
+      }
+    | {
+          kind: 'close_all_other_windows';
       }
     | {
           kind: 'edit_config';

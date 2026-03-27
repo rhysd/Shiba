@@ -41,7 +41,7 @@ export interface Props<T extends Item> {
     items: T[];
     placeholder: string;
     onClose: () => void;
-    onSelect: (item: T) => void;
+    onSelect: (item: T, shiftKey: boolean) => void;
     renderItem: (item: T) => React.ReactNode;
 }
 
@@ -103,7 +103,7 @@ export function Palette<T extends Item>({
             setIndex(0);
         } else if (e.key === 'Enter') {
             if (index < items.length) {
-                onSelect(items[index]);
+                onSelect(items[index], e.shiftKey);
             }
         } else {
             return;
@@ -151,8 +151,8 @@ export function Palette<T extends Item>({
                         return (
                             <ListItemButton
                                 selected={selected}
-                                onClick={() => {
-                                    onSelect(item);
+                                onClick={e => {
+                                    onSelect(item, e.shiftKey);
                                 }}
                                 ref={ref}
                                 key={idx}

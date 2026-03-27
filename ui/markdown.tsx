@@ -20,6 +20,7 @@ import type {
     RenderTreeTableAlign,
     RenderTreeCodeFence,
     AlertKind,
+    InitScroll,
 } from './ipc';
 import { colorScheme } from './css';
 import * as log from './log';
@@ -162,6 +163,7 @@ export interface MarkdownReactTree {
     root: ReactNode;
     lastModified: React.RefObject<HTMLSpanElement | null> | null;
     matchCount: number;
+    scroll: InitScroll | null;
 }
 
 function rawText(elem: RenderTreeElem): string {
@@ -240,6 +242,17 @@ function alertIcon(kind: AlertKind): ReactElement | null {
     }
 }
 
+function onLinkClick(event: React.MouseEvent<HTMLAnchorElement>): void {
+    if (!event.shiftKey) {
+        return;
+    }
+    // Note: On Windows this is the WebView2's default behavior. However, on macOS, WKWebView doesn't create
+    // a new window on click with shift.
+    event.preventDefault();
+    log.debug('Opening a new window with URL:', event.currentTarget.href);
+    window.open(event.currentTarget.href, '_blank');
+}
+
 class RenderTreeToReact {
     private table: TableState | null;
     private lastModifiedRef: React.RefObject<HTMLSpanElement | null> | null;
@@ -272,6 +285,7 @@ class RenderTreeToReact {
             root,
             lastModified: this.lastModifiedRef,
             matchCount: this.matchCount,
+            scroll: null,
         };
     }
 
@@ -343,7 +357,7 @@ class RenderTreeToReact {
             case 'a':
                 if (elem.auto) {
                     return (
-                        <a key={key} href={elem.href}>
+                        <a key={key} href={elem.href} onClick={onLinkClick}>
                             {await this.renderAll(elem.c)}
                         </a>
                     );
@@ -354,7 +368,7 @@ class RenderTreeToReact {
                         title = `"${elem.title}" ${title}`;
                     }
                     return (
-                        <a key={key} title={title} href={elem.href}>
+                        <a key={key} title={title} href={elem.href} onClick={onLinkClick}>
                             {await this.renderAll(elem.c)}
                         </a>
                     );

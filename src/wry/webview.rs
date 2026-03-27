@@ -1,11 +1,12 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, MessageFromWindow, MessageToWindow, RawMessageWriter, Window as RendererWindow,
-    WindowAppearance, WindowHandles, WindowState, ZoomLevel,
+    Event, InitFile, InitScroll, MessageFromWindow, MessageToWindow, RawMessageWriter, Request,
+    Window as RendererWindow, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::WindowMenu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
+use crate::wry::types::{EventLoop, Proxy};
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
@@ -25,8 +26,6 @@ use wry::http::header::CONTENT_TYPE;
 use wry::{DragDropEvent, NewWindowResponse, WebContext, WebView, WebViewBuilder};
 #[cfg(target_os = "windows")]
 use wry::{MemoryUsageLevel, WebViewBuilderExtWindows, WebViewExtWindows};
-
-pub type EventLoop = tao::event_loop::EventLoop<Event>;
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_32x32.rgba");
@@ -190,13 +189,49 @@ fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, Zoo
     Ok((window, zoom_level, always_on_top))
 }
 
-fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> Result<WebView> {
-    let ipc_proxy = event_loop.create_proxy();
-    let file_drop_proxy = event_loop.create_proxy();
-    let navigation_proxy = event_loop.create_proxy();
+fn parse_local_path_from_url(mut url: String) -> Result<InitFile, String> {
+    // Custom protocol URLs are different for each platform
+    //   macOS, Linux → <scheme_name>://<path>
+    //   Windows → https://<scheme_name>.<path>
+    #[cfg(not(target_os = "windows"))]
+    const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
+    #[cfg(target_os = "windows")]
+    const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
+
+    if !url.starts_with(CUSTOM_PROTOCOL_URL) {
+        return Err(url);
+    }
+
+    url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
+    if url.is_empty() {
+        url.push('.');
+    }
+
+    let scroll = if let Some(idx) = url.rfind('#')
+        && !url[idx..].contains('/')
+    {
+        let frag = url[idx + 1..].to_string(); // Get hash: /a/b#foo -> foo
+        url.truncate(idx); // Remove hash link: /a/b#foo -> /a/b
+        if frag.is_empty() { InitScroll::Nop } else { InitScroll::Fragment(frag) }
+    } else {
+        InitScroll::Nop
+    };
+
+    #[cfg(not(target_os = "windows"))]
+    let path = url.into();
+    #[cfg(target_os = "windows")]
+    let path = url.replace('/', "\\").into();
+    Ok(InitFile { path, scroll })
+}
+
+fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
+    let file_drop_proxy = ipc_proxy.clone();
+    let navigation_proxy = ipc_proxy.clone();
+    let new_window_proxy = ipc_proxy.clone();
     let loader = Assets::new(config);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
+    let id = window.id();
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
     let mut builder = WebViewBuilder::new_with_web_context(&mut context);
@@ -204,9 +239,11 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
     builder = builder
         .with_url("shiba://localhost/index.html")
         .with_ipc_handler(move |msg| {
-            let msg: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
-            log::debug!("Message from WebView: {msg:?}");
-            if let Err(err) = ipc_proxy.send_event(Event::WindowMessage(msg)) {
+            let message: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
+            log::debug!("Message from WebView: {message:?}");
+            if let Err(err) =
+                ipc_proxy.send_event(Request::Emit(Event::WindowMessage { message, id }))
+            {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
@@ -215,59 +252,42 @@ fn create_webview(window: &Window, event_loop: &EventLoop, config: &Config) -> R
                 log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
                 // TODO: Support dropping multiple files
                 if let Some(path) = paths.into_iter().next()
-                    && let Err(err) = file_drop_proxy.send_event(Event::FileDrop(path))
+                    && let Err(err) =
+                        file_drop_proxy.send_event(Request::Emit(Event::FileDrop { path, id }))
                 {
                     log::error!("Could not send user event for file drop: {err}");
                 }
             }
             true
         })
-        .with_navigation_handler(move |mut url| {
-            // Custom protocol URLs are different for each platform
-            //   macOS, Linux → <scheme_name>://<path>
-            //   Windows → https://<scheme_name>.<path>
-            #[cfg(not(target_os = "windows"))]
-            const CUSTOM_PROTOCOL_URL: &str = "shiba://localhost/";
-            #[cfg(target_os = "windows")]
-            const CUSTOM_PROTOCOL_URL: &str = "http://shiba.localhost/";
-
-            let event = if url.starts_with(CUSTOM_PROTOCOL_URL) {
-                log::debug!("Navigating to custom protocol URL {}", url);
-                if &url[CUSTOM_PROTOCOL_URL.len()..] == "index.html" {
-                    return true;
-                }
-
-                url.drain(0..CUSTOM_PROTOCOL_URL.len() - 1); // shiba://localhost/foo/bar -> /foo/bar
-
-                if url.starts_with("/index.html#") {
-                    log::debug!("Allow navigating to hash link {}", url);
-                    return true;
-                }
-
-                if url.is_empty() {
-                    url.push('.');
-                }
-
-                #[cfg(not(target_os = "windows"))]
-                let path = url.into();
-                #[cfg(target_os = "windows")]
-                let path = url.replace('/', "\\").into();
-
-                log::debug!("Opening local path {:?}", path);
-                Event::OpenLocalPath(path)
-            } else {
-                log::debug!("Navigating to external URL {:?}", url);
-                Event::OpenExternalLink(url)
+        .with_navigation_handler(move |url| {
+            log::debug!("Navigating to URL: {url:?}");
+            let event = match parse_local_path_from_url(url) {
+                Ok(file) if &file.path == "/index.html" => return true,
+                Ok(file) => Event::OpenLocalPath { file, id },
+                Err(url) => Event::OpenExternalLink(url),
             };
 
-            if let Err(e) = navigation_proxy.send_event(event) {
+            if let Err(e) = navigation_proxy.send_event(Request::Emit(event)) {
                 log::error!("Could not send navigation event: {}", e);
             }
 
             false // Don't allow navigating to any external links
         })
-        .with_new_window_req_handler(|url, _| {
-            log::debug!("Rejected to open new window for URL: {}", url);
+        .with_new_window_req_handler(move |url, _| {
+            log::debug!("New window request with URL: {url:?}");
+            let event = match parse_local_path_from_url(url) {
+                Ok(InitFile { path, scroll }) if &path == "/index.html" => {
+                    Event::DuplicateWindow { scroll, id }
+                }
+                Ok(file) => Event::NewWindow { init_file: Some(file) },
+                Err(url) => Event::OpenExternalLink(url),
+            };
+
+            if let Err(e) = new_window_proxy.send_event(Request::Emit(event)) {
+                log::error!("Could not send new window event: {}", e);
+            }
+
             NewWindowResponse::Deny
         })
         .with_custom_protocol("shiba".into(), move |_webview_id, request| {
@@ -334,14 +354,19 @@ pub struct WebViewWindow {
 }
 
 impl WebViewWindow {
-    pub fn new(config: &Config, event_loop: &EventLoop, mut menu: WindowMenu) -> Result<Self> {
+    pub fn new(
+        config: &Config,
+        event_loop: &EventLoop,
+        proxy: Proxy,
+        mut menu: WindowMenu,
+    ) -> Result<Self> {
         let (window, zoom_level, always_on_top) = create_window(event_loop, config)?;
 
         if config.window().menu_bar != menu.is_visible() {
             menu.toggle(&window)?;
         }
 
-        let webview = create_webview(&window, event_loop, config)?;
+        let webview = create_webview(&window, proxy, config)?;
         log::debug!("WebView was created successfully");
 
         let zoom_factor = zoom_level.factor();

@@ -63,6 +63,7 @@ export const INITIAL_STATE: State = {
         root: null,
         lastModified: null,
         matchCount: 0,
+        scroll: null,
     },
     path: null,
     searching: false,
@@ -78,7 +79,7 @@ export const INITIAL_STATE: State = {
     headings: [],
 };
 
-type Action =
+export type Action =
     | {
           kind: 'preview_content';
           tree: MarkdownReactTree;

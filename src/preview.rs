@@ -1,4 +1,4 @@
-use crate::config::SearchMatcher;
+use crate::config::{SearchMatcher, home_dir};
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::renderer::{MessageToWindow, Window};
 use anyhow::Result;
@@ -6,38 +6,24 @@ use std::fs;
 use std::mem;
 use std::path::{MAIN_SEPARATOR, Path, PathBuf};
 
+#[derive(Default)]
 pub struct Preview {
-    home_dir: Option<PathBuf>,
     content: MarkdownContent,
     text: DisplayText,
     path: PathBuf,
 }
 
-impl Default for Preview {
-    fn default() -> Self {
-        let home_dir = dirs::home_dir();
-        #[cfg(target_os = "windows")]
-        let home_dir = home_dir.and_then(|p| p.canonicalize().ok()); // Ensure \\? at the head of the path
-        Self {
-            home_dir,
-            content: MarkdownContent::default(),
-            text: DisplayText::default(),
-            path: PathBuf::new(),
-        }
-    }
-}
-
 impl Preview {
-    pub fn home_dir(&self) -> Option<&'_ Path> {
-        self.home_dir.as_deref()
-    }
-
     pub fn is_empty(&self) -> bool {
         self.content.is_empty()
     }
 
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
     fn title(&self) -> String {
-        if let Some(home_dir) = &self.home_dir
+        if let Some(home_dir) = home_dir()
             && let Ok(path) = self.path.strip_prefix(home_dir)
         {
             return format!("Shiba: ~{}{}", MAIN_SEPARATOR, path.display());

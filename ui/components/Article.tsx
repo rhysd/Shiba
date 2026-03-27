@@ -77,21 +77,39 @@ export interface Props {
 }
 
 export const Article: React.FC<Props> = ({ tree, dispatch }) => {
-    const { root, lastModified } = tree;
+    const { root, lastModified, scroll } = tree;
     const ref = useRef<HTMLElement>(null);
 
     useEffect(() => {
-        const elem = lastModified?.current;
-        if (!elem || appearInViewport(elem)) {
-            return;
+        if (lastModified) {
+            const elem = lastModified.current;
+            if (!elem || appearInViewport(elem)) {
+                return;
+            }
+            log.debug('Scrolling to last modified element:', elem);
+            elem.scrollIntoView({
+                behavior: 'smooth', // This does not work on WKWebView
+                block: 'center',
+                inline: 'center',
+            });
+        } else if (scroll !== null) {
+            log.debug('Scrolling:', scroll);
+            if ('fragment' in scroll) {
+                location.hash = scroll.fragment;
+            } else if ('heading' in scroll) {
+                const heading = ref.current
+                    ?.querySelectorAll<HTMLHeadingElement>('article > h1,h2,h3,h4,h5,h6')
+                    .item(scroll.heading);
+                if (heading) {
+                    heading.scrollIntoView({
+                        behavior: 'instant',
+                        block: 'start',
+                        inline: 'start',
+                    });
+                }
+            }
         }
-        log.debug('Scrolling to last modified element:', elem);
-        elem.scrollIntoView({
-            behavior: 'smooth', // This does not work on WKWebView
-            block: 'center',
-            inline: 'center',
-        });
-    }, [lastModified]);
+    }, [lastModified, scroll]);
 
     useEffect(() => {
         if (root && ref.current) {

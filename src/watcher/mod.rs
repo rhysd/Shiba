@@ -9,7 +9,7 @@ pub use system::SystemWatcher;
 pub use system_linux::SystemWatcher;
 
 use crate::config::{FileExtensions, Watch as Config};
-use crate::renderer::EventSender;
+use crate::renderer::RendererHandle;
 use anyhow::Result;
 use notify::event::{CreateKind, DataChange, EventKind, ModifyKind};
 use std::collections::HashMap;
@@ -84,14 +84,14 @@ impl PathFilter {
 }
 
 pub trait Watcher: Sized {
-    fn new<S: EventSender>(sender: S, filter: PathFilter) -> Result<Self>;
+    fn new<H: RendererHandle>(handle: H, filter: PathFilter) -> Result<Self>;
     fn watch(&mut self, path: &Path) -> Result<()>;
 }
 
 pub struct NopWatcher;
 
 impl Watcher for NopWatcher {
-    fn new<S: EventSender>(_sender: S, _filter: PathFilter) -> Result<Self> {
+    fn new<H: RendererHandle>(_handle: H, _filter: PathFilter) -> Result<Self> {
         Ok(Self)
     }
     fn watch(&mut self, _path: &Path) -> Result<()> {

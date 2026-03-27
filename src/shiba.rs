@@ -1,31 +1,32 @@
 use crate::cli::Options;
-use crate::config::Config;
+use crate::config::{Config, home_dir};
 use crate::dialog::Dialog;
 use crate::history::{Direction, History};
 use crate::opener::Opener;
-use crate::preview::Preview;
 use crate::renderer::{
-    Event, EventHandler, MenuItem, MessageFromWindow, MessageToWindow, Renderer, RenderingFlow,
-    Window, WindowHandles,
+    Event, EventHandler, InitFile, InitScroll, MenuItem, MessageFromWindow, MessageToWindow,
+    Renderer, RendererHandle, RenderingFlow, ScrollRequest, Window, WindowEvent, WindowHandles,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
+use crate::window::WindowManager;
 use anyhow::{Context as _, Error, Result};
+use std::collections::VecDeque;
 use std::mem;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 pub struct Shiba<R: Renderer, O, W, D> {
-    window: R::Window, // Only a single window is currently supported
+    renderer: R::Handle,
+    windows: WindowManager<R>,
     opener: O,
     history: History,
     watcher: W,
     dialog: D,
-    config: Config,
-    preview: Preview,
-    init_file: Option<PathBuf>,
-    #[cfg(feature = "__sanity")]
-    sanity: SanityTest<R::EventSender>,
+    config: Rc<Config>,
+    init_files: VecDeque<InitFile>,
+    exit_status: i32,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -39,74 +40,112 @@ where
     where
         Self: 'static,
     {
-        fn on_err<D: Dialog>(err: Error) -> Error {
-            let err = err.context("Could not launch application");
-            if let Ok(dialog) = D::new(&Config::default()) {
-                dialog.alert(&err, &WindowHandles::unsupported());
-            }
-            err
+        let Err(error) = Self::run_impl(options) else {
+            return Ok(());
+        };
+
+        let error = error.context("Could not launch application");
+        if let Ok(dialog) = D::new(&Config::default()) {
+            dialog.alert(&error, &WindowHandles::unavailable());
         }
-        let renderer = R::new().map_err(on_err::<D>)?;
-        let dog = Self::new(options, &renderer).map_err(on_err::<D>)?;
+        Err(error)
+    }
+
+    fn run_impl(mut options: Options) -> Result<()>
+    where
+        Self: 'static,
+    {
+        log::debug!("Application options: {:?}", options);
+        let watch_paths = mem::take(&mut options.watch_paths);
+        let init_files = mem::take(&mut options.init_files);
+
+        let config = Rc::new(Config::load(options)?);
+        log::debug!("Application config: {:?}", config);
+
+        let renderer = R::new(config.clone())?;
+        let dog = Self::new(watch_paths, init_files, config, &renderer)?;
+
         renderer.start(dog)
     }
 
-    pub fn new(mut options: Options, renderer: &R) -> Result<Self> {
-        log::debug!("Application options: {:?}", options);
-        let watch_paths = mem::take(&mut options.watch_paths);
-        let init_file = mem::take(&mut options.init_file);
-
-        let config = Config::load(options)?;
-        log::debug!("Application config: {:?}", config);
-
-        let window = renderer.create_window(&config)?;
-        log::debug!("Created window with ID: {:?}", window.id());
-
+    pub fn new(
+        watch_paths: Vec<PathBuf>,
+        init_files: Vec<PathBuf>,
+        config: Rc<Config>,
+        renderer: &R,
+    ) -> Result<Self> {
         let filter = PathFilter::new(config.watch());
-        let mut watcher = W::new(renderer.create_sender(), filter)?;
+        let mut watcher = W::new(renderer.create_handle(), filter)?;
         let mut history = History::load(&config);
         for path in watch_paths {
             log::debug!("Watching initial path: {:?}", path);
             watcher.watch(&path)?;
             history.push(path);
         }
+        let handle = renderer.create_handle();
+        for _ in 0..init_files.len().max(1) {
+            handle.create_window();
+        }
+        let init_files = init_files.into_iter().map(|p| p.into()).collect();
 
         Ok(Self {
-            window,
+            renderer: handle,
+            windows: WindowManager::default(),
             opener: O::default(),
             history,
             watcher,
             dialog: D::new(&config)?,
             config,
-            preview: Preview::default(),
-            init_file,
-            #[cfg(feature = "__sanity")]
-            sanity: SanityTest::new(renderer.create_sender()),
+            init_files,
+            exit_status: 0,
         })
     }
 
-    fn open_preview(&mut self, path: PathBuf) -> Result<()> {
+    fn open_preview(&mut self, id: R::WindowId, path: PathBuf, scroll: InitScroll) -> Result<()> {
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
-        if self.preview.show(&path, &self.window)? {
+        let (window, preview) = self.windows.get_mut(id);
+
+        match scroll {
+            InitScroll::Fragment(hash) => {
+                let scroll = ScrollRequest::Fragment(&hash);
+                window.send_message(MessageToWindow::Scroll { scroll })?
+            }
+            InitScroll::Heading(index) => {
+                let scroll = ScrollRequest::Heading(index);
+                window.send_message(MessageToWindow::Scroll { scroll })?
+            }
+            InitScroll::Nop => {}
+        }
+
+        if preview.show(&path, window)? {
             self.history.push(path);
         }
+
         Ok(())
     }
 
-    fn navigate(&mut self, dir: Direction) -> Result<()> {
-        let mut current = if self.preview.is_empty() {
+    fn open_window(&mut self, file: InitFile) {
+        log::debug!("Open new window with file: {file:?}");
+        self.init_files.push_back(file);
+        self.renderer.create_window();
+    }
+
+    fn navigate(&mut self, id: R::WindowId, dir: Direction) -> Result<()> {
+        let (window, preview) = self.windows.get_mut(id);
+
+        let (mut current, dir) = if preview.is_empty() {
             // When the welcome page is displayed, the history already indicates the latest history item.
             match dir {
-                Direction::Forward => None,
-                Direction::Back | Direction::Top => self.history.current(),
+                Direction::Forward => (None, dir),
+                Direction::Back | Direction::Top => (self.history.current(), Direction::Back),
             }
         } else {
-            self.history.navigate(dir)
+            (self.history.navigate(dir), dir)
         };
 
         while let Some(path) = current {
             log::debug!("Try to navigate preview page with direction {dir:?}: {path:?}");
-            if self.preview.show(path, &self.window)? {
+            if preview.show(path, window)? {
                 return Ok(());
             }
             current = self.history.delete(dir);
@@ -116,8 +155,9 @@ where
         Ok(())
     }
 
-    fn reload(&mut self) -> Result<()> {
-        if self.preview.is_empty() {
+    fn reload(&mut self, id: R::WindowId) -> Result<()> {
+        let (window, preview) = self.windows.get_mut(id);
+        if preview.is_empty() {
             // When content is empty, we don't need to reload the page. This happens when 'welcome' page displays just
             // after launching the app.
             log::debug!("Skipped to reload empty content");
@@ -125,15 +165,16 @@ where
         }
         if let Some(path) = self.history.current() {
             log::debug!("Reload current preview page: {:?}", path);
-            self.preview.show(path, &self.window)?;
-            self.window.send_message(MessageToWindow::Reload)?;
+            preview.show(path, window)?;
+            window.send_message(MessageToWindow::Reload)?;
         }
         Ok(())
     }
 
-    fn open_files(&mut self) -> Result<()> {
+    fn pick_files(&mut self, id: R::WindowId) -> Result<()> {
+        let (window, _) = self.windows.get(id);
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
-        let mut files = self.dialog.pick_files(&self.window.handles());
+        let mut files = self.dialog.pick_files(&window.handles());
         #[cfg(target_os = "windows")]
         let mut files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
         log::debug!("{} files were chosen by dialog", files.len());
@@ -146,14 +187,15 @@ where
             self.watcher.watch(&file)?;
             self.history.push(file);
         }
-        log::debug!("Previewing the last file chosen by dialog: {last:?}");
-        self.open_preview(last)?;
+        log::debug!("Preview the last file chosen by dialog: {last:?}");
+        self.open_preview(id, last, InitScroll::Nop)?;
 
         Ok(())
     }
 
-    fn open_dirs(&mut self) -> Result<()> {
-        let dirs = self.dialog.pick_dirs(&self.window.handles());
+    fn pick_dirs(&mut self, id: R::WindowId) -> Result<()> {
+        let (window, _) = self.windows.get(id);
+        let dirs = self.dialog.pick_dirs(&window.handles());
         #[cfg(target_os = "windows")]
         let dirs: Vec<_> = dirs.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
 
@@ -166,100 +208,148 @@ where
         Ok(())
     }
 
-    fn zoom(&mut self, zoom_in: bool) -> Result<()> {
-        let level = if zoom_in {
-            self.window.zoom_level().zoom_in()
-        } else {
-            self.window.zoom_level().zoom_out()
-        };
+    fn zoom(&mut self, id: R::WindowId, zoom_in: bool) -> Result<()> {
+        let (window, _) = self.windows.get_mut(id);
+        let level = window.zoom_level();
+        let level = if zoom_in { level.zoom_in() } else { level.zoom_out() };
 
         let Some(level) = level else {
             return Ok(());
         };
 
-        self.window.zoom(level)?;
+        window.zoom(level)?;
         let percent = level.percent();
         log::debug!("Changed zoom factor: {}%", percent);
-        self.window.send_message(MessageToWindow::Zoomed { percent })?;
+        window.send_message(MessageToWindow::Zoomed { percent })?;
 
         Ok(())
     }
 
-    fn toggle_always_on_top(&mut self) -> Result<()> {
-        let pinned = !self.window.always_on_top();
+    fn toggle_always_on_top(&mut self, id: R::WindowId) -> Result<()> {
+        let (window, _) = self.windows.get_mut(id);
+        let pinned = !window.always_on_top();
         log::debug!("Toggle always-on-top (pinned={})", pinned);
-        self.window.set_always_on_top(pinned);
-        self.window.send_message(MessageToWindow::AlwaysOnTop { pinned })
+        window.set_always_on_top(pinned);
+        window.send_message(MessageToWindow::AlwaysOnTop { pinned })
     }
 
-    fn toggle_maximized(&mut self) {
-        let maximized = !self.window.is_maximized();
+    fn toggle_maximized(&mut self, id: R::WindowId) {
+        let (window, _) = self.windows.get_mut(id);
+        let maximized = !window.is_maximized();
         log::debug!("Toggle maximized window (maximized={})", maximized);
-        self.window.maximize(maximized);
+        window.maximize(maximized);
     }
 
-    fn toggle_minimized(&mut self) {
-        let minimized = !self.window.is_minimized();
+    fn toggle_minimized(&mut self, id: R::WindowId) {
+        let (window, _) = self.windows.get_mut(id);
+        let minimized = !window.is_minimized();
         log::debug!("Toggle minimized window (minimized={})", minimized);
-        self.window.minimize(minimized);
+        window.minimize(minimized);
     }
 
     fn open_config(&mut self) -> Result<()> {
         let path = self.config.config_file()?;
         log::debug!("Opening config file via menu item: {:?}", path);
-        self.opener.open(&path)
+        self.opener.open(&path).with_context(|| format!("Could not open config file {path:?}"))
     }
 
-    fn handle_window_message(&mut self, message: MessageFromWindow) -> Result<RenderingFlow> {
+    fn is_markdown_file(&self, path: &Path) -> bool {
+        self.config.watch().file_extensions.matches(path)
+            && path.metadata().map(|md| !md.is_dir()).unwrap_or(false)
+    }
+
+    fn duplicate_window(&mut self, id: R::WindowId, scroll: InitScroll) {
+        let (_, preview) = self.windows.get(id);
+        if preview.is_empty() {
+            self.renderer.create_window();
+        } else {
+            self.open_window(InitFile { path: preview.path().into(), scroll });
+        }
+    }
+
+    fn close_window(&mut self, id: R::WindowId) -> RenderingFlow {
+        log::debug!("Close window {id:?}");
+        if self.windows.is_last(id) {
+            self.quit(id)
+        } else {
+            if self.windows.remove(id).is_none() {
+                log::error!("Window was closed but it was not managed by Shiba: {id:?}");
+            }
+            RenderingFlow::Continue
+        }
+    }
+
+    fn close_other_windows(&mut self, id: R::WindowId) {
+        log::debug!("Close all windows other than {id:?}");
+        for (id, _, _) in self.windows.remove_others(id) {
+            log::debug!("Close window: {id:?}");
+        }
+    }
+
+    fn handle_window_message(
+        &mut self,
+        id: R::WindowId,
+        message: MessageFromWindow,
+    ) -> Result<RenderingFlow> {
         use MessageFromWindow::*;
         match message {
             Init => {
+                let (window, _) = self.windows.get(id);
+
                 if self.config.debug() {
-                    self.window.send_message(MessageToWindow::Debug)?;
+                    window.send_message(MessageToWindow::Debug)?;
                 }
 
-                self.window.send_message(MessageToWindow::Config {
+                window.send_message(MessageToWindow::Config {
                     keymaps: self.config.keymaps(),
                     search: self.config.search(),
-                    home: self.preview.home_dir(),
-                    window: self.window.appearance(),
+                    home: home_dir(),
+                    window: window.appearance(),
                 })?;
 
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
-                self.window.show();
+                window.show();
 
-                if let Some(path) = mem::take(&mut self.init_file) {
-                    self.open_preview(path)?;
+                if let Some(InitFile { path, scroll }) = self.init_files.pop_front() {
+                    self.open_preview(id, path, scroll)?;
                 } else {
-                    self.window.send_message(MessageToWindow::Welcome)?;
+                    window.send_message(MessageToWindow::Welcome)?;
                 }
 
                 #[cfg(feature = "__sanity")]
-                self.sanity.run_test();
+                SanityTest::new(self.renderer.clone()).run(id);
             }
             Search { query, index, matcher } => {
-                self.preview.search(&self.window, &query, index, matcher)?;
+                let (window, preview) = self.windows.get(id);
+                preview.search(window, &query, index, matcher)?;
             }
-            GoForward => self.navigate(Direction::Forward)?,
-            GoBack => self.navigate(Direction::Back)?,
-            GoTop if self.preview.is_empty() => self.navigate(Direction::Back)?,
-            GoTop => self.navigate(Direction::Top)?,
-            History => self.history.send_paths(&self.window)?,
-            Reload => self.reload()?,
-            FileDialog => self.open_files()?,
-            DirDialog => self.open_dirs()?,
-            OpenFile { path } => self.open_preview(PathBuf::from(path))?,
-            ZoomIn => self.zoom(true)?,
-            ZoomOut => self.zoom(false)?,
-            DragWindow => self.window.drag_window()?,
-            ToggleMaximized => self.toggle_maximized(),
-            ToggleMinimized => self.toggle_minimized(),
-            Quit => return Ok(RenderingFlow::Exit),
-            OpenMenu { position } => self.window.show_menu_at(position),
-            ToggleMenuBar => self.window.toggle_menu()?,
-            ToggleAlwaysOnTop => self.toggle_always_on_top()?,
+            GoForward => self.navigate(id, Direction::Forward)?,
+            GoBack => self.navigate(id, Direction::Back)?,
+            GoTop => self.navigate(id, Direction::Top)?,
+            History => self.history.send_paths(self.windows.get(id).0)?,
+            Reload => self.reload(id)?,
+            FileDialog => self.pick_files(id)?,
+            DirDialog => self.pick_dirs(id)?,
+            OpenFile { path } => self.open_preview(id, path.into(), InitScroll::Nop)?,
+            ZoomIn => self.zoom(id, true)?,
+            ZoomOut => self.zoom(id, false)?,
+            DragWindow => self.windows.get(id).0.drag_window()?,
+            ToggleMaximized => self.toggle_maximized(id),
+            ToggleMinimized => self.toggle_minimized(id),
+            NewWindow { path: None } => self.renderer.create_window(),
+            NewWindow { path: Some(path) } => self.open_window(PathBuf::from(path).into()),
+            DuplicateWindow { heading: None } => self.duplicate_window(id, InitScroll::Nop),
+            DuplicateWindow { heading: Some(index) } => {
+                self.duplicate_window(id, InitScroll::Heading(index));
+            }
+            CloseWindow => return Ok(self.close_window(id)),
+            CloseAllOtherWindows => self.close_other_windows(id),
+            Quit => return Ok(self.quit(id)),
+            OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
+            ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
+            ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
             EditConfig => self.open_config()?,
-            Error { message } => anyhow::bail!("Error reported from renderer: {}", message),
+            Error { message } => anyhow::bail!("Error reported from renderer: {message}"),
         }
         Ok(RenderingFlow::Continue)
     }
@@ -267,120 +357,205 @@ where
     fn handle_menu_item(&mut self, item: MenuItem) -> Result<RenderingFlow> {
         use MenuItem::*;
 
-        log::debug!("Menu item was clicked: {:?}", item);
+        // muda doesn't provide a way to know which menu item came from which window. However, when
+        // menu item is selected, the window must be focused. We can assume that the focused window
+        // emitted the menu event here.
+        let id = self.windows.focused_id();
+        log::debug!("Menu item was clicked with window {:?}: {:?}", id, item);
+
         match item {
-            Quit => return Ok(RenderingFlow::Exit),
-            Forward => self.navigate(Direction::Forward)?,
-            Back => self.navigate(Direction::Back)?,
-            Top if self.preview.is_empty() => self.navigate(Direction::Back)?,
-            Top => self.navigate(Direction::Top)?,
-            Reload => self.reload()?,
-            OpenFiles => self.open_files()?,
-            WatchDirs => self.open_dirs()?,
-            Search => self.window.send_message(MessageToWindow::Search)?,
-            SearchNext => self.window.send_message(MessageToWindow::SearchNext)?,
-            SearchPrevious => self.window.send_message(MessageToWindow::SearchPrevious)?,
-            Outline => self.window.send_message(MessageToWindow::Outline)?,
-            Print if self.preview.is_empty() => {}
-            Print => self.window.print()?,
-            ZoomIn => self.zoom(true)?,
-            ZoomOut => self.zoom(false)?,
+            Quit => return Ok(self.quit(id)),
+            Forward => self.navigate(id, Direction::Forward)?,
+            Back => self.navigate(id, Direction::Back)?,
+            Top => self.navigate(id, Direction::Top)?,
+            Reload => self.reload(id)?,
+            OpenFiles => self.pick_files(id)?,
+            WatchDirs => self.pick_dirs(id)?,
+            Search => self.windows.get(id).0.send_message(MessageToWindow::Search)?,
+            SearchNext => self.windows.get(id).0.send_message(MessageToWindow::SearchNext)?,
+            SearchPrevious => {
+                self.windows.get(id).0.send_message(MessageToWindow::SearchPrevious)?
+            }
+            Outline => self.windows.get(id).0.send_message(MessageToWindow::Outline)?,
+            Print => {
+                let (window, preview) = self.windows.get(id);
+                if !preview.is_empty() {
+                    window.print()?;
+                }
+            }
+            ZoomIn => self.zoom(id, true)?,
+            ZoomOut => self.zoom(id, false)?,
             #[cfg(not(target_os = "macos"))]
-            ToggleMenuBar => self.window.toggle_menu()?,
-            History => self.history.send_paths(&self.window)?,
-            ToggleAlwaysOnTop => self.toggle_always_on_top()?,
-            ToggleMinimizeWindow => self.toggle_minimized(),
-            ToggleMaximizeWindow => self.toggle_maximized(),
-            Help => self.window.send_message(MessageToWindow::Help)?,
+            ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
+            History => self.history.send_paths(self.windows.get(id).0)?,
+            ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
+            ToggleMinimizeWindow => self.toggle_minimized(id),
+            ToggleMaximizeWindow => self.toggle_maximized(id),
+            NewWindow => self.renderer.create_window(),
+            DuplicateWindow => self.duplicate_window(id, InitScroll::Nop),
+            CloseWindow => return Ok(self.close_window(id)),
+            CloseAllOtherWindows => self.close_other_windows(id),
+            Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
             EditConfig => self.open_config()?,
             DeleteHistory => {
                 if self.dialog.yes_no(
                     "Deleting history...",
                     "Are you sure you want to delete all history?",
-                    &self.window.handles(),
+                    &self.windows.get(id).0.handles(),
                 ) {
                     self.history.clear(&self.config)?;
-                    self.window.delete_cache()?;
+                    self.windows.get_mut(id).0.delete_cache()?;
                 }
             }
         }
         Ok(RenderingFlow::Continue)
     }
 
-    fn handle_event(&mut self, event: Event) -> Result<RenderingFlow> {
+    fn handle_file_changes(&mut self, mut paths: Vec<PathBuf>) -> Result<()> {
+        log::debug!("Files changed: {:?}", paths);
+
+        let mut updated = vec![];
+        let focused_id = self.windows.focused_id();
+        let mut focused_window_updated = false;
+        for (id, window, preview) in self.windows.iter_mut() {
+            let is_updated = if let Some(idx) = paths.iter().position(|p| p == preview.path()) {
+                let path = paths.swap_remove(idx);
+                log::debug!("Update the preview for the file change: {:?}", path);
+                preview.show(&path, window)?;
+                updated.push(path);
+                true
+            } else if let Some(path) = updated.iter().find(|&p| p == preview.path()) {
+                log::debug!("Update the (duplicate) preview for the file change: {:?}", path);
+                preview.show(path, window)?;
+                true
+            } else {
+                false
+            };
+            if is_updated && id == focused_id {
+                focused_window_updated = true;
+            }
+        }
+
+        if !focused_window_updated && let Some(path) = paths.pop() {
+            log::debug!(
+                "Show the new preview for the file change in window {focused_id:?}: {path:?}",
+            );
+            let (window, preview) = self.windows.get_mut(focused_id);
+            if preview.show(&path, window)? {
+                self.history.push(path);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn handle_event(&mut self, event: Event<R::WindowId>) -> Result<RenderingFlow> {
         log::debug!("Handling event {:?}", event);
         match event {
-            Event::WindowMessage(msg) => return self.handle_window_message(msg),
-            Event::FileDrop(mut path) => {
+            Event::WindowMessage { message, id } => return self.handle_window_message(id, message),
+            Event::FileDrop { mut path, id } => {
                 log::debug!("Previewing file dropped into window: {:?}", path);
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.open_preview(path)?;
+                self.open_preview(id, path, InitScroll::Nop)?;
             }
-            Event::WatchedFilesChanged(mut paths) => {
-                log::debug!("Files changed: {:?}", paths);
-                if let Some(current) = self.history.current()
-                    && paths.iter().any(|p| p == current)
-                {
-                    self.preview.show(current, &self.window)?;
-                    return Ok(RenderingFlow::Continue);
+            Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
+            Event::OpenLocalPath { file, id } => {
+                let InitFile { mut path, scroll } = file;
+                if let Some(abs_path) = self.history.absolute_path(&path) {
+                    path = abs_path;
                 }
-                // Choose the last one to preview if the current file is not included in `paths`
-                if let Some(mut path) = paths.pop() {
-                    if !path.is_absolute() {
-                        path = path.canonicalize()?;
-                    }
-                    if self.preview.show(&path, &self.window)? {
-                        self.history.push(path);
-                    }
-                }
-            }
-            Event::OpenLocalPath(mut path) => {
-                if path.is_relative()
-                    && let Some(current_file) = self.history.current()
-                    && let Some(dir) = current_file.parent()
-                {
-                    path = dir.join(path).canonicalize()?;
-                }
-                let path = path;
-                let is_markdown = self.config.watch().file_extensions.matches(&path);
-                if is_markdown {
+                if self.is_markdown_file(&path) {
                     log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.open_preview(path)?;
+                    self.open_preview(id, path, scroll)?;
                 } else {
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
-                    self.opener.open(&path).with_context(|| format!("opening path {:?}", &path))?;
+                    self.opener
+                        .open(&path)
+                        .with_context(|| format!("Failed to open the local path {path:?}"))?;
                 }
             }
             Event::OpenExternalLink(link) => {
                 log::debug!("Opening external link item clicked in WebView: {:?}", link);
-                self.opener.open(&link).with_context(|| format!("opening link {:?}", &link))?;
+                self.opener
+                    .open(&link)
+                    .with_context(|| format!("Failed to open link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
-            Event::Minimized(is_minimized) => self.window.save_memory(is_minimized)?,
-            Event::Error(err) => self.dialog.alert(&err, &self.window.handles()),
+            Event::NewWindow { init_file: None } => self.renderer.create_window(),
+            Event::NewWindow { init_file: Some(mut file) } => {
+                if let Some(abs_path) = self.history.absolute_path(&file.path) {
+                    file.path = abs_path;
+                }
+                if self.is_markdown_file(&file.path) {
+                    self.open_window(file);
+                } else {
+                    let InitFile { path, .. } = file;
+                    log::debug!("Opening local path link item clicked in WebView: {:?}", path);
+                    self.opener
+                        .open(&path)
+                        .with_context(|| format!("Failed to open the local path {:?}", &path))?;
+                }
+            }
+            Event::DuplicateWindow { scroll, id } => self.duplicate_window(id, scroll),
+            Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)
     }
 
-    fn shutdown(&self) -> Result<()> {
-        log::debug!("Handling application exit");
+    fn save(&self, last_window: &R::Window) -> Result<()> {
+        log::debug!("Save the persistent data before quit with window {:?}", last_window.id());
 
-        // Hide the window before destroying it to avoid flickering.
-        self.window.hide();
-
+        let mut result = Ok(()); // Don't return early
         if self.config.window().restore
-            && let Some(state) = self.window.state()
+            && let Some(state) = last_window.state()
             && state.height > 0.0
             && state.width > 0.0
         {
             log::debug!("Saving window state as persistent data: {:?}", state);
-            self.config.data_dir().save(&state)?;
+            result = self.config.data_dir().save(&state);
         }
-        self.history.save(&self.config)?;
-        Ok(())
+
+        result.or(self.history.save(&self.config))
+    }
+
+    fn quit(&mut self, id: R::WindowId) -> RenderingFlow {
+        let (window, _) = self.windows.get(id);
+        window.hide();
+        if let Err(error) = self.save(window) {
+            self.alert("Error while the application quits", error);
+        }
+        log::debug!("Quit application with window {:?} and exit status {}", id, self.exit_status);
+        RenderingFlow::Exit(self.exit_status)
+    }
+
+    fn handle_window_event(
+        &mut self,
+        id: R::WindowId,
+        event: WindowEvent<R::Window>,
+    ) -> Result<RenderingFlow> {
+        match event {
+            WindowEvent::Created(window) => self.windows.add(id, window),
+            WindowEvent::Minimized(is_minimized) => {
+                self.windows.get_mut(id).0.save_memory(is_minimized)?
+            }
+            WindowEvent::Focused => self.windows.set_focus(id),
+            WindowEvent::Closed => return Ok(self.close_window(id)),
+        }
+        Ok(RenderingFlow::Continue)
+    }
+
+    fn alert(&mut self, title: &'static str, error: Error) {
+        log::error!("Error while handling window event: {title}: {error}");
+        let handles = if self.windows.is_empty() {
+            WindowHandles::unavailable() // Error may happen after all windows are closed
+        } else {
+            self.windows.focused().0.handles()
+        };
+        self.dialog.alert(&error.context(title), &handles);
+        self.exit_status = 1;
     }
 }
 
@@ -391,22 +566,30 @@ where
     W: Watcher,
     D: Dialog,
 {
-    fn on_event(&mut self, event: Event) -> RenderingFlow {
+    type Window = R::Window;
+    type WindowId = R::WindowId;
+
+    fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow {
+        if self.windows.is_empty() {
+            log::error!("Ignore the event because no window exists: {event:?}");
+            return RenderingFlow::Continue;
+        }
         self.handle_event(event).unwrap_or_else(|err| {
-            let err = err.context("Could not handle event");
-            self.dialog.alert(&err, &self.window.handles());
+            self.alert("Could not handle event", err);
             RenderingFlow::Continue
         })
     }
 
-    fn on_exit(&mut self) -> i32 {
-        if let Err(err) = self.shutdown() {
-            let err = err.context("Could not shutdown application");
-            // Don't pass window handles because the window is already hidden in `self.shutdown` call.
-            self.dialog.alert(&err, &WindowHandles::unsupported());
-            1
-        } else {
-            0
+    fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow {
+        if self.windows.is_empty() && !matches!(event, WindowEvent::Created(_)) {
+            log::error!(
+                "Ignore the window event for window {id:?} because no window exists: {event:?}",
+            );
+            return RenderingFlow::Continue;
         }
+        self.handle_window_event(id, event).unwrap_or_else(|err| {
+            self.alert("Could not handle window event", err);
+            RenderingFlow::Continue
+        })
     }
 }

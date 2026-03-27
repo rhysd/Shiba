@@ -1,4 +1,5 @@
-use crate::renderer::{Event, EventSender, MenuItem as AppMenuItem};
+use crate::renderer::{Event, MenuItem as AppMenuItem, RendererHandle};
+use crate::wry::types::Proxy;
 use anyhow::Result;
 use muda::dpi::{LogicalPosition, Position};
 use muda::{
@@ -64,7 +65,7 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn create<S: EventSender + Sync>(&self, sender: S) -> Result<()> {
+    pub fn create(&self, proxy: Proxy) -> Result<()> {
         fn item(text: &str) -> MenuItem {
             MenuItem::new(text, true, None)
         }
@@ -89,6 +90,10 @@ impl Menu {
         let back = item("Back");
         let top = item("Latest");
         let history = item("History…");
+        let new_window = item("New Window");
+        let dup_window = item("Duplicate Window");
+        let close_window = item("Close Window");
+        let close_other_wins = item("Close All Other Windows");
         let minimize = item("Minimize");
         let maximize = item("Maximize");
         let always_on_top = item("Pin/Unpin On Top");
@@ -101,11 +106,18 @@ impl Menu {
             "&Window",
             true,
             &[
+                &new_window,
+                &dup_window,
+                &close_window,
+                &close_other_wins,
+                &PredefinedMenuItem::separator(),
                 &minimize,
                 &maximize,
                 #[cfg(target_os = "macos")]
                 &PredefinedMenuItem::fullscreen(None),
                 &always_on_top,
+                #[cfg(target_os = "macos")]
+                &PredefinedMenuItem::bring_all_to_front(None),
                 &PredefinedMenuItem::separator(),
                 &zoom_in,
                 &zoom_out,
@@ -206,30 +218,34 @@ impl Menu {
         let ids = {
             use AppMenuItem::*;
             HashMap::from([
-                (open_files.into_id(),      OpenFiles),
-                (watch_dirs.into_id(),      WatchDirs),
-                (quit.into_id(),            Quit),
-                (forward.into_id(),         Forward),
-                (back.into_id(),            Back),
-                (top.into_id(),             Top),
-                (reload.into_id(),          Reload),
-                (search.into_id(),          Search),
-                (search_next.into_id(),     SearchNext),
-                (search_prev.into_id(),     SearchPrevious),
-                (outline.into_id(),         Outline),
-                (print.into_id(),           Print),
-                (zoom_in.into_id(),         ZoomIn),
-                (zoom_out.into_id(),        ZoomOut),
-                (history.into_id(),         History),
-                (always_on_top.into_id(),   ToggleAlwaysOnTop),
-                (minimize.into_id(),        ToggleMinimizeWindow),
-                (maximize.into_id(),        ToggleMaximizeWindow),
-                (guide.into_id(),           Help),
-                (open_repo.into_id(),       OpenRepo),
-                (settings.into_id(),        EditConfig),
+                (open_files.into_id(),       OpenFiles),
+                (watch_dirs.into_id(),       WatchDirs),
+                (quit.into_id(),             Quit),
+                (forward.into_id(),          Forward),
+                (back.into_id(),             Back),
+                (top.into_id(),              Top),
+                (reload.into_id(),           Reload),
+                (search.into_id(),           Search),
+                (search_next.into_id(),      SearchNext),
+                (search_prev.into_id(),      SearchPrevious),
+                (outline.into_id(),          Outline),
+                (print.into_id(),            Print),
+                (zoom_in.into_id(),          ZoomIn),
+                (zoom_out.into_id(),         ZoomOut),
+                (history.into_id(),          History),
+                (always_on_top.into_id(),    ToggleAlwaysOnTop),
+                (new_window.into_id(),       NewWindow),
+                (dup_window.into_id(),       DuplicateWindow),
+                (close_window.into_id(),     CloseWindow),
+                (close_other_wins.into_id(), CloseAllOtherWindows),
+                (minimize.into_id(),         ToggleMinimizeWindow),
+                (maximize.into_id(),         ToggleMaximizeWindow),
+                (guide.into_id(),            Help),
+                (open_repo.into_id(),        OpenRepo),
+                (settings.into_id(),         EditConfig),
                 #[cfg(not(target_os = "macos"))]
-                (toggle_menu_bar.into_id(), ToggleMenuBar),
-                (delete_history.into_id(),  DeleteHistory),
+                (toggle_menu_bar.into_id(),  ToggleMenuBar),
+                (delete_history.into_id(),   DeleteHistory),
             ])
         };
         log::debug!("Registered menu items: {:?}", ids);
@@ -242,7 +258,7 @@ impl Menu {
                 let err = anyhow::anyhow!("Unknown menu item ID in event {:?}: {:?}", event, ids);
                 Event::Error(err)
             };
-            sender.send(event);
+            proxy.send(event);
         }));
         log::debug!("Set menu event handler with {} menu items", num_ids);
 

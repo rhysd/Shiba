@@ -24,6 +24,7 @@ mod shiba;
 #[cfg(test)]
 mod test;
 mod watcher;
+mod window;
 #[cfg(target_os = "windows")]
 mod windows;
 mod wry;

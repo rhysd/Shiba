@@ -49,6 +49,8 @@ keymaps:
   plus: ZoomIn
   -: ZoomOut
   ctrl+m: MaximizeWindow
+  ctrl+n: DuplicateWindow
+  ctrl+w: CloseWindow
   mod+q: Quit
   ?: Help
 
