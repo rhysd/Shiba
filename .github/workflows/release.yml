@@ -57,13 +57,13 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
   release-mac:
     name: Build and upload macOS package
-    runs-on: macos-15-intel
+    runs-on: macos-latest
     needs: [info]
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
       - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'

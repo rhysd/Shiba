@@ -10,7 +10,7 @@ jobs:
   unit-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest, macos-15-intel]
+        os: [ubuntu-latest, macos-latest, windows-latest, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -34,7 +34,7 @@ jobs:
     needs: unit-test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest, macos-15-intel]
+        os: [ubuntu-latest, macos-latest, windows-latest, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
