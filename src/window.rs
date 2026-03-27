@@ -62,6 +62,10 @@ impl<R: Renderer> WindowManager<R> {
         self.windows.is_empty()
     }
 
+    pub fn is_last(&self, id: R::WindowId) -> bool {
+        self.windows.len() == 1 && self.windows.contains_key(&id)
+    }
+
     pub fn add(&mut self, id: R::WindowId, window: R::Window) {
         log::debug!("Add new window: {id:?}");
         self.windows.insert(id, (window, Preview::default()));
@@ -108,21 +112,24 @@ mod tests {
     use super::*;
     use crate::test::{TestRenderer, TestWindow};
 
-    #[test]
-    fn add_and_remove() {
-        let mut wm = WindowManager::<TestRenderer>::default();
-        assert!(wm.is_empty());
-
+    fn add(wm: &mut WindowManager<TestRenderer>) -> u32 {
         let w = TestWindow::new();
         let id = w.window_id;
         wm.add(id, w);
+        id
+    }
+
+    #[test]
+    fn add_and_remove() {
+        let wm = &mut WindowManager::<TestRenderer>::default();
+        assert!(wm.is_empty());
+
+        let id = add(wm);
         assert!(!wm.is_empty());
         assert_eq!(wm.get(id).0.window_id, id);
         assert_eq!(wm.get_mut(id).0.window_id, id);
 
-        let w = TestWindow::new();
-        let id2 = w.window_id;
-        wm.add(id2, w);
+        let id2 = add(wm);
         assert_eq!(wm.remove(id2).unwrap().0.window_id, id2); // Focus is lost here
         assert!(!wm.is_empty());
 
@@ -139,10 +146,8 @@ mod tests {
 
     #[test]
     fn manage_focus() {
-        let mut wm = WindowManager::<TestRenderer>::default();
-        let w = TestWindow::new();
-        let id = w.window_id;
-        wm.add(id, w);
+        let wm = &mut WindowManager::<TestRenderer>::default();
+        let id = add(wm);
 
         // Fallback to the first window when focus is not set
         assert_eq!(wm.focused_id(), id);
@@ -159,9 +164,7 @@ mod tests {
         assert_eq!(wm.focused_id(), id);
 
         // Add the second window
-        let w = TestWindow::new();
-        let id2 = w.window_id;
-        wm.add(id2, w);
+        let id2 = add(wm);
 
         assert_eq!(wm.focused_id(), id2);
         assert_eq!(wm.focused().0.window_id, id2);
@@ -189,15 +192,8 @@ mod tests {
 
     #[test]
     fn remove_unfocused_window() {
-        let mut wm = WindowManager::<TestRenderer>::default();
-        let mut add = || {
-            let w = TestWindow::new();
-            let id = w.window_id;
-            wm.add(id, w);
-            id
-        };
-
-        let (id1, id2, id3) = (add(), add(), add());
+        let wm = &mut WindowManager::<TestRenderer>::default();
+        let (id1, id2, id3) = (add(wm), add(wm), add(wm));
         assert_eq!(wm.focused_id(), id3);
         wm.remove(id2);
         assert_eq!(wm.focused_id(), id3);
@@ -207,15 +203,8 @@ mod tests {
 
     #[test]
     fn iter_windows() {
-        let mut wm = WindowManager::<TestRenderer>::default();
-        let mut add = || {
-            let w = TestWindow::new();
-            let id = w.window_id;
-            wm.add(id, w);
-            id
-        };
-
-        let expected = [add(), add(), add()];
+        let wm = &mut WindowManager::<TestRenderer>::default();
+        let expected = [add(wm), add(wm), add(wm)];
         let mut actual = wm
             .iter_mut()
             .map(|(id, w, _)| {
@@ -229,20 +218,34 @@ mod tests {
 
     #[test]
     fn remove_other_windows() {
-        let mut wm = WindowManager::<TestRenderer>::default();
-        let mut add = || {
-            let w = TestWindow::new();
-            let id = w.window_id;
-            wm.add(id, w);
-            id
-        };
-
-        let (id1, id2, id3) = (add(), add(), add());
+        let wm = &mut WindowManager::<TestRenderer>::default();
+        let (id1, id2, id3) = (add(wm), add(wm), add(wm));
         wm.set_focus(id2);
         let mut removed: Vec<_> = wm.remove_others(id2).map(|(id, _, _)| id).collect();
         removed.sort();
         assert_eq!(removed, &[id1, id3]);
         assert_eq!(wm.focused_id(), id2);
         assert!(!wm.is_empty());
+    }
+
+    #[test]
+    fn check_last_window() {
+        let invalid_id = 100;
+        let wm = &mut WindowManager::<TestRenderer>::default();
+        assert!(!wm.is_last(0));
+
+        let id1 = add(wm);
+        assert!(wm.is_last(id1));
+        assert!(!wm.is_last(invalid_id));
+
+        let id2 = add(wm);
+        assert!(!wm.is_last(id1));
+        assert!(!wm.is_last(id2));
+        assert!(!wm.is_last(invalid_id));
+
+        wm.remove(id1);
+        assert!(!wm.is_last(id1));
+        assert!(wm.is_last(id2));
+        assert!(!wm.is_last(invalid_id));
     }
 }

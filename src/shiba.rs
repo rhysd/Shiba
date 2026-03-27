@@ -26,6 +26,7 @@ pub struct Shiba<R: Renderer, O, W, D> {
     dialog: D,
     config: Rc<Config>,
     init_files: VecDeque<InitFile>,
+    exit_status: i32,
 }
 
 impl<R, O, W, D> Shiba<R, O, W, D>
@@ -96,6 +97,7 @@ where
             dialog: D::new(&config)?,
             config,
             init_files,
+            exit_status: 0,
         })
     }
 
@@ -265,16 +267,15 @@ where
         }
     }
 
-    fn close_window(&mut self, id: R::WindowId) -> Result<RenderingFlow> {
-        let Some((window, _)) = self.windows.remove(id) else {
-            anyhow::bail!("Could not close the window because it did not exist: {id:?}");
-        };
-        log::debug!("Close window: {id:?}");
-        if self.windows.is_empty() {
-            log::debug!("Quit application because no window remains");
-            Ok(self.quit(&window))
+    fn close_window(&mut self, id: R::WindowId) -> RenderingFlow {
+        log::debug!("Close window {id:?}");
+        if self.windows.is_last(id) {
+            self.quit(id)
         } else {
-            Ok(RenderingFlow::Continue)
+            if self.windows.remove(id).is_none() {
+                log::error!("Window was closed but it was not managed by Shiba: {id:?}");
+            }
+            RenderingFlow::Continue
         }
     }
 
@@ -341,9 +342,9 @@ where
             DuplicateWindow { heading: Some(index) } => {
                 self.duplicate_window(id, InitScroll::Heading(index));
             }
-            CloseWindow => return self.close_window(id),
+            CloseWindow => return Ok(self.close_window(id)),
             CloseAllOtherWindows => self.close_other_windows(id),
-            Quit => return Ok(self.quit(self.windows.get(id).0)),
+            Quit => return Ok(self.quit(id)),
             OpenMenu { position } => self.windows.get(id).0.show_menu_at(position),
             ToggleMenuBar => self.windows.get_mut(id).0.toggle_menu()?,
             ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
@@ -363,7 +364,7 @@ where
         log::debug!("Menu item was clicked with window {:?}: {:?}", id, item);
 
         match item {
-            Quit => return Ok(self.quit(self.windows.get(id).0)),
+            Quit => return Ok(self.quit(id)),
             Forward => self.navigate(id, Direction::Forward)?,
             Back => self.navigate(id, Direction::Back)?,
             Top => self.navigate(id, Direction::Top)?,
@@ -392,7 +393,7 @@ where
             ToggleMaximizeWindow => self.toggle_maximized(id),
             NewWindow => self.renderer.create_window(),
             DuplicateWindow => self.duplicate_window(id, InitScroll::Nop),
-            CloseWindow => return self.close_window(id),
+            CloseWindow => return Ok(self.close_window(id)),
             CloseAllOtherWindows => self.close_other_windows(id),
             Help => self.windows.get(id).0.send_message(MessageToWindow::Help)?,
             OpenRepo => self.opener.open("https://github.com/rhysd/Shiba")?,
@@ -520,14 +521,14 @@ where
         result.or(self.history.save(&self.config))
     }
 
-    fn quit(&self, last_window: &R::Window) -> RenderingFlow {
-        last_window.hide();
-        if let Err(error) = self.save(last_window) {
+    fn quit(&mut self, id: R::WindowId) -> RenderingFlow {
+        let (window, _) = self.windows.get(id);
+        window.hide();
+        if let Err(error) = self.save(window) {
             self.alert("Error while the application quits", error);
-            RenderingFlow::Exit(1)
-        } else {
-            RenderingFlow::Exit(0)
         }
+        log::debug!("Quit application with window {:?} and exit status {}", id, self.exit_status);
+        RenderingFlow::Exit(self.exit_status)
     }
 
     fn handle_window_event(
@@ -541,21 +542,12 @@ where
                 self.windows.get_mut(id).0.save_memory(is_minimized)?
             }
             WindowEvent::Focused => self.windows.set_focus(id),
-            WindowEvent::Closed => {
-                if let Some((window, _)) = self.windows.remove(id) {
-                    if self.windows.is_empty() {
-                        log::debug!("No window remains after the last window was closed");
-                        return Ok(self.quit(&window));
-                    }
-                } else {
-                    log::error!("Window was closed but it is not managed by Shiba: {id:?}");
-                }
-            }
+            WindowEvent::Closed => return Ok(self.close_window(id)),
         }
         Ok(RenderingFlow::Continue)
     }
 
-    fn alert(&self, title: &'static str, error: Error) {
+    fn alert(&mut self, title: &'static str, error: Error) {
         log::error!("Error while handling window event: {title}: {error}");
         let handles = if self.windows.is_empty() {
             WindowHandles::unavailable() // Error may happen after all windows are closed
@@ -563,6 +555,7 @@ where
             self.windows.focused().0.handles()
         };
         self.dialog.alert(&error.context(title), &handles);
+        self.exit_status = 1;
     }
 }
 
