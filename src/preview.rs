@@ -1,8 +1,9 @@
 use crate::config::{SearchMatcher, home_dir};
 use crate::markdown::{DisplayText, MarkdownContent, MarkdownParser};
 use crate::renderer::{MessageToWindow, Window};
-use anyhow::Result;
+use anyhow::{Error, Result};
 use std::fs;
+use std::io::ErrorKind;
 use std::mem;
 use std::path::{MAIN_SEPARATOR, Path, PathBuf};
 
@@ -36,11 +37,17 @@ impl Preview {
         let new_content = match fs::read_to_string(path) {
             Ok(source) => MarkdownContent::new(source, path.parent()),
             Err(err) => {
+                log::debug!("Could not open {:?} due to error: {}", path, err);
+
                 // Do not return error 'no such file' because the file might be renamed and no longer
                 // exists. This can happen when saving files on Vim. In this case, a file create event
                 // will follow so the preview can be updated with the event.
-                log::debug!("Could not open {:?} due to error: {}", path, err);
-                return Ok(false);
+                if err.kind() == ErrorKind::NotFound {
+                    return Ok(false);
+                }
+
+                let err = Error::new(err).context(format!("Could not open {path:?} due to error"));
+                return Err(err);
             }
         };
 
