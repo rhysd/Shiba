@@ -1,3 +1,29 @@
+<a id="v2.0.0-alpha.4"></a>
+# [v2.0.0-alpha.4](https://github.com/rhysd/Shiba/releases/tag/v2.0.0-alpha.4) - 2026-03-28
+
+- Support multiple windows so that multiple documents can be previewed at the same time. Now a single Shiba process can open multiple windows. When the last window is closed, or 'Quit' menu item or key action is selected, the process exits.
+  - Implement the following ways to open new windows in several situations.
+    - Clicking a link to local markdown file with pressing <kbd>Shift</kbd> key opens the file in a new window.
+    - Clicking a hash link (e.g. `[link](#hash)`) with pressing <kbd>Shift</kbd> key opens the current document in a new window and automatically scrolling to the linked element.
+    - 'New Window' menu item or `NewWindow` key action opens a new empty window.
+    - 'Duplicate Window' menu item or `DuplicateWindow` key action duplicates the current window.
+    - 'Open in New Window' menu item or `OpenFileInNewWindow` key action picks files in a file dialog and opens them in respective new windows.
+    - In the history palette, hit <kbd>Enter</kbd> or click a history item with pressing <kbd>Shift</kbd> to open the selected item in a new window.
+    - In the outline palette, hit <kbd>Enter</kbd> or click a section with pressing <kbd>Shift</kbd> to open the current document in a new window and automatically scroll to the selected section.
+    - Click a section in the side bar to open the current document in a new window and automatically scroll to the selected section.
+    - `--open` (or `-o`) option in the command line arguments opens a given path with a new window. See `--help` output for more details.
+  - Add the following menu items and key actions related to multiple windows.
+    - 'Close Window' menu item and `CloseWindow` key action to close the current window.
+    - 'Close All Other Windows' menu item and `CloseAllOtherWindows` key action to close all windows except the current one.
+    - 'Bring all to front' window menu item on macOS.
+- Return non-zero exit status when at least one unexpected error was caused.
+- Fix notifications are included in a printed pages.
+- Update wry to 0.55 and tao to 0.35.
+- Don't set 'pre-release' on GitHub release page so that the latest alpha release is linked from the repository page.
+
+[Changes][v2.0.0-alpha.4]
+
+
 <a id="v2.0.0-alpha.3"></a>
 # [v2.0.0-alpha.3](https://github.com/rhysd/Shiba/releases/tag/v2.0.0-alpha.3) - 2026-03-11
 
@@ -47,7 +73,7 @@
   | `mod+q` | `Quit` |
   | `?` | `Help` |
 - Apply the [Mica material](https://learn.microsoft.com/en-us/windows/apps/design/style/mica) to the window background on Windows 11 or later, which is the modern dynamic material based on your desktop wallpaper.
-  <img alt="window with mica material" src="https://github.com/user-attachments/assets/cfbb2b87-886b-4770-ac24-467047ca89e6" width="598">
+  - <img alt="window with mica material" src="https://github.com/user-attachments/assets/cfbb2b87-886b-4770-ac24-467047ca89e6" width="598">
 - Support `max` keyword at the width and hight of window size in the `window.default_size` configuration. For example the following configration creates a window with fixed 800 pixels width and maximized height.
   ```yaml
   window:
@@ -360,6 +386,7 @@ First experimental alpha release of Shiba.
 [Changes][v0.1.0]
 
 
+[v2.0.0-alpha.4]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.3...v2.0.0-alpha.4
 [v2.0.0-alpha.3]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.2...v2.0.0-alpha.3
 [v2.0.0-alpha.2]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
 [v2.0.0-alpha.1]: https://github.com/rhysd/Shiba/compare/v2.0.0-alpha.0...v2.0.0-alpha.1
