@@ -29,6 +29,7 @@ pub enum KeyAction {
     GoTop,
     Reload,
     OpenFile,
+    OpenFileInNewWindow,
     OpenDir,
     ScrollDown,
     ScrollUp,

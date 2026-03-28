@@ -20,6 +20,7 @@ export type KeyAction =
     | 'GoTop'
     | 'Reload'
     | 'OpenFile'
+    | 'OpenFileInNewWindow'
     | 'OpenDir'
     | 'ScrollTop'
     | 'ScrollBottom'
@@ -293,6 +294,9 @@ export type MessageToMain =
       }
     | {
           kind: 'file_dialog';
+      }
+    | {
+          kind: 'file_dialog_new_window';
       }
     | {
           kind: 'dir_dialog';

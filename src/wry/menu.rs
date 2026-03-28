@@ -74,6 +74,7 @@ impl Menu {
         let settings = item("Settings…");
         let quit = item("Quit");
         let open_files = item("Open Files…");
+        let open_in_new_win = item("Open in New Window…");
         let watch_dirs = item("Watch Directories…");
         let print = item("Print…");
         let search = item("Search…");
@@ -153,6 +154,7 @@ impl Menu {
                 true,
                 &[
                     &open_files,
+                    &open_in_new_win,
                     &watch_dirs,
                     &reload,
                     &PredefinedMenuItem::separator(),
@@ -219,6 +221,7 @@ impl Menu {
             use AppMenuItem::*;
             HashMap::from([
                 (open_files.into_id(),       OpenFiles),
+                (open_in_new_win.into_id(),  OpenFilesInNewWindow),
                 (watch_dirs.into_id(),       WatchDirs),
                 (quit.into_id(),             Quit),
                 (forward.into_id(),          Forward),

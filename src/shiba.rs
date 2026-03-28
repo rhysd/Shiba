@@ -101,7 +101,8 @@ where
         })
     }
 
-    fn open_preview(&mut self, id: R::WindowId, path: PathBuf, scroll: InitScroll) -> Result<()> {
+    fn open_preview(&mut self, id: R::WindowId, file: InitFile) -> Result<()> {
+        let InitFile { path, scroll } = file;
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         let (window, preview) = self.windows.get_mut(id);
 
@@ -188,7 +189,7 @@ where
             self.history.push(file);
         }
         log::debug!("Preview the last file chosen by dialog: {last:?}");
-        self.open_preview(id, last, InitScroll::Nop)?;
+        self.open_preview(id, last.into())?;
 
         Ok(())
     }
@@ -206,6 +207,19 @@ where
         }
 
         Ok(())
+    }
+
+    fn pick_files_in_new_window(&mut self, id: R::WindowId) {
+        let (window, _) = self.windows.get(id);
+
+        let files = self.dialog.pick_files(&window.handles());
+        #[cfg(target_os = "windows")]
+        let files: Vec<_> = files.into_iter().flat_map(|p| p.canonicalize().ok()).collect(); // Ensure \\? at the head of the path
+
+        log::debug!("{} files were chosen by dialog in new windows", files.len());
+        for file in files {
+            self.open_window(file.into());
+        }
     }
 
     fn zoom(&mut self, id: R::WindowId, zoom_in: bool) -> Result<()> {
@@ -310,8 +324,8 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 window.show();
 
-                if let Some(InitFile { path, scroll }) = self.init_files.pop_front() {
-                    self.open_preview(id, path, scroll)?;
+                if let Some(file) = self.init_files.pop_front() {
+                    self.open_preview(id, file)?;
                 } else {
                     window.send_message(MessageToWindow::Welcome)?;
                 }
@@ -329,8 +343,9 @@ where
             History => self.history.send_paths(self.windows.get(id).0)?,
             Reload => self.reload(id)?,
             FileDialog => self.pick_files(id)?,
+            FileDialogNewWindow => self.pick_files_in_new_window(id),
             DirDialog => self.pick_dirs(id)?,
-            OpenFile { path } => self.open_preview(id, path.into(), InitScroll::Nop)?,
+            OpenFile { path } => self.open_preview(id, PathBuf::from(path).into())?,
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             DragWindow => self.windows.get(id).0.drag_window()?,
@@ -370,6 +385,7 @@ where
             Top => self.navigate(id, Direction::Top)?,
             Reload => self.reload(id)?,
             OpenFiles => self.pick_files(id)?,
+            OpenFilesInNewWindow => self.pick_files_in_new_window(id),
             WatchDirs => self.pick_dirs(id)?,
             Search => self.windows.get(id).0.send_message(MessageToWindow::Search)?,
             SearchNext => self.windows.get(id).0.send_message(MessageToWindow::SearchNext)?,
@@ -459,18 +475,18 @@ where
                 if !path.is_absolute() {
                     path = path.canonicalize()?;
                 }
-                self.open_preview(id, path, InitScroll::Nop)?;
+                self.open_preview(id, path.into())?;
             }
             Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
-            Event::OpenLocalPath { file, id } => {
-                let InitFile { mut path, scroll } = file;
-                if let Some(abs_path) = self.history.absolute_path(&path) {
-                    path = abs_path;
+            Event::OpenLocalPath { mut file, id } => {
+                if let Some(abs_path) = self.history.absolute_path(&file.path) {
+                    file.path = abs_path;
                 }
-                if self.is_markdown_file(&path) {
-                    log::debug!("Opening local markdown link clicked in WebView: {:?}", path);
-                    self.open_preview(id, path, scroll)?;
+                if self.is_markdown_file(&file.path) {
+                    log::debug!("Opening local markdown link clicked in WebView: {:?}", file);
+                    self.open_preview(id, file)?;
                 } else {
+                    let InitFile { path, .. } = file;
                     log::debug!("Opening local link item clicked in WebView: {:?}", path);
                     self.opener
                         .open(&path)

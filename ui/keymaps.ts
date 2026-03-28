@@ -158,14 +158,21 @@ const KeyShortcuts: Record<KeyAction, KeyShortcut> = {
     },
 
     OpenFile: {
-        description: 'Open a dialog to choose a file to preview.',
+        description: 'Open a dialog to choose files to preview.',
         dispatch(): void {
             sendMessage({ kind: 'file_dialog' });
         },
     },
 
+    OpenFileInNewWindow: {
+        description: 'Open a dialog to choose files to preview in new windows.',
+        dispatch(): void {
+            sendMessage({ kind: 'file_dialog_new_window' });
+        },
+    },
+
     OpenDir: {
-        description: 'Open a dialog to choose a directory to watch file changes.',
+        description: 'Open a dialog to choose directories to watch file changes.',
         dispatch(): void {
             sendMessage({ kind: 'dir_dialog' });
         },
