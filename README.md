@@ -7,8 +7,8 @@
 > [!WARNING]
 > Shiba v2 is a work in progress
 
-[Shiba][shiba] is a simple [Markdown][gh-markdown] preview application to be used with your favorite text editor.
-It is designed for simplicity, performance, keyboard-friendliness.
+[Shiba][shiba] is a simple [Markdown][gh-markdown] browser to preview documents with your favorite text editor.
+It is designed for simplicity, performance, keyboard-friendly navigations.
 
 ![Screenshot of light/dark windows](https://raw.githubusercontent.com/rhysd/ss/master/Shiba/main.jpg)
 
@@ -26,7 +26,7 @@ Features:
 - Performance critical part (parsing Markdown text, searching Markdown AST, calculating the last modified position, ...) and
   core application logic are written in [Rust][rust]. Thin view logic is written in [TypeScript][ts] & [React][react] and runs on
   platform-specific WebView
-- Support multiple windows to open multiple documents simultaneously
+- Multiple windows support to open multiple documents simultaneously
 - Cross platform; macOS, Windows, Linux are supported
 - Customizable with [a YAML config file](./src/assets/default_config.yml) (color theme, keyboard shortcuts, custom CSS, ...)
 - Dogs are respected :dog2:

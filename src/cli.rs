@@ -67,8 +67,8 @@ impl Default for Options {
 impl Options {
     const USAGE: &'static str = r#"Usage: shiba [OPTIONS...] [PATH...]
 
-Shiba is a markdown previewer to be used with your favorite text editor, designed for simplicity,
-performance, and keyboard-friendliness.
+Shiba is a markdown browser to preview documents with your favorite text editor, designed for
+simplicity, performance, and keyboard-friendly navigations.
 
 Options:
 
