@@ -17,6 +17,7 @@ mod markdown;
 mod opener;
 mod persistent;
 mod preview;
+mod process_singleton;
 mod renderer;
 #[cfg(feature = "__sanity")]
 mod sanity;

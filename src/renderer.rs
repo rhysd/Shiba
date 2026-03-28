@@ -137,11 +137,12 @@ pub enum Event<WindowId> {
     WindowMessage { message: MessageFromWindow, id: WindowId },
     FileDrop { path: PathBuf, id: WindowId },
     WatchedFilesChanged(Vec<PathBuf>),
-    OpenLocalPath { file: InitFile, id: WindowId },
+    OpenLocalFile { file: InitFile, id: WindowId },
     OpenExternalLink(String),
     Menu(MenuItem),
     NewWindow { init_file: Option<InitFile> },
     DuplicateWindow { scroll: InitScroll, id: WindowId },
+    ProcessSingleton { init_files: Vec<PathBuf>, watch_paths: Vec<PathBuf> },
     Error(Error),
 }
 
@@ -307,6 +308,7 @@ pub trait Window {
     fn delete_cache(&mut self) -> Result<()>;
     fn handles(&self) -> WindowHandles<'_>;
     fn id(&self) -> Self::Id;
+    fn focus(&self);
 }
 
 /// Renderer manages the entire rendering lifecycle.

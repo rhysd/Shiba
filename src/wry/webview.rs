@@ -264,7 +264,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
             log::debug!("Navigating to URL: {url:?}");
             let event = match parse_local_path_from_url(url) {
                 Ok(file) if &file.path == "/index.html" => return true,
-                Ok(file) => Event::OpenLocalPath { file, id },
+                Ok(file) => Event::OpenLocalFile { file, id },
                 Err(url) => Event::OpenExternalLink(url),
             };
 
@@ -533,5 +533,9 @@ impl RendererWindow for WebViewWindow {
 
     fn id(&self) -> Self::Id {
         self.window.id()
+    }
+
+    fn focus(&self) {
+        self.window.set_focus();
     }
 }

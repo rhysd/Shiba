@@ -28,6 +28,7 @@ pub struct TestWindow {
     pub cache_deleted: bool,
     pub window_handles_requested: AtomicBool,
     pub window_id: u32,
+    pub is_focused: AtomicBool,
 }
 
 impl TestWindow {
@@ -147,6 +148,10 @@ impl Window for TestWindow {
 
     fn id(&self) -> Self::Id {
         self.window_id
+    }
+
+    fn focus(&self) {
+        self.is_focused.store(true, Ordering::Relaxed);
     }
 }
 

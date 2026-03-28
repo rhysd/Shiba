@@ -3,6 +3,7 @@ use crate::config::{Config, home_dir};
 use crate::dialog::Dialog;
 use crate::history::{Direction, History};
 use crate::opener::Opener;
+use crate::process_singleton::ProcessSingleton;
 use crate::renderer::{
     Event, EventHandler, InitFile, InitScroll, MenuItem, MessageFromWindow, MessageToWindow,
     Renderer, RendererHandle, RenderingFlow, ScrollRequest, Window, WindowEvent, WindowHandles,
@@ -26,6 +27,7 @@ pub struct Shiba<R: Renderer, O, W, D> {
     dialog: D,
     config: Rc<Config>,
     init_files: VecDeque<InitFile>,
+    singleton: ProcessSingleton,
     exit_status: i32,
 }
 
@@ -62,8 +64,21 @@ where
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
 
+        let singleton = ProcessSingleton::new(config.data_dir());
+        if singleton
+            .send(&init_files, &watch_paths)
+            .context("Could not connect to IPC socket for process singleton")?
+        {
+            log::debug!(
+                "Command line arguments are sent to the existing process singleton: init_files={init_files:?}, watch_paths={watch_paths:?}"
+            );
+            return Ok(());
+        }
+
         let renderer = R::new(config.clone())?;
-        let dog = Self::new(watch_paths, init_files, config, &renderer)?;
+        let dog = Self::new(watch_paths, init_files, config, singleton, &renderer)?;
+
+        log::debug!("Started to listen IPC messages for process singleton");
 
         renderer.start(dog)
     }
@@ -72,6 +87,7 @@ where
         watch_paths: Vec<PathBuf>,
         init_files: Vec<PathBuf>,
         config: Rc<Config>,
+        singleton: ProcessSingleton,
         renderer: &R,
     ) -> Result<Self> {
         let filter = PathFilter::new(config.watch());
@@ -97,6 +113,7 @@ where
             dialog: D::new(&config)?,
             config,
             init_files,
+            singleton,
             exit_status: 0,
         })
     }
@@ -478,7 +495,7 @@ where
                 self.open_preview(id, path.into())?;
             }
             Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
-            Event::OpenLocalPath { mut file, id } => {
+            Event::OpenLocalFile { mut file, id } => {
                 if let Some(abs_path) = self.history.absolute_path(&file.path) {
                     file.path = abs_path;
                 }
@@ -516,6 +533,26 @@ where
                 }
             }
             Event::DuplicateWindow { scroll, id } => self.duplicate_window(id, scroll),
+            Event::ProcessSingleton { mut init_files, watch_paths } => {
+                log::debug!("Watch paths received via IPC: {watch_paths:?}");
+                for path in watch_paths {
+                    self.watcher.watch(&path)?;
+                }
+
+                log::debug!("Open file paths received via IPC: {init_files:?}");
+                let (window, preview) = self.windows.focused_mut();
+                if !init_files.is_empty() {
+                    let path = init_files.remove(0);
+                    self.watcher.watch(&path)?;
+                    if preview.show(&path, window)? {
+                        self.history.push(path);
+                    }
+                    window.focus();
+                }
+                for path in init_files {
+                    self.open_window(path.into());
+                }
+            }
             Event::Error(err) => return Err(err),
         }
         Ok(RenderingFlow::Continue)
@@ -553,7 +590,14 @@ where
         event: WindowEvent<R::Window>,
     ) -> Result<RenderingFlow> {
         match event {
-            WindowEvent::Created(window) => self.windows.add(id, window),
+            WindowEvent::Created(window) => {
+                let is_first_window = self.windows.is_empty();
+                self.windows.add(id, window);
+                // Ensure IPC messages are received after the first window is created
+                if is_first_window {
+                    self.singleton.listen(self.renderer.clone())?;
+                }
+            }
             WindowEvent::Minimized(is_minimized) => {
                 self.windows.get_mut(id).0.save_memory(is_minimized)?
             }
