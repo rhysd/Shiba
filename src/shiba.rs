@@ -60,12 +60,11 @@ where
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
         let init_files = mem::take(&mut options.init_files);
-        let use_process_singleton = options.process_singleton;
 
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
 
-        let singleton = if use_process_singleton {
+        let singleton = if config.process().singleton {
             #[cfg(not(target_os = "windows"))]
             {
                 ProcessSingleton::with_socket_file(config.data_dir())

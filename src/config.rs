@@ -369,6 +369,18 @@ impl Dialog {
     }
 }
 
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct Process {
+    pub singleton: bool,
+}
+
+impl Default for Process {
+    fn default() -> Self {
+        Self { singleton: true }
+    }
+}
+
 #[non_exhaustive]
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -379,6 +391,7 @@ pub struct UserConfig {
     pub window: Window,
     pub preview: Preview,
     pub dialog: Dialog,
+    pub process: Process,
 }
 
 impl Default for UserConfig {
@@ -390,6 +403,7 @@ impl Default for UserConfig {
             window: Window::default(),
             preview: Preview::default(),
             dialog: Dialog::default(),
+            process: Process::default(),
         }
     }
 }
@@ -507,6 +521,10 @@ impl Config {
             user_config.window.restore = false;
         }
 
+        if !options.process_singleton {
+            user_config.process.singleton = false;
+        }
+
         let data_dir = if let Some(dir) = mem::take(&mut options.data_dir) {
             DataDir::new(dir)
         } else {
@@ -570,6 +588,10 @@ impl Config {
 
     pub fn dialog(&self) -> &Dialog {
         &self.user_config.dialog
+    }
+
+    pub fn process(&self) -> &Process {
+        &self.user_config.process
     }
 }
 
@@ -718,7 +740,9 @@ mod tests {
         let dir = test_config_dir("ok");
         let opts = Options {
             debug: true,
-            theme: Some(ThemeOption::Light), // Theme in config is overwritten
+            restore: false,                  // Config is overwritten by this option
+            theme: Some(ThemeOption::Light), // Config is overwritten by this option
+            process_singleton: false,        // Config is overwritten by this option
             config_dir: Some(dir.clone()),
             data_dir: Some(dir.clone()),
             ..Default::default()
@@ -726,6 +750,8 @@ mod tests {
         let cfg = Config::load(opts).unwrap();
         assert!(cfg.debug());
         assert_eq!(cfg.window().theme, WindowTheme::Light);
+        assert!(!cfg.window().restore);
+        assert!(!cfg.process().singleton);
     }
 
     #[test]

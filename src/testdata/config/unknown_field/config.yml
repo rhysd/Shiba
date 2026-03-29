@@ -29,4 +29,7 @@ preview:
 dialog:
   default_dir: /path/to/default_dir/
 
+process:
+  singleton: true
+
 unknown_field: fooooo

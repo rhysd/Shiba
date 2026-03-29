@@ -158,3 +158,14 @@ dialog:
   # default_dir: ~/Documents
   # ```
   default_dir: null
+
+# Configuration related to application process.
+process:
+  # Setting this option to true enables the single-process (process singleton) feature.
+  # When the application is launched while another instance is already running, the new process forwards
+  # the file paths to the existing process via IPC and then exits immediately. The existing process
+  # opens the paths instead.
+  # This feature ensures that only one process is active at any time. It reduces overall memory usage
+  # and simplifies multi-window management.
+  # When set to `false`, each application launch creates a separate process.
+  singleton: true
