@@ -46,6 +46,7 @@ pub struct Options {
     pub gen_config_file: bool,
     pub config_dir: Option<PathBuf>,
     pub data_dir: Option<PathBuf>,
+    pub process_singleton: bool,
 }
 
 impl Default for Options {
@@ -60,6 +61,7 @@ impl Default for Options {
             gen_config_file: false,
             config_dir: None,
             data_dir: None,
+            process_singleton: true,
         }
     }
 }
@@ -79,6 +81,7 @@ Options:
         --generate-config-file  Generate the default config file overwriting an existing file
         --config-dir PATH       Change the config directory path
         --data-dir PATH         Change the application data directory path
+        --no-proc-singleton     Don't reuse an existing application process
         --debug                 Enable debug features
     -h, --help                  Print this help
         --version               Print application version
@@ -141,6 +144,7 @@ Document:
                 Long("generate-config-file") => opts.gen_config_file = true,
                 Long("config-dir") => opts.config_dir = Some(path_value(&mut parser)?),
                 Long("data-dir") => opts.data_dir = Some(path_value(&mut parser)?),
+                Long("no-proc-singleton") => opts.process_singleton = false,
                 Long("debug") => opts.debug = true,
                 Short('o') | Long("open") => {
                     let path = path_value(&mut parser)?;
@@ -297,6 +301,10 @@ mod tests {
                     watch_paths: vec![cur.join("CHANGELOG.md")],
                     ..Default::default()
                 },
+            ),
+            (
+                &["--no-proc-singleton"][..],
+                Options { process_singleton: false, ..Default::default() },
             ),
         ];
 

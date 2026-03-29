@@ -60,14 +60,24 @@ where
         log::debug!("Application options: {:?}", options);
         let watch_paths = mem::take(&mut options.watch_paths);
         let init_files = mem::take(&mut options.init_files);
+        let use_process_singleton = options.process_singleton;
 
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
 
-        #[cfg(not(target_os = "windows"))]
-        let singleton = ProcessSingleton::with_socket_file(config.data_dir());
-        #[cfg(target_os = "windows")]
-        let singleton = ProcessSingleton::with_namespace();
+        let singleton = if use_process_singleton {
+            #[cfg(not(target_os = "windows"))]
+            {
+                ProcessSingleton::with_socket_file(config.data_dir())
+            }
+            #[cfg(target_os = "windows")]
+            {
+                ProcessSingleton::with_namespace()
+            }
+        } else {
+            log::debug!("Disable process singleton due to user's preference");
+            ProcessSingleton::default()
+        };
 
         if singleton
             .send(&init_files, &watch_paths)
