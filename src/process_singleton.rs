@@ -10,7 +10,7 @@ use std::fs::remove_file;
 use std::io::{Read, Write};
 use std::mem::take;
 use std::path::PathBuf;
-use std::thread;
+use std::thread::{JoinHandle, spawn};
 
 #[derive(Serialize)]
 struct Tx<'a> {
@@ -25,16 +25,20 @@ struct Rx {
 }
 
 impl Rx {
-    fn decode(stream: &mut Stream) -> Result<Self> {
+    fn decode(stream: &mut Stream) -> Result<Option<Self>> {
         let mut buf = [0u8; 4];
         stream.read_exact(&mut buf)?;
         let len = u32::from_ne_bytes(buf) as usize;
+
+        if len == 0 {
+            return Ok(None);
+        }
 
         let mut buf = vec![0; len];
         stream.read_exact(&mut buf)?;
         let msg = serde_json::from_slice(&buf)?;
 
-        Ok(msg)
+        Ok(Some(msg))
     }
 }
 
@@ -72,19 +76,25 @@ impl ProcessSingleton {
         }
     }
 
-    pub fn send(&self, init_files: &[PathBuf], watch_paths: &[PathBuf]) -> Result<bool> {
+    fn stream(&self) -> Option<Stream> {
         let Some(name) = &self.name else {
             log::debug!("Skip sending IPC message because socket file was not created");
-            return Ok(false);
+            return None;
         };
-        let mut conn = match Stream::connect(name.clone()) {
-            Ok(conn) => conn,
+        match Stream::connect(name.clone()) {
+            Ok(conn) => Some(conn),
             Err(err) => {
                 log::debug!(
                     "Could not send IPC message probably because no process is running yet: {err:?}"
                 );
-                return Ok(false);
+                None
             }
+        }
+    }
+
+    pub fn send(&self, init_files: &[PathBuf], watch_paths: &[PathBuf]) -> Result<bool> {
+        let Some(mut conn) = self.stream() else {
+            return Ok(false);
         };
         let msg = serde_json::to_vec(&Tx { init_files, watch_paths })?;
         let len = u32::try_from(msg.len()).unwrap().to_ne_bytes();
@@ -100,10 +110,10 @@ impl ProcessSingleton {
         }
     }
 
-    pub fn listen<H: RendererHandle>(&mut self, handle: H) -> Result<()> {
+    pub fn listen<H: RendererHandle>(&mut self, handle: H) -> Result<Option<JoinHandle<()>>> {
         let Some(name) = take(&mut self.name) else {
             log::debug!("Skip listening IPC messages because socket file was not created");
-            return Ok(());
+            return Ok(None);
         };
 
         // Socket file can be leaked when the previous app process was killed
@@ -114,15 +124,16 @@ impl ProcessSingleton {
             .create_sync()
             .context("Could not listen IPC messages")?;
 
-        thread::spawn(move || {
+        let handle = spawn(move || {
             for conn in listener {
                 match conn.context("Failed to listen IPC message") {
                     Ok(mut stream) => {
                         match Rx::decode(&mut stream).context("Failed to decode IPC message") {
-                            Ok(Rx { init_files, watch_paths }) => {
+                            Ok(Some(Rx { init_files, watch_paths })) => {
                                 let event = Event::ProcessSingleton { init_files, watch_paths };
                                 handle.send(event);
                             }
+                            Ok(None) => break,
                             Err(err) => handle.send(Event::Error(err)),
                         }
                     }
@@ -131,17 +142,34 @@ impl ProcessSingleton {
             }
         });
 
-        Ok(())
+        Ok(Some(handle))
     }
 
     pub fn can_listen(&self) -> bool {
         self.name.is_some()
+    }
+
+    #[allow(unused)]
+    pub fn send_stop(&self) -> Result<bool> {
+        let Some(mut conn) = self.stream() else {
+            return Ok(false);
+        };
+        let len = 0u32.to_ne_bytes();
+        conn.write_all(&len)?;
+        conn.flush()?;
+        Ok(true)
     }
 }
 
 impl Drop for ProcessSingleton {
     fn drop(&mut self) {
         self.cleanup();
+    }
+}
+
+impl From<Name<'static>> for ProcessSingleton {
+    fn from(name: Name<'static>) -> Self {
+        Self { name: Some(name), path: None }
     }
 }
 
@@ -174,16 +202,16 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
 
         let mut listener = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
-        assert!(listener.can_listen());
+        let name = listener.name.clone().unwrap();
 
-        listener.listen(renderer.create_handle()).unwrap();
+        let join_handle = listener.listen(renderer.create_handle()).unwrap().unwrap();
         assert!(!listener.can_listen());
         let path = listener.path.clone().unwrap();
         assert!(path.exists(), "{path:?}");
 
         let expected_init_files = &[PathBuf::from("foo.md")];
         let expected_watch_paths = &[PathBuf::from("some_dir")];
-        let sender = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
+        let sender = ProcessSingleton::from(name);
         let sent = sender.send(expected_init_files, expected_watch_paths).unwrap();
         assert!(sent);
 
@@ -201,6 +229,11 @@ mod tests {
             ),
             "{request:?}"
         );
+
+        let sent = sender.send_stop().unwrap();
+        assert!(sent);
+
+        join_handle.join().unwrap();
 
         // Check the socket file is cleaned up when the singleton is dropped
         drop(listener);
