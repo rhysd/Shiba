@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
+use std::time::Duration;
 
 #[derive(Default)]
 pub struct TestWindow {
@@ -181,6 +182,10 @@ impl TestRenderer {
     pub fn recv(&self) -> Request<u32> {
         self.rx.try_recv().unwrap()
     }
+
+    pub fn recv_timeout(&self, timeout_seconds: u64) -> Request<u32> {
+        self.rx.recv_timeout(Duration::from_secs(timeout_seconds)).unwrap()
+    }
 }
 
 impl Renderer for TestRenderer {
@@ -189,8 +194,7 @@ impl Renderer for TestRenderer {
     type Handle = TestRendererHandle;
 
     fn new(_: Rc<Config>) -> Result<Self> {
-        let (tx, rx) = channel();
-        Ok(Self { tx, rx })
+        Ok(Self::default())
     }
 
     fn create_handle(&self) -> Self::Handle {
@@ -205,11 +209,21 @@ impl Renderer for TestRenderer {
     }
 }
 
+impl Default for TestRenderer {
+    fn default() -> Self {
+        let (tx, rx) = channel();
+        Self { tx, rx }
+    }
+}
+
 #[test]
 fn test_renderer_create_window() {
     let renderer = TestRenderer::new(Rc::new(Config::default())).unwrap();
     let handle = renderer.create_handle();
     handle.create_window();
     let req = renderer.recv();
+    assert!(matches!(req, Request::CreateWindow), "request={req:?}");
+    handle.create_window();
+    let req = renderer.recv_timeout(1);
     assert!(matches!(req, Request::CreateWindow), "request={req:?}");
 }

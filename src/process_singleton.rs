@@ -2,7 +2,9 @@ use crate::persistent::DataDir;
 use crate::renderer::{Event, RendererHandle};
 use anyhow::{Context as _, Result};
 use interprocess::local_socket::prelude::*;
-use interprocess::local_socket::{GenericFilePath, ListenerOptions, Name, Stream};
+use interprocess::local_socket::{
+    GenericFilePath, GenericNamespaced, ListenerOptions, Name, Stream,
+};
 use serde::{Deserialize, Serialize};
 use std::fs::remove_file;
 use std::io::{Read, Write};
@@ -43,17 +45,28 @@ pub struct ProcessSingleton {
 }
 
 impl ProcessSingleton {
-    pub fn new(data_dir: &DataDir) -> Self {
+    #[allow(unused)]
+    pub fn with_socket_file(data_dir: &DataDir) -> Self {
         let Some(path) = data_dir.path() else {
             return Self::default();
         };
-        let mut path = path.to_path_buf();
-        path.push("singleton.sock");
+        let path = path.join("singleton.sock");
         log::debug!("Socket file for IPC for process singleton: {path:?}");
         match path.clone().to_fs_name::<GenericFilePath>() {
             Ok(name) => Self { name: Some(name), path: Some(path) },
             Err(err) => {
                 log::error!("Could not create a socket file {path:?} for IPC: {err:?}");
+                Self::default()
+            }
+        }
+    }
+
+    #[allow(unused)]
+    pub fn with_namespace() -> Self {
+        match "shiba.singleton.sock".to_ns_name::<GenericNamespaced>() {
+            Ok(name) => Self { name: Some(name), path: None },
+            Err(err) => {
+                log::error!("Could not create a socket namespace for IPC: {err:?}");
                 Self::default()
             }
         }
@@ -120,10 +133,89 @@ impl ProcessSingleton {
 
         Ok(())
     }
+
+    pub fn can_listen(&self) -> bool {
+        self.name.is_some()
+    }
 }
 
 impl Drop for ProcessSingleton {
     fn drop(&mut self) {
         self.cleanup();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::renderer::{Event, Renderer, Request};
+    use crate::test::TestRenderer;
+    use std::env;
+
+    #[test]
+    fn create_process_singleton() {
+        let cwd = env::current_dir().unwrap();
+        let singleton = ProcessSingleton::with_socket_file(&DataDir::new(cwd));
+        assert!(singleton.can_listen());
+        assert!(singleton.path.is_some());
+
+        let singleton = ProcessSingleton::with_namespace();
+        assert!(singleton.can_listen());
+        assert!(singleton.path.is_none());
+
+        let singleton = ProcessSingleton::default();
+        assert!(!singleton.can_listen());
+        assert!(singleton.path.is_none());
+    }
+
+    #[test]
+    fn send_receive() {
+        let renderer = TestRenderer::default();
+        let dir = tempfile::tempdir().unwrap();
+
+        let mut listener = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
+        assert!(listener.can_listen());
+
+        listener.listen(renderer.create_handle()).unwrap();
+        assert!(!listener.can_listen());
+        let path = listener.path.clone().unwrap();
+        assert!(path.exists(), "{path:?}");
+
+        let expected_init_files = &[PathBuf::from("foo.md")];
+        let expected_watch_paths = &[PathBuf::from("some_dir")];
+        let sender = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
+        let sent = sender.send(expected_init_files, expected_watch_paths).unwrap();
+        assert!(sent);
+
+        let request = renderer.recv_timeout(1);
+        assert!(
+            matches!(
+                &request,
+                Request::Emit(
+                    Event::ProcessSingleton {
+                        init_files,
+                        watch_paths,
+                    }
+                )
+                if init_files == expected_init_files && watch_paths == expected_watch_paths
+            ),
+            "{request:?}"
+        );
+
+        // Check the socket file is cleaned up when the singleton is dropped
+        drop(listener);
+        assert!(!path.exists(), "{path:?}");
+    }
+
+    #[test]
+    fn nop_empty_singleton() {
+        let init_files = &[PathBuf::from("foo.md")];
+        let watch_paths = &[PathBuf::from("some_dir")];
+        let mut singleton = ProcessSingleton::default();
+        let sent = singleton.send(init_files, watch_paths).unwrap();
+        assert!(!sent);
+
+        let renderer = TestRenderer::default();
+        singleton.listen(renderer.create_handle()).unwrap();
     }
 }

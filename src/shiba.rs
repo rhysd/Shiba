@@ -64,7 +64,11 @@ where
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
 
-        let singleton = ProcessSingleton::new(config.data_dir());
+        #[cfg(not(target_os = "windows"))]
+        let singleton = ProcessSingleton::with_socket_file(config.data_dir());
+        #[cfg(target_os = "windows")]
+        let singleton = ProcessSingleton::with_namespace();
+
         if singleton
             .send(&init_files, &watch_paths)
             .context("Could not connect to IPC socket for process singleton")?
@@ -591,10 +595,9 @@ where
     ) -> Result<RenderingFlow> {
         match event {
             WindowEvent::Created(window) => {
-                let is_first_window = self.windows.is_empty();
                 self.windows.add(id, window);
                 // Ensure IPC messages are received after the first window is created
-                if is_first_window {
+                if self.singleton.can_listen() {
                     self.singleton.listen(self.renderer.clone())?;
                 }
             }
