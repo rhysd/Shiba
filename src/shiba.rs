@@ -554,14 +554,27 @@ where
                 }
 
                 log::debug!("Open file paths received via IPC: {init_files:?}");
-                let (window, preview) = self.windows.focused_mut();
-                if !init_files.is_empty() {
+                let mut focused = false;
+                for (id, window, preview) in self.windows.iter_mut() {
+                    if init_files.is_empty() {
+                        break;
+                    }
+                    if !preview.is_empty() {
+                        continue;
+                    }
+
                     let path = init_files.remove(0);
+                    log::debug!("Reuse an empty window {id:?} for {path:?}");
                     self.watcher.watch(&path)?;
                     if preview.show(&path, window)? {
                         self.history.push(path);
                     }
-                    window.focus();
+
+                    // Focus the first window which opened a new document
+                    if !focused {
+                        window.focus();
+                        focused = true;
+                    }
                 }
                 for path in init_files {
                     self.open_window(path.into());
