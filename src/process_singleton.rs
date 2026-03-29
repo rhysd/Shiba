@@ -1,16 +1,19 @@
+#[cfg(not(target_os = "windows"))]
 use crate::persistent::DataDir;
 use crate::renderer::{Event, RendererHandle};
 use anyhow::{Context as _, Result};
+#[cfg(not(target_os = "windows"))]
+use interprocess::local_socket::GenericFilePath;
+#[cfg(target_os = "windows")]
+use interprocess::local_socket::GenericNamespaced;
 use interprocess::local_socket::prelude::*;
-use interprocess::local_socket::{
-    GenericFilePath, GenericNamespaced, ListenerOptions, Name, Stream,
-};
+use interprocess::local_socket::{ListenerOptions, Name, Stream};
 use serde::{Deserialize, Serialize};
 use std::fs::remove_file;
 use std::io::{Read, Write};
 use std::mem::take;
 use std::path::PathBuf;
-use std::thread;
+use std::thread::spawn;
 
 #[derive(Serialize)]
 struct Tx<'a> {
@@ -45,7 +48,8 @@ pub struct ProcessSingleton {
 }
 
 impl ProcessSingleton {
-    #[allow(unused)]
+    // `GenericFilePath` does not work on Windows due to 'not a named pipe path' error
+    #[cfg(not(target_os = "windows"))]
     pub fn with_socket_file(data_dir: &DataDir) -> Self {
         let Some(path) = data_dir.path() else {
             return Self::default();
@@ -61,7 +65,7 @@ impl ProcessSingleton {
         }
     }
 
-    #[allow(unused)]
+    #[cfg(target_os = "windows")]
     pub fn with_namespace() -> Self {
         match "shiba.singleton.sock".to_ns_name::<GenericNamespaced>() {
             Ok(name) => Self { name: Some(name), path: None },
@@ -114,7 +118,7 @@ impl ProcessSingleton {
             .create_sync()
             .context("Could not listen IPC messages")?;
 
-        thread::spawn(move || {
+        spawn(move || {
             for conn in listener {
                 match conn.context("Failed to listen IPC message") {
                     Ok(mut stream) => {
@@ -150,18 +154,23 @@ mod tests {
     use super::*;
     use crate::renderer::{Event, Renderer, Request};
     use crate::test::TestRenderer;
-    use std::env;
 
     #[test]
     fn create_process_singleton() {
-        let cwd = env::current_dir().unwrap();
-        let singleton = ProcessSingleton::with_socket_file(&DataDir::new(cwd));
-        assert!(singleton.can_listen());
-        assert!(singleton.path.is_some());
+        #[cfg(not(target_os = "windows"))]
+        {
+            let cwd = std::env::current_dir().unwrap();
+            let singleton = ProcessSingleton::with_socket_file(&DataDir::new(cwd));
+            assert!(singleton.can_listen());
+            assert!(singleton.path.is_some());
+        }
 
-        let singleton = ProcessSingleton::with_namespace();
-        assert!(singleton.can_listen());
-        assert!(singleton.path.is_none());
+        #[cfg(target_os = "windows")]
+        {
+            let singleton = ProcessSingleton::with_namespace();
+            assert!(singleton.can_listen());
+            assert!(singleton.path.is_none());
+        }
 
         let singleton = ProcessSingleton::default();
         assert!(!singleton.can_listen());
@@ -169,6 +178,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn send_receive() {
         let renderer = TestRenderer::default();
         let dir = tempfile::tempdir().unwrap();
@@ -205,6 +215,38 @@ mod tests {
         // Check the socket file is cleaned up when the singleton is dropped
         drop(listener);
         assert!(!path.exists(), "{path:?}");
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn send_receive() {
+        let renderer = TestRenderer::default();
+        let mut listener = ProcessSingleton::with_namespace();
+        assert!(listener.can_listen());
+
+        listener.listen(renderer.create_handle()).unwrap();
+        assert!(!listener.can_listen());
+
+        let expected_init_files = &[PathBuf::from("foo.md")];
+        let expected_watch_paths = &[PathBuf::from("some_dir")];
+        let sender = ProcessSingleton::with_namespace();
+        let sent = sender.send(expected_init_files, expected_watch_paths).unwrap();
+        assert!(sent);
+
+        let request = renderer.recv_timeout(1);
+        assert!(
+            matches!(
+                &request,
+                Request::Emit(
+                    Event::ProcessSingleton {
+                        init_files,
+                        watch_paths,
+                    }
+                )
+                if init_files == expected_init_files && watch_paths == expected_watch_paths
+            ),
+            "{request:?}"
+        );
     }
 
     #[test]
