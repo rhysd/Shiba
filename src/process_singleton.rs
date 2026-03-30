@@ -1,3 +1,4 @@
+use crate::cli::PathArgs;
 #[cfg(not(target_os = "windows"))]
 use crate::persistent::DataDir;
 use crate::renderer::{Event, RendererHandle};
@@ -8,37 +9,33 @@ use interprocess::local_socket::GenericFilePath;
 use interprocess::local_socket::GenericNamespaced;
 use interprocess::local_socket::prelude::*;
 use interprocess::local_socket::{ListenerOptions, Name, Stream};
-use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
+use serde::ser::Serialize;
 use std::fs::remove_file;
 use std::io::{Read, Write};
 use std::mem::take;
 use std::path::PathBuf;
 use std::thread::spawn;
 
-#[derive(Serialize)]
-struct Tx<'a> {
-    init_files: &'a [PathBuf],
-    watch_paths: &'a [PathBuf],
+fn encode<T: Serialize>(stream: &mut Stream, args: &T) -> Result<()> {
+    let msg = serde_json::to_vec(args)?;
+    let len =
+        u32::try_from(msg.len()).expect("IPC message is smaller than 2^32 bytes").to_ne_bytes();
+    stream.write_all(&len)?;
+    stream.write_all(&msg)?;
+    stream.flush()?;
+    Ok(())
 }
 
-#[derive(Deserialize)]
-struct Rx {
-    init_files: Vec<PathBuf>,
-    watch_paths: Vec<PathBuf>,
-}
+fn decode<T: DeserializeOwned>(stream: &mut Stream) -> Result<T> {
+    let mut buf = [0u8; 4];
+    stream.read_exact(&mut buf)?;
+    let len = u32::from_ne_bytes(buf) as usize;
 
-impl Rx {
-    fn decode(stream: &mut Stream) -> Result<Self> {
-        let mut buf = [0u8; 4];
-        stream.read_exact(&mut buf)?;
-        let len = u32::from_ne_bytes(buf) as usize;
-
-        let mut buf = vec![0; len];
-        stream.read_exact(&mut buf)?;
-        let msg = serde_json::from_slice(&buf)?;
-
-        Ok(msg)
-    }
+    let mut buf = vec![0; len];
+    stream.read_exact(&mut buf)?;
+    let msg = serde_json::from_slice(&buf)?;
+    Ok(msg)
 }
 
 #[derive(Default)]
@@ -76,7 +73,7 @@ impl ProcessSingleton {
         }
     }
 
-    pub fn send(&self, init_files: &[PathBuf], watch_paths: &[PathBuf]) -> Result<bool> {
+    pub fn send(&self, args: &PathArgs) -> Result<bool> {
         let Some(name) = &self.name else {
             log::debug!("Skip sending IPC message because socket file was not created");
             return Ok(false);
@@ -90,11 +87,7 @@ impl ProcessSingleton {
                 return Ok(false);
             }
         };
-        let msg = serde_json::to_vec(&Tx { init_files, watch_paths })?;
-        let len = u32::try_from(msg.len()).unwrap().to_ne_bytes();
-        conn.write_all(&len)?;
-        conn.write_all(&msg)?;
-        conn.flush()?;
+        encode(&mut conn, args)?;
         Ok(true)
     }
 
@@ -122,11 +115,8 @@ impl ProcessSingleton {
             for conn in listener {
                 match conn.context("Failed to listen IPC message") {
                     Ok(mut stream) => {
-                        match Rx::decode(&mut stream).context("Failed to decode IPC message") {
-                            Ok(Rx { init_files, watch_paths }) => {
-                                let event = Event::ProcessSingleton { init_files, watch_paths };
-                                handle.send(event);
-                            }
+                        match decode(&mut stream).context("Failed to decode IPC message") {
+                            Ok(paths) => handle.send(Event::ProcessSingleton { paths }),
                             Err(err) => handle.send(Event::Error(err)),
                         }
                     }
@@ -191,10 +181,13 @@ mod tests {
         let path = listener.path.clone().unwrap();
         assert!(path.exists(), "{path:?}");
 
-        let expected_init_files = &[PathBuf::from("foo.md")];
-        let expected_watch_paths = &[PathBuf::from("some_dir")];
+        let expected_args = PathArgs {
+            init: Some("foo.md".into()),
+            additional_windows: vec!["a.md".into(), "b.md".into()],
+            watched: vec!["dir1".into(), "dir2".into()],
+        };
         let sender = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
-        let sent = sender.send(expected_init_files, expected_watch_paths).unwrap();
+        let sent = sender.send(&expected_args).unwrap();
         assert!(sent);
 
         let request = renderer.recv_timeout(1);
@@ -202,14 +195,11 @@ mod tests {
             matches!(
                 &request,
                 Request::Emit(
-                    Event::ProcessSingleton {
-                        init_files,
-                        watch_paths,
-                    }
+                    Event::ProcessSingleton { paths }
                 )
-                if init_files == expected_init_files && watch_paths == expected_watch_paths
+                if &expected_args == paths,
             ),
-            "{request:?}"
+            "request={request:?}, expected_args={expected_args:?}"
         );
 
         // Check the socket file is cleaned up when the singleton is dropped
@@ -227,10 +217,13 @@ mod tests {
         listener.listen(renderer.create_handle()).unwrap();
         assert!(!listener.can_listen());
 
-        let expected_init_files = &[PathBuf::from("foo.md")];
-        let expected_watch_paths = &[PathBuf::from("some_dir")];
+        let expected_args = PathArgs {
+            init: Some("foo.md".into()),
+            windows: vec!["a.md".into(), "b.md".into()],
+            watched: vec!["dir1".into(), "dir2".into()],
+        };
         let sender = ProcessSingleton::with_namespace();
-        let sent = sender.send(expected_init_files, expected_watch_paths).unwrap();
+        let sent = sender.send(&expected_args).unwrap();
         assert!(sent);
 
         let request = renderer.recv_timeout(1);
@@ -238,23 +231,19 @@ mod tests {
             matches!(
                 &request,
                 Request::Emit(
-                    Event::ProcessSingleton {
-                        init_files,
-                        watch_paths,
-                    }
+                    Event::ProcessSingleton { paths }
                 )
-                if init_files == expected_init_files && watch_paths == expected_watch_paths
+                if &expected_args == paths,
             ),
-            "{request:?}"
+            "request={request:?}, expected_args={expected_args:?}"
         );
     }
 
     #[test]
     fn nop_empty_singleton() {
-        let init_files = &[PathBuf::from("foo.md")];
-        let watch_paths = &[PathBuf::from("some_dir")];
+        let args = PathArgs::default();
         let mut singleton = ProcessSingleton::default();
-        let sent = singleton.send(init_files, watch_paths).unwrap();
+        let sent = singleton.send(&args).unwrap();
         assert!(!sent);
 
         let renderer = TestRenderer::default();

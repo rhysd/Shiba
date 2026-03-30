@@ -58,8 +58,7 @@ where
         Self: 'static,
     {
         log::debug!("Application options: {:?}", options);
-        let watch_paths = mem::take(&mut options.watch_paths);
-        let init_files = mem::take(&mut options.init_files);
+        let paths = mem::take(&mut options.paths);
 
         let config = Rc::new(Config::load(options)?);
         log::debug!("Application config: {:?}", config);
@@ -79,13 +78,17 @@ where
         };
 
         if singleton
-            .send(&init_files, &watch_paths)
+            .send(&paths)
             .context("Could not connect to IPC socket for process singleton")?
         {
-            log::debug!(
-                "Command line arguments are sent to the existing process singleton: init_files={init_files:?}, watch_paths={watch_paths:?}"
-            );
+            log::debug!("Arguments are sent to the existing process singleton: {paths:?}");
             return Ok(());
+        }
+
+        let watch_paths = paths.watched;
+        let mut init_files = paths.additional_windows;
+        if let Some(init_file) = paths.init {
+            init_files.insert(0, init_file);
         }
 
         let renderer = R::new(config.clone())?;
@@ -546,36 +549,24 @@ where
                 }
             }
             Event::DuplicateWindow { scroll, id } => self.duplicate_window(id, scroll),
-            Event::ProcessSingleton { mut init_files, watch_paths } => {
-                log::debug!("Watch paths received via IPC: {watch_paths:?}");
-                for path in watch_paths {
+            Event::ProcessSingleton { paths } => {
+                log::debug!("Watch paths received via IPC: {:?}", paths.watched);
+                for path in paths.watched {
                     self.watcher.watch(&path)?;
                 }
 
-                log::debug!("Open file paths received via IPC: {init_files:?}");
-                let mut focused = false;
-                for (id, window, preview) in self.windows.iter_mut() {
-                    if init_files.is_empty() {
-                        break;
-                    }
-                    if !preview.is_empty() {
-                        continue;
-                    }
-
-                    let path = init_files.remove(0);
-                    log::debug!("Reuse an empty window {id:?} for {path:?}");
+                if let Some(path) = paths.init {
+                    log::debug!("Open the initial file via IPC in existing window: {path:?}");
+                    let (window, preview) = self.windows.focused_mut();
                     self.watcher.watch(&path)?;
                     if preview.show(&path, window)? {
                         self.history.push(path);
                     }
-
-                    // Focus the first window which opened a new document
-                    if !focused {
-                        window.focus();
-                        focused = true;
-                    }
+                    window.focus();
                 }
-                for path in init_files {
+
+                log::debug!("Open additional windows via IPC: {:?}", paths.additional_windows);
+                for path in paths.additional_windows {
                     self.open_window(path.into());
                 }
             }

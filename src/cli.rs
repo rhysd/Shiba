@@ -1,5 +1,6 @@
 use anyhow::{Error, Result};
 use once_cell::unsync::OnceCell; // For OnceCell::get_or_try_init
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -34,12 +35,18 @@ pub enum Parsed {
     Version(&'static str),
 }
 
+#[derive(Default, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PathArgs {
+    pub init: Option<PathBuf>,
+    pub additional_windows: Vec<PathBuf>,
+    pub watched: Vec<PathBuf>,
+}
+
 #[non_exhaustive]
 #[derive(Debug, PartialEq)]
 pub struct Options {
     pub debug: bool,
-    pub init_files: Vec<PathBuf>,
-    pub watch_paths: Vec<PathBuf>,
+    pub paths: PathArgs,
     pub watch: bool,
     pub restore: bool,
     pub theme: Option<ThemeOption>,
@@ -53,8 +60,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             debug: false,
-            init_files: vec![],
-            watch_paths: vec![],
+            paths: PathArgs::default(),
             watch: true,
             restore: true,
             theme: None,
@@ -107,9 +113,8 @@ Examples:
         Tracks `file1.md`, `file2.md`, files in `dir1` directory, and files in `dir2` directory.
         `file1.md` file is opened in a preview window.
 
-    $ shiba file1.md -o file2.md -o file3.md
-        Opens the three files in three windows respectively and tracks the file changes. The first
-        file path implies --open option so you don't need to specify it.
+    $ shiba file1.md file2.md -o file3.md
+        Opens file1.md and file3.md in windows and tracks changes of the three files.
 
     $ shiba
         Opens an empty window. You can open files from key shortcuts, menu items, file picker, etc.
@@ -159,7 +164,7 @@ Document:
                             return Err(err);
                         }
                     };
-                    opts.init_files.push(path)
+                    opts.paths.additional_windows.push(path)
                 }
                 Value(path) => {
                     let path = PathBuf::from(path);
@@ -173,10 +178,10 @@ Document:
                         cwd.get_or_try_init(|| env::current_dir()?.canonicalize())?.join(path)
                     };
 
-                    if !opts.init_files.is_empty() || !exists || path.is_dir() {
-                        opts.watch_paths.push(path);
+                    if opts.paths.init.is_some() || !exists || path.is_dir() {
+                        opts.paths.watched.push(path);
                     } else {
-                        opts.init_files.push(path);
+                        opts.paths.init = Some(path);
                     }
                 }
                 _ => return Err(arg.unexpected().into()),
@@ -211,30 +216,42 @@ mod tests {
             (
                 &["README.md"][..],
                 Options {
-                    init_files: vec![cur.join("README.md")],
+                    paths: PathArgs {
+                        init: Some(cur.join("README.md")),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             ),
             (
                 &["README.md", "src"][..],
                 Options {
-                    init_files: vec![cur.join("README.md")],
-                    watch_paths: vec![cur.join("src")],
+                    paths: PathArgs {
+                        init: Some(cur.join("README.md")),
+                        watched: vec![cur.join("src")],
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             ),
             (
                 &["file-not-existing.md"][..],
                 Options {
-                    watch_paths: vec![cur.join("file-not-existing.md")],
+                    paths: PathArgs {
+                        watched: vec![cur.join("file-not-existing.md")],
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             ),
             (
                 &["file-not-existing.md", "README.md"][..],
                 Options {
-                    init_files: vec![cur.join("README.md")],
-                    watch_paths: vec![cur.join("file-not-existing.md")],
+                    paths: PathArgs {
+                        init: Some(cur.join("README.md")),
+                        watched: vec![cur.join("file-not-existing.md")],
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             ),
@@ -283,22 +300,43 @@ mod tests {
             (
                 &["README.md", "-o", "CHANGELOG.md", "--open", "LICENSE"][..],
                 Options {
-                    init_files: vec![
-                        cur.join("README.md"),
-                        cur.join("CHANGELOG.md"),
-                        cur.join("LICENSE"),
-                    ],
+                    paths: PathArgs {
+                        init: Some(cur.join("README.md")),
+                        additional_windows: vec![
+                            cur.join("CHANGELOG.md"),
+                            cur.join("LICENSE"),
+                        ],
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             ),
             (
-                &["-o", "README.md", "CHANGELOG.md", "-o", "LICENSE"][..],
+                &["-o", "README.md", "Makefile", "CHANGELOG.md", "-o", "LICENSE"][..],
                 Options {
-                    init_files: vec![
-                        cur.join("README.md"),
-                        cur.join("LICENSE"),
-                    ],
-                    watch_paths: vec![cur.join("CHANGELOG.md")],
+                    paths: PathArgs {
+                        init: Some(cur.join("Makefile")),
+                        additional_windows: vec![
+                            cur.join("README.md"),
+                            cur.join("LICENSE"),
+                        ],
+                        watched: vec![cur.join("CHANGELOG.md")],
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+            ),
+            (
+                &["-o", "README.md", "-o", "CHANGELOG.md"][..],
+                Options {
+                    paths: PathArgs {
+                        init: None,
+                        additional_windows: vec![
+                            cur.join("README.md"),
+                            cur.join("CHANGELOG.md"),
+                        ],
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
             ),

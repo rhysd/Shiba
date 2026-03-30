@@ -1,3 +1,4 @@
+use crate::cli::PathArgs;
 use crate::config::{Config, KeyAction, Search as SearchConfig, SearchMatcher};
 use crate::persistent::PersistentData;
 use anyhow::{Error, Result};
@@ -142,7 +143,7 @@ pub enum Event<WindowId> {
     Menu(MenuItem),
     NewWindow { init_file: Option<InitFile> },
     DuplicateWindow { scroll: InitScroll, id: WindowId },
-    ProcessSingleton { init_files: Vec<PathBuf>, watch_paths: Vec<PathBuf> },
+    ProcessSingleton { paths: PathArgs },
     Error(Error),
 }
 
