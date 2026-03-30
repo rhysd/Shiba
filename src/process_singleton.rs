@@ -12,12 +12,12 @@ use interprocess::local_socket::{ListenerOptions, Name, Stream};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fs::remove_file;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::mem::take;
 use std::path::PathBuf;
 use std::thread::spawn;
 
-fn encode<T: Serialize>(stream: &mut Stream, args: &T) -> Result<()> {
+fn encode<T: Serialize>(stream: &mut Stream, args: &T) -> io::Result<()> {
     let msg = serde_json::to_vec(args)?;
     let len =
         u32::try_from(msg.len()).expect("IPC message is smaller than 2^32 bytes").to_ne_bytes();
@@ -27,7 +27,7 @@ fn encode<T: Serialize>(stream: &mut Stream, args: &T) -> Result<()> {
     Ok(())
 }
 
-fn decode<T: DeserializeOwned>(stream: &mut Stream) -> Result<T> {
+fn decode<T: DeserializeOwned>(stream: &mut Stream) -> io::Result<T> {
     let mut buf = [0u8; 4];
     stream.read_exact(&mut buf)?;
     let len = u32::from_ne_bytes(buf) as usize;
@@ -78,17 +78,19 @@ impl ProcessSingleton {
             log::debug!("Skip sending IPC message because socket file was not created");
             return Ok(false);
         };
-        let mut conn = match Stream::connect(name.clone()) {
-            Ok(conn) => conn,
+        match Stream::connect(name.clone()) {
+            Ok(mut conn) => {
+                encode(&mut conn, args)?;
+                log::debug!("Arguments are sent to the existing process singleton: {args:?}");
+                Ok(true)
+            }
             Err(err) => {
                 log::debug!(
-                    "Could not send IPC message probably because no process is running yet: {err:?}"
+                    "Could not send IPC message probably because no server is running yet: {err:?}"
                 );
-                return Ok(false);
+                Ok(false)
             }
-        };
-        encode(&mut conn, args)?;
-        Ok(true)
+        }
     }
 
     fn cleanup(&self) {
@@ -113,17 +115,20 @@ impl ProcessSingleton {
 
         spawn(move || {
             for conn in listener {
-                match conn.context("Failed to listen IPC message") {
-                    Ok(mut stream) => {
-                        match decode(&mut stream).context("Failed to decode IPC message") {
-                            Ok(paths) => handle.send(Event::ProcessSingleton { paths }),
-                            Err(err) => handle.send(Event::Error(err)),
-                        }
+                match conn
+                    .and_then(|mut stream| decode(&mut stream))
+                    .context("Failed to receive IPC message")
+                {
+                    Ok(paths) => handle.send(Event::ProcessSingleton { paths }),
+                    Err(err) => {
+                        handle.send(Event::Error(err));
+                        break;
                     }
-                    Err(err) => handle.send(Event::Error(err)),
                 }
             }
+            log::error!("IPC server has stopped listening due to error");
         });
+        log::debug!("Started to listen IPC messages for process singleton");
 
         Ok(())
     }

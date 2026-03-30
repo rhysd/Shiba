@@ -37,9 +37,8 @@ impl TestWindow {
         static ID: AtomicU32 = AtomicU32::new(0);
 
         let mut w = Self::default();
-        let id = ID.load(Ordering::Relaxed);
+        let id = ID.fetch_add(1, Ordering::Relaxed);
         w.window_id = id;
-        ID.store(id + 1, Ordering::Relaxed);
         w
     }
 }

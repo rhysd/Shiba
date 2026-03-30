@@ -327,7 +327,6 @@ mod tests {
                             cur.join("LICENSE"),
                         ],
                         watched: vec![cur.join("CHANGELOG.md")],
-                        ..Default::default()
                     },
                     ..Default::default()
                 },

@@ -42,15 +42,13 @@ where
     where
         Self: 'static,
     {
-        let Err(error) = Self::run_impl(options) else {
-            return Ok(());
-        };
-
-        let error = error.context("Could not launch application");
-        if let Ok(dialog) = D::new(&Config::default()) {
-            dialog.alert(&error, &WindowHandles::unavailable());
-        }
-        Err(error)
+        Self::run_impl(options).map_err(|error| {
+            let error = error.context("Could not launch application");
+            if let Ok(dialog) = D::new(&Config::default()) {
+                dialog.alert(&error, &WindowHandles::unavailable());
+            }
+            error
+        })
     }
 
     fn run_impl(mut options: Options) -> Result<()>
@@ -81,7 +79,6 @@ where
             .send(&paths)
             .context("Could not connect to IPC socket for process singleton")?
         {
-            log::debug!("Arguments are sent to the existing process singleton: {paths:?}");
             return Ok(());
         }
 
@@ -93,8 +90,6 @@ where
 
         let renderer = R::new(config.clone())?;
         let dog = Self::new(watch_paths, init_files, config, singleton, &renderer)?;
-
-        log::debug!("Started to listen IPC messages for process singleton");
 
         renderer.start(dog)
     }
@@ -650,7 +645,7 @@ where
             return RenderingFlow::Continue;
         }
         self.handle_event(event).unwrap_or_else(|err| {
-            self.alert("Could not handle event", err);
+            self.alert("Could not handle application event", err);
             RenderingFlow::Continue
         })
     }
