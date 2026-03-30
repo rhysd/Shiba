@@ -1,17 +1,18 @@
 use crate::config::Config;
 use crate::renderer::{
     Event, EventHandler, MessageToWindow, RawMessageWriter, Renderer, RendererHandle, Request,
-    Window, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
+    Window, WindowAppearance, WindowHandles, WindowId, WindowState, ZoomLevel,
 };
 use anyhow::Result;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::Duration;
 
 #[derive(Default)]
 pub struct TestWindow {
+    pub id: WindowId,
     pub messages: RefCell<Vec<String>>,
     pub title: RefCell<String>,
     pub window_state: Option<WindowState>,
@@ -28,25 +29,10 @@ pub struct TestWindow {
     pub is_low_memory: bool,
     pub cache_deleted: bool,
     pub window_handles_requested: AtomicBool,
-    pub window_id: u32,
     pub is_focused: AtomicBool,
 }
 
-impl TestWindow {
-    pub fn new() -> Self {
-        static ID: AtomicU32 = AtomicU32::new(0);
-
-        let mut w = Self::default();
-        let id = ID.load(Ordering::Relaxed);
-        w.window_id = id;
-        ID.store(id + 1, Ordering::Relaxed);
-        w
-    }
-}
-
 impl Window for TestWindow {
-    type Id = u32;
-
     fn send_message(&self, message: MessageToWindow<'_>) -> Result<()> {
         let msg = serde_json::to_string_pretty(&message)?;
         self.messages.borrow_mut().push(msg);
@@ -147,10 +133,6 @@ impl Window for TestWindow {
         WindowHandles::unavailable()
     }
 
-    fn id(&self) -> Self::Id {
-        self.window_id
-    }
-
     fn focus(&self) {
         self.is_focused.store(true, Ordering::Relaxed);
     }
@@ -158,38 +140,37 @@ impl Window for TestWindow {
 
 #[derive(Clone)]
 pub struct TestRendererHandle {
-    tx: Sender<Request<u32>>,
+    tx: Sender<Request>,
 }
 
 impl RendererHandle for TestRendererHandle {
-    type WindowId = u32;
-
-    fn send(&self, event: Event<Self::WindowId>) {
+    fn send(&self, event: Event) {
         self.tx.send(Request::Emit(event)).unwrap();
     }
 
-    fn create_window(&self) {
-        self.tx.send(Request::CreateWindow).unwrap();
+    fn create_window(&self) -> WindowId {
+        let id = WindowId::generate();
+        self.tx.send(Request::CreateWindow(id)).unwrap();
+        id
     }
 }
 
 pub struct TestRenderer {
-    tx: Sender<Request<u32>>,
-    rx: Receiver<Request<u32>>,
+    tx: Sender<Request>,
+    rx: Receiver<Request>,
 }
 
 impl TestRenderer {
-    pub fn recv(&self) -> Request<u32> {
+    pub fn recv(&self) -> Request {
         self.rx.try_recv().unwrap()
     }
 
-    pub fn recv_timeout(&self, timeout_seconds: u64) -> Request<u32> {
+    pub fn recv_timeout(&self, timeout_seconds: u64) -> Request {
         self.rx.recv_timeout(Duration::from_secs(timeout_seconds)).unwrap()
     }
 }
 
 impl Renderer for TestRenderer {
-    type WindowId = u32;
     type Window = TestWindow;
     type Handle = TestRendererHandle;
 
@@ -203,7 +184,7 @@ impl Renderer for TestRenderer {
 
     fn start<H>(self, _: H) -> !
     where
-        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static,
+        H: EventHandler<Window = Self::Window> + 'static,
     {
         unreachable!()
     }
@@ -222,8 +203,8 @@ fn test_renderer_create_window() {
     let handle = renderer.create_handle();
     handle.create_window();
     let req = renderer.recv();
-    assert!(matches!(req, Request::CreateWindow), "request={req:?}");
+    assert!(matches!(req, Request::CreateWindow(_)), "request={req:?}");
     handle.create_window();
     let req = renderer.recv_timeout(1);
-    assert!(matches!(req, Request::CreateWindow), "request={req:?}");
+    assert!(matches!(req, Request::CreateWindow(_)), "request={req:?}");
 }

@@ -1,11 +1,11 @@
-use crate::renderer::{Event, MenuItem as AppMenuItem, RendererHandle};
-use crate::wry::types::Proxy;
+use crate::renderer::{Event, MenuItem as AppMenuItem, RendererHandle, Request};
 use anyhow::Result;
 use muda::dpi::{LogicalPosition, Position};
 use muda::{
     AboutMetadata, ContextMenu, Menu as MenuBar, MenuEvent, MenuItem, PredefinedMenuItem, Submenu,
 };
 use std::collections::HashMap;
+use tao::event_loop::EventLoopProxy;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -65,7 +65,7 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn create(&self, proxy: Proxy) -> Result<()> {
+    pub fn create(&self, proxy: EventLoopProxy<Request>) -> Result<()> {
         fn item(text: &str) -> MenuItem {
             MenuItem::new(text, true, None)
         }

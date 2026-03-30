@@ -2,14 +2,14 @@ use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
     Event, InitFile, InitScroll, MessageFromWindow, MessageToWindow, RawMessageWriter, Request,
-    Window as RendererWindow, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
+    Window as RendererWindow, WindowAppearance, WindowHandles, WindowId, WindowState, ZoomLevel,
 };
 use crate::wry::menu::WindowMenu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
-use crate::wry::types::{EventLoop, Proxy};
 use anyhow::{Context as _, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
+use tao::event_loop::{EventLoopProxy, EventLoopWindowTarget};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS as _;
 #[cfg(target_os = "linux")]
@@ -18,7 +18,7 @@ use tao::platform::unix::WindowExtUnix;
 use tao::platform::windows::WindowBuilderExtWindows as _;
 #[cfg(target_os = "windows")]
 use tao::platform::windows::WindowExtWindows as _;
-use tao::window::{Fullscreen, Theme, Window, WindowBuilder, WindowId};
+use tao::window::{Fullscreen, Theme, Window, WindowBuilder};
 #[cfg(target_os = "linux")]
 use wry::WebViewBuilderExtUnix;
 use wry::http::Response;
@@ -75,7 +75,10 @@ impl MaximizeWindow {
     }
 }
 
-fn create_window(event_loop: &EventLoop, config: &Config) -> Result<(Window, ZoomLevel, bool)> {
+fn create_window(
+    event_loop: &EventLoopWindowTarget<Request>,
+    config: &Config,
+) -> Result<(Window, ZoomLevel, bool)> {
     let mut builder = WindowBuilder::new()
         .with_title("Shiba")
         .with_visible(false)
@@ -224,14 +227,18 @@ fn parse_local_path_from_url(mut url: String) -> Result<InitFile, String> {
     Ok(InitFile { path, scroll })
 }
 
-fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
+fn create_webview(
+    window: &Window,
+    id: WindowId,
+    ipc_proxy: EventLoopProxy<Request>,
+    config: &Config,
+) -> Result<WebView> {
     let file_drop_proxy = ipc_proxy.clone();
     let navigation_proxy = ipc_proxy.clone();
     let new_window_proxy = ipc_proxy.clone();
     let loader = Assets::new(config);
 
     let user_dir = config.data_dir().path().map(|dir| dir.join("WebView"));
-    let id = window.id();
     log::debug!("WebView user data directory: {:?}", user_dir);
     let mut context = WebContext::new(user_dir);
     let mut builder = WebViewBuilder::new_with_web_context(&mut context);
@@ -355,9 +362,10 @@ pub struct WebViewWindow {
 
 impl WebViewWindow {
     pub fn new(
+        id: WindowId,
         config: &Config,
-        event_loop: &EventLoop,
-        proxy: Proxy,
+        event_loop: &EventLoopWindowTarget<Request>,
+        proxy: EventLoopProxy<Request>,
         mut menu: WindowMenu,
     ) -> Result<Self> {
         let (window, zoom_level, always_on_top) = create_window(event_loop, config)?;
@@ -366,7 +374,7 @@ impl WebViewWindow {
             menu.toggle(&window)?;
         }
 
-        let webview = create_webview(&window, proxy, config)?;
+        let webview = create_webview(&window, id, proxy, config)?;
         log::debug!("WebView was created successfully");
 
         let zoom_factor = zoom_level.factor();
@@ -378,11 +386,13 @@ impl WebViewWindow {
         let is_vibrant = config.window().is_vibrant();
         Ok(Self { webview, window, zoom_level, always_on_top, menu, is_vibrant })
     }
+
+    pub fn window(&self) -> &Window {
+        &self.window
+    }
 }
 
 impl RendererWindow for WebViewWindow {
-    type Id = WindowId;
-
     fn send_message(&self, message: MessageToWindow) -> Result<()> {
         let mut buf = b"window.postShibaMessageFromMain(".to_vec();
         serde_json::to_writer(&mut buf, &message)?;
@@ -529,10 +539,6 @@ impl RendererWindow for WebViewWindow {
 
     fn handles(&self) -> WindowHandles<'_> {
         WindowHandles::new(&self.window)
-    }
-
-    fn id(&self) -> Self::Id {
-        self.window.id()
     }
 
     fn focus(&self) {
