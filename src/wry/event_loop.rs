@@ -2,18 +2,19 @@
 use crate::assets::set_app_icon_to_dock;
 use crate::config::Config;
 use crate::renderer::{
-    Event as AppEvent, EventHandler, Renderer, RendererHandle, RenderingFlow, Request,
-    WindowEvent as AppWindowEvent, WindowId,
+    EventHandler, Renderer, RendererHandle, RenderingFlow, Window, WindowEvent as AppWindowEvent,
 };
 use crate::wry::menu::Menu;
+use crate::wry::types::{Event as AppEvent, Proxy, Request};
 use crate::wry::webview::WebViewWindow;
 use anyhow::Result;
-use std::collections::HashMap;
 use std::rc::Rc;
 use tao::event::{Event, StartCause, WindowEvent};
-use tao::event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy};
+use tao::event_loop::EventLoop;
+use tao::event_loop::{ControlFlow, EventLoopBuilder};
 #[cfg(target_os = "windows")]
 use tao::platform::windows::EventLoopBuilderExtWindows as _;
+use tao::window::WindowId;
 
 pub struct Wry {
     event_loop: EventLoop<Request>,
@@ -21,24 +22,25 @@ pub struct Wry {
     config: Rc<Config>,
 }
 
-impl RendererHandle for EventLoopProxy<Request> {
+impl RendererHandle for Proxy {
+    type WindowId = WindowId;
+
     fn send(&self, event: AppEvent) {
         if let Err(err) = self.send_event(Request::Emit(event)) {
             log::error!("Could not send user event for message from WebView: {}", err);
         }
     }
 
-    fn create_window(&self) -> WindowId {
-        let id = WindowId::generate();
-        if let Err(err) = self.send_event(Request::CreateWindow(id)) {
+    fn create_window(&self) {
+        if let Err(err) = self.send_event(Request::CreateWindow) {
             log::error!("Could not send window creation request: {}", err);
         }
-        id
     }
 }
 
 impl Renderer for Wry {
-    type Handle = EventLoopProxy<Request>;
+    type Handle = Proxy;
+    type WindowId = WindowId;
     type Window = WebViewWindow;
 
     fn new(config: Rc<Config>) -> Result<Self> {
@@ -68,11 +70,10 @@ impl Renderer for Wry {
 
     fn start<H>(self, mut handler: H) -> !
     where
-        H: EventHandler<Window = Self::Window> + 'static,
+        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static,
     {
         let proxy = self.event_loop.create_proxy();
         let mut is_minimized = false;
-        let mut id_mapping = HashMap::new();
         self.event_loop.run(move |event, event_loop, control| {
             let flow = match event {
                 Event::NewEvents(StartCause::Init) => {
@@ -87,23 +88,20 @@ impl Renderer for Wry {
                 }
                 Event::WindowEvent { event: WindowEvent::CloseRequested, window_id, .. } => {
                     log::debug!("Closing window was requested: {window_id:?}");
-                    let id = id_mapping.remove(&window_id).unwrap();
-                    handler.on_window(id, AppWindowEvent::Closed)
+                    handler.on_window(window_id, AppWindowEvent::Closed)
                 }
                 Event::UserEvent(request) => match request {
                     Request::Emit(event) => handler.on_event(event),
-                    Request::CreateWindow(id) => {
+                    Request::CreateWindow => {
                         let created = WebViewWindow::new(
-                            id,
                             &self.config,
                             event_loop,
                             proxy.clone(),
                             self.menu.window_menu(),
                         );
                         match created {
-                            Ok(webview) => {
-                                id_mapping.insert(webview.window().id(), id);
-                                handler.on_window(id, AppWindowEvent::Created(webview))
+                            Ok(window) => {
+                                handler.on_window(window.id(), AppWindowEvent::Created(window))
                             }
                             Err(err) => handler.on_event(AppEvent::Error(err)),
                         }
@@ -113,16 +111,14 @@ impl Renderer for Wry {
                     let next_minimized = size.height == 0 || size.width == 0;
                     if next_minimized != is_minimized {
                         is_minimized = next_minimized;
-                        let id = *id_mapping.get(&window_id).unwrap();
-                        log::debug!("Minimized state changed for {id:?}: {is_minimized}");
-                        handler.on_window(id, AppWindowEvent::Minimized(is_minimized))
+                        log::debug!("Minimized state changed for {window_id:?}: {is_minimized}");
+                        handler.on_window(window_id, AppWindowEvent::Minimized(is_minimized))
                     } else {
                         RenderingFlow::Continue
                     }
                 }
                 Event::WindowEvent { event: WindowEvent::Focused(true), window_id, .. } => {
-                    let id = *id_mapping.get(&window_id).unwrap();
-                    handler.on_window(id, AppWindowEvent::Focused)
+                    handler.on_window(window_id, AppWindowEvent::Focused)
                 }
                 _ => RenderingFlow::Continue,
             };

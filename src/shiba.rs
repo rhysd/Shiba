@@ -7,27 +7,26 @@ use crate::process_singleton::ProcessSingleton;
 use crate::renderer::{
     Event, EventHandler, InitFile, InitScroll, MenuItem, MessageFromWindow, MessageToWindow,
     Renderer, RendererHandle, RenderingFlow, ScrollRequest, Window, WindowEvent, WindowHandles,
-    WindowId,
 };
 #[cfg(feature = "__sanity")]
 use crate::sanity::SanityTest;
 use crate::watcher::{PathFilter, Watcher};
 use crate::window::WindowManager;
 use anyhow::{Context as _, Error, Result};
-use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::mem;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 pub struct Shiba<R: Renderer, O, W, D> {
     renderer: R::Handle,
-    windows: WindowManager<R::Window>,
+    windows: WindowManager<R>,
     opener: O,
     history: History,
     watcher: W,
     dialog: D,
     config: Rc<Config>,
-    init_files: HashMap<WindowId, InitFile>,
+    init_files: VecDeque<InitFile>,
     singleton: ProcessSingleton,
     exit_status: i32,
 }
@@ -102,7 +101,7 @@ where
 
     pub fn new(
         watch_paths: Vec<PathBuf>,
-        files: Vec<PathBuf>,
+        init_files: Vec<PathBuf>,
         config: Rc<Config>,
         singleton: ProcessSingleton,
         renderer: &R,
@@ -115,18 +114,11 @@ where
             watcher.watch(&path)?;
             history.push(path);
         }
-
         let handle = renderer.create_handle();
-        let mut init_files = HashMap::new();
-
-        if files.is_empty() {
+        for _ in 0..init_files.len().max(1) {
             handle.create_window();
-        } else {
-            for file in files {
-                let id = handle.create_window();
-                init_files.insert(id, file.into());
-            }
         }
+        let init_files = init_files.into_iter().map(|p| p.into()).collect();
 
         Ok(Self {
             renderer: handle,
@@ -142,7 +134,7 @@ where
         })
     }
 
-    fn open_preview(&mut self, id: WindowId, file: InitFile) -> Result<&R::Window> {
+    fn open_preview(&mut self, id: R::WindowId, file: InitFile) -> Result<&R::Window> {
         let InitFile { path, scroll } = file;
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         let (window, preview) = self.windows.get_mut(id);
@@ -168,11 +160,11 @@ where
 
     fn open_window(&mut self, file: InitFile) {
         log::debug!("Open new window with file: {file:?}");
-        let id = self.renderer.create_window();
-        self.init_files.insert(id, file);
+        self.init_files.push_back(file);
+        self.renderer.create_window();
     }
 
-    fn navigate(&mut self, id: WindowId, dir: Direction) -> Result<()> {
+    fn navigate(&mut self, id: R::WindowId, dir: Direction) -> Result<()> {
         let (window, preview) = self.windows.get_mut(id);
 
         let (mut current, dir) = if preview.is_empty() {
@@ -197,7 +189,7 @@ where
         Ok(())
     }
 
-    fn reload(&mut self, id: WindowId) -> Result<()> {
+    fn reload(&mut self, id: R::WindowId) -> Result<()> {
         let (window, preview) = self.windows.get_mut(id);
         if preview.is_empty() {
             // When content is empty, we don't need to reload the page. This happens when 'welcome' page displays just
@@ -213,7 +205,7 @@ where
         Ok(())
     }
 
-    fn pick_files(&mut self, id: WindowId) -> Result<()> {
+    fn pick_files(&mut self, id: R::WindowId) -> Result<()> {
         let (window, _) = self.windows.get(id);
         #[cfg_attr(target_os = "windows", allow(unused_mut))]
         let mut files = self.dialog.pick_files(&window.handles());
@@ -235,7 +227,7 @@ where
         Ok(())
     }
 
-    fn pick_dirs(&mut self, id: WindowId) -> Result<()> {
+    fn pick_dirs(&mut self, id: R::WindowId) -> Result<()> {
         let (window, _) = self.windows.get(id);
         let dirs = self.dialog.pick_dirs(&window.handles());
         #[cfg(target_os = "windows")]
@@ -250,7 +242,7 @@ where
         Ok(())
     }
 
-    fn pick_files_in_new_window(&mut self, id: WindowId) {
+    fn pick_files_in_new_window(&mut self, id: R::WindowId) {
         let (window, _) = self.windows.get(id);
 
         let files = self.dialog.pick_files(&window.handles());
@@ -263,7 +255,7 @@ where
         }
     }
 
-    fn zoom(&mut self, id: WindowId, zoom_in: bool) -> Result<()> {
+    fn zoom(&mut self, id: R::WindowId, zoom_in: bool) -> Result<()> {
         let (window, _) = self.windows.get_mut(id);
         let level = window.zoom_level();
         let level = if zoom_in { level.zoom_in() } else { level.zoom_out() };
@@ -280,7 +272,7 @@ where
         Ok(())
     }
 
-    fn toggle_always_on_top(&mut self, id: WindowId) -> Result<()> {
+    fn toggle_always_on_top(&mut self, id: R::WindowId) -> Result<()> {
         let (window, _) = self.windows.get_mut(id);
         let pinned = !window.always_on_top();
         log::debug!("Toggle always-on-top (pinned={})", pinned);
@@ -288,14 +280,14 @@ where
         window.send_message(MessageToWindow::AlwaysOnTop { pinned })
     }
 
-    fn toggle_maximized(&mut self, id: WindowId) {
+    fn toggle_maximized(&mut self, id: R::WindowId) {
         let (window, _) = self.windows.get_mut(id);
         let maximized = !window.is_maximized();
         log::debug!("Toggle maximized window (maximized={})", maximized);
         window.maximize(maximized);
     }
 
-    fn toggle_minimized(&mut self, id: WindowId) {
+    fn toggle_minimized(&mut self, id: R::WindowId) {
         let (window, _) = self.windows.get_mut(id);
         let minimized = !window.is_minimized();
         log::debug!("Toggle minimized window (minimized={})", minimized);
@@ -313,7 +305,7 @@ where
             && path.metadata().map(|md| !md.is_dir()).unwrap_or(false)
     }
 
-    fn duplicate_window(&mut self, id: WindowId, scroll: InitScroll) {
+    fn duplicate_window(&mut self, id: R::WindowId, scroll: InitScroll) {
         let (_, preview) = self.windows.get(id);
         if preview.is_empty() {
             self.renderer.create_window();
@@ -322,7 +314,7 @@ where
         }
     }
 
-    fn close_window(&mut self, id: WindowId) -> RenderingFlow {
+    fn close_window(&mut self, id: R::WindowId) -> RenderingFlow {
         log::debug!("Close window {id:?}");
         if self.windows.is_last(id) {
             self.quit(id)
@@ -334,7 +326,7 @@ where
         }
     }
 
-    fn close_other_windows(&mut self, id: WindowId) {
+    fn close_other_windows(&mut self, id: R::WindowId) {
         log::debug!("Close all windows other than {id:?}");
         for (id, _, _) in self.windows.remove_others(id) {
             log::debug!("Close window: {id:?}");
@@ -343,7 +335,7 @@ where
 
     fn handle_window_message(
         &mut self,
-        id: WindowId,
+        id: R::WindowId,
         message: MessageFromWindow,
     ) -> Result<RenderingFlow> {
         use MessageFromWindow::*;
@@ -365,7 +357,7 @@ where
                 // Open window when the content is ready. Otherwise a white window flashes when dark theme.
                 window.show();
 
-                if let Some(file) = self.init_files.remove(&id) {
+                if let Some(file) = self.init_files.pop_front() {
                     self.open_preview(id, file)?;
                 } else {
                     window.send_message(MessageToWindow::Welcome)?;
@@ -394,9 +386,7 @@ where
             DragWindow => self.windows.get(id).0.drag_window()?,
             ToggleMaximized => self.toggle_maximized(id),
             ToggleMinimized => self.toggle_minimized(id),
-            NewWindow { path: None } => {
-                self.renderer.create_window();
-            }
+            NewWindow { path: None } => self.renderer.create_window(),
             NewWindow { path: Some(path) } => self.open_window(PathBuf::from(path).into()),
             DuplicateWindow { heading: None } => self.duplicate_window(id, InitScroll::Nop),
             DuplicateWindow { heading: Some(index) } => {
@@ -452,9 +442,7 @@ where
             ToggleAlwaysOnTop => self.toggle_always_on_top(id)?,
             ToggleMinimizeWindow => self.toggle_minimized(id),
             ToggleMaximizeWindow => self.toggle_maximized(id),
-            NewWindow => {
-                self.renderer.create_window();
-            }
+            NewWindow => self.renderer.create_window(),
             DuplicateWindow => self.duplicate_window(id, InitScroll::Nop),
             CloseWindow => return Ok(self.close_window(id)),
             CloseAllOtherWindows => self.close_other_windows(id),
@@ -513,7 +501,7 @@ where
         Ok(())
     }
 
-    fn handle_event(&mut self, event: Event) -> Result<RenderingFlow> {
+    fn handle_event(&mut self, event: Event<R::WindowId>) -> Result<RenderingFlow> {
         log::debug!("Handling event {:?}", event);
         match event {
             Event::WindowMessage { message, id } => return self.handle_window_message(id, message),
@@ -547,9 +535,7 @@ where
                     .with_context(|| format!("Failed to open link {:?}", &link))?;
             }
             Event::Menu(item) => return self.handle_menu_item(item),
-            Event::NewWindow { init_file: None } => {
-                self.renderer.create_window();
-            }
+            Event::NewWindow { init_file: None } => self.renderer.create_window(),
             Event::NewWindow { init_file: Some(mut file) } => {
                 if let Some(abs_path) = self.history.absolute_path(&file.path) {
                     file.path = abs_path;
@@ -565,9 +551,7 @@ where
                 }
             }
             Event::DuplicateWindow { scroll, id } => self.duplicate_window(id, scroll),
-            Event::ProcessSingleton { paths } if paths.is_empty() => {
-                self.renderer.create_window();
-            }
+            Event::ProcessSingleton { paths } if paths.is_empty() => self.renderer.create_window(),
             Event::ProcessSingleton { paths } => {
                 log::debug!("Watch paths via IPC: {:?}", paths.watched);
                 for path in paths.watched {
@@ -590,8 +574,8 @@ where
         Ok(RenderingFlow::Continue)
     }
 
-    fn save(&self, id: WindowId, last_window: &R::Window) -> Result<()> {
-        log::debug!("Save the persistent data before quit with window {id:?}");
+    fn save(&self, last_window: &R::Window) -> Result<()> {
+        log::debug!("Save the persistent data before quit with window {:?}", last_window.id());
 
         let mut result = Ok(()); // Don't return early
         if self.config.window().restore
@@ -606,10 +590,10 @@ where
         result.or(self.history.save(&self.config))
     }
 
-    fn quit(&mut self, id: WindowId) -> RenderingFlow {
+    fn quit(&mut self, id: R::WindowId) -> RenderingFlow {
         let (window, _) = self.windows.get(id);
         window.hide();
-        if let Err(error) = self.save(id, window) {
+        if let Err(error) = self.save(window) {
             self.alert("Error while the application quits", error);
         }
         log::debug!("Quit application with window {:?} and exit status {}", id, self.exit_status);
@@ -618,7 +602,7 @@ where
 
     fn handle_window_event(
         &mut self,
-        id: WindowId,
+        id: R::WindowId,
         event: WindowEvent<R::Window>,
     ) -> Result<RenderingFlow> {
         match event {
@@ -658,8 +642,9 @@ where
     D: Dialog,
 {
     type Window = R::Window;
+    type WindowId = R::WindowId;
 
-    fn on_event(&mut self, event: Event) -> RenderingFlow {
+    fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow {
         if self.windows.is_empty() {
             log::error!("Ignore the event because no window exists: {event:?}");
             return RenderingFlow::Continue;
@@ -670,7 +655,7 @@ where
         })
     }
 
-    fn on_window(&mut self, id: WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow {
+    fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow {
         if self.windows.is_empty() && !matches!(event, WindowEvent::Created(_)) {
             log::error!(
                 "Ignore the window event for window {id:?} because no window exists: {event:?}",

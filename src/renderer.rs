@@ -11,27 +11,8 @@ use std::collections::HashMap;
 use std::fmt::{self, Debug};
 use std::hash::Hash;
 use std::io;
-use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use std::sync::atomic::{AtomicU32, Ordering};
-
-#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug, PartialOrd, Ord)]
-pub struct WindowId(NonZeroU32);
-
-impl WindowId {
-    pub fn generate() -> Self {
-        static NEXT: AtomicU32 = AtomicU32::new(1);
-        let id = NEXT.fetch_add(1, Ordering::Relaxed);
-        Self(NonZeroU32::new(id).unwrap())
-    }
-}
-
-impl Default for WindowId {
-    fn default() -> Self {
-        Self::generate()
-    }
-}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct WindowState {
@@ -153,7 +134,7 @@ impl From<PathBuf> for InitFile {
 }
 
 #[derive(Debug)]
-pub enum Event {
+pub enum Event<WindowId> {
     WindowMessage { message: MessageFromWindow, id: WindowId },
     FileDrop { path: PathBuf, id: WindowId },
     WatchedFilesChanged(Vec<PathBuf>),
@@ -167,9 +148,9 @@ pub enum Event {
 }
 
 #[derive(Debug)]
-pub enum Request {
-    Emit(Event),
-    CreateWindow(WindowId),
+pub enum Request<WindowId> {
+    Emit(Event<WindowId>),
+    CreateWindow,
 }
 
 pub enum WindowEvent<W> {
@@ -295,12 +276,16 @@ pub enum RenderingFlow {
 /// Handle to access the renderer accross threads. It is used to send the user events to the main thread
 /// from another worker thread.
 pub trait RendererHandle: 'static + Send + Clone {
-    fn send(&self, event: Event);
-    fn create_window(&self) -> WindowId;
+    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+
+    fn send(&self, event: Event<Self::WindowId>);
+    fn create_window(&self);
 }
 
 /// Window is responsible for rendering a single window in the rendering context.
 pub trait Window {
+    type Id: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+
     fn send_message(&self, message: MessageToWindow<'_>) -> Result<()>;
     fn send_message_raw<W: RawMessageWriter>(&self, writer: W) -> Result<W::Output>;
     fn set_title(&self, title: &str);
@@ -323,28 +308,31 @@ pub trait Window {
     fn save_memory(&mut self, is_low: bool) -> Result<()>;
     fn delete_cache(&mut self) -> Result<()>;
     fn handles(&self) -> WindowHandles<'_>;
+    fn id(&self) -> Self::Id;
     fn focus(&self);
 }
 
 /// Renderer manages the entire rendering lifecycle.
 pub trait Renderer: Sized {
-    type Window: Window;
-    type Handle: RendererHandle;
+    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+    type Window: Window<Id = Self::WindowId>;
+    type Handle: RendererHandle<WindowId = Self::WindowId>;
 
     fn new(config: Rc<Config>) -> Result<Self>;
     fn create_handle(&self) -> Self::Handle;
     /// Starts the rendering execution and runs until the process exits.
     fn start<H>(self, handler: H) -> !
     where
-        H: EventHandler<Window = Self::Window> + 'static;
+        H: EventHandler<Window = Self::Window, WindowId = Self::WindowId> + 'static;
 }
 
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
     type Window: Window;
+    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
 
-    fn on_event(&mut self, event: Event) -> RenderingFlow;
-    fn on_window(&mut self, id: WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow;
+    fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow;
+    fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow;
 }
 
 #[cfg(test)]

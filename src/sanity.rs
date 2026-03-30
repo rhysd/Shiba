@@ -1,4 +1,4 @@
-use crate::renderer::{Event, MessageFromWindow, RendererHandle, WindowId};
+use crate::renderer::{Event, MessageFromWindow, RendererHandle};
 use std::env;
 use std::thread::{sleep, spawn};
 use std::time::Duration;
@@ -12,7 +12,7 @@ impl<H: RendererHandle> SanityTest<H> {
         Self { handle }
     }
 
-    pub fn run(self, id: WindowId) {
+    pub fn run(self, id: H::WindowId) {
         log::debug!("Start sanity test. This app will quit soon");
         spawn(move || {
             use MessageFromWindow::*;
