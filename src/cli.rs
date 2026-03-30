@@ -42,6 +42,12 @@ pub struct PathArgs {
     pub watched: Vec<PathBuf>,
 }
 
+impl PathArgs {
+    pub fn is_empty(&self) -> bool {
+        self.init.is_none() && self.additional_windows.is_empty() && self.watched.is_empty()
+    }
+}
+
 #[non_exhaustive]
 #[derive(Debug, PartialEq)]
 pub struct Options {
@@ -428,5 +434,14 @@ mod tests {
                 "argument {arg:?} does not cause expected message {expected:?}: {msg:?}",
             );
         }
+    }
+
+    #[test]
+    fn path_args_is_empty() {
+        assert!(PathArgs::default().is_empty());
+        let args = PathArgs { init: Some("foo.md".into()), ..Default::default() };
+        assert!(!args.is_empty());
+        let args = PathArgs { watched: vec!["foo".into()], ..Default::default() };
+        assert!(!args.is_empty());
     }
 }

@@ -87,8 +87,8 @@ where
 
         let watch_paths = paths.watched;
         let mut init_files = paths.additional_windows;
-        if let Some(init_file) = paths.init {
-            init_files.insert(0, init_file);
+        if let Some(path) = paths.init {
+            init_files.push(path);
         }
 
         let renderer = R::new(config.clone())?;
@@ -134,7 +134,7 @@ where
         })
     }
 
-    fn open_preview(&mut self, id: R::WindowId, file: InitFile) -> Result<()> {
+    fn open_preview(&mut self, id: R::WindowId, file: InitFile) -> Result<&R::Window> {
         let InitFile { path, scroll } = file;
         self.watcher.watch(&path)?; // Watch path at first since the file may not exist yet
         let (window, preview) = self.windows.get_mut(id);
@@ -142,11 +142,11 @@ where
         match scroll {
             InitScroll::Fragment(hash) => {
                 let scroll = ScrollRequest::Fragment(&hash);
-                window.send_message(MessageToWindow::Scroll { scroll })?
+                window.send_message(MessageToWindow::Scroll { scroll })?;
             }
             InitScroll::Heading(index) => {
                 let scroll = ScrollRequest::Heading(index);
-                window.send_message(MessageToWindow::Scroll { scroll })?
+                window.send_message(MessageToWindow::Scroll { scroll })?;
             }
             InitScroll::Nop => {}
         }
@@ -155,7 +155,7 @@ where
             self.history.push(path);
         }
 
-        Ok(())
+        Ok(window)
     }
 
     fn open_window(&mut self, file: InitFile) {
@@ -378,7 +378,9 @@ where
             FileDialog => self.pick_files(id)?,
             FileDialogNewWindow => self.pick_files_in_new_window(id),
             DirDialog => self.pick_dirs(id)?,
-            OpenFile { path } => self.open_preview(id, PathBuf::from(path).into())?,
+            OpenFile { path } => {
+                self.open_preview(id, PathBuf::from(path).into())?;
+            }
             ZoomIn => self.zoom(id, true)?,
             ZoomOut => self.zoom(id, false)?,
             DragWindow => self.windows.get(id).0.drag_window()?,
@@ -549,20 +551,17 @@ where
                 }
             }
             Event::DuplicateWindow { scroll, id } => self.duplicate_window(id, scroll),
+            Event::ProcessSingleton { paths } if paths.is_empty() => self.renderer.create_window(),
             Event::ProcessSingleton { paths } => {
-                log::debug!("Watch paths received via IPC: {:?}", paths.watched);
+                log::debug!("Watch paths via IPC: {:?}", paths.watched);
                 for path in paths.watched {
                     self.watcher.watch(&path)?;
                 }
 
                 if let Some(path) = paths.init {
                     log::debug!("Open the initial file via IPC in existing window: {path:?}");
-                    let (window, preview) = self.windows.focused_mut();
-                    self.watcher.watch(&path)?;
-                    if preview.show(&path, window)? {
-                        self.history.push(path);
-                    }
-                    window.focus();
+                    let id = self.windows.focused_id();
+                    self.open_preview(id, path.into())?.focus();
                 }
 
                 log::debug!("Open additional windows via IPC: {:?}", paths.additional_windows);
