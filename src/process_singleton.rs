@@ -224,7 +224,7 @@ mod tests {
 
         let expected_args = PathArgs {
             init: Some("foo.md".into()),
-            windows: vec!["a.md".into(), "b.md".into()],
+            additional_windows: vec!["a.md".into(), "b.md".into()],
             watched: vec!["dir1".into(), "dir2".into()],
         };
         let sender = ProcessSingleton::with_namespace();

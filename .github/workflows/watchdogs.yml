@@ -15,8 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v6
         with:
@@ -25,11 +23,8 @@ jobs:
       - run: sudo bash ./scripts/install_apt_deps.bash
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - run: npm ci
-      - run: npm run bundle
-      - run: cargo clippy --all --all-features --benches --tests -- -D warnings
+      - run: make build
       - run: cargo test
-      - run: cargo clippy -- -D warnings
-        working-directory: fuzz
   sanity-test:
     needs: unit-test
     strategy:
@@ -56,10 +51,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      # Clippy runs on each platforms in `test` job
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
+          components: rustfmt,clippy
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v6
         with:
@@ -71,7 +65,10 @@ jobs:
       - run: pip install yamllint
       - run: sudo bash ./scripts/install_apt_deps.bash
       - run: npm ci
-      - run: npm run lint:ui
+      - run: npm run bundle
+      - run: npm run lint
       - run: cargo fmt --all --check
+      - run: cargo clippy -- -D warnings
+        working-directory: fuzz
       - run: shellcheck ./scripts/gen_macos_app.bash ./scripts/gen_macos_dmg.bash ./scripts/install_apt_deps.bash
       - run: yamllint --strict ./src/assets/default_config.yml
