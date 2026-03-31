@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use shiba_preview::bench::{modified_offset_scalar, modified_offset_simd};
 use std::hint::black_box;
 
