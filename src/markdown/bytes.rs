@@ -188,20 +188,23 @@ mod aarch64 {
     fn neon_mismatch_index(lhs: uint8x16_t, rhs: uint8x16_t) -> Option<usize> {
         // SAFETY: `vceqq_u8` is available on all aarch64 targets as part of the baseline NEON ISA.
         let eq = unsafe { vceqq_u8(lhs, rhs) };
+        // SAFETY: Bitwise NOT preserves the vector shape and turns equal bytes into 0x00 and mismatches into 0xff.
+        let neq = unsafe { vmvnq_u8(eq) };
         // SAFETY: Reinterpreting the vector keeps the same bits and does not change size or alignment.
-        let lanes = unsafe { vreinterpretq_u64_u8(eq) };
+        let lanes = unsafe { vreinterpretq_u64_u8(neq) };
+
         // SAFETY: Accessing lane 0 is in-bounds for a 2-lane `uint64x2_t`.
-        if unsafe { vgetq_lane_u64(lanes, 0) } == u64::MAX
-            // SAFETY: Accessing lane 1 is in-bounds for a 2-lane `uint64x2_t`.
-            && unsafe { vgetq_lane_u64(lanes, 1) } == u64::MAX
-        {
-            return None;
+        let lane = unsafe { vgetq_lane_u64(lanes, 0) };
+        if lane != 0 {
+            return Some((lane.trailing_zeros() / 8) as usize);
+        }
+        // SAFETY: Accessing lane 1 is in-bounds for a 2-lane `uint64x2_t`.
+        let lane = unsafe { vgetq_lane_u64(lanes, 1) };
+        if lane != 0 {
+            return Some(8 + (lane.trailing_zeros() / 8) as usize);
         }
 
-        let mut bytes = [0u8; 16];
-        // SAFETY: `bytes` points to a writable 16-byte buffer, matching the vector width exactly.
-        unsafe { vst1q_u8(bytes.as_mut_ptr(), eq) };
-        bytes.iter().position(|&b| b != u8::MAX)
+        None
     }
 }
 
