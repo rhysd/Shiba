@@ -1,5 +1,5 @@
-use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use shiba_preview::bench::{modified_offset_scalar, modified_offset_simd};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use shiba_preview::bench::{modified_offset, modified_offset_scalar};
 use std::hint::black_box;
 
 fn with_diff_at(len: usize, pos: usize) -> (Vec<u8>, Vec<u8>) {
@@ -24,7 +24,7 @@ fn bench_case(c: &mut Criterion, group: &str, name: &str, left: &[u8], right: &[
 
     g.bench_with_input(BenchmarkId::new("simd", name), &(left, right), |b, &(left, right)| {
         b.iter(|| {
-            let ret = modified_offset_simd(black_box(left), black_box(right));
+            let ret = modified_offset(black_box(left), black_box(right));
             black_box(ret);
         });
     });
@@ -34,6 +34,7 @@ fn bench_case(c: &mut Criterion, group: &str, name: &str, left: &[u8], right: &[
 
 fn bytes(c: &mut Criterion) {
     let cases = [
+        ("48_end", with_diff_at(48, 47)),
         ("512_middle", with_diff_at(512, 256)),
         ("512_end", with_diff_at(512, 511)),
         ("4k_begin", with_diff_at(4 * 1024, 0)),

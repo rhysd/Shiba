@@ -39,7 +39,6 @@ pub mod bench {
     pub use super::history::History;
     pub use super::markdown::{
         MarkdownContent, MarkdownParser, modified_offset, modified_offset_scalar,
-        modified_offset_simd,
     };
     pub use super::renderer::RawMessageWriter;
 }

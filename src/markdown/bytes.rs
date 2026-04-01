@@ -1,5 +1,35 @@
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")))]
 pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
-    modified_offset_simd(left, right)
+    let min_len = left.len().min(right.len());
+    if min_len == 0 {
+        return (left.len() != right.len()).then_some(0);
+    }
+    modified_offset_scalar(left, right)
+}
+
+#[inline]
+fn modified_offset_from_index(mut index: usize, left: &[u8], right: &[u8]) -> Option<usize> {
+    const WORD_SIZE: usize = 8;
+
+    let min_len = left.len().min(right.len());
+
+    while index + WORD_SIZE <= min_len {
+        let left_word = u64::from_ne_bytes(left[index..index + WORD_SIZE].try_into().unwrap());
+        let right_word = u64::from_ne_bytes(right[index..index + WORD_SIZE].try_into().unwrap());
+        if left_word != right_word {
+            break;
+        }
+        index += WORD_SIZE;
+    }
+
+    while index < min_len && left[index] == right[index] {
+        index += 1;
+    }
+
+    if index == min_len {
+        return (left.len() != right.len()).then_some(min_len);
+    }
+    Some(index)
 }
 
 pub fn modified_offset_scalar(left: &[u8], right: &[u8]) -> Option<usize> {
@@ -9,7 +39,6 @@ pub fn modified_offset_scalar(left: &[u8], right: &[u8]) -> Option<usize> {
     // - Benchmark:  https://github.com/rhysd/misc/tree/master/rust_bench/str_utf8_aware_offset
     // - Discussion: https://users.rust-lang.org/t/how-to-find-common-prefix-of-two-byte-slices-effectively/25815
     const CHUNK_SIZE: usize = 32;
-    const WORD_SIZE: usize = 8;
 
     let min_len = left.len().min(right.len());
     let mut offset = 0;
@@ -22,26 +51,11 @@ pub fn modified_offset_scalar(left: &[u8], right: &[u8]) -> Option<usize> {
         offset = end;
     }
 
-    while offset + WORD_SIZE <= min_len {
-        let left_word = u64::from_ne_bytes(left[offset..offset + WORD_SIZE].try_into().unwrap());
-        let right_word = u64::from_ne_bytes(right[offset..offset + WORD_SIZE].try_into().unwrap());
-        if left_word != right_word {
-            break;
-        }
-        offset += WORD_SIZE;
-    }
-
-    while offset < min_len && left[offset] == right[offset] {
-        offset += 1;
-    }
-
-    if offset == min_len {
-        return (left.len() != right.len()).then_some(min_len);
-    }
-    Some(offset)
+    modified_offset_from_index(offset, left, right)
 }
 
-pub fn modified_offset_simd(left: &[u8], right: &[u8]) -> Option<usize> {
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
     let min_len = left.len().min(right.len());
     if min_len == 0 {
         return (left.len() != right.len()).then_some(0);
@@ -49,7 +63,6 @@ pub fn modified_offset_simd(left: &[u8], right: &[u8]) -> Option<usize> {
     if min_len < 64 {
         return modified_offset_scalar(left, right);
     }
-
     simd_dispatch(left, right)
 }
 
@@ -61,43 +74,33 @@ fn simd_dispatch(left: &[u8], right: &[u8]) -> Option<usize> {
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn simd_dispatch(left: &[u8], right: &[u8]) -> Option<usize> {
+    use std::arch;
     use std::sync::OnceLock;
 
     static DISPATCH: OnceLock<x86::DispatchFn> = OnceLock::new();
 
-    let dispatch = DISPATCH.get_or_init(|| {
-        if std::arch::is_x86_feature_detected!("avx2") {
+    let dispatch = *DISPATCH.get_or_init(|| {
+        if arch::is_x86_feature_detected!("avx2") {
             x86::modified_offset_avx2
-        } else if std::arch::is_x86_feature_detected!("sse2") {
+        } else if arch::is_x86_feature_detected!("sse2") {
             x86::modified_offset_sse2
         } else {
             modified_offset_scalar
         }
     });
+
     // SAFETY: The stored function pointer is selected based on runtime CPU feature checks,
     // or falls back to the scalar implementation.
     unsafe { dispatch(left, right) }
 }
 
-#[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")))]
-fn simd_dispatch(left: &[u8], right: &[u8]) -> Option<usize> {
-    modified_offset_scalar(left, right)
-}
-
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86 {
+    use super::modified_offset_from_index;
     #[cfg(target_arch = "x86")]
-    use std::arch::x86::{
-        __m128i, __m256i, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8, _mm256_cmpeq_epi8,
-        _mm256_loadu_si256, _mm256_movemask_epi8,
-    };
+    use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::{
-        __m128i, __m256i, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8, _mm256_cmpeq_epi8,
-        _mm256_loadu_si256, _mm256_movemask_epi8,
-    };
-
-    use super::finish_modified_offset;
+    use std::arch::x86_64::*;
 
     pub(super) type DispatchFn = unsafe fn(&[u8], &[u8]) -> Option<usize>;
 
@@ -108,28 +111,24 @@ mod x86 {
         let mut offset = 0;
 
         while offset + CHUNK_SIZE <= min_len {
-            // SAFETY: The loop bound guarantees that loading 64 bytes from both pointers is in-bounds.
-            let lhs0 = unsafe { _mm256_loadu_si256(left.as_ptr().add(offset).cast::<__m256i>()) };
-            // SAFETY: Same as above for the right slice.
-            let rhs0 = unsafe { _mm256_loadu_si256(right.as_ptr().add(offset).cast::<__m256i>()) };
-            // SAFETY: The loop bound guarantees that loading the second 32-byte lane is also in-bounds.
-            let lhs1 =
-                unsafe { _mm256_loadu_si256(left.as_ptr().add(offset + 32).cast::<__m256i>()) };
-            // SAFETY: Same as above for the right slice.
-            let rhs1 =
-                unsafe { _mm256_loadu_si256(right.as_ptr().add(offset + 32).cast::<__m256i>()) };
-            let mask0 = _mm256_movemask_epi8(_mm256_cmpeq_epi8(lhs0, rhs0)) as u32;
-            let mask1 = _mm256_movemask_epi8(_mm256_cmpeq_epi8(lhs1, rhs1)) as u32;
-            if mask0 != u32::MAX {
-                return Some(offset + (!mask0).trailing_zeros() as usize);
+            macro_rules! unroll_mismatch_checks {
+                ($($offset:expr),+) => {$(
+                    // SAFETY: The loop bound guarantees that loading this 32-byte lane from both pointers is in-bounds.
+                    let lhs = unsafe { _mm256_loadu_si256(left.as_ptr().add(offset + $offset).cast::<__m256i>()) };
+                    // SAFETY: Same as above for the right slice.
+                    let rhs = unsafe { _mm256_loadu_si256(right.as_ptr().add(offset + $offset).cast::<__m256i>()) };
+                    let mask = _mm256_movemask_epi8(_mm256_cmpeq_epi8(lhs, rhs)) as u32;
+                    if mask != u32::MAX {
+                        return Some(offset + $offset + (!mask).trailing_zeros() as usize);
+                    }
+                )+}
             }
-            if mask1 != u32::MAX {
-                return Some(offset + 32 + (!mask1).trailing_zeros() as usize);
-            }
+
+            unroll_mismatch_checks!(0, 32);
             offset += CHUNK_SIZE;
         }
 
-        finish_modified_offset(left, right, offset)
+        modified_offset_from_index(offset, left, right)
     }
 
     #[target_feature(enable = "sse2")]
@@ -151,16 +150,14 @@ mod x86 {
             offset += CHUNK_SIZE;
         }
 
-        finish_modified_offset(left, right, offset)
+        modified_offset_from_index(offset, left, right)
     }
 }
 
 #[cfg(target_arch = "aarch64")]
 mod aarch64 {
-    use super::finish_modified_offset;
-    use std::arch::aarch64::{
-        uint8x16_t, vceqq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8, vst1q_u8,
-    };
+    use super::modified_offset_from_index;
+    use std::arch::aarch64::*;
 
     pub(super) unsafe fn modified_offset_neon(left: &[u8], right: &[u8]) -> Option<usize> {
         const CHUNK_SIZE: usize = 64;
@@ -168,60 +165,44 @@ mod aarch64 {
         let mut offset = 0;
 
         while offset + CHUNK_SIZE <= min_len {
-            let lhs0 = unsafe { vld1q_u8(left.as_ptr().add(offset)) };
-            let rhs0 = unsafe { vld1q_u8(right.as_ptr().add(offset)) };
-            if let Some(i) = neon_mismatch_index(lhs0, rhs0) {
-                return Some(offset + i);
+            macro_rules! unroll_mismatch_checks {
+                ($($offset:expr),+) => {$(
+                    // SAFETY: The loop bound guarantees that loading 16 bytes from both pointers is in-bounds.
+                    let lhs = unsafe { vld1q_u8(left.as_ptr().add(offset + $offset)) };
+                    // SAFETY: Same as above for the right slice.
+                    let rhs = unsafe { vld1q_u8(right.as_ptr().add(offset + $offset)) };
+                    if let Some(i) = neon_mismatch_index(lhs, rhs) {
+                        return Some(offset + $offset + i);
+                    }
+                )+}
             }
 
-            let lhs1 = unsafe { vld1q_u8(left.as_ptr().add(offset + 16)) };
-            let rhs1 = unsafe { vld1q_u8(right.as_ptr().add(offset + 16)) };
-            if let Some(i) = neon_mismatch_index(lhs1, rhs1) {
-                return Some(offset + 16 + i);
-            }
-
-            let lhs2 = unsafe { vld1q_u8(left.as_ptr().add(offset + 32)) };
-            let rhs2 = unsafe { vld1q_u8(right.as_ptr().add(offset + 32)) };
-            if let Some(i) = neon_mismatch_index(lhs2, rhs2) {
-                return Some(offset + 32 + i);
-            }
-
-            let lhs3 = unsafe { vld1q_u8(left.as_ptr().add(offset + 48)) };
-            let rhs3 = unsafe { vld1q_u8(right.as_ptr().add(offset + 48)) };
-            if let Some(i) = neon_mismatch_index(lhs3, rhs3) {
-                return Some(offset + 48 + i);
-            }
-
+            unroll_mismatch_checks!(0, 16, 32, 48);
             offset += CHUNK_SIZE;
         }
 
-        finish_modified_offset(left, right, offset)
+        modified_offset_from_index(offset, left, right)
     }
 
     #[inline]
     fn neon_mismatch_index(lhs: uint8x16_t, rhs: uint8x16_t) -> Option<usize> {
+        // SAFETY: `vceqq_u8` is available on all aarch64 targets as part of the baseline NEON ISA.
         let eq = unsafe { vceqq_u8(lhs, rhs) };
+        // SAFETY: Reinterpreting the vector keeps the same bits and does not change size or alignment.
         let lanes = unsafe { vreinterpretq_u64_u8(eq) };
+        // SAFETY: Accessing lane 0 is in-bounds for a 2-lane `uint64x2_t`.
         if unsafe { vgetq_lane_u64(lanes, 0) } == u64::MAX
+            // SAFETY: Accessing lane 1 is in-bounds for a 2-lane `uint64x2_t`.
             && unsafe { vgetq_lane_u64(lanes, 1) } == u64::MAX
         {
             return None;
         }
 
         let mut bytes = [0u8; 16];
+        // SAFETY: `bytes` points to a writable 16-byte buffer, matching the vector width exactly.
         unsafe { vst1q_u8(bytes.as_mut_ptr(), eq) };
         bytes.iter().position(|&b| b != u8::MAX)
     }
-}
-
-fn finish_modified_offset(left: &[u8], right: &[u8], offset: usize) -> Option<usize> {
-    let index =
-        offset + left[offset..].iter().zip(&right[offset..]).take_while(|(x, y)| x == y).count();
-    let min_len = left.len().min(right.len());
-    if index == min_len {
-        return (left.len() != right.len()).then_some(min_len);
-    }
-    Some(index)
 }
 
 #[cfg(test)]
@@ -280,7 +261,7 @@ mod tests {
             (63, 64),
             (64, 63),
             (127, 128),
-            (127, 128),
+            (128, 127),
         ] {
             cases.push((
                 vec![b'a'; len1],
@@ -314,6 +295,19 @@ mod tests {
     fn simd_modified_offset() {
         for (left, right, expected) in cases() {
             assert_eq!(expected, modified_offset(&left, &right), "left={left:?}, right={right:?}");
+        }
+    }
+
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[test]
+    fn sse2_modified_offset() {
+        for (left, right, expected) in cases() {
+            assert_eq!(
+                expected,
+                // SAFETY: This function is only called on target x86 or x86_64.
+                unsafe { super::x86::modified_offset_sse2(&left, &right) },
+                "left={left:?}, right={right:?}"
+            );
         }
     }
 }
