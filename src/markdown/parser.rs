@@ -1,4 +1,5 @@
 use super::sanitizer::{Sanitizer, SlashPath, should_rebase_url};
+use crate::markdown::bytes::modified_offset;
 use crate::renderer::RawMessageWriter;
 use aho_corasick::AhoCorasick;
 use emojis::Emoji;
@@ -75,28 +76,8 @@ impl MarkdownContent {
         // - い: 0xE3 0x81 0x84
         // The first two bytes are the same. So the byte offset is 2 and it points at the middle of the sequence.
         // `MarkdownParser` will try to split the text at this position and will crash.
-        //
-        // Note: Iterating UTF-8 character indices with `str::char_indices` is slower than iterating bytes and adjusting
-        // the byte offset to the UTF-8 character boundary. In addition, it is 8~10x faster to search 32 bytes chunk
-        // index at first then search the byte index within the chunk rather than searching the index byte-by-byte.
-        // - Benchmark:  https://github.com/rhysd/misc/tree/master/rust_bench/str_utf8_aware_offset
-        // - Discussion: https://users.rust-lang.org/t/how-to-find-common-prefix-of-two-byte-slices-effectively/25815
-        const CHUNK_SIZE: usize = 32;
-        let prev = prev_source.as_bytes();
-        let new = new_source.as_bytes();
-        let offset = prev
-            .chunks_exact(CHUNK_SIZE)
-            .zip(new.chunks_exact(CHUNK_SIZE))
-            .take_while(|(x, y)| x == y)
-            .count()
-            * CHUNK_SIZE;
-        let index =
-            offset + prev[offset..].iter().zip(&new[offset..]).take_while(|(x, y)| x == y).count();
-        let min_len = prev.len().min(new.len());
-        if index == min_len {
-            return (prev.len() != new.len()).then_some(min_len);
-        }
-        Some(new_source.floor_char_boundary(index))
+        modified_offset(prev_source.as_bytes(), new_source.as_bytes())
+            .map(|index| new_source.floor_char_boundary(index))
     }
 
     pub fn is_empty(&self) -> bool {
