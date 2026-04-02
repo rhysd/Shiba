@@ -8,30 +8,31 @@ pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
 }
 
 #[inline]
-fn modified_offset_from_index(mut index: usize, left: &[u8], right: &[u8]) -> Option<usize> {
+fn modified_offset_from(mut offset: usize, left: &[u8], right: &[u8]) -> Option<usize> {
     const WORD_SIZE: usize = 8;
 
     let min_len = left.len().min(right.len());
 
-    while index + WORD_SIZE <= min_len {
-        let left_word = u64::from_ne_bytes(left[index..index + WORD_SIZE].try_into().unwrap());
-        let right_word = u64::from_ne_bytes(right[index..index + WORD_SIZE].try_into().unwrap());
-        if left_word != right_word {
+    while offset + WORD_SIZE <= min_len {
+        let left = u64::from_ne_bytes(left[offset..offset + WORD_SIZE].try_into().unwrap());
+        let right = u64::from_ne_bytes(right[offset..offset + WORD_SIZE].try_into().unwrap());
+        if left != right {
             break;
         }
-        index += WORD_SIZE;
+        offset += WORD_SIZE;
     }
 
-    while index < min_len && left[index] == right[index] {
-        index += 1;
+    while offset < min_len && left[offset] == right[offset] {
+        offset += 1;
     }
 
-    if index == min_len {
+    if offset == min_len {
         return (left.len() != right.len()).then_some(min_len);
     }
-    Some(index)
+    Some(offset)
 }
 
+#[inline]
 pub fn modified_offset_scalar(left: &[u8], right: &[u8]) -> Option<usize> {
     // Note: Iterating UTF-8 character indices with `str::char_indices` is slower than iterating bytes and adjusting
     // the byte offset to the UTF-8 character boundary. In addition, it is 8~10x faster to search 32 bytes chunk
@@ -51,9 +52,12 @@ pub fn modified_offset_scalar(left: &[u8], right: &[u8]) -> Option<usize> {
         offset = end;
     }
 
-    modified_offset_from_index(offset, left, right)
+    modified_offset_from(offset, left, right)
 }
 
+// SIMD version of `modified_offset` function. Currently AVX2 version and SSE2 version are supported for x86_64 and x86.
+// Neon version was once implemented for aarch64 but it was removed later because the scalar version was equal or faster.
+// See https://github.com/rhysd/Shiba/commit/28f2e714db0ff20e86f40d7feba65c5548d22b54
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
     let min_len = left.len().min(right.len());
@@ -63,43 +67,42 @@ pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
     if min_len < 64 {
         return modified_offset_scalar(left, right);
     }
-    simd_dispatch(left, right)
+    simd::dispatch(left, right)
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn simd_dispatch(left: &[u8], right: &[u8]) -> Option<usize> {
-    use std::arch;
-    use std::sync::OnceLock;
-
-    static DISPATCH: OnceLock<x86::DispatchFn> = OnceLock::new();
-
-    let dispatch = *DISPATCH.get_or_init(|| {
-        if arch::is_x86_feature_detected!("avx2") {
-            x86::modified_offset_avx2
-        } else if arch::is_x86_feature_detected!("sse2") {
-            x86::modified_offset_sse2
-        } else {
-            modified_offset_scalar
-        }
-    });
-
-    // SAFETY: The stored function pointer is selected based on runtime CPU feature checks,
-    // or falls back to the scalar implementation.
-    unsafe { dispatch(left, right) }
-}
-
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-mod x86 {
-    use super::modified_offset_from_index;
+mod simd {
+    use super::{modified_offset_from, modified_offset_scalar};
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
     use std::arch::x86_64::*;
 
-    pub(super) type DispatchFn = unsafe fn(&[u8], &[u8]) -> Option<usize>;
+    type DispatchFn = unsafe fn(&[u8], &[u8]) -> Option<usize>;
+
+    pub(super) fn dispatch(left: &[u8], right: &[u8]) -> Option<usize> {
+        use std::arch;
+        use std::sync::OnceLock;
+
+        static DISPATCH: OnceLock<DispatchFn> = OnceLock::new();
+
+        let dispatch_fn = *DISPATCH.get_or_init(|| {
+            if arch::is_x86_feature_detected!("avx2") {
+                modified_offset_avx2
+            } else if arch::is_x86_feature_detected!("sse2") {
+                modified_offset_sse2
+            } else {
+                modified_offset_scalar
+            }
+        });
+
+        // SAFETY: The stored function pointer is selected based on runtime CPU feature checks,
+        // or falls back to the scalar implementation.
+        unsafe { dispatch_fn(left, right) }
+    }
 
     #[target_feature(enable = "avx2")]
-    pub(super) unsafe fn modified_offset_avx2(left: &[u8], right: &[u8]) -> Option<usize> {
+    unsafe fn modified_offset_avx2(left: &[u8], right: &[u8]) -> Option<usize> {
         const CHUNK_SIZE: usize = 64;
         let min_len = left.len().min(right.len());
         let mut offset = 0;
@@ -122,7 +125,7 @@ mod x86 {
             offset += CHUNK_SIZE;
         }
 
-        modified_offset_from_index(offset, left, right)
+        modified_offset_from(offset, left, right)
     }
 
     #[target_feature(enable = "sse2")]
@@ -144,7 +147,7 @@ mod x86 {
             offset += CHUNK_SIZE;
         }
 
-        modified_offset_from_index(offset, left, right)
+        modified_offset_from(offset, left, right)
     }
 }
 
@@ -251,7 +254,7 @@ mod tests {
             assert_eq!(
                 expected,
                 // SAFETY: This function is only called on target x86 or x86_64.
-                unsafe { super::x86::modified_offset_sse2(&left, &right) },
+                unsafe { super::simd::modified_offset_sse2(&left, &right) },
                 "left={left:?}, right={right:?}"
             );
         }
