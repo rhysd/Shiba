@@ -1,4 +1,4 @@
-#[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")))]
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
     let min_len = left.len().min(right.len());
     if min_len == 0 {
@@ -54,7 +54,7 @@ pub fn modified_offset_scalar(left: &[u8], right: &[u8]) -> Option<usize> {
     modified_offset_from_index(offset, left, right)
 }
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
     let min_len = left.len().min(right.len());
     if min_len == 0 {
@@ -64,12 +64,6 @@ pub fn modified_offset(left: &[u8], right: &[u8]) -> Option<usize> {
         return modified_offset_scalar(left, right);
     }
     simd_dispatch(left, right)
-}
-
-#[cfg(target_arch = "aarch64")]
-fn simd_dispatch(left: &[u8], right: &[u8]) -> Option<usize> {
-    // SAFETY: Advanced SIMD (NEON) is part of the baseline ISA on aarch64.
-    unsafe { aarch64::modified_offset_neon(left, right) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -154,64 +148,8 @@ mod x86 {
     }
 }
 
-#[cfg(target_arch = "aarch64")]
-mod aarch64 {
-    use super::modified_offset_from_index;
-    use std::arch::aarch64::*;
-
-    pub(super) unsafe fn modified_offset_neon(left: &[u8], right: &[u8]) -> Option<usize> {
-        const CHUNK_SIZE: usize = 64;
-        let min_len = left.len().min(right.len());
-        let mut offset = 0;
-
-        while offset + CHUNK_SIZE <= min_len {
-            macro_rules! unroll_mismatch_checks {
-                ($($offset:expr),+) => {$(
-                    // SAFETY: The loop bound guarantees that loading 16 bytes from both pointers is in-bounds.
-                    let lhs = unsafe { vld1q_u8(left.as_ptr().add(offset + $offset)) };
-                    // SAFETY: Same as above for the right slice.
-                    let rhs = unsafe { vld1q_u8(right.as_ptr().add(offset + $offset)) };
-                    if let Some(i) = neon_mismatch_index(lhs, rhs) {
-                        return Some(offset + $offset + i);
-                    }
-                )+}
-            }
-
-            unroll_mismatch_checks!(0, 16, 32, 48);
-            offset += CHUNK_SIZE;
-        }
-
-        modified_offset_from_index(offset, left, right)
-    }
-
-    #[inline]
-    fn neon_mismatch_index(lhs: uint8x16_t, rhs: uint8x16_t) -> Option<usize> {
-        // SAFETY: `vceqq_u8` is available on all aarch64 targets as part of the baseline NEON ISA.
-        let eq = unsafe { vceqq_u8(lhs, rhs) };
-        // SAFETY: Bitwise NOT preserves the vector shape and turns equal bytes into 0x00 and mismatches into 0xff.
-        let neq = unsafe { vmvnq_u8(eq) };
-        // SAFETY: Reinterpreting the vector keeps the same bits and does not change size or alignment.
-        let lanes = unsafe { vreinterpretq_u64_u8(neq) };
-
-        // SAFETY: Accessing lane 0 is in-bounds for a 2-lane `uint64x2_t`.
-        let lane = unsafe { vgetq_lane_u64(lanes, 0) };
-        if lane != 0 {
-            return Some((lane.trailing_zeros() / 8) as usize);
-        }
-        // SAFETY: Accessing lane 1 is in-bounds for a 2-lane `uint64x2_t`.
-        let lane = unsafe { vgetq_lane_u64(lanes, 1) };
-        if lane != 0 {
-            return Some(8 + (lane.trailing_zeros() / 8) as usize);
-        }
-
-        None
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{modified_offset, modified_offset_scalar};
-
     fn cases() -> Vec<(Vec<u8>, Vec<u8>, Option<usize>)> {
         let mut cases = vec![
             (b"".into(), b"".into(), None),
@@ -288,16 +226,21 @@ mod tests {
         for (left, right, expected) in cases() {
             assert_eq!(
                 expected,
-                modified_offset_scalar(&left, &right),
+                super::modified_offset_scalar(&left, &right),
                 "left={left:?}, right={right:?}"
             );
         }
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[test]
     fn simd_modified_offset() {
         for (left, right, expected) in cases() {
-            assert_eq!(expected, modified_offset(&left, &right), "left={left:?}, right={right:?}");
+            assert_eq!(
+                expected,
+                super::modified_offset(&left, &right),
+                "left={left:?}, right={right:?}"
+            );
         }
     }
 
