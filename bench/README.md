@@ -6,16 +6,20 @@ To run all benchmarks:
 cargo bench --benches
 ```
 
-To run specific benchmark suite:
+Each benchmark cases are in the format `{group}/{func}/{param}`.
 
 ```sh
-cargo bench --bench markdown
+# Run "markdown" benchmark group
+cargo bench markdown
+
+# Run benchmark for "simd" function of "bytes" group
+cargo bench bytes/simd
 ```
 
-To filter benchmarks:
+To list all benchmark cases:
 
 ```sh
-cargo bench markdown::large
+cargo bench -- --list
 ```
 
 To compare benchmark results with [critcmp][]:

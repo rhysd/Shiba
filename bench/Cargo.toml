@@ -16,13 +16,5 @@ shiba-preview = { path = "..", features = ["__bench"] }
 criterion = "0.8.1"
 
 [[bench]]
-name = "markdown"
-harness = false
-
-[[bench]]
-name = "history"
-harness = false
-
-[[bench]]
-name = "bytes"
+name = "bench"
 harness = false
