@@ -86,6 +86,7 @@ impl<R: Renderer> WindowManager<R> {
         &mut self,
         id: R::WindowId,
     ) -> impl Iterator<Item = (R::WindowId, R::Window, Preview)> {
+        self.focused = Some(id);
         self.windows.extract_if(move |i, _| *i != id).map(|(i, (w, p))| (i, w, p))
     }
 
