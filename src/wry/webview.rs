@@ -1,13 +1,13 @@
 use crate::assets::Assets;
 use crate::config::{Config, WindowLength, WindowTheme as ThemeConfig};
 use crate::renderer::{
-    Event, InitFile, InitScroll, MessageFromWindow, MessageToWindow, RawMessageWriter, Request,
+    Event, InitFile, InitScroll, MessageToWindow, RawMessageWriter, Request,
     Window as RendererWindow, WindowAppearance, WindowHandles, WindowState, ZoomLevel,
 };
 use crate::wry::menu::WindowMenu;
 use crate::wry::monitor::MonitorExtWorkArea as _;
 use crate::wry::types::{EventLoop, Proxy};
-use anyhow::{Context as _, Result};
+use anyhow::{Context as _, Error, Result};
 use std::num::NonZeroU32;
 use tao::dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "macos")]
@@ -239,11 +239,19 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
     builder = builder
         .with_url("shiba://localhost/index.html")
         .with_ipc_handler(move |msg| {
-            let message: MessageFromWindow = serde_json::from_str(msg.body()).unwrap();
-            log::debug!("Message from WebView: {message:?}");
-            if let Err(err) =
-                ipc_proxy.send_event(Request::Emit(Event::WindowMessage { message, id }))
-            {
+            let event = match serde_json::from_str(msg.body()) {
+                Ok(message) => {
+                    log::debug!("Message from WebView: {message:?} from window {id:?}");
+                    Event::WindowMessage { message, id }
+                }
+                Err(err) => {
+                    log::error!("Broken message {:?} from window {:?}: {:?}", msg.body(), id, err);
+                    let err = Error::new(err)
+                        .context(format!("Broken message from window: {:?}", msg.body()));
+                    Event::Error(err)
+                }
+            };
+            if let Err(err) = ipc_proxy.send_event(Request::Emit(event)) {
                 log::error!("Could not send user event for message from WebView: {err}");
             }
         })
