@@ -54,9 +54,13 @@ impl Preview {
         let is_new = self.path != path;
         let prev_content = mem::replace(&mut self.content, new_content);
         let offset = if is_new { None } else { prev_content.modified_utf8_offset(&self.content) };
-        log::debug!("Last modified offset: {:?}", offset);
 
-        self.text = window.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
+        if is_new || offset.is_some() {
+            log::debug!("Parse Markdown source and send it to renderer with offset {offset:?}");
+            self.text = window.send_message_raw(MarkdownParser::new(&self.content, offset, ()))?;
+        } else {
+            log::debug!("Skip parsing Markdown source because nothing has changed");
+        }
 
         if is_new {
             window.send_message(MessageToWindow::Path { path })?;
