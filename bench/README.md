@@ -12,8 +12,8 @@ Each benchmark cases are in the format `{group}/{func}/{param}`.
 # Run "markdown" benchmark group
 cargo bench markdown
 
-# Run benchmark for "simd" function of "bytes" group
-cargo bench bytes/simd
+# Run benchmark for "simd" function of "offset" group
+cargo bench offset/simd
 ```
 
 To list all benchmark cases:

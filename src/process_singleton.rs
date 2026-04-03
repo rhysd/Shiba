@@ -51,6 +51,7 @@ fn decode<R: Read, T: DeserializeOwned>(mut reader: R) -> io::Result<T> {
 pub struct ProcessSingleton {
     name: Option<Name<'static>>,
     path: Option<PathBuf>,
+    cleanup: bool,
 }
 
 impl ProcessSingleton {
@@ -63,7 +64,7 @@ impl ProcessSingleton {
         let path = path.join("singleton.sock");
         log::debug!("Socket file for IPC for process singleton: {path:?}");
         match path.clone().to_fs_name::<GenericFilePath>() {
-            Ok(name) => Self { name: Some(name), path: Some(path) },
+            Ok(name) => Self { name: Some(name), path: Some(path), cleanup: false },
             Err(err) => {
                 log::error!("Could not create a socket file {path:?} for IPC: {err:?}");
                 Self::default()
@@ -107,7 +108,7 @@ impl ProcessSingleton {
         }
     }
 
-    fn cleanup(&self) {
+    fn remove_socket_file(&self) {
         if let Some(path) = &self.path {
             let _ = remove_file(path);
         }
@@ -120,12 +121,14 @@ impl ProcessSingleton {
         };
 
         // Socket file can be leaked when the previous app process was killed
-        self.cleanup();
+        self.remove_socket_file();
 
         let listener = ListenerOptions::new()
             .name(name)
             .create_sync()
             .context("Could not listen IPC messages")?;
+
+        self.cleanup = true;
 
         spawn(move || {
             for conn in listener {
@@ -154,7 +157,9 @@ impl ProcessSingleton {
 
 impl Drop for ProcessSingleton {
     fn drop(&mut self) {
-        self.cleanup();
+        if self.cleanup {
+            self.remove_socket_file();
+        }
     }
 }
 
@@ -297,7 +302,8 @@ mod tests {
         };
 
         let renderer = TestRenderer::default();
-        let mut listener = ProcessSingleton { name: sender.name.clone(), path: None };
+        let mut listener =
+            ProcessSingleton { name: sender.name.clone(), path: None, cleanup: false };
         listener.listen(renderer.create_handle()).unwrap();
 
         let path = String::from_utf8(vec![b'a'; 16 * 1024]).unwrap().into();
