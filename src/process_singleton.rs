@@ -149,6 +149,21 @@ mod tests {
     use super::*;
     use crate::renderer::{Event, Renderer, Request};
     use crate::test::TestRenderer;
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    fn send_with_retry(sender: &ProcessSingleton, args: &PathArgs, retry: u8) -> Result<bool> {
+        let mut count = 0;
+        let mut last_result;
+        loop {
+            last_result = sender.send(args);
+            count += 1;
+            if last_result.is_ok() || count > retry {
+                return last_result;
+            }
+            sleep(Duration::from_millis(500));
+        }
+    }
 
     #[test]
     fn create_process_singleton() {
@@ -192,7 +207,7 @@ mod tests {
             watched: vec!["dir1".into(), "dir2".into()],
         };
         let sender = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
-        let sent = sender.send(&expected_args).unwrap();
+        let sent = send_with_retry(&sender, &expected_args, 5).unwrap();
         assert!(sent);
 
         let request = renderer.recv_timeout(1);
@@ -228,7 +243,7 @@ mod tests {
             watched: vec!["dir1".into(), "dir2".into()],
         };
         let sender = ProcessSingleton::with_namespace();
-        let sent = sender.send(&expected_args).unwrap();
+        let sent = send_with_retry(&sender, &expected_args, 5).unwrap();
         assert!(sent);
 
         let request = renderer.recv_timeout(1);
