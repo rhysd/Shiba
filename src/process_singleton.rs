@@ -12,28 +12,37 @@ use interprocess::local_socket::{ListenerOptions, Name, Stream};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fs::remove_file;
-use std::io::{self, Read, Write};
+use std::io::{self, ErrorKind, Read, Write};
 use std::mem::take;
 use std::path::PathBuf;
 use std::thread::spawn;
 
-fn encode<T: Serialize>(stream: &mut Stream, args: &T) -> io::Result<()> {
-    let msg = serde_json::to_vec(args)?;
+const MAX_MESSAGE_SIZE: usize = 16 * 1024 * 1024; // 16 MiB
+
+fn encode<W: Write, T: Serialize>(mut writer: W, args: &T) -> io::Result<()> {
+    let payload = serde_json::to_vec(args)?;
+    if payload.len() > MAX_MESSAGE_SIZE {
+        let msg = format!("Could not send too large message ({} bytes > 16 MiB)", payload.len());
+        return Err(io::Error::new(ErrorKind::InvalidData, msg));
+    }
     let len =
-        u32::try_from(msg.len()).expect("IPC message is smaller than 2^32 bytes").to_ne_bytes();
-    stream.write_all(&len)?;
-    stream.write_all(&msg)?;
-    stream.flush()?;
+        u32::try_from(payload.len()).expect("IPC message is smaller than 2^32 bytes").to_ne_bytes();
+    writer.write_all(&len)?;
+    writer.write_all(&payload)?;
+    writer.flush()?;
     Ok(())
 }
 
-fn decode<T: DeserializeOwned>(stream: &mut Stream) -> io::Result<T> {
+fn decode<R: Read, T: DeserializeOwned>(mut reader: R) -> io::Result<T> {
     let mut buf = [0u8; 4];
-    stream.read_exact(&mut buf)?;
+    reader.read_exact(&mut buf)?;
     let len = u32::from_ne_bytes(buf) as usize;
-
+    if len > MAX_MESSAGE_SIZE {
+        let msg = format!("Could not receive too large message ({len} bytes > 16 MiB)");
+        return Err(io::Error::new(ErrorKind::InvalidInput, msg));
+    }
     let mut buf = vec![0; len];
-    stream.read_exact(&mut buf)?;
+    reader.read_exact(&mut buf)?;
     let msg = serde_json::from_slice(&buf)?;
     Ok(msg)
 }
@@ -63,8 +72,13 @@ impl ProcessSingleton {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn with_namespace() -> Self {
-        match "shiba.singleton.sock".to_ns_name::<GenericNamespaced>() {
+    pub fn with_default_namespace() -> Self {
+        Self::with_namespace("shiba.singleton.sock")
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn with_namespace(name: &'static str) -> Self {
+        match name.to_ns_name::<GenericNamespaced>() {
             Ok(name) => Self { name: Some(name), path: None },
             Err(err) => {
                 log::error!("Could not create a socket namespace for IPC: {err:?}");
@@ -149,6 +163,7 @@ mod tests {
     use super::*;
     use crate::renderer::{Event, Renderer, Request};
     use crate::test::TestRenderer;
+    use std::iter::repeat_n;
     use std::thread::sleep;
     use std::time::Duration;
 
@@ -158,7 +173,7 @@ mod tests {
         loop {
             last_result = sender.send(args);
             count += 1;
-            if last_result.is_ok() || count > retry {
+            if last_result.as_ref().is_ok_and(|&sent| sent) || count > retry {
                 return last_result;
             }
             sleep(Duration::from_millis(500));
@@ -177,7 +192,7 @@ mod tests {
 
         #[cfg(target_os = "windows")]
         {
-            let singleton = ProcessSingleton::with_namespace();
+            let singleton = ProcessSingleton::with_default_namespace();
             assert!(singleton.can_listen());
             assert!(singleton.path.is_none());
         }
@@ -210,7 +225,7 @@ mod tests {
         let sent = send_with_retry(&sender, &expected_args, 5).unwrap();
         assert!(sent);
 
-        let request = renderer.recv_timeout(1);
+        let request = renderer.recv_timeout(Duration::from_secs(1));
         assert!(
             matches!(
                 &request,
@@ -231,7 +246,7 @@ mod tests {
     #[cfg(target_os = "windows")]
     fn send_receive() {
         let renderer = TestRenderer::default();
-        let mut listener = ProcessSingleton::with_namespace();
+        let mut listener = ProcessSingleton::with_default_namespace();
         assert!(listener.can_listen());
 
         listener.listen(renderer.create_handle()).unwrap();
@@ -242,11 +257,11 @@ mod tests {
             additional_windows: vec!["a.md".into(), "b.md".into()],
             watched: vec!["dir1".into(), "dir2".into()],
         };
-        let sender = ProcessSingleton::with_namespace();
+        let sender = ProcessSingleton::with_default_namespace();
         let sent = send_with_retry(&sender, &expected_args, 5).unwrap();
         assert!(sent);
 
-        let request = renderer.recv_timeout(1);
+        let request = renderer.recv_timeout(Duration::from_secs(1));
         assert!(
             matches!(
                 &request,
@@ -268,5 +283,85 @@ mod tests {
 
         let renderer = TestRenderer::default();
         singleton.listen(renderer.create_handle()).unwrap();
+    }
+
+    #[test]
+    fn send_too_large_message() {
+        #[cfg(target_os = "windows")]
+        let sender = ProcessSingleton::with_namespace("shiba.test.error.send");
+        #[cfg(not(target_os = "windows"))]
+        let (sender, _tempdir) = {
+            let dir = tempfile::tempdir().unwrap();
+            let sender = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
+            (sender, dir)
+        };
+
+        let renderer = TestRenderer::default();
+        let mut listener = ProcessSingleton { name: sender.name.clone(), path: None };
+        listener.listen(renderer.create_handle()).unwrap();
+
+        let path = String::from_utf8(vec![b'a'; 16 * 1024]).unwrap().into();
+        let too_large_args =
+            PathArgs { watched: repeat_n(path, 1024).collect(), ..Default::default() };
+
+        let mut last_error = String::new();
+        for _ in 0..10 {
+            sleep(Duration::from_millis(200));
+            let msg = match sender.send(&too_large_args) {
+                Ok(false) => continue,
+                Ok(true) => panic!("Socket was unexpectedly connected"),
+                Err(err) => format!("{err}"),
+            };
+            if msg.contains("Could not send too large message") {
+                return; // Test passed
+            }
+            last_error = msg;
+        }
+        panic!("Expected error did not occur after 2 seconds. last error: {last_error:?}");
+    }
+
+    #[test]
+    fn receive_too_large_message() {
+        #[cfg(target_os = "windows")]
+        let mut listener = ProcessSingleton::with_namespace("shiba.test.error.receive");
+        #[cfg(not(target_os = "windows"))]
+        let (mut listener, _tempdir) = {
+            let dir = tempfile::tempdir().unwrap();
+            let listener = ProcessSingleton::with_socket_file(&DataDir::new(dir.path()));
+            (listener, dir)
+        };
+
+        let name = listener.name.clone().unwrap();
+        let renderer = TestRenderer::default();
+        listener.listen(renderer.create_handle()).unwrap();
+
+        let mut count = 0;
+        let mut conn = loop {
+            count += 1;
+            match Stream::connect(name.clone()) {
+                Ok(conn) => break conn,
+                Err(err) if count >= 10 => {
+                    panic!("Could not connect to server after 2 seconds: {err}")
+                }
+                Err(_) => {
+                    sleep(Duration::from_millis(200));
+                }
+            }
+        };
+
+        let too_large_len = (16u32 * 1024 * 1024 + 1).to_ne_bytes();
+        conn.write_all(&too_large_len).unwrap();
+
+        let request = renderer.recv_timeout(Duration::from_secs(1));
+        assert!(
+            matches!(
+                &request,
+                Request::Emit(Event::Error(err))
+                if err
+                    .chain()
+                    .any(|err| format!("{err}").contains("Could not receive too large message")),
+            ),
+            "unexpected request: {request:?}",
+        );
     }
 }

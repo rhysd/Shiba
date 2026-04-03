@@ -182,8 +182,8 @@ impl TestRenderer {
         self.rx.try_recv().unwrap()
     }
 
-    pub fn recv_timeout(&self, timeout_seconds: u64) -> Request<u32> {
-        self.rx.recv_timeout(Duration::from_secs(timeout_seconds)).unwrap()
+    pub fn recv_timeout(&self, timeout: Duration) -> Request<u32> {
+        self.rx.recv_timeout(timeout).unwrap()
     }
 }
 
@@ -223,6 +223,6 @@ fn test_renderer_create_window() {
     let req = renderer.recv();
     assert!(matches!(req, Request::CreateWindow), "request={req:?}");
     handle.create_window();
-    let req = renderer.recv_timeout(1);
+    let req = renderer.recv_timeout(Duration::from_secs(1));
     assert!(matches!(req, Request::CreateWindow), "request={req:?}");
 }

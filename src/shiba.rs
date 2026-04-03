@@ -68,7 +68,7 @@ where
             }
             #[cfg(target_os = "windows")]
             {
-                ProcessSingleton::with_namespace()
+                ProcessSingleton::with_default_namespace()
             }
         } else {
             log::debug!("Disable process singleton due to user's preference");
