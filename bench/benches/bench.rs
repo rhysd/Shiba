@@ -40,10 +40,30 @@ fn markdown_parse(g: &mut BenchmarkGroup<'_, WallTime>) {
     });
 
     g.throughput(Throughput::Bytes(small.len() as _));
-    g.bench_function(BenchmarkId::new("parse", "offset"), |b| {
+    g.bench_function(BenchmarkId::new("parse", "small_offset"), |b| {
         let offset = Some(small.len() / 2);
         b.iter(|| run(small.clone(), offset));
     });
+
+    {
+        let content = MarkdownContent::new(middle.clone(), None);
+        let parser = MarkdownParser::new(&content, None, ());
+        let text: DisplayText = parser.write_to(sink()).unwrap();
+        let matches = text.search("a", SearchMatcher::CaseInsensitive).unwrap();
+        assert!(matches.len() > 0);
+
+        g.throughput(Throughput::Bytes(middle.len() as _));
+        g.bench_function(BenchmarkId::new("parse", "middle_matches"), |b| {
+            b.iter(|| {
+                let tokenizer = matches.tokenizer(Some(0)).unwrap();
+                let parser = MarkdownParser::new(&content, None, tokenizer);
+                let mut buf = Vec::new();
+                let () = parser.write_to(&mut buf).unwrap();
+                let buf = String::from_utf8(buf).unwrap();
+                assert!(!buf.is_empty());
+            });
+        });
+    }
 }
 
 fn markdown_search(g: &mut BenchmarkGroup<'_, WallTime>) {
@@ -61,19 +81,42 @@ fn markdown_search(g: &mut BenchmarkGroup<'_, WallTime>) {
     let text: DisplayText = parser.write_to(sink()).unwrap();
 
     let cases = [
-        Case { name: "case_sensitive", matcher: SearchMatcher::CaseSensitive, query: "a" },
-        Case { name: "case_sensitive", matcher: SearchMatcher::CaseSensitive, query: "actionlint" },
-        Case { name: "case_insensitive", matcher: SearchMatcher::CaseInsensitive, query: "a" },
+        Case { name: "case_sensitive_match", matcher: SearchMatcher::CaseSensitive, query: "a" },
         Case {
-            name: "case_insensitive",
+            name: "case_sensitive_match",
+            matcher: SearchMatcher::CaseSensitive,
+            query: "actionlint",
+        },
+        Case {
+            name: "case_sensitive_no_match",
+            matcher: SearchMatcher::CaseSensitive,
+            query: "this-does-not-match",
+        },
+        Case {
+            name: "case_insensitive_match",
+            matcher: SearchMatcher::CaseInsensitive,
+            query: "a",
+        },
+        Case {
+            name: "case_insensitive_match",
             matcher: SearchMatcher::CaseInsensitive,
             query: "ACTIONLINT",
         },
-        Case { name: "regex", matcher: SearchMatcher::CaseSensitiveRegex, query: "a" },
         Case {
-            name: "regex",
+            name: "case_insensitive_no_match",
+            matcher: SearchMatcher::CaseInsensitive,
+            query: "THIS-DOES-NOT-MATCH",
+        },
+        Case { name: "regex_match", matcher: SearchMatcher::CaseSensitiveRegex, query: "a" },
+        Case {
+            name: "regex_match",
             matcher: SearchMatcher::CaseSensitiveRegex,
             query: "\\baction\\w+\\b",
+        },
+        Case {
+            name: "regex_no_match",
+            matcher: SearchMatcher::CaseSensitiveRegex,
+            query: "\\bthisdoesnotmatch\\b",
         },
     ];
 
@@ -82,11 +125,7 @@ fn markdown_search(g: &mut BenchmarkGroup<'_, WallTime>) {
         g.bench_with_input(BenchmarkId::new("search", param), &case, |b, c| {
             b.iter(|| {
                 let matches = text.search(black_box(c.query), black_box(c.matcher)).unwrap();
-                assert!(matches.len() > 0);
-                let tokenizer = matches.tokenizer(Some(0)).unwrap();
-                let mut buf = Vec::new();
-                let () = MarkdownParser::new(&content, None, tokenizer).write_to(&mut buf).unwrap();
-                assert!(!buf.is_empty());
+                black_box(matches);
             });
         });
     }
