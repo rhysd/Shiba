@@ -276,7 +276,7 @@ pub enum RenderingFlow {
 /// Handle to access the renderer accross threads. It is used to send the user events to the main thread
 /// from another worker thread.
 pub trait RendererHandle: 'static + Send + Clone {
-    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+    type WindowId: 'static + PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
 
     fn send(&self, event: Event<Self::WindowId>);
     fn create_window(&self);
@@ -314,7 +314,7 @@ pub trait Window {
 
 /// Renderer manages the entire rendering lifecycle.
 pub trait Renderer: Sized {
-    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+    type WindowId: 'static + PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
     type Window: Window<Id = Self::WindowId>;
     type Handle: RendererHandle<WindowId = Self::WindowId>;
 
@@ -329,7 +329,7 @@ pub trait Renderer: Sized {
 /// Event handler which listens several rendering events.
 pub trait EventHandler {
     type Window: Window;
-    type WindowId: PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
+    type WindowId: 'static + PartialEq + Eq + Hash + Clone + Copy + Debug + Send + Sync;
 
     fn on_event(&mut self, event: Event<Self::WindowId>) -> RenderingFlow;
     fn on_window(&mut self, id: Self::WindowId, event: WindowEvent<Self::Window>) -> RenderingFlow;
