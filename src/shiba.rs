@@ -625,7 +625,7 @@ where
 
     fn alert(&mut self, title: &'static str, error: Error) {
         if error.is::<WindowError<R::WindowId>>() {
-            log::error!("Ignore window error: {error:?}");
+            log::error!("Ignore window error: {error}");
             return;
         }
         log::error!("Error while handling window event: {title}: {error}");
