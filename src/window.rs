@@ -69,22 +69,20 @@ impl<R: Renderer> WindowManager<R> {
         self.set_focus(id);
     }
 
-    pub fn remove(&mut self, id: R::WindowId) -> Option<(R::Window, Preview)> {
-        let removed = self.windows.remove(&id)?;
-        log::debug!("Removed window {id:?}");
+    pub fn close(&mut self, id: R::WindowId) -> bool {
+        let removed = self.windows.remove(&id).is_some();
+        log::debug!("Closed window {id:?} (removed={removed})");
         if self.focused == Some(id) {
             log::debug!("Focus was lost because the window was removed");
             self.focused = None;
         }
-        Some(removed)
+        removed
     }
 
-    pub fn remove_others(
-        &mut self,
-        id: R::WindowId,
-    ) -> impl Iterator<Item = (R::WindowId, R::Window, Preview)> {
-        self.focused = Some(id);
-        self.windows.extract_if(move |i, _| *i != id).map(|(i, (w, p))| (i, w, p))
+    pub fn close_others(&mut self, id: R::WindowId) {
+        log::debug!("Close all windows other than window {id:?}");
+        self.windows.retain(|&i, _| i == id);
+        self.focused = self.windows.contains_key(&id).then_some(id);
     }
 
     pub fn set_focus(&mut self, id: R::WindowId) {
@@ -121,25 +119,30 @@ mod tests {
     }
 
     #[test]
-    fn add_and_remove() {
+    fn add_and_close() {
         let wm = &mut WindowManager::<TestRenderer>::default();
 
-        let id = add(wm);
-        assert_eq!(wm.get(id).unwrap().0.window_id, id);
-        assert_eq!(wm.get_mut(id).unwrap().0.window_id, id);
+        let id1 = add(wm);
+        assert_eq!(wm.get(id1).unwrap().0.window_id, id1);
+        assert_eq!(wm.get_mut(id1).unwrap().0.window_id, id1);
 
         let id2 = add(wm);
-        assert_eq!(wm.remove(id2).unwrap().0.window_id, id2); // Focus is lost here
-        assert!(wm.remove(id2).is_none()); // Focus is lost here
+        assert!(wm.close(id2)); // Focus is lost here
+        assert!(!wm.close(id2));
 
-        assert!(matches!(wm.get(id2), Err(Error::UnknownWindow(i)) if i == id2));
-        assert!(matches!(wm.get_mut(id2), Err(Error::UnknownWindow(i)) if i == id2));
+        assert!(wm.get(id1).is_ok());
+        assert!(wm.get_mut(id1).is_ok());
+        assert!(matches!(wm.get(id2), Err(Error::UnknownWindow(id)) if id == id2));
+        assert!(matches!(wm.get_mut(id2), Err(Error::UnknownWindow(id)) if id == id2));
+
+        assert!(wm.close(id1));
+        assert!(!wm.close(id1));
+
+        assert!(matches!(wm.get(id1), Err(Error::UnknownWindow(id)) if id == id1));
+        assert!(matches!(wm.get_mut(id1), Err(Error::UnknownWindow(id)) if id == id1));
 
         // Removing an invalid ID does nothing
-        assert!(wm.remove(id + 100).is_none());
-
-        assert_eq!(wm.remove(id).unwrap().0.window_id, id);
-        assert!(wm.remove(id).is_none()); // Focus is lost here
+        assert!(!wm.close(id1 + 100));
     }
 
     #[test]
@@ -169,7 +172,7 @@ mod tests {
         wm.set_focus(id); // Set focus back to the first window
         assert_eq!(wm.focused_id().unwrap(), id);
 
-        wm.remove(id); // Remove the first window
+        assert!(wm.close(id)); // Close the first window
 
         // Fallback to the second window
         assert_eq!(wm.focused_id().unwrap(), id2);
@@ -185,13 +188,13 @@ mod tests {
     }
 
     #[test]
-    fn remove_unfocused_window() {
+    fn close_unfocused_window() {
         let wm = &mut WindowManager::<TestRenderer>::default();
         let (id1, id2, id3) = (add(wm), add(wm), add(wm));
         assert_eq!(wm.focused_id().unwrap(), id3);
-        wm.remove(id2);
+        assert!(wm.close(id2));
         assert_eq!(wm.focused_id().unwrap(), id3);
-        wm.remove(id1);
+        assert!(wm.close(id1));
         assert_eq!(wm.focused_id().unwrap(), id3);
     }
 
@@ -211,14 +214,12 @@ mod tests {
     }
 
     #[test]
-    fn remove_other_windows() {
+    fn close_other_windows() {
         let wm = &mut WindowManager::<TestRenderer>::default();
-        let (id1, id2, id3) = (add(wm), add(wm), add(wm));
-        wm.set_focus(id2);
-        let mut removed: Vec<_> = wm.remove_others(id2).map(|(id, _, _)| id).collect();
-        removed.sort();
-        assert_eq!(removed, &[id1, id3]);
-        assert_eq!(wm.focused_id().unwrap(), id2);
+        let (_, id, _) = (add(wm), add(wm), add(wm));
+        wm.close_others(id);
+        assert!(wm.is_last(id));
+        assert_eq!(wm.focused_id().unwrap(), id);
     }
 
     #[test]
@@ -236,7 +237,7 @@ mod tests {
         assert!(!wm.is_last(id2));
         assert!(!wm.is_last(invalid_id));
 
-        wm.remove(id1);
+        assert!(wm.close(id1));
         assert!(!wm.is_last(id1));
         assert!(wm.is_last(id2));
         assert!(!wm.is_last(invalid_id));

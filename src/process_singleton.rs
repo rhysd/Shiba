@@ -80,7 +80,7 @@ impl ProcessSingleton {
     #[cfg(target_os = "windows")]
     pub fn with_namespace(name: &'static str) -> Self {
         match name.to_ns_name::<GenericNamespaced>() {
-            Ok(name) => Self { name: Some(name), path: None },
+            Ok(name) => Self { name: Some(name), path: None, cleanup: false },
             Err(err) => {
                 log::error!("Could not create a socket namespace for IPC: {err:?}");
                 Self::default()

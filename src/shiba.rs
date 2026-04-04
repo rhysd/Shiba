@@ -318,7 +318,7 @@ where
         if self.windows.is_last(id) {
             self.quit(id)
         } else {
-            if self.windows.remove(id).is_none() {
+            if !self.windows.close(id) {
                 log::error!("Window was closed but it was not managed by Shiba: {id:?}");
             }
             RenderingFlow::Continue
@@ -327,9 +327,7 @@ where
 
     fn close_other_windows(&mut self, id: R::WindowId) {
         log::debug!("Close all windows other than {id:?}");
-        for (id, _, _) in self.windows.remove_others(id) {
-            log::debug!("Close window: {id:?}");
-        }
+        self.windows.close_others(id);
     }
 
     fn handle_window_message(

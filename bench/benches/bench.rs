@@ -1,11 +1,11 @@
 use criterion::measurement::WallTime;
 use criterion::{
-    BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main,
+    criterion_group, criterion_main, BenchmarkGroup, BenchmarkId, Criterion, Throughput,
 };
 use shiba_bench::asset;
 use shiba_preview::bench::{
-    DisplayText, History, MarkdownContent, MarkdownParser, RawMessageWriter, SearchMatcher,
-    modified_offset, modified_offset_scalar,
+    modified_offset, modified_offset_scalar, DisplayText, History, MarkdownContent, MarkdownParser,
+    RawMessageWriter, SearchMatcher,
 };
 use std::hint::black_box;
 use std::io::sink;
