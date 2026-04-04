@@ -36,9 +36,10 @@ pub use windows::WindowsConsole;
 
 #[cfg(feature = "__bench")]
 pub mod bench {
+    pub use super::config::SearchMatcher;
     pub use super::history::History;
     pub use super::markdown::{
-        MarkdownContent, MarkdownParser, modified_offset, modified_offset_scalar,
+        DisplayText, MarkdownContent, MarkdownParser, modified_offset, modified_offset_scalar,
     };
     pub use super::renderer::RawMessageWriter;
 }

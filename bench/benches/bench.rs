@@ -1,14 +1,17 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::measurement::WallTime;
+use criterion::{
+    BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main,
+};
 use shiba_bench::asset;
 use shiba_preview::bench::{
-    modified_offset, modified_offset_scalar, History, MarkdownContent, MarkdownParser,
-    RawMessageWriter,
+    DisplayText, History, MarkdownContent, MarkdownParser, RawMessageWriter, SearchMatcher,
+    modified_offset, modified_offset_scalar,
 };
 use std::hint::black_box;
+use std::io::sink;
 use std::path::PathBuf;
 
-fn markdown_parse(c: &mut Criterion) {
-    #[inline]
+fn markdown_parse(g: &mut BenchmarkGroup<'_, WallTime>) {
     fn run(source: String, offset: Option<usize>) {
         let target = MarkdownContent::new(source, None);
         let parser = MarkdownParser::new(&target, offset, ());
@@ -17,8 +20,6 @@ fn markdown_parse(c: &mut Criterion) {
         let buf = String::from_utf8(buf).unwrap();
         assert!(!buf.is_empty());
     }
-
-    let mut g = c.benchmark_group("markdown");
 
     let small = asset("example.md");
     g.throughput(Throughput::Bytes(small.len() as _));
@@ -43,11 +44,62 @@ fn markdown_parse(c: &mut Criterion) {
         let offset = Some(small.len() / 2);
         b.iter(|| run(small.clone(), offset));
     });
+}
 
+fn markdown_search(g: &mut BenchmarkGroup<'_, WallTime>) {
+    struct Case<'a> {
+        name: &'a str,
+        matcher: SearchMatcher,
+        query: &'a str,
+    }
+
+    let source = asset("actionlint.md");
+    g.throughput(Throughput::Bytes(source.len() as u64));
+
+    let content = MarkdownContent::new(source, None);
+    let parser = MarkdownParser::new(&content, None, ());
+    let text: DisplayText = parser.write_to(sink()).unwrap();
+
+    let cases = [
+        Case { name: "case_sensitive", matcher: SearchMatcher::CaseSensitive, query: "a" },
+        Case { name: "case_sensitive", matcher: SearchMatcher::CaseSensitive, query: "actionlint" },
+        Case { name: "case_insensitive", matcher: SearchMatcher::CaseInsensitive, query: "a" },
+        Case {
+            name: "case_insensitive",
+            matcher: SearchMatcher::CaseInsensitive,
+            query: "ACTIONLINT",
+        },
+        Case { name: "regex", matcher: SearchMatcher::CaseSensitiveRegex, query: "a" },
+        Case {
+            name: "regex",
+            matcher: SearchMatcher::CaseSensitiveRegex,
+            query: "\\baction\\w+\\b",
+        },
+    ];
+
+    for case in cases {
+        let param = format!("{}_{}", case.name, case.query.chars().count());
+        g.bench_with_input(BenchmarkId::new("search", param), &case, |b, c| {
+            b.iter(|| {
+                let matches = text.search(black_box(c.query), black_box(c.matcher)).unwrap();
+                assert!(matches.len() > 0);
+                let tokenizer = matches.tokenizer(Some(0)).unwrap();
+                let mut buf = Vec::new();
+                let () = MarkdownParser::new(&content, None, tokenizer).write_to(&mut buf).unwrap();
+                assert!(!buf.is_empty());
+            });
+        });
+    }
+}
+
+fn markdown(c: &mut Criterion) {
+    let mut g = c.benchmark_group("markdown");
+    markdown_parse(&mut g);
+    markdown_search(&mut g);
     g.finish();
 }
 
-fn history_push(c: &mut Criterion) {
+fn history(c: &mut Criterion) {
     let mut g = c.benchmark_group("history");
 
     let paths: Vec<_> = (0..10000).map(|i| PathBuf::from(format!("path/to/{i}.md"))).collect();
@@ -100,7 +152,7 @@ fn bytes(c: &mut Criterion) {
         (left, right)
     }
 
-    let mut g = c.benchmark_group("offset");
+    let mut g = c.benchmark_group("bytes");
     let cases = [
         ("48_end", with_diff_at(48, 47)),
         ("512_middle", with_diff_at(512, 256)),
@@ -119,7 +171,7 @@ fn bytes(c: &mut Criterion) {
         g.throughput(Throughput::Bytes(left.len().min(right.len()) as u64));
 
         g.bench_with_input(
-            BenchmarkId::new("scalar", name),
+            BenchmarkId::new("modified_offset", format!("scalar_{name}")),
             &(left, right),
             |b, &(left, right)| {
                 b.iter(|| {
@@ -129,16 +181,20 @@ fn bytes(c: &mut Criterion) {
             },
         );
 
-        g.bench_with_input(BenchmarkId::new("simd", name), &(left, right), |b, &(left, right)| {
-            b.iter(|| {
-                let ret = modified_offset(black_box(left), black_box(right));
-                black_box(ret);
-            });
-        });
+        g.bench_with_input(
+            BenchmarkId::new("modified_offset", format!("simd_{name}")),
+            &(left, right),
+            |b, &(left, right)| {
+                b.iter(|| {
+                    let ret = modified_offset(black_box(left), black_box(right));
+                    black_box(ret);
+                });
+            },
+        );
     }
 
     g.finish();
 }
 
-criterion_group!(benches, markdown_parse, history_push, bytes);
+criterion_group!(benches, markdown, history, bytes);
 criterion_main!(benches);

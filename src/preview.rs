@@ -98,9 +98,10 @@ impl Preview {
         };
         log::debug!("Search hit {} matches", matches.len());
 
-        let Some(tokenizer) = matches.tokenizer(index) else {
-            return self.rerender(window);
-        };
-        window.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
+        if let Some(tokenizer) = matches.tokenizer(index) {
+            window.send_message_raw(MarkdownParser::new(&self.content, None, tokenizer))
+        } else {
+            self.rerender(window)
+        }
     }
 }
