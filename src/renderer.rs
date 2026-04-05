@@ -136,7 +136,7 @@ impl From<PathBuf> for InitFile {
 #[derive(Debug)]
 pub enum Event<WindowId> {
     WindowMessage { message: MessageFromWindow, id: WindowId },
-    FileDrop { path: PathBuf, id: WindowId },
+    FileDrop { paths: Vec<PathBuf>, id: WindowId },
     WatchedFilesChanged(Vec<PathBuf>),
     OpenLocalFile { file: InitFile, id: WindowId },
     OpenExternalLink(String),

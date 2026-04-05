@@ -502,12 +502,20 @@ where
         log::debug!("Handling event {:?}", event);
         match event {
             Event::WindowMessage { message, id } => return self.handle_window_message(id, message),
-            Event::FileDrop { mut path, id } => {
-                log::debug!("Previewing file dropped into window: {:?}", path);
-                if !path.is_absolute() {
-                    path = path.canonicalize()?;
+            Event::FileDrop { mut paths, id } => {
+                log::debug!("Files are dropped to window: {:?}", paths);
+                for path in paths.iter_mut() {
+                    if let Some(p) = self.history.absolute_path(path) {
+                        *path = p;
+                    }
                 }
-                self.open_preview(id, path.into())?;
+                if let Some(last) = paths.pop() {
+                    for path in paths {
+                        self.watcher.watch(&path)?;
+                        self.history.push(path);
+                    }
+                    self.open_preview(id, last.into())?;
+                }
             }
             Event::WatchedFilesChanged(paths) => self.handle_file_changes(paths)?,
             Event::OpenLocalFile { mut file, id } => {

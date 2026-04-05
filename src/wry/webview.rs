@@ -225,7 +225,7 @@ fn parse_local_path_from_url(mut url: String) -> Result<InitFile, String> {
 }
 
 fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<WebView> {
-    let file_drop_proxy = ipc_proxy.clone();
+    let dnd_proxy = ipc_proxy.clone();
     let navigation_proxy = ipc_proxy.clone();
     let new_window_proxy = ipc_proxy.clone();
     let loader = Assets::new(config);
@@ -257,11 +257,8 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
         })
         .with_drag_drop_handler(move |event| {
             if let DragDropEvent::Drop { paths, .. } = event {
-                log::debug!("Files were dropped (the first one will be opened): {paths:?}",);
-                // TODO: Support dropping multiple files
-                if let Some(path) = paths.into_iter().next()
-                    && let Err(err) =
-                        file_drop_proxy.send_event(Request::Emit(Event::FileDrop { path, id }))
+                log::debug!("Files were dropped at window {id:?}: {paths:?}",);
+                if let Err(err) = dnd_proxy.send_event(Request::Emit(Event::FileDrop { paths, id }))
                 {
                     log::error!("Could not send user event for file drop: {err}");
                 }
@@ -271,7 +268,7 @@ fn create_webview(window: &Window, ipc_proxy: Proxy, config: &Config) -> Result<
         .with_navigation_handler(move |url| {
             log::debug!("Navigating to URL: {url:?}");
             let event = match parse_local_path_from_url(url) {
-                Ok(file) if &file.path == "/index.html" => return true,
+                Ok(file) if &file.path == "/index.html" => return true, // Initial index.html loading
                 Ok(file) => Event::OpenLocalFile { file, id },
                 Err(url) => Event::OpenExternalLink(url),
             };
