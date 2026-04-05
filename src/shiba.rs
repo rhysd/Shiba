@@ -553,6 +553,7 @@ where
                 log::debug!("Watch paths via IPC: {:?}", paths.watched);
                 for path in paths.watched {
                     self.watcher.watch(&path)?;
+                    self.history.push(path);
                 }
 
                 if let Some(path) = paths.init {
