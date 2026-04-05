@@ -54,8 +54,8 @@ export function searchNextIndex(index: number | null): number | null {
     } else {
         // Find the nearest next item against current scroll position
         const y = window.scrollY;
-        for (const i of startIndices) {
-            if (all[i].offsetTop >= y) {
+        for (let i = 0; i < startIndices.length; i++) {
+            if (all[startIndices[i]].offsetTop >= y) {
                 next = i;
                 break;
             }
@@ -95,8 +95,8 @@ export function searchPreviousIndex(index: number | null): number | null {
     } else {
         // Find the nearest previous item against current scroll position
         const y = window.scrollY + window.innerHeight;
-        for (const i of startIndices) {
-            const e = all[i];
+        for (let i = 0; i < startIndices.length; i++) {
+            const e = all[startIndices[i]];
             const bottom = e.offsetTop + e.clientHeight;
             if (bottom >= y) {
                 next = i - 1;
