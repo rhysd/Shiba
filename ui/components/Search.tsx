@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
@@ -49,7 +49,16 @@ interface Props {
 export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => {
     const counterElem = useRef<HTMLDivElement>(null);
     const inputElem = useRef<HTMLInputElement>(null);
-    const [debId, setDebId] = useState<number | null>(null);
+    const debId = useRef<number | null>(null);
+
+    const clearPendingSearch = (): void => {
+        if (debId.current !== null) {
+            window.clearTimeout(debId.current);
+            debId.current = null;
+        }
+    };
+
+    useEffect(() => clearPendingSearch, []);
 
     useEffect(() => {
         if (counterElem.current !== null) {
@@ -65,19 +74,17 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => 
         dispatch(searchNext(index));
     };
     const handleClose = (): void => {
+        clearPendingSearch();
         sendMessage({ kind: 'search', query: '', index: null, matcher });
         dispatch(closeSearch());
     };
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        if (debId !== null) {
-            window.clearTimeout(debId);
-        }
+        clearPendingSearch();
         const query = e.currentTarget.value;
-        const id = window.setTimeout(() => {
+        debId.current = window.setTimeout(() => {
             sendMessage({ kind: 'search', query, index, matcher });
-            setDebId(null);
+            debId.current = null;
         }, DEBOUNCE_TIMEOUT);
-        setDebId(id);
     };
     const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
         switch (e.key) {
