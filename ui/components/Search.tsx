@@ -50,6 +50,7 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => 
     const counterElem = useRef<HTMLDivElement>(null);
     const inputElem = useRef<HTMLInputElement>(null);
     const debId = useRef<number | null>(null);
+    const matching = useRef<SearchMatcher | null>(null);
 
     const clearPendingSearch = (): void => {
         if (debId.current !== null) {
@@ -58,7 +59,15 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => 
         }
     };
 
-    useEffect(() => clearPendingSearch, []);
+    useEffect(
+        () => () => {
+            clearPendingSearch();
+            if (matching.current !== null) {
+                sendMessage({ kind: 'search', query: '', index: null, matcher: matching.current });
+            }
+        },
+        [],
+    );
 
     useEffect(() => {
         if (counterElem.current !== null) {
@@ -76,13 +85,16 @@ export const Search: React.FC<Props> = ({ index, matcher, dispatch, total }) => 
     const handleClose = (): void => {
         clearPendingSearch();
         sendMessage({ kind: 'search', query: '', index: null, matcher });
+        matching.current = null;
         dispatch(closeSearch());
     };
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         clearPendingSearch();
         const query = e.currentTarget.value;
+        matching.current = query !== '' ? matcher : null;
         debId.current = window.setTimeout(() => {
             sendMessage({ kind: 'search', query, index, matcher });
+            matching.current = query !== '' ? matcher : null;
             debId.current = null;
         }, DEBOUNCE_TIMEOUT);
     };
