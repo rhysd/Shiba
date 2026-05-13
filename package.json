@@ -71,7 +71,7 @@
     "set-git-hooks-dir": "^1.0.0",
     "stylelint": "^17.1.0",
     "stylelint-config-standard": "^40.0.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.50.0"
   }
 }
